@@ -1,0 +1,35 @@
+{
+  "allowedEmailDomains": [
+    "example.com",
+    "example.org",
+    "example.net",
+    "exemplo.com",
+    "exemplo.com.br",
+    "yourcompany.com"
+  ],
+  "allowedEmails": [
+    "noreply@anthropic.com",
+    "git@github.com",
+    "contato@convoflow.com.br",
+    "suporte@convoflow.com.br",
+    "dev@convoflow.com.br",
+    "nao-responda@convoflow.com.br",
+    "reports@convoflow.com.br",
+    "security@convoflow.com",
+    "gerente.teste@re9.online",
+    "seu@email.com",
+    "seu-email@gmail.com",
+    "nome@empresa.com.br",
+    "exemplo@email.com"
+  ],
+  "allowedIps": [],
+  "allowedPhones": [],
+  "ignoredPaths": [
+    "package-lock.json",
+    "bun.lockb",
+    "deno.lock",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "scripts/pii-check/historico-migracoes.txt"
+  ]
+}

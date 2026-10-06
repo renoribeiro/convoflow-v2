@@ -1,0 +1,280 @@
+/* Inter — corpo de texto (font-sans). NewBlack Typeface é usada como font-display. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ConvoFlow Design System — Nova marca
+   Paleta: Lima #DAE27C · Creme #F9F9ED · Carvão #211E0B · Lilás #7777D8 · Oliva #49511D
+   Todas as cores em HSL (formato "H S% L%"). Tokens semânticos para theming escalável.
+*/
+
+/* NewBlack Typeface — fonte de marca (display). WOFF2 primário, WOFF fallback. */
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-UltraLight.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-UltraLight.woff') format('woff');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-Light.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-Regular.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-Medium.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-SemiBold.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-Bold.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'NewBlack Typeface';
+  src: url('./assets/fonts/NewBlackTypeface-ExtraBold.woff2') format('woff2'),
+       url('./assets/fonts/NewBlackTypeface-ExtraBold.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    /* Core Brand Colors */
+    --brand-primary: 65 64% 69%;      /* #DAE27C — Lima (destaque principal) */
+    --brand-secondary: 240 55% 66%;   /* #7777D8 — Lilás (destaque secundário) */
+    --brand-light: 65 56% 90%;        /* Lima clara (fundos sutis) */
+    --brand-dark: 69 47% 22%;         /* #49511D — Oliva (apoio escuro) */
+
+    /* Business Dashboard Colors */
+    --business-dark: 52 50% 9%;       /* #211E0B — Carvão */
+    --business-medium: 69 22% 38%;    /* Oliva média */
+    --business-light: 60 40% 95%;     /* Creme claro */
+
+    /* Status Colors (harmonizados com a nova paleta) */
+    --success: 84 46% 40%;            /* Verde-lima */
+    --warning: 38 92% 48%;            /* Âmbar */
+    --error: 0 75% 55%;               /* Vermelho */
+    --info: 240 55% 62%;              /* Lilás-azul (alinhado ao accent) */
+
+    /* Light Theme Variables */
+    --background: 60 50% 95%;         /* #F9F9ED */
+    --foreground: 52 50% 9%;          /* #211E0B */
+
+    --card: 0 0% 100%;
+    --card-foreground: 52 50% 9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 52 50% 9%;
+
+    --primary: 65 64% 69%;            /* #DAE27C */
+    --primary-foreground: 52 50% 9%;  /* texto escuro sobre a lima */
+
+    --secondary: 240 48% 94%;         /* Lilás bem claro */
+    --secondary-foreground: 240 40% 28%;
+
+    --muted: 69 24% 90%;              /* Oliva bem clara */
+    --muted-foreground: 69 28% 32%;   /* Oliva (texto secundário) */
+
+    --accent: 240 55% 66%;            /* #7777D8 */
+    --accent-foreground: 60 50% 96%;  /* creme sobre lilás */
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 60 16% 84%;             /* cinza quente neutro */
+    --input: 60 16% 84%;
+    --ring: 65 64% 69%;               /* #DAE27C */
+
+    /* Custom Business Variables */
+    --dashboard-bg: 60 44% 97%;
+    --sidebar-bg: 0 0% 100%;
+    --navbar-bg: 0 0% 100%;
+
+    /* Conversa não visualizada — precisa saltar aos olhos sobre o card branco.
+       `--success/10` era sutil demais no tema claro (feedback de cliente). */
+    --unread-bg: 84 56% 90%;          /* lavagem verde-lima nítida */
+    --unread-bg-hover: 84 56% 85%;
+    --unread-strong: 84 52% 30%;      /* barra lateral, contador, timestamp */
+    --unread-on-strong: 0 0% 100%;    /* texto sobre --unread-strong */
+
+    /* Gradients (lima clara → verde-lima; texto escuro permanece legível) */
+    --gradient-primary: linear-gradient(135deg, hsl(65 64% 70%), hsl(74 54% 58%));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(84 46% 28%));
+    --gradient-background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--dashboard-bg)));
+
+    /* Shadows (tom da marca) */
+    --shadow-soft: 0 2px 8px hsl(var(--brand-dark) / 0.1);
+    --shadow-medium: 0 4px 16px hsl(var(--brand-dark) / 0.14);
+    --shadow-strong: 0 8px 32px hsl(var(--brand-dark) / 0.18);
+
+    /* Animations */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --radius: 0.5rem;
+
+    /* Sidebar (shadcn) */
+    --sidebar-background: 60 45% 97%;
+    --sidebar-foreground: 52 30% 20%;
+    --sidebar-primary: 65 64% 69%;
+    --sidebar-primary-foreground: 52 50% 9%;
+    --sidebar-accent: 65 42% 90%;
+    --sidebar-accent-foreground: 69 47% 22%;
+    --sidebar-border: 60 20% 87%;
+    --sidebar-ring: 65 64% 69%;
+  }
+
+  .dark {
+    /* Core Brand Colors (dark) */
+    --brand-primary: 65 64% 69%;
+    --brand-secondary: 240 55% 70%;
+    --brand-light: 69 30% 22%;
+    --brand-dark: 69 40% 30%;
+
+    --business-dark: 60 50% 95%;
+    --business-medium: 69 18% 60%;
+    --business-light: 55 18% 14%;
+
+    /* Status (dark, levemente mais vivos) */
+    --success: 84 48% 48%;
+    --warning: 38 92% 55%;
+    --error: 0 72% 58%;
+    --info: 240 60% 70%;
+
+    /* Dark Theme Variables */
+    --background: 60 22% 7%;          /* carvão esverdeado */
+    --foreground: 60 50% 95%;         /* creme */
+
+    --card: 55 18% 11%;
+    --card-foreground: 60 50% 95%;
+
+    --popover: 55 18% 11%;
+    --popover-foreground: 60 50% 95%;
+
+    --primary: 65 64% 69%;
+    --primary-foreground: 52 50% 9%;
+
+    --secondary: 240 22% 22%;
+    --secondary-foreground: 60 50% 95%;
+
+    --muted: 60 12% 16%;
+    --muted-foreground: 60 16% 66%;
+
+    --accent: 240 55% 70%;
+    --accent-foreground: 52 50% 9%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 60 12% 20%;
+    --input: 60 12% 20%;
+    --ring: 65 64% 69%;
+
+    /* Dark Business Variables */
+    --dashboard-bg: 60 24% 5%;
+    --sidebar-bg: 55 18% 11%;
+    --navbar-bg: 55 18% 11%;
+
+    /* Conversa não visualizada (dark) — mesmo salto, invertido. */
+    --unread-bg: 84 34% 16%;
+    --unread-bg-hover: 84 34% 21%;
+    --unread-strong: 84 52% 55%;
+    --unread-on-strong: 52 50% 9%;
+
+    /* Dark Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(65 64% 70%), hsl(74 50% 56%));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(84 46% 26%));
+    --gradient-background: linear-gradient(180deg, hsl(var(--background)), hsl(var(--dashboard-bg)));
+
+    /* Dark Shadows */
+    --shadow-soft: 0 2px 8px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 4px 16px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 8px 32px hsl(0 0% 0% / 0.5);
+
+    /* Sidebar (shadcn, dark) */
+    --sidebar-background: 55 18% 11%;
+    --sidebar-foreground: 60 40% 90%;
+    --sidebar-primary: 65 64% 69%;
+    --sidebar-primary-foreground: 52 50% 9%;
+    --sidebar-accent: 60 12% 18%;
+    --sidebar-accent-foreground: 60 40% 90%;
+    --sidebar-border: 60 12% 20%;
+    --sidebar-ring: 65 64% 69%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: 'NewBlack Typeface', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+/* Chat messages background — subtle repeating ConvoFlow icon (WhatsApp-style watermark).
+   Motif derived from src/assets/logos/icon-green.svg. Light: Oliva #49511D @ 4% over creme.
+   Dark: Lima #DAE27C @ 5% over the dark background. Kept faint to preserve message readability. */
+.chat-bg-pattern {
+  background-color: hsl(var(--background));
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27360%27%20height%3D%27360%27%20viewBox%3D%270%200%20360%20360%27%20fill%3D%27none%27%20stroke%3D%27%2349511D%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-opacity%3D%270.14%27%3E%3Cg%20transform%3D%27translate(30%2036)%20rotate(-12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%205h14a1%201%200%200%201%201%201v8a1%201%200%200%201-1%201h-7l-4%203v-3H5a1%201%200%200%201-1-1V6a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(130%2028)%20rotate(10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2020s-7-4.7-7-9.5A3.5%203.5%200%200%201%2012%207a3.5%203.5%200%200%201%207%203.5C19%2015.3%2012%2020%2012%2020z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(226%2040)%20rotate(-20)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M22%202%2011%2013%20M22%202%2015%2022%2011%2013%202%209z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(318%2030)%20rotate(16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203l2.6%205.5%206%20.6-4.5%204%201.3%206-5.4-3-5.4%203%201.3-6-4.5-4%206-.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(78%20110)%20rotate(8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M2%2013l4%204%208-10%20M11%2017l1%201%208-10%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(176%20102)%20rotate(-8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18z%20M8.5%2014a4%204%200%200%200%207%200%20M9%209.5h.01%20M15%209.5h.01%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(272%20116)%20rotate(14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2022s7-7%207-12a7%207%200%200%200-14%200c0%205%207%2012%207%2012z%20M12%2012a2.4%202.4%200%201%200%200-4.8%202.4%202.4%200%200%200%200%204.8z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(350%20110)%20rotate(-10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a3%203%200%200%200-3%203v5a3%203%200%200%200%206%200V6a3%203%200%200%200-3-3z%20M6%2011a6%206%200%200%200%2012%200%20M12%2017v4%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(26%20188)%20rotate(18)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%204h3l2%205-2.5%201.5a11%2011%200%200%200%205%205L15%2014l5%202v3a2%202%200%200%201-2%202A16%2016%200%200%201%203%206a2%202%200%200%201%202-2z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(122%20196)%20rotate(-14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M4%208h3.5l2-2h5l2%202H20a1%201%200%200%201%201%201v9a1%201%200%200%201-1%201H4a1%201%200%200%201-1-1V9a1%201%200%200%201%201-1z%20M12%2011a3.3%203.3%200%201%200%200%206.6%203.3%203.3%200%200%200%200-6.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(220%20184)%20rotate(10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M3%206h18v12H3z%20M3%207l9%206%209-6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(316%20196)%20rotate(-18)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%205h14a1%201%200%200%201%201%201v8a1%201%200%200%201-1%201h-7l-4%203v-3H5a1%201%200%200%201-1-1V6a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(70%20270)%20rotate(-12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203l2.6%205.5%206%20.6-4.5%204%201.3%206-5.4-3-5.4%203%201.3-6-4.5-4%206-.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(168%20280)%20rotate(14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2020s-7-4.7-7-9.5A3.5%203.5%200%200%201%2012%207a3.5%203.5%200%200%201%207%203.5C19%2015.3%2012%2020%2012%2020z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(262%20268)%20rotate(8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M22%202%2011%2013%20M22%202%2015%2022%2011%2013%202%209z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(352%20280)%20rotate(-16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18z%20M8.5%2014a4%204%200%200%200%207%200%20M9%209.5h.01%20M15%209.5h.01%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(30%20344)%20rotate(12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a3%203%200%200%200-3%203v5a3%203%200%200%200%206%200V6a3%203%200%200%200-3-3z%20M6%2011a6%206%200%200%200%2012%200%20M12%2017v4%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(128%20350)%20rotate(-10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2022s7-7%207-12a7%207%200%200%200-14%200c0%205%207%2012%207%2012z%20M12%2012a2.4%202.4%200%201%200%200-4.8%202.4%202.4%200%200%200%200%204.8z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(224%20344)%20rotate(16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M2%2013l4%204%208-10%20M11%2017l1%201%208-10%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(320%20352)%20rotate(-8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M4%208h3.5l2-2h5l2%202H20a1%201%200%200%201%201%201v9a1%201%200%200%201-1%201H4a1%201%200%200%201-1-1V9a1%201%200%200%201%201-1z%20M12%2011a3.3%203.3%200%201%200%200%206.6%203.3%203.3%200%200%200%200-6.6z%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: 360px 360px;
+  background-position: center;
+  opacity: 1;
+}
+
+.dark .chat-bg-pattern {
+  background-color: hsl(var(--background));
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27360%27%20height%3D%27360%27%20viewBox%3D%270%200%20360%20360%27%20fill%3D%27none%27%20stroke%3D%27%23DAE27C%27%20stroke-width%3D%271.6%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20stroke-opacity%3D%270.13%27%3E%3Cg%20transform%3D%27translate(30%2036)%20rotate(-12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%205h14a1%201%200%200%201%201%201v8a1%201%200%200%201-1%201h-7l-4%203v-3H5a1%201%200%200%201-1-1V6a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(130%2028)%20rotate(10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2020s-7-4.7-7-9.5A3.5%203.5%200%200%201%2012%207a3.5%203.5%200%200%201%207%203.5C19%2015.3%2012%2020%2012%2020z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(226%2040)%20rotate(-20)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M22%202%2011%2013%20M22%202%2015%2022%2011%2013%202%209z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(318%2030)%20rotate(16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203l2.6%205.5%206%20.6-4.5%204%201.3%206-5.4-3-5.4%203%201.3-6-4.5-4%206-.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(78%20110)%20rotate(8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M2%2013l4%204%208-10%20M11%2017l1%201%208-10%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(176%20102)%20rotate(-8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18z%20M8.5%2014a4%204%200%200%200%207%200%20M9%209.5h.01%20M15%209.5h.01%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(272%20116)%20rotate(14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2022s7-7%207-12a7%207%200%200%200-14%200c0%205%207%2012%207%2012z%20M12%2012a2.4%202.4%200%201%200%200-4.8%202.4%202.4%200%200%200%200%204.8z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(350%20110)%20rotate(-10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a3%203%200%200%200-3%203v5a3%203%200%200%200%206%200V6a3%203%200%200%200-3-3z%20M6%2011a6%206%200%200%200%2012%200%20M12%2017v4%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(26%20188)%20rotate(18)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%204h3l2%205-2.5%201.5a11%2011%200%200%200%205%205L15%2014l5%202v3a2%202%200%200%201-2%202A16%2016%200%200%201%203%206a2%202%200%200%201%202-2z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(122%20196)%20rotate(-14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M4%208h3.5l2-2h5l2%202H20a1%201%200%200%201%201%201v9a1%201%200%200%201-1%201H4a1%201%200%200%201-1-1V9a1%201%200%200%201%201-1z%20M12%2011a3.3%203.3%200%201%200%200%206.6%203.3%203.3%200%200%200%200-6.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(220%20184)%20rotate(10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M3%206h18v12H3z%20M3%207l9%206%209-6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(316%20196)%20rotate(-18)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M5%205h14a1%201%200%200%201%201%201v8a1%201%200%200%201-1%201h-7l-4%203v-3H5a1%201%200%200%201-1-1V6a1%201%200%200%201%201-1z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(70%20270)%20rotate(-12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203l2.6%205.5%206%20.6-4.5%204%201.3%206-5.4-3-5.4%203%201.3-6-4.5-4%206-.6z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(168%20280)%20rotate(14)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2020s-7-4.7-7-9.5A3.5%203.5%200%200%201%2012%207a3.5%203.5%200%200%201%207%203.5C19%2015.3%2012%2020%2012%2020z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(262%20268)%20rotate(8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M22%202%2011%2013%20M22%202%2015%2022%2011%2013%202%209z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(352%20280)%20rotate(-16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a9%209%200%201%200%200%2018%209%209%200%200%200%200-18z%20M8.5%2014a4%204%200%200%200%207%200%20M9%209.5h.01%20M15%209.5h.01%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(30%20344)%20rotate(12)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%203a3%203%200%200%200-3%203v5a3%203%200%200%200%206%200V6a3%203%200%200%200-3-3z%20M6%2011a6%206%200%200%200%2012%200%20M12%2017v4%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(128%20350)%20rotate(-10)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M12%2022s7-7%207-12a7%207%200%200%200-14%200c0%205%207%2012%207%2012z%20M12%2012a2.4%202.4%200%201%200%200-4.8%202.4%202.4%200%200%200%200%204.8z%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(224%20344)%20rotate(16)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M2%2013l4%204%208-10%20M11%2017l1%201%208-10%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate(320%20352)%20rotate(-8)%20scale(1.05)%20translate(-12%20-12)%27%3E%3Cpath%20d%3D%27M4%208h3.5l2-2h5l2%202H20a1%201%200%200%201%201%201v9a1%201%200%200%201-1%201H4a1%201%200%200%201-1-1V9a1%201%200%200%201%201-1z%20M12%2011a3.3%203.3%200%201%200%200%206.6%203.3%203.3%200%200%200%200-6.6z%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: 360px 360px;
+  background-position: center;
+}
+
+/* Typing indicator — three bouncing dots used in the conversation header. */
+.typing-dot {
+  animation: typing-bounce 1.2s infinite ease-in-out;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes typing-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}

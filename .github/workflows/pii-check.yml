@@ -1,0 +1,42 @@
+# Mesma checagem do hook de pre-commit, no servidor: quem pular o hook
+# (git commit --no-verify) é barrado aqui. Olha só o que o PR acrescenta.
+# Regra no topo do CLAUDE.md; detalhes em docs/RUNBOOK_dados_pessoais_fora_do_repo.md.
+name: Dado pessoal no PR
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pii-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Lista privada (nomes, e-mails e UUIDs reais) vem do secret PII_DENYLIST,
+      # com o mesmo conteúdo de ops-privado/pii-denylist.txt. Sem o secret, só os
+      # padrões rodam — e isso aparece como aviso no PR.
+      - name: Preparar a lista privada
+        env:
+          PII_DENYLIST: ${{ secrets.PII_DENYLIST }}
+        run: |
+          if [ -n "$PII_DENYLIST" ]; then
+            printf '%s\n' "$PII_DENYLIST" > "$RUNNER_TEMP/pii-denylist.txt"
+            echo "PII_DENYLIST_FILE=$RUNNER_TEMP/pii-denylist.txt" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Secret PII_DENYLIST não configurado: nomes, e-mails e UUIDs reais da lista privada não são conferidos neste PR."
+          fi
+
+      - name: Conferir o que o PR acrescenta
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: node scripts/pii-check/cli.mjs --range "origin/$BASE_REF...HEAD" --quiet

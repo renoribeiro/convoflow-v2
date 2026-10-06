@@ -1,0 +1,2 @@
+# O hook roda no sh do git: com CRLF ele quebra no Windows.
+.githooks/* text eol=lf

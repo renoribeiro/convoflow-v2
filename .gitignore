@@ -1,0 +1,99 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Security and sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Backup files
+*.backup
+*.bak
+# Database backups (contêm dados sensíveis — NUNCA commitar)
+backup_dados_*.json
+backup_estrutura_*.sql
+backup_*.sql
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs and debug
+*.log
+debug.log
+error.log
+
+# OS generated files
+Thumbs.db
+ehthumbs.db
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Icon?
+
+# IDE specific
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+.gemini/
+
+# Claude Code / MCP — contém tokens locais, NÃO commitar
+.claude/
+.mcp.json
+
+# estado local do CLI do Supabase — nao versionar
+supabase/.temp/
+
+# vínculo local do CLI do Vercel (ids do time e do projeto) — nao versionar
+.vercel/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.playwright/
+
+# artefatos gerados pela auditoria de botoes/links
+/audit-inventory.json
+/audit-reachable.json
+/audit-coverage.json
+
+# Dado pessoal real (nomes, e-mails, telefones, IPs, ids do Stripe, UUIDs de linha)
+# mora SÓ aqui, nunca em arquivo versionado. Regra no topo do CLAUDE.md.
+/ops-privado/

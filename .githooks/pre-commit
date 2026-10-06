@@ -1,0 +1,11 @@
+#!/bin/sh
+# Barra o commit que acrescenta dado pessoal real (e-mail, telefone, IP público,
+# id do Stripe, chave, e o que estiver na lista privada). Só olha o que está
+# sendo commitado. Ligado sozinho pelo `npm install` (script "prepare").
+# Regra no topo do CLAUDE.md; detalhes em docs/RUNBOOK_dados_pessoais_fora_do_repo.md.
+HOOK_DIR=$(cd "$(dirname "$0")" && pwd)
+if ! command -v node >/dev/null 2>&1; then
+  echo "pii-check: node não encontrado no PATH — sem ele o commit não é conferido." >&2
+  exit 1
+fi
+exec node "$HOOK_DIR/../scripts/pii-check/cli.mjs" --staged

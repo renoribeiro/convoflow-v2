@@ -1,0 +1,79 @@
+# Guarda da cópia pública. GERADO por scripts/copia-publica/publicar.mjs no
+# repositório privado — não edite aqui, a próxima publicação sobrescreve.
+#
+# O publicar.mjs já recusa enviar qualquer um destes caminhos. Este Action é a
+# segunda rede: se um deles aparecer aqui por qualquer outro caminho (push à mão,
+# edição pelo site do GitHub), o check fica vermelho. Atenção: ele avisa DEPOIS
+# do push — o que já subiu deve ser tratado como vazado.
+name: Guarda da cópia pública
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  guarda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Nenhum caminho proibido
+        run: |
+          achou=0
+          while read -r regex motivo; do
+            [ -z "$regex" ] && continue
+            hits=$(git ls-files | grep -E -i -- "$regex" || true)
+            if [ -n "$hits" ]; then
+              echo "::error::Caminho proibido na cópia pública: $motivo"
+              echo "$hits" | sed 's/^/  /'
+              achou=1
+            fi
+          done <<'PROIBIDOS'
+          ^docs/.*$ docs/** — documentação de operação (runbooks, incidente, suítes SQL)
+          ^([^/]+/)*[^/]*\.sql$ **/*.sql — SQL (migração, suíte de teste, script aplicado)
+          ^supabase/migrations/.*$ supabase/migrations/** — migrações
+          ^supabase/migrations-archive/.*$ supabase/migrations-archive/** — migrações arquivadas
+          ^supabase/seeds/.*$ supabase/seeds/** — dados de teste do banco
+          ^supabase/\.temp/.*$ supabase/.temp/** — estado local do CLI do Supabase
+          ^([^/]+/)*CLAUDE\.md$ **/CLAUDE.md — CLAUDE.md (mapa de operação e segurança)
+          ^([^/]+/)*CLAUDE\.local\.md$ **/CLAUDE.local.md — CLAUDE.local.md
+          ^ops-privado/.*$ ops-privado/** — valores reais (ops-privado)
+          ^([^/]+/)*\.env$ **/.env — arquivo de ambiente
+          ^([^/]+/)*\.env\.[^/]*$ **/.env.* — arquivo de ambiente
+          ^\.vercel/.*$ .vercel/** — vínculo local do Vercel
+          ^\.trae/.*$ .trae/** — planos antigos
+          ^\.agent/.*$ .agent/** — skills do agente
+          ^\.claude/.*$ .claude/** — configuração local do Claude Code
+          ^([^/]+/)*\.mcp\.json$ **/.mcp.json — configuração de MCP
+          ^([^/]+/)*[^/]*_REPORT\.md$ **/*_REPORT.md — relatório antigo
+          ^([^/]+/)*RELATORIO_[^/]*\.md$ **/RELATORIO_*.md — relatório antigo
+          ^scripts/copia-publica/.*$ scripts/copia-publica/** — ferramenta da própria cópia pública
+          ^scripts/pii-check/historico-migracoes\.txt$ scripts/pii-check/historico-migracoes.txt — lista com nomes de migrações
+          ^([^/]+/)*[^/]*\.pem$ **/*.pem — chave privada
+          ^([^/]+/)*id_rsa[^/]*$ **/id_rsa* — chave privada
+          PROIBIDOS
+          exit $achou
+
+      # Lista privada (nomes, e-mails e UUIDs reais) vem do secret PII_DENYLIST.
+      # Sem o secret, só os padrões rodam — e isso aparece como aviso.
+      - name: Preparar a lista privada
+        env:
+          PII_DENYLIST: ${{ secrets.PII_DENYLIST }}
+        run: |
+          if [ -n "$PII_DENYLIST" ]; then
+            printf '%s\n' "$PII_DENYLIST" > "$RUNNER_TEMP/pii-denylist.txt"
+            echo "PII_DENYLIST_FILE=$RUNNER_TEMP/pii-denylist.txt" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Secret PII_DENYLIST não configurado: nomes, e-mails e UUIDs reais da lista privada não são conferidos."
+          fi
+
+      - name: Dado pessoal em qualquer arquivo
+        run: node scripts/pii-check/cli.mjs --all --quiet
