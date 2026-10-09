@@ -225,7 +225,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
         note:
-          'Se a seção ou o botão não aparecem, a conexão do Instagram ainda não foi liberada para a sua Loja: escreva para contato@convoflow.com.br.',
+          'Se a seção ou o botão não aparecem, confira o seletor do topo: o Instagram só se conecta numa Loja, nunca na Conta. O Atendente também não vê o botão: quem conecta é o Gestor ou o Gerente.',
       },
       {
         title: 'Entre com a conta da Loja e autorize o ConvoFlow',

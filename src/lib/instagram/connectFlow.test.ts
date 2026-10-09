@@ -1,6 +1,6 @@
 /**
  * Fatia 4b — o que a tela decide mostrar ao conectar, reconectar, desligar e
- * religar o Instagram, e a lista do superadmin. O servidor decide de verdade;
+ * religar o Instagram. O servidor decide de verdade;
  * aqui se prova que a tela não oferece o que o servidor vai recusar e que as
  * frases dizem exatamente o que acontece.
  */
@@ -13,7 +13,6 @@ import {
   toggleConfirmText,
   withoutInstagramCallback,
 } from './connectFlow';
-import { instagramConnectRows } from './connectAdmin';
 
 const STATE = 'b'.repeat(64);
 
@@ -73,13 +72,13 @@ describe('mensagem de sucesso mostra a validade', () => {
 });
 
 describe('o que a tela oferece', () => {
-  it('Loja liberada + Gestor/Gerente: conectar, reconectar e desligar', () => {
+  it('Loja + Gestor/Gerente: conectar, reconectar e desligar', () => {
     expect(instagramActions({ connectEnabled: true, canConfigure: true })).toEqual({
       showSection: true, showConnect: true, showReconnect: true, showToggle: true,
     });
   });
 
-  it('Loja sem a chave (Central Vagas): nem seção nem botão; desligar continua', () => {
+  it('fora de Loja (a Conta): nem seção nem botão; desligar continua', () => {
     expect(instagramActions({ connectEnabled: false, canConfigure: true })).toEqual({
       showSection: false, showConnect: false, showReconnect: false, showToggle: true,
     });
@@ -108,29 +107,5 @@ describe('confirmação de desligar/religar diz exatamente o que acontece', () =
     expect(t.title).toBe('Religar @convoflow?');
     expect(t.action).toBe('Religar');
     expect(t.body.join(' ')).toContain('não voltam');
-  });
-});
-
-describe('lista do superadmin (Conectar Instagram por Loja)', () => {
-  const tenants = [
-    { id: 'c1', name: 'Conta Teste Gerente', kind: 'account', parent_tenant_id: null },
-    { id: 'l1', name: 'Loja Teste', kind: 'store', parent_tenant_id: 'c1' },
-    { id: 'c2', name: 'Grupo Vaga', kind: 'account', parent_tenant_id: null },
-    { id: 'l2', name: 'Central Vagas', kind: 'store', parent_tenant_id: 'c2' },
-    { id: 'l3', name: 'Ótica Centro', kind: 'store', parent_tenant_id: null },
-  ];
-
-  it('só Lojas; liberadas primeiro; nome da Conta ao lado', () => {
-    expect(instagramConnectRows(tenants, new Set(['l1']))).toEqual([
-      { id: 'l1', name: 'Loja Teste', parentName: 'Conta Teste Gerente', enabled: true },
-      { id: 'l2', name: 'Central Vagas', parentName: 'Grupo Vaga', enabled: false },
-      { id: 'l3', name: 'Ótica Centro', parentName: null, enabled: false },
-    ]);
-  });
-
-  it('busca pela Loja ou pela Conta, sem acento', () => {
-    expect(instagramConnectRows(tenants, new Set(), 'otica').map((r) => r.id)).toEqual(['l3']);
-    expect(instagramConnectRows(tenants, new Set(), 'vaga').map((r) => r.id)).toEqual(['l2']);
-    expect(instagramConnectRows(tenants, new Set(), 'gerente').map((r) => r.id)).toEqual(['l1']);
   });
 });

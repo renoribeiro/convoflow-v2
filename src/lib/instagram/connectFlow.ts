@@ -84,9 +84,9 @@ export function connectSuccessText(r: InstagramConnectSuccess): { title: string;
 
 /**
  * O que aparece na tela. `connectEnabled` vem de `instagram_connect_enabled`
- * (Loja + chave do superadmin + cargo + alcance); `canConfigure` é a
- * capability `whatsapp.configure`. Desligar/religar NÃO depende da chave:
- * desligar tem que funcionar sempre.
+ * (é Loja + cargo + alcance; sem chave por Loja desde a 20261008000002);
+ * `canConfigure` é a capability `whatsapp.configure`. Desligar/religar não
+ * depende de ser Loja: desligar tem que funcionar sempre.
  */
 export function instagramActions(p: { connectEnabled: boolean; canConfigure: boolean }): {
   showSection: boolean;

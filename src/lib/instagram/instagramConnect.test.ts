@@ -350,12 +350,12 @@ describe('runCallback — a ordem é a segurança', () => {
     expect(d.commit).not.toHaveBeenCalled();
   });
 
-  it('o banco recusa no commit (a chave foi desligada no meio): devolve a mensagem dele', async () => {
+  it('o banco recusa no commit (o acesso à Loja mudou no meio): devolve a mensagem dele', async () => {
     const { d } = deps({
-      commit: vi.fn(async () => ({ ok: false as const, reason: 'not_enabled', message: 'A conexão do Instagram ainda não foi liberada para esta Loja.' })),
+      commit: vi.fn(async () => ({ ok: false as const, reason: 'forbidden_tenant', message: 'Você não pode conectar o Instagram nesta Loja.' })),
     });
     const r = await runCallback(d, input);
-    expect(r).toMatchObject({ ok: false, reason: 'not_enabled', step: 'commit' });
+    expect(r).toMatchObject({ ok: false, reason: 'forbidden_tenant', step: 'commit' });
   });
 
   it('sem expires_in, o commit recebe null (o banco decide 60 dias)', async () => {

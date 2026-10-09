@@ -151,8 +151,9 @@ export default function WhatsAppNumbers() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Instagram pela tela (fatia 4b). O botão só aparece na Loja que o
-  // superadmin liberou — quem decide é instagram_connect_enabled no banco.
+  // Instagram pela tela (fatia 4b). O botão aparece em toda Loja, nunca na
+  // Conta, para quem tem o cargo e o alcance — quem decide é
+  // instagram_connect_enabled no banco.
   const { data: igConnectEnabled = false } = useInstagramConnectEnabled(tenant?.id);
   const igActions = instagramActions({ connectEnabled: igConnectEnabled, canConfigure });
   const [igStarting, setIgStarting] = useState<string | null>(null);
@@ -852,10 +853,10 @@ export default function WhatsAppNumbers() {
         </CardContent>
           </Card>
 
-          {/* Contas do Instagram — na Loja que tem conta, ou na Loja liberada
-              pelo superadmin para conectar (fatia 4b). Sem "instância" e sem
-              "chave": para quem usa, é a conta do Instagram conectada. Na Loja
-              sem conta e sem a chave (a VagaCerta) a seção não existe. */}
+          {/* Contas do Instagram — na Loja que tem conta, ou em qualquer Loja
+              para quem pode conectar (fatia 4b). Sem "instância" e sem
+              "chave": para quem usa, é a conta do Instagram conectada. Na Conta,
+              e para o Atendente numa Loja sem conta, a seção não existe. */}
           {(sections.instagram.length > 0 || igActions.showSection) && (
             <Card>
               <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
