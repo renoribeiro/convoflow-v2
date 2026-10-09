@@ -6,7 +6,9 @@
  * "Instagram", enquanto o @ não chegou. Nunca um espaço em branco.
  *
  * Contato nunca é juntado entre canais: a mesma pessoa no WhatsApp e no
- * Instagram são dois contatos, e nada aqui tenta casar um com o outro.
+ * Instagram são dois contatos, e nada aqui tenta casar um com o outro. Quem
+ * atende pode VINCULAR os dois à mão (src/lib/contacts/links.ts) — continuam
+ * sendo duas linhas, só marcadas.
  */
 import { CHANNEL_LABEL, asChannel, type ConversationChannel } from '@/lib/conversations/channel';
 import { instagramHandle } from '@/lib/instagram/contactProfile';

@@ -28,6 +28,18 @@ vi.mock('@/hooks/useSupabaseMutation', () => ({
   useSupabaseMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
+// Vínculo WhatsApp ↔ Instagram (migração 20261009000001): a tabela marca a
+// linha vinculada. O índice vem do estado do teste; o diálogo não é o assunto.
+const { links } = vi.hoisted(() => ({ links: { list: [] as Array<Record<string, unknown>> } }));
+vi.mock('@/hooks/useContactLinks', async () => {
+  const { buildLinkIndex } = await import('@/lib/contacts/links');
+  return {
+    useContactLinkIndex: () => buildLinkIndex(links.list as never),
+    useUnlinkContact: () => ({ mutate: vi.fn(), isPending: false }),
+  };
+});
+vi.mock('@/contexts/TenantContext', () => ({ useCan: () => true }));
+vi.mock('@/components/contacts/LinkContactDialog', () => ({ LinkContactDialog: () => null }));
 
 import { ContactsTable } from './ContactsTable';
 
@@ -56,6 +68,29 @@ function renderTable(props: Partial<React.ComponentProps<typeof ContactsTable>> 
 beforeEach(() => {
   state.rows = [WA, WA_NO_NAME, IG, IG_NO_NAME, IG_BARE];
   state.lastQuery = null;
+  links.list = [];
+});
+
+describe('ContactsTable — vínculo WhatsApp ↔ Instagram', () => {
+  it('as duas linhas vinculadas ganham a marca; as outras não', () => {
+    links.list = [
+      {
+        link_id: 'l1',
+        whatsapp_contact_id: 'wa-1',
+        instagram_contact_id: 'ig-1',
+        linked_by: null,
+        linked_by_name: null,
+        linked_at: '2026-10-09T12:00:00Z',
+        can_unlink: true,
+      },
+    ];
+    const { container } = renderTable();
+    expect(container.querySelectorAll('[data-contact-linked]')).toHaveLength(2);
+    expect(screen.getByText('(vinculado ao contato do Instagram)')).toBeInTheDocument();
+    expect(screen.getByText('(vinculado ao contato do WhatsApp)')).toBeInTheDocument();
+    // Vinculadas continuam duas linhas.
+    expect(screen.getByText('5 contatos encontrados')).toBeInTheDocument();
+  });
 });
 
 describe('ContactsTable — canal', () => {

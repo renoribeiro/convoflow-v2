@@ -52,6 +52,8 @@ vi.mock('@/components/conversations/InstanceSelector', () => ({
   },
 }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: vi.fn() } }));
+// Vínculos só entram na exportação ("Vinculado a"); aqui o assunto é o canal.
+vi.mock('@/hooks/useContactLinks', () => ({ useContactLinks: () => ({ data: [] }) }));
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), info: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import Contacts from './Contacts';

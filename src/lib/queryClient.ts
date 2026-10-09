@@ -81,6 +81,12 @@ export const QUERY_KEYS = {
      * propósito: cai na faixa realtime (30 s), a mesma cadência da lista.
      */
     CONVERSATIONS_BOT_SESSIONS: 'conversations-bot-sessions',
+    /**
+     * Vínculos WhatsApp ↔ Instagram da Loja (RPC contact_links_list,
+     * migração 20261009000001) e a busca do seletor. semiStatic (5 min): só
+     * mudam quando alguém vincula ou desvincula, e os hooks invalidam na hora.
+     */
+    CONTACT_LINKS: 'contact-links',
     USAGE_LIMITS: 'usage-limits',
 } as const;
 

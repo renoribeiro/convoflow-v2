@@ -213,6 +213,36 @@ export type Database = {
           },
         ]
       }
+      auth_email_failures: {
+        Row: {
+          created_at: string
+          detail: string | null
+          error_code: string | null
+          error_status: number | null
+          id: string
+          reason: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          error_code?: string | null
+          error_status?: number | null
+          id?: string
+          reason: string
+          source: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          error_code?: string | null
+          error_status?: number | null
+          id?: string
+          reason?: string
+          source?: string
+        }
+        Relationships: []
+      }
       automation_executions: {
         Row: {
           completed_at: string | null
@@ -1332,6 +1362,98 @@ export type Database = {
           },
         ]
       }
+      contact_link_events: {
+        Row: {
+          by_profile_id: string | null
+          created_at: string
+          details: Json
+          id: number
+          instagram_contact_id: string
+          kind: string
+          link_id: string
+          tenant_id: string
+          whatsapp_contact_id: string
+        }
+        Insert: {
+          by_profile_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: never
+          instagram_contact_id: string
+          kind: string
+          link_id: string
+          tenant_id: string
+          whatsapp_contact_id: string
+        }
+        Update: {
+          by_profile_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: never
+          instagram_contact_id?: string
+          kind?: string
+          link_id?: string
+          tenant_id?: string
+          whatsapp_contact_id?: string
+        }
+        Relationships: []
+      }
+      contact_links: {
+        Row: {
+          id: string
+          instagram_contact_id: string
+          linked_at: string
+          linked_by: string | null
+          tenant_id: string
+          whatsapp_contact_id: string
+        }
+        Insert: {
+          id?: string
+          instagram_contact_id: string
+          linked_at?: string
+          linked_by?: string | null
+          tenant_id: string
+          whatsapp_contact_id: string
+        }
+        Update: {
+          id?: string
+          instagram_contact_id?: string
+          linked_at?: string
+          linked_by?: string | null
+          tenant_id?: string
+          whatsapp_contact_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_links_instagram_contact_id_fkey"
+            columns: ["instagram_contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_links_linked_by_fkey"
+            columns: ["linked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_links_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_links_whatsapp_contact_id_fkey"
+            columns: ["whatsapp_contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_tags: {
         Row: {
           contact_id: string
@@ -1406,7 +1528,7 @@ export type Database = {
           current_stage_id?: string | null
           custom_fields?: Json
           email?: string | null
-          external_id?: string
+          external_id: string
           first_message?: string | null
           id?: string
           is_blocked?: boolean | null
@@ -1493,11 +1615,129 @@ export type Database = {
           },
         ]
       }
+      conversation_assignment_events: {
+        Row: {
+          by_profile_id: string | null
+          conversation_id: string
+          created_at: string
+          from_profile_id: string | null
+          id: number
+          kind: string
+          tenant_id: string
+          to_profile_id: string | null
+        }
+        Insert: {
+          by_profile_id?: string | null
+          conversation_id: string
+          created_at?: string
+          from_profile_id?: string | null
+          id?: never
+          kind: string
+          tenant_id: string
+          to_profile_id?: string | null
+        }
+        Update: {
+          by_profile_id?: string | null
+          conversation_id?: string
+          created_at?: string
+          from_profile_id?: string | null
+          id?: never
+          kind?: string
+          tenant_id?: string
+          to_profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_assignment_events_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_participants: {
+        Row: {
+          conversation_id: string
+          first_at: string
+          profile_id: string
+        }
+        Insert: {
+          conversation_id: string
+          first_at?: string
+          profile_id: string
+        }
+        Update: {
+          conversation_id?: string
+          first_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_participants_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_rotation: {
+        Row: {
+          created_at: string
+          credit: number
+          percent: number
+          profile_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit?: number
+          percent?: number
+          profile_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit?: number
+          percent?: number
+          profile_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_rotation_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_rotation_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           assigned_at: string | null
           assigned_by: string | null
           assigned_profile_id: string | null
+          auto_transfer_count: number
+          auto_transfer_last_at: string | null
           channel: string
           contact_id: string
           created_at: string | null
@@ -1508,6 +1748,7 @@ export type Database = {
           last_message_direction: string | null
           last_message_status: string | null
           last_message_type: string | null
+          response_rule_escalated_at: string | null
           sla_muted_at: string | null
           sla_muted_by: string | null
           tenant_id: string
@@ -1519,6 +1760,8 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           assigned_profile_id?: string | null
+          auto_transfer_count?: number
+          auto_transfer_last_at?: string | null
           channel?: string
           contact_id: string
           created_at?: string | null
@@ -1529,6 +1772,7 @@ export type Database = {
           last_message_direction?: string | null
           last_message_status?: string | null
           last_message_type?: string | null
+          response_rule_escalated_at?: string | null
           sla_muted_at?: string | null
           sla_muted_by?: string | null
           tenant_id: string
@@ -1540,6 +1784,8 @@ export type Database = {
           assigned_at?: string | null
           assigned_by?: string | null
           assigned_profile_id?: string | null
+          auto_transfer_count?: number
+          auto_transfer_last_at?: string | null
           channel?: string
           contact_id?: string
           created_at?: string | null
@@ -1550,6 +1796,7 @@ export type Database = {
           last_message_direction?: string | null
           last_message_status?: string | null
           last_message_type?: string | null
+          response_rule_escalated_at?: string | null
           sla_muted_at?: string | null
           sla_muted_by?: string | null
           tenant_id?: string
@@ -2240,6 +2487,159 @@ export type Database = {
           },
         ]
       }
+      instagram_connection_alerts: {
+        Row: {
+          created_at: string
+          instance_id: string
+          milestone: string
+          recipients: number
+          tenant_id: string
+          token_expires_at: string
+        }
+        Insert: {
+          created_at?: string
+          instance_id: string
+          milestone: string
+          recipients?: number
+          tenant_id: string
+          token_expires_at: string
+        }
+        Update: {
+          created_at?: string
+          instance_id?: string
+          milestone?: string
+          recipients?: number
+          tenant_id?: string
+          token_expires_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_connection_alerts_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_echo_claims: {
+        Row: {
+          created_at: string
+          kind: string
+          message_id: string
+          mid: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          message_id: string
+          mid: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          message_id?: string
+          mid?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_echo_claims_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_message_meta_times: {
+        Row: {
+          message_id: string
+          meta_ts: string | null
+          recorded_at: string
+        }
+        Insert: {
+          message_id: string
+          meta_ts?: string | null
+          recorded_at?: string
+        }
+        Update: {
+          message_id?: string
+          meta_ts?: string | null
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_message_meta_times_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: true
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      instagram_oauth_states: {
+        Row: {
+          claimed_at: string | null
+          committed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          instance_id: string | null
+          outcome: string | null
+          redirect_uri: string
+          return_to: string
+          state_hash: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string | null
+          committed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          instance_id?: string | null
+          outcome?: string | null
+          redirect_uri: string
+          return_to: string
+          state_hash: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string | null
+          committed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          instance_id?: string | null
+          outcome?: string | null
+          redirect_uri?: string
+          return_to?: string
+          state_hash?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "instagram_oauth_states_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "instagram_oauth_states_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       instance_secrets: {
         Row: {
           created_at: string
@@ -2646,6 +3046,7 @@ export type Database = {
         Row: {
           ad_referral: Json | null
           campaign_id: string | null
+          channel: string
           contact_id: string
           content: string | null
           conversation_id: string | null
@@ -2667,6 +3068,7 @@ export type Database = {
         Insert: {
           ad_referral?: Json | null
           campaign_id?: string | null
+          channel?: string
           contact_id: string
           content?: string | null
           conversation_id?: string | null
@@ -2688,6 +3090,7 @@ export type Database = {
         Update: {
           ad_referral?: Json | null
           campaign_id?: string | null
+          channel?: string
           contact_id?: string
           content?: string | null
           conversation_id?: string | null
@@ -2729,6 +3132,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "messages_sender_profile_id_fkey"
+            columns: ["sender_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -2740,13 +3150,6 @@ export type Database = {
             columns: ["whatsapp_instance_id"]
             isOneToOne: false
             referencedRelation: "whatsapp_instances"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_profile_id_fkey"
-            columns: ["sender_profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3452,6 +3855,81 @@ export type Database = {
           version?: string | null
         }
         Relationships: []
+      }
+      signup_requests: {
+        Row: {
+          cleaned_at: string | null
+          company_name: string
+          created_at: string
+          email: string
+          failure_code: string | null
+          failure_detail: string | null
+          first_name: string
+          id: string
+          last_name: string
+          phone: string
+          privacy_version: string
+          status: string
+          tenant_id: string | null
+          terms_accepted_at: string
+          terms_version: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          cleaned_at?: string | null
+          company_name: string
+          created_at?: string
+          email: string
+          failure_code?: string | null
+          failure_detail?: string | null
+          first_name: string
+          id?: string
+          last_name: string
+          phone: string
+          privacy_version: string
+          status?: string
+          tenant_id?: string | null
+          terms_accepted_at?: string
+          terms_version: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          cleaned_at?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string
+          failure_code?: string | null
+          failure_detail?: string | null
+          first_name?: string
+          id?: string
+          last_name?: string
+          phone?: string
+          privacy_version?: string
+          status?: string
+          tenant_id?: string | null
+          terms_accepted_at?: string
+          terms_version?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signup_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "signup_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_view"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stripe_config: {
         Row: {
@@ -4626,6 +5104,32 @@ export type Database = {
           },
         ]
       }
+      whatsapp_instance_register_pins: {
+        Row: {
+          instance_id: string
+          pin: string
+          updated_at: string
+        }
+        Insert: {
+          instance_id: string
+          pin: string
+          updated_at?: string
+        }
+        Update: {
+          instance_id?: string
+          pin?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instance_register_pins_instance_id_fkey"
+            columns: ["instance_id"]
+            isOneToOne: true
+            referencedRelation: "whatsapp_instances"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_instances: {
         Row: {
           account_review_status: string | null
@@ -5341,6 +5845,10 @@ export type Database = {
         Args: { tenant_uuid: string }
         Returns: undefined
       }
+      business_minutes_between: {
+        Args: { p_from: string; p_settings: Json; p_to: string }
+        Returns: number
+      }
       calculate_affiliate_commission: {
         Args: {
           p_affiliate_id: string
@@ -5358,15 +5866,108 @@ export type Database = {
         Args: { days_to_keep?: number }
         Returns: number
       }
+      cleanup_public_signups: { Args: { p_now?: string }; Returns: Json }
       complete_job: {
         Args: { p_error_message?: string; p_job_id: string; p_success: boolean }
         Returns: boolean
       }
+      contact_has_conversation: {
+        Args: { p_contact_id: string }
+        Returns: boolean
+      }
+      contact_link_candidates: {
+        Args: { p_contact_id: string; p_search: string }
+        Returns: {
+          avatar_url: string
+          channel: string
+          contact_id: string
+          name: string
+          phone: string
+          username: string
+        }[]
+      }
+      contact_link_create: {
+        Args: {
+          p_choices?: Json
+          p_instagram_contact_id: string
+          p_whatsapp_contact_id: string
+        }
+        Returns: Json
+      }
+      contact_link_reachable: {
+        Args: { p_contact_id: string }
+        Returns: boolean
+      }
+      contact_link_remove: { Args: { p_contact_id: string }; Returns: Json }
+      contact_links_list: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          can_unlink: boolean
+          instagram_contact_id: string
+          link_id: string
+          linked_at: string
+          linked_by: string
+          linked_by_name: string
+          whatsapp_contact_id: string
+        }[]
+      }
+      conversation_assignment_events_list: {
+        Args: {
+          p_from?: string
+          p_limit?: number
+          p_tenant_id: string
+          p_to?: string
+        }
+        Returns: {
+          by_profile_id: string
+          contact_id: string
+          conversation_id: string
+          created_at: string
+          from_profile_id: string
+          id: number
+          kind: string
+          to_profile_id: string
+        }[]
+      }
+      conversation_rotation_get: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          avatar_url: string
+          first_name: string
+          last_name: string
+          percent: number
+          profile_id: string
+          role: string
+        }[]
+      }
+      conversation_transfer_allowed: { Args: never; Returns: boolean }
+      conversation_visibility_level: { Args: never; Returns: string }
+      conversation_visible_to_caller: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
+      create_instagram_instance: {
+        Args: {
+          p_ig_account_id: string
+          p_ig_username: string
+          p_name: string
+          p_tenant_id: string
+          p_token: string
+          p_token_issued_at?: string
+        }
+        Returns: Json
+      }
+      cron_worker_kick: { Args: { p_function: string }; Returns: number }
+      cron_worker_secret: { Args: never; Returns: string }
       current_capability_role: { Args: never; Returns: string }
       current_profile_id: { Args: never; Returns: string }
       current_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      delete_whatsapp_instance: {
+        Args: { p_instance_id: string }
+        Returns: Json
       }
       dequeue_next_job:
         | {
@@ -5426,6 +6027,7 @@ export type Database = {
         Returns: undefined
       }
       flip_overdue_followups: { Args: never; Returns: number }
+      gerente_child_store_ids: { Args: never; Returns: string[] }
       get_admin_users_data: {
         Args: never
         Returns: {
@@ -5528,6 +6130,112 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      instagram_connect_access: {
+        Args: { p_tenant_id: string }
+        Returns: string
+      }
+      instagram_connect_act_as: { Args: { p_user_id: string }; Returns: string }
+      instagram_connect_begin: {
+        Args: {
+          p_instance_id: string
+          p_redirect_uri: string
+          p_return_to: string
+          p_tenant_id: string
+        }
+        Returns: Json
+      }
+      instagram_connect_bounce: { Args: { p_state: string }; Returns: string }
+      instagram_connect_check: {
+        Args: { p_ig_account_id: string; p_state_id: string; p_user_id: string }
+        Returns: Json
+      }
+      instagram_connect_claim: {
+        Args: { p_state: string; p_user_id: string }
+        Returns: Json
+      }
+      instagram_connect_commit: {
+        Args: {
+          p_expires_in: number
+          p_ig_account_id: string
+          p_state_id: string
+          p_token: string
+          p_user_id: string
+          p_username: string
+        }
+        Returns: Json
+      }
+      instagram_connect_enabled: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
+      instagram_connect_refuse: {
+        Args: { p_detail?: string; p_reason: string }
+        Returns: Json
+      }
+      instagram_connect_restore: {
+        Args: { p_prev: string }
+        Returns: undefined
+      }
+      instagram_connection_alert_sweep: {
+        Args: { p_instance_id?: string; p_now?: string }
+        Returns: Json
+      }
+      instagram_contact_profile_claim: {
+        Args: { p_contact_ids: string[]; p_now?: string }
+        Returns: {
+          contact_id: string
+          igsid: string
+          instance_id: string
+          token_issued_at: string
+        }[]
+      }
+      instagram_contact_profile_record: {
+        Args: {
+          p_contact_id: string
+          p_name: string
+          p_now?: string
+          p_status: string
+          p_username: string
+        }
+        Returns: string
+      }
+      instagram_echo_mark_read: {
+        Args: { p_conversation_id: string; p_echo_meta_ts: string }
+        Returns: string
+      }
+      instagram_parse_ts: { Args: { p_value: string }; Returns: string }
+      instagram_reply_window: { Args: { p_contact_id: string }; Returns: Json }
+      instagram_token_renewal_cron_secret: { Args: never; Returns: string }
+      instagram_token_renewal_kick: {
+        Args: {
+          p_dry_run?: boolean
+          p_ignore_window?: boolean
+          p_instance_id?: string
+        }
+        Returns: number
+      }
+      instagram_token_renewal_record_failure: {
+        Args: {
+          p_expected_issued_at: string
+          p_instance_id: string
+          p_kind: string
+          p_message: string
+          p_meta_code: number
+          p_now?: string
+          p_reason: string
+        }
+        Returns: Json
+      }
+      instagram_token_renewal_record_success: {
+        Args: {
+          p_expected_issued_at: string
+          p_expires_in: number
+          p_instance_id: string
+          p_now?: string
+          p_token: string
+        }
+        Returns: Json
+      }
       instance_outbound_today: {
         Args: { p_instance_id: string }
         Returns: number
@@ -5556,10 +6264,157 @@ export type Database = {
         Args: { p_instance_id: string; p_phone: string }
         Returns: boolean
       }
+      loja_attendant_metrics: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          first_name: string
+          is_parent_account: boolean
+          last_name: string
+          n_assumed: number
+          n_automatic: number
+          n_held: number
+          n_no_human_reply: number
+          n_rule_transfers_received: number
+          n_rule_transfers_suffered: number
+          n_transferred: number
+          n_waiting: number
+          profile_id: string
+          reason: string
+          role: string
+        }[]
+      }
+      loja_contact_last_message: {
+        Args: {
+          p_contact_id?: string
+          p_direction?: string
+          p_tenant_id: string
+        }
+        Returns: {
+          contact_id: string
+          last_at: string
+        }[]
+      }
+      loja_conversation_counts: {
+        Args: {
+          p_bucket?: string
+          p_from?: string
+          p_tenant_id: string
+          p_to?: string
+          p_tz?: string
+        }
+        Returns: {
+          bucket: string
+          is_archived: boolean
+          n: number
+          n_unread: number
+        }[]
+      }
+      loja_conversation_metrics: {
+        Args: { p_from?: string; p_tenant_id: string; p_to?: string }
+        Returns: {
+          median_duration_minutes: number
+          median_first_bot_minutes: number
+          median_first_human_minutes: number
+          median_messages: number
+          n_bot_touched: number
+          n_conversations: number
+          n_first_bot: number
+          n_first_human: number
+          n_no_human_reply: number
+          n_waiting_human: number
+          n_waiting_human_unowned: number
+        }[]
+      }
+      loja_ineligible_owners: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          first_name: string
+          last_name: string
+          n_conversations: number
+          profile_id: string
+          reason: string
+        }[]
+      }
+      loja_message_counts: {
+        Args: {
+          p_bucket?: string
+          p_from?: string
+          p_tenant_id: string
+          p_to?: string
+          p_tz?: string
+        }
+        Returns: {
+          bucket: string
+          direction: string
+          is_from_bot: boolean
+          last_at: string
+          n: number
+          whatsapp_instance_id: string
+        }[]
+      }
+      loja_response_rule_preview: {
+        Args: {
+          p_business_hours?: Json
+          p_days?: number
+          p_minutes: number
+          p_tenant_id: string
+        }
+        Returns: {
+          breached: number
+          never_replied: number
+          turns: number
+        }[]
+      }
+      loja_response_time: {
+        Args: {
+          p_bucket?: string
+          p_from?: string
+          p_tenant_id: string
+          p_to?: string
+          p_tz?: string
+        }
+        Returns: {
+          avg_minutes: number
+          bucket: string
+          n: number
+        }[]
+      }
+      loja_stats_scope_ok: {
+        Args: { p_allow_super: boolean; p_tenant_id: string }
+        Returns: boolean
+      }
+      maintenance_state: {
+        Args: never
+        Returns: {
+          active: boolean
+          ends_at: string
+          reason: string
+          scheduled: boolean
+          server_now: string
+          starts_at: string
+        }[]
+      }
       mark_all_notifications_as_read: { Args: never; Returns: undefined }
       mark_notification_as_read: {
         Args: { notification_id: string }
         Returns: undefined
+      }
+      meta_signup_check: {
+        Args: { p_phone_number_id: string; p_tenant_id: string }
+        Returns: Json
+      }
+      meta_signup_commit: {
+        Args: {
+          p_graph_api_version: string
+          p_name: string
+          p_phone_number: string
+          p_phone_number_id: string
+          p_profile_name: string
+          p_tenant_id: string
+          p_token: string
+          p_waba_id: string
+        }
+        Returns: Json
       }
       normalize_ad_referral: {
         Args: { p_referral: Json }
@@ -5600,9 +6455,44 @@ export type Database = {
         }
         Returns: Json
       }
+      process_instagram_message: {
+        Args: {
+          p_ig_account_id: string
+          p_is_echo: boolean
+          p_meta_ts?: string
+          p_mid: string
+          p_recipient_id: string
+          p_sender_id: string
+          p_text: string
+        }
+        Returns: Json
+      }
       promote_scheduled_campaigns: { Args: never; Returns: undefined }
+      public_signup_failed: {
+        Args: { p_code: string; p_detail: string; p_lead_id: string }
+        Returns: undefined
+      }
+      public_signup_invited: {
+        Args: { p_lead_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      public_signup_start: {
+        Args: { p_lead_id: string; p_slug: string }
+        Returns: {
+          conta_id: string
+          resultado: string
+        }[]
+      }
       recompute_campaign_metrics: {
         Args: { p_campaign_id: string }
+        Returns: undefined
+      }
+      reconcile_instagram_send: {
+        Args: { p_message_id: string; p_mid: string }
+        Returns: Json
+      }
+      record_auth_email_failure_from_browser: {
+        Args: { p_reason: string; p_source: string }
         Returns: undefined
       }
       refresh_all_materialized_views: {
@@ -5619,6 +6509,67 @@ export type Database = {
       }
       refresh_monitoring_views: { Args: never; Returns: undefined }
       refresh_tracking_views: { Args: never; Returns: undefined }
+      resolve_contact_by_channel: {
+        Args: {
+          p_channel: string
+          p_external_id: string
+          p_first_message: string
+          p_instance_id: string
+          p_phone: string
+          p_tenant_id: string
+        }
+        Returns: string
+      }
+      response_rule_admin_user_ids: {
+        Args: { p_tenant_id: string }
+        Returns: string[]
+      }
+      response_rule_settings: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      response_rule_sweep: { Args: { p_now?: string }; Returns: number }
+      response_rule_transfer: {
+        Args: { p_conversation_id: string; p_now?: string }
+        Returns: string
+      }
+      response_rule_turn_start: {
+        Args: { p_conversation_id: string }
+        Returns: string
+      }
+      rotation_admin_scope_ok: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
+      }
+      rotation_assign_conversation: {
+        Args: { p_conversation_id: string }
+        Returns: string
+      }
+      rotation_bot_pending: {
+        Args: {
+          p_contact_id: string
+          p_conversation_id: string
+          p_instance_id: string
+          p_message_id: string
+          p_tenant_id: string
+        }
+        Returns: boolean
+      }
+      rotation_eligible_profile_ids: {
+        Args: { p_tenant_id: string }
+        Returns: string[]
+      }
+      rotation_pick: { Args: { p_tenant_id: string }; Returns: string }
+      rotation_pick_excluding: {
+        Args: { p_exclude: string; p_tenant_id: string }
+        Returns: string
+      }
+      rotation_rebalance: { Args: { p_tenant_id: string }; Returns: boolean }
+      rotation_settings: {
+        Args: { p_tenant_id: string }
+        Returns: Record<string, unknown>[]
+      }
+      rotation_sweep_after_bot: { Args: never; Returns: number }
       schedule_campaign_messages: {
         Args: { p_campaign_id: string }
         Returns: number
@@ -5645,6 +6596,14 @@ export type Database = {
         Args: { p_phone: string; p_source?: string; p_tenant: string }
         Returns: number
       }
+      set_conversation_rotation: {
+        Args: { p_percents: Json; p_tenant_id: string }
+        Returns: undefined
+      }
+      set_instagram_account_active: {
+        Args: { p_active: boolean; p_instance_id: string }
+        Returns: Json
+      }
       set_instance_meta_token: {
         Args: { p_instance_id: string; p_token: string }
         Returns: string
@@ -5652,6 +6611,11 @@ export type Database = {
       set_tenant_settings: {
         Args: { p_patch: Json; p_tenant_id: string }
         Returns: Json
+      }
+      signup_discard_tenant: { Args: { p_tenant_id: string }; Returns: number }
+      signup_tenant_is_disposable: {
+        Args: { p_tenant_id: string }
+        Returns: boolean
       }
       tenant_access_state: {
         Args: { p_tenant_id: string }
@@ -5676,6 +6640,18 @@ export type Database = {
       update_message_status: {
         Args: { p_api_message_id: string; p_status: string }
         Returns: boolean
+      }
+      whatsapp_instance_delete_check: {
+        Args: { p_instance_id: string }
+        Returns: Json
+      }
+      whatsapp_instance_delete_preview: {
+        Args: { p_instance_id: string }
+        Returns: Json
+      }
+      whatsapp_instance_history_counts: {
+        Args: { p_instance_id: string }
+        Returns: Json
       }
     }
     Enums: {
@@ -5727,12 +6703,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5756,11 +6732,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5781,11 +6757,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5806,11 +6782,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -5823,11 +6799,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

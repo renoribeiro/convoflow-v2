@@ -125,6 +125,11 @@ interface ChatWindowProps {
    * acompanhar (link direto para uma conversa do outro canal, por exemplo).
    */
   onChannelDetected?: (channel: ConversationChannel) => void;
+  /**
+   * Abre outra conversa na mesma tela — o atalho do painel do contato para a
+   * conversa do outro canal quando os contatos estão vinculados.
+   */
+  onOpenConversation?: (conversationId: string) => void;
 }
 
 /** Max auto-grow height for the message textarea (~5 rows). */
@@ -188,6 +193,7 @@ export const ChatWindow = ({
   onPanelOpenChange,
   onBack,
   onChannelDetected,
+  onOpenConversation,
 }: ChatWindowProps) => {
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -1506,6 +1512,7 @@ export const ChatWindow = ({
         contactId={contactId}
         contact={contact}
         isLoading={conversationLoading}
+        onOpenConversation={onOpenConversation}
       />
 
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
