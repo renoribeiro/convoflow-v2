@@ -1,8 +1,33 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
+
+// `import.meta.env` lido INTEIRO (sem `.CHAVE`), em qualquer arquivo, inclusive
+// de dependência, faz o Vite colar no bundle o objeto com TODAS as variáveis
+// VITE_*. No Vercel isso inclui as que ele cria sozinho, como
+// VITE_VERCEL_GIT_COMMIT_AUTHOR_LOGIN / _NAME: o nome de quem fez o commit ia
+// para o JavaScript do site. Foi o devtools do zustand, até 2026-10-08. O site
+// lê só as chaves de que precisa (src/lib/env.ts); este guarda derruba o build
+// se o objeto inteiro voltar a aparecer.
+const WHOLE_ENV_OBJECT = /["']?BASE_URL["']?\s*:\s*["'][^"']*["']\s*,\s*["']?DEV["']?\s*:/;
+
+const guardWholeEnvObject = (): Plugin => ({
+  name: 'convoflow:sem-import-meta-env-inteiro',
+  apply: 'build',
+  generateBundle(_options, bundle) {
+    const culpados = Object.values(bundle)
+      .filter((item) => item.type === 'chunk' && WHOLE_ENV_OBJECT.test(item.code))
+      .map((item) => item.fileName);
+    if (culpados.length > 0) {
+      this.error(
+        `import.meta.env inteiro foi embutido em: ${culpados.join(', ')}. ` +
+          'Leia cada chave pelo nome (import.meta.env.VITE_X) ou ache a dependência que lê o objeto todo.',
+      );
+    }
+  },
+});
 
 // Required environment variables for production builds
 const REQUIRED_ENV_VARS = [
@@ -152,6 +177,7 @@ export default defineConfig(({ mode }) => {
           enabled: false, // Disable in development
         },
       }),
+      guardWholeEnvObject(),
     ].filter(Boolean),
     resolve: {
       alias: {

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { clearActiveTenant } from '@/lib/activeTenant';
+import { loginErrorToast } from '@/lib/auth/loginErrorToast';
 
 interface AuthContextType {
   user: User | null;
@@ -85,8 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         toast({
-          title: "Erro no login",
-          description: error.message,
+          ...loginErrorToast(error),
           variant: "destructive",
         });
         throw error;

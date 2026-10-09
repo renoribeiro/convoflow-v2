@@ -1229,7 +1229,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Com o rodízio de conversas ligado (Configurações › Escala/Transferência), quem entra na Loja recebe a própria fatia sozinho e quem sai é removido dela: as fatias se refazem em divisão igual, preservando quem estava em 0 %. Quem sai FICA com as conversas que já tinha; use a pílula "Responsável indisponível" em Conversas para movê-las.',
       'Como Gerente esta tela mostra as Lojas da sua Conta e as pessoas delas; como Gestor, mostra as pessoas da sua Loja e o convite já entra nela. Você não escolhe Loja, porque só tem a sua.',
       'Login compartilhado quebra relatório por pessoa e apaga o histórico de quem atendeu o quê.',
-      'Suspender corta o acesso na hora: a pessoa não consegue mais entrar, e uma tela que ela deixou aberta para de mostrar conversas e de enviar mensagens. Quem está abaixo dela (os Atendentes de um Gestor suspenso) é suspenso junto. "Reativar" devolve tudo como era, mas só para a pessoa escolhida: quem foi suspenso junto precisa ser reativado um por um.',
+      'Suspender corta o acesso na hora: a pessoa não consegue mais entrar (na tela de login ela vê "Acesso suspenso", com o pedido de falar com quem administra a equipe), e uma tela que ela deixou aberta para de mostrar conversas e de enviar mensagens. Quem está abaixo dela (os Atendentes de um Gestor suspenso) é suspenso junto. "Reativar" devolve tudo como era, mas só para a pessoa escolhida: quem foi suspenso junto precisa ser reativado um por um.',
     ],
     category: 'tela',
     area: 'Equipe',
@@ -1357,7 +1357,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Leia a coluna Plano / Acesso antes de qualquer ação. "Pago" é assinatura ativa; "Em teste até" é o teste grátis de 7 dias, já com cartão cadastrado; "Pagamento pendente" é o cartão recusado com o Stripe ainda tentando (o sistema segue aberto); os três liberam a Conta. Um "cancela em" embaixo do selo é cancelamento agendado. "Manual (Liberado)" é liberação sua, com a data ao passar o mouse; "Bloqueado" é sem acesso. Numa Loja o selo é o da Conta acima, e a lista diz de onde ele vem. A Loja não decide nada sozinha.',
       'Para abrir o sistema sem pagamento, clique em "Liberar Manualmente" na linha da pessoa: a Conta inteira abre, para todo o time, e fica registrado quem liberou e quando. "Revogar Acesso" fecha na hora para todos, inclusive o Gerente.',
       'Para criar alguém, use "Novo Usuário": nome, e-mail, cargo e a Loja (Gestor e Atendente) ou o nome da Conta nova (Gerente: a Conta nasce junto). A pessoa recebe o convite por e-mail e define a própria senha.',
-      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo) e a lixeira abre "Excluir Usuário". Excluir tira o login e some com a pessoa das listas; o histórico de atendimento dela fica. Não existe botão para desfazer.',
+      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo) e a lixeira abre "Excluir Usuário". Excluir tira o login e some com a pessoa das listas; o histórico de atendimento dela fica. Se ela tentar entrar, vê "Acesso suspenso", o mesmo aviso de quem foi suspenso. Não existe botão para desfazer.',
     ],
     example:
       'Chega um "não consigo entrar". Você busca o e-mail e vê "Bloqueado" na Conta: é cobrança, não senha. O contrato já foi assinado, então "Liberar Manualmente" abre na hora, e você revoga se o pagamento não vier.',

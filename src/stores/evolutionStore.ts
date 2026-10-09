@@ -1,5 +1,8 @@
 import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
+// Sem o `devtools`: ele lê `import.meta.env` inteiro, e o Vite colava no site
+// todas as variáveis VITE_* (inclusive o autor do commit, no Vercel). Em
+// produção ele já ficava desligado. Guarda: guardWholeEnvObject no vite.config.ts.
+import { persist } from 'zustand/middleware';
 import { EvolutionInstance } from '../types/evolution.types';
 import { EvolutionApiService } from '../services/evolutionApi';
 // WebhookHandler removido — webhooks são processados exclusivamente pela Edge Function server-side
@@ -192,8 +195,7 @@ const initialState = {
 };
 
 export const useEvolutionStore = create<EvolutionState>()(
-  devtools(
-    persist(
+  persist(
       (set, get) => ({
         ...initialState,
         
@@ -748,10 +750,6 @@ export const useEvolutionStore = create<EvolutionState>()(
           selectedChat: state.selectedChat,
         }),
       }
-    ),
-    {
-      name: 'evolution-store',
-    }
   ),
 );
 
