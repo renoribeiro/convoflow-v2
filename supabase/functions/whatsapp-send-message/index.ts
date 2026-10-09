@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
+import { camposDaFalhaMeta } from '../_shared/meta-error-fields.ts';
 
 /**
  * whatsapp-send-message
@@ -326,8 +327,11 @@ Deno.serve(async (req: Request) => {
     else if (errCode === 131026) friendly = 'Número não existe no WhatsApp.';
     else if (errCode === 133010) friendly = 'Número Meta ainda não está registrado (chame /register).';
     else if (errCode === 131051) friendly = 'Tipo de mensagem não suportado pela Cloud API.';
+    // `meta_message` é a frase crua da Meta (com error_data.details): é ela
+    // que o front grava em messages.error_message quando a linha vira failed.
+    const { error_message: metaMessage } = camposDaFalhaMeta(err ?? metaJson);
     return jsonResponse(
-      { ok: false, error: friendly, code: errCode, status: metaResp.status },
+      { ok: false, error: friendly, code: errCode, status: metaResp.status, meta_message: metaMessage },
       400,
     );
   }

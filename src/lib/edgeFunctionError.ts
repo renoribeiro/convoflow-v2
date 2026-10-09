@@ -18,19 +18,12 @@ export async function mensagemDaEdgeFunction(
   error: unknown,
   fallback: string,
 ): Promise<string> {
-  const context = (error as { context?: unknown } | null)?.context;
-
-  if (context && typeof (context as Response).json === 'function') {
-    try {
-      const body = await (context as Response).json();
-      // createErrorResponse devolve { error: { message, code } }; algumas
-      // funções antigas devolvem { error: "texto" } direto.
-      const mensagem = body?.error?.message ?? body?.error;
-      if (typeof mensagem === 'string' && mensagem.trim()) return mensagem;
-    } catch {
-      // corpo vazio ou não-JSON: cai no fallback
-    }
-  }
+  const body = await corpoDaEdgeFunction(error);
+  // createErrorResponse devolve { error: { message, code } }; algumas
+  // funções antigas devolvem { error: "texto" } direto.
+  const erro = body?.error as { message?: unknown } | string | undefined;
+  const mensagem = typeof erro === 'string' ? erro : erro?.message;
+  if (typeof mensagem === 'string' && mensagem.trim()) return mensagem;
 
   if (error instanceof Error && error.message) {
     // A frase genérica do supabase-js não ajuda ninguém: prefira o fallback,
@@ -40,4 +33,26 @@ export async function mensagemDaEdgeFunction(
   }
 
   return fallback;
+}
+
+/**
+ * O corpo JSON inteiro que a edge function devolveu junto com o 4xx/5xx, ou
+ * `null` quando não há corpo legível. Para quem precisa de mais que a frase —
+ * o `whatsapp-send-message`, por exemplo, manda também o `code` da Meta.
+ *
+ * O `Response` só pode ser lido uma vez: quem chama esta função não chama
+ * `mensagemDaEdgeFunction` para o mesmo erro (ela lê o corpo por aqui).
+ */
+export async function corpoDaEdgeFunction(
+  error: unknown,
+): Promise<Record<string, unknown> | null> {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (!context || typeof (context as Response).json !== 'function') return null;
+  try {
+    const body = await (context as Response).json();
+    return body && typeof body === 'object' ? (body as Record<string, unknown>) : null;
+  } catch {
+    // corpo vazio ou não-JSON
+    return null;
+  }
 }

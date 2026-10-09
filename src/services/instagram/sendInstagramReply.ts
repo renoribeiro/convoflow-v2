@@ -1,5 +1,6 @@
 import { logger } from '@/lib/logger';
 import { INSTAGRAM_COMPOSER_TEXT, INSTAGRAM_TEXT_MAX_BYTES, utf8ByteLength } from '@/lib/instagram/reply';
+import { camposDaFalha } from '@/lib/whatsapp/failureFields';
 import type { IWhatsAppProvider } from '@/services/whatsapp';
 
 /**
@@ -80,7 +81,7 @@ export async function sendInstagramReply(input: SendInstagramReplyInput): Promis
     // 4. Falhou. Só vira 'failed' se nenhum eco já provou que saiu.
     const upd = await client
       .from('messages')
-      .update({ status: 'failed' })
+      .update({ status: 'failed', ...camposDaFalha(result) })
       .eq('id', rowId)
       .is('evolution_message_id', null);
     if (upd?.error) {

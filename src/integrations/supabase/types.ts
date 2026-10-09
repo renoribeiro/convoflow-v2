@@ -2651,6 +2651,8 @@ export type Database = {
           conversation_id: string | null
           created_at: string
           direction: string
+          error_code: string | null
+          error_message: string | null
           evolution_message_id: string | null
           id: string
           is_from_bot: boolean | null
@@ -2670,6 +2672,8 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           direction: string
+          error_code?: string | null
+          error_message?: string | null
           evolution_message_id?: string | null
           id?: string
           is_from_bot?: boolean | null
@@ -2689,6 +2693,8 @@ export type Database = {
           conversation_id?: string | null
           created_at?: string
           direction?: string
+          error_code?: string | null
+          error_message?: string | null
           evolution_message_id?: string | null
           id?: string
           is_from_bot?: boolean | null

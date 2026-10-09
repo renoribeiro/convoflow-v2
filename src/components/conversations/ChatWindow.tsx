@@ -96,6 +96,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { providerLabel, WhatsAppAdapterError } from '@/services/whatsapp';
 import { uploadWhatsAppMedia, detectMediaTypeFromMime } from '@/services/whatsapp/media-upload';
 import { logger } from '@/lib/logger';
+import { camposDaFalha } from '@/lib/whatsapp/failureFields';
 import { formatPhoneBR } from '@/lib/utils';
 import { MessageBubble, type RenderableMessage } from './MessageBubble';
 import { LeadTagsDialog } from '@/components/etiquetas/LeadTagsDialog';
@@ -718,6 +719,7 @@ export const ChatWindow = ({
       // Guarda o id do provider (wamid) p/ o webhook avançar delivered/read.
       evolution_message_id: providerResult?.providerMessageId ?? null,
       is_from_bot: false,
+      ...(status === 'failed' ? camposDaFalha(providerResult) : {}),
     } as any);
   };
 
@@ -855,7 +857,11 @@ export const ChatWindow = ({
         if (pendingId) {
           await supabase
             .from('messages')
-            .update({ status, evolution_message_id: providerResult?.providerMessageId ?? null })
+            .update({
+              status,
+              evolution_message_id: providerResult?.providerMessageId ?? null,
+              ...(status === 'failed' ? camposDaFalha(providerResult) : {}),
+            })
             .eq('id', pendingId);
           queryClient.invalidateQueries({ queryKey: ['messages', contactId, tenant.id] });
           queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });

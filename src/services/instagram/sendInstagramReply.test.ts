@@ -109,7 +109,7 @@ describe('sendInstagramReply', () => {
     expect(r).toEqual({ ok: false, reason: 'outside_window', error: 'fora da janela', messageRowId: 'row-1' });
     expect(calls[1]).toMatchObject({
       op: 'update',
-      payload: { status: 'failed' },
+      payload: { status: 'failed', error_code: 'outside_window', error_message: 'fora da janela' },
       filters: [['eq', 'id', 'row-1'], ['is', 'evolution_message_id', null]],
     });
   });

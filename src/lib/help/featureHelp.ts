@@ -507,7 +507,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   },
   // Os três a seguir são superfícies DENTRO de Conversas (diálogo, diálogo,
   // painel). Ganharam entrada própria porque cada um tem regra que não cabe num
-  // passo: a janela de 24 h, o atalho que só serve à Evolution, e um painel
+  // passo: a janela de 24 h, o atalho que muda conforme o tipo de número, e um painel
   // com seis seções. O modal "Filtros" ficou como dois passos em
   // page:conversations — quatro recortes que valem na hora, não há o que
   // explicar em separado.
@@ -526,7 +526,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O cliente pediu orçamento na segunda e sumiu. Na quinta você abre a conversa, vê o aviso das 24 horas, escolhe o modelo "retorno_orcamento" com o nome dele no {{1}} e envia. Ele responde à tarde, e a partir daí você escreve normalmente.',
     tips: [
       'Isto só existe em número da API Oficial. Número conectado por QR Code (Evolution ou WAHA) não tem janela de 24 horas nem template: nele o texto livre sai sempre.',
-      'Modelo com variável errada é recusado pela Meta na hora, com o motivo no aviso vermelho. O erro mais comum é deixar um parâmetro vazio.',
+      'Modelo com variável errada é recusado pela Meta na hora, com o motivo no aviso vermelho e o código da Meta no fim, por exemplo "(código 132001 da Meta)" para modelo que não existe ou não foi aprovado. O erro mais comum é deixar um parâmetro vazio.',
+      'Para falar com um telefone que ainda não está na lista, use "Nova Conversa": num número da API Oficial ela também começa por um template aprovado.',
       'Os modelos são criados e aprovados no Gerenciador do WhatsApp Business, não aqui. Para ver a lista completa da sua conta com o selo de cada um, use a tela Templates.',
       'Use template para reabrir a conversa, não como mensagem do dia a dia: dentro da janela de 24 horas o texto livre é mais rápido, sem parâmetros e sem depender de aprovação.',
     ],
@@ -537,18 +538,22 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     moduleName: 'conversations',
     title: 'Conversas › Nova Conversa',
     whatItDoes:
-      'Começa uma conversa com um telefone que nunca escreveu para você: você escolhe o número da Loja, digita o telefone do cliente e a primeira mensagem, e o sistema cria o contato e manda tudo de uma vez.',
+      'Começa uma conversa com um telefone que ainda não está na sua lista: você escolhe o número da Loja, digita o telefone do cliente e a primeira mensagem, e o envio sai pelo mesmo caminho da tela da conversa. Em número conectado por QR Code, a primeira mensagem é texto livre. Em número da API Oficial, é um template aprovado, a não ser que o cliente tenha escrito para esse número nas últimas 24 horas.',
     howToConfigure: [
       'Clique em "Nova Conversa", acima da lista.',
-      'Escolha em "Instância do WhatsApp" o número da Loja que vai enviar. Ele precisa estar conectado.',
-      'Digite o "Número do WhatsApp" com DDD e a "Mensagem inicial" (até 1000 caracteres).',
-      'Clique em "Iniciar Conversa". Se o telefone ainda não era contato, ele é cadastrado agora e a conversa abre na lista, já com a sua mensagem enviada.',
+      'Escolha em "Instância do WhatsApp" o número da Loja que vai enviar. Ele precisa estar conectado; se a Loja tem um número só, ele já vem escolhido.',
+      'Digite o "Número do WhatsApp" com DDD.',
+      'Número conectado por QR Code: escreva a "Mensagem inicial" (até 1000 caracteres).',
+      'Número da API Oficial: escolha o template na lista "Template" e preencha cada variável ({{1}}, {{2}}…). Só aparecem os aprovados. Se o cliente escreveu para esse número nas últimas 24 horas, o botão "Texto livre" fica liberado e você pode escrever em vez de usar template.',
+      'Clique em "Iniciar Conversa". Se a Meta ou o WhatsApp recusar, o motivo aparece em vermelho na própria janela e nada é cadastrado. Se der certo, o contato é cadastrado (caso ainda não fosse) e a conversa abre na lista, já com a sua mensagem.',
     ],
     example:
-      'O corretor recebeu um cartão na visita. Ele abre "Nova Conversa", escolhe o número do plantão, digita o telefone e "Oi, aqui é o Paulo da imobiliária, segue o material que prometi" e a conversa já nasce no ConvoFlow.',
+      'O corretor recebeu um cartão na visita. Ele abre "Nova Conversa", escolhe o número do plantão, digita o telefone, escolhe o template "retorno_visita", põe o nome do cliente no {{1}} e envia. A conversa já nasce no ConvoFlow; quando o cliente responder, ele escreve normalmente.',
     tips: [
-      'Este atalho envia pelo servidor da Evolution: serve para número conectado por QR Code. Para número da API Oficial, o caminho é outro: cadastre o telefone em Contatos, clique em "Conversar" na linha dele e, na conversa, use "Enviar template", porque a Meta não aceita texto livre para quem nunca falou com você.',
-      'Se o telefone já era contato, nada é duplicado: a conversa dele é reaproveitada e a mensagem entra no histórico que já existia.',
+      'A lista "Template" vem da sua conta na Meta. Se ela diz "Nenhum template aprovado neste número", crie um no Gerenciador do WhatsApp Business e acompanhe a aprovação na tela Templates. Template com imagem, vídeo, documento ou variável no cabeçalho ou no botão não aparece aqui; para esses, use "Enviar template" dentro da conversa.',
+      'O motivo da recusa vem com o código da Meta no fim, por exemplo "(código 131047 da Meta)". Mande esse código ao suporte se precisar de ajuda.',
+      'Se o telefone já era contato da Loja, nada é duplicado: a conversa dele é reaproveitada e a mensagem entra no histórico que já existia. Vale também para celular gravado sem o 9 depois do DDD, que é como o WhatsApp manda muitos números brasileiros.',
+      'Para o atendente, o "Texto livre" só libera quando ele enxerga a conversa desse cliente. Se a conversa está com outra pessoa, use o template ou peça para quem a atende.',
       'A conversa nova nasce sem responsável. Se a Loja ligou o rodízio, o próximo cliente que responder faz ela ganhar dono; até lá, quem quiser cuidar clica em "Assumir".',
     ],
     category: 'tela',

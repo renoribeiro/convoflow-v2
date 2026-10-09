@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mensagemDaEdgeFunction } from './edgeFunctionError';
+import { corpoDaEdgeFunction, mensagemDaEdgeFunction } from './edgeFunctionError';
 
 /** Imita o FunctionsHttpError do supabase-js: Response original em `context`. */
 function erroHttp(body: unknown) {
@@ -57,5 +57,26 @@ describe('mensagemDaEdgeFunction', () => {
   it('sem erro reconhecível, usa o fallback', async () => {
     expect(await mensagemDaEdgeFunction(null, 'fallback')).toBe('fallback');
     expect(await mensagemDaEdgeFunction({ context: {} }, 'fallback')).toBe('fallback');
+  });
+});
+
+describe('corpoDaEdgeFunction', () => {
+  it('devolve o corpo inteiro, com os campos além da frase (ex.: o código da Meta)', async () => {
+    const erro = erroHttp({ ok: false, code: 131047, error: 'Fora da janela de 24h.' });
+    expect(await corpoDaEdgeFunction(erro)).toEqual({
+      ok: false,
+      code: 131047,
+      error: 'Fora da janela de 24h.',
+    });
+  });
+
+  it('sem corpo legível, devolve null em vez de estourar', async () => {
+    const ilegivel = {
+      message: 'Edge Function returned a non-2xx status code',
+      context: { json: () => Promise.reject(new Error('not json')) } as unknown as Response,
+    };
+    expect(await corpoDaEdgeFunction(ilegivel)).toBeNull();
+    expect(await corpoDaEdgeFunction(new Error('Failed to fetch'))).toBeNull();
+    expect(await corpoDaEdgeFunction(null)).toBeNull();
   });
 });
