@@ -97,6 +97,44 @@ export const asChannel = (value: unknown): ConversationChannel =>
 
 const CONNECTORS = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
 
+// Letra a letra como a pessoa vê (grafema): um emoji, um tom de pele ou um
+// acento combinante contam como UMA. `n[0]` pegava meio emoji ("🌸 Maria"
+// virava um caractere quebrado no avatar). Sem Intl.Segmenter (Firefox antes
+// do 125), cai para ponto de código, que já não quebra o emoji ao meio.
+type GraphemeSegmenter = { segment(text: string): Iterable<{ segment: string }> };
+const SEGMENTER: GraphemeSegmenter | null = (() => {
+  const Segmenter = (Intl as unknown as { Segmenter?: new (locale: string, options: { granularity: 'grapheme' }) => GraphemeSegmenter }).Segmenter;
+  return typeof Segmenter === 'function' ? new Segmenter('pt-BR', { granularity: 'grapheme' }) : null;
+})();
+
+const graphemes = (text: string): string[] =>
+  SEGMENTER ? Array.from(SEGMENTER.segment(text), (s) => s.segment) : Array.from(text);
+
+const LETTER_OR_DIGIT = /^[\p{L}\p{N}]/u;
+
+/** Primeira letra (ou algarismo) da palavra. Emoji e pontuação são pulados. */
+const firstLetter = (word: string): string => graphemes(word).find((g) => LETTER_OR_DIGIT.test(g)) ?? '';
+
+/**
+ * Até duas iniciais, uma por palavra, só de letras e algarismos. Um nome sem
+ * letra nenhuma ("🌸🌸") mostra o próprio primeiro emoji, inteiro.
+ */
+function initialsFromWords(words: string[]): string {
+  const letters = words.map(firstLetter).filter(Boolean).slice(0, 2);
+  if (letters.length > 0) return letters.map((l) => l.toUpperCase()).join('');
+  return graphemes(words.join(' ').trim())[0] ?? '';
+}
+
+/**
+ * Iniciais do avatar de um contato do WhatsApp: a primeira letra de cada
+ * palavra, até duas ("Maria 🌸 Recrutamento" → "MR", "🌸 Maria" → "M").
+ * Nome vazio devolve '' e quem chama escolhe o substituto.
+ */
+export function nameInitials(name: string): string {
+  const clean = name.trim();
+  return clean ? initialsFromWords(clean.split(/\s+/)) : '';
+}
+
 /**
  * Iniciais para o avatar: duas letras do nome (sem "de", "do"...), ou a
  * primeira do @. "Cliente do Instagram" vira "CI"; "Ana de Souza", "AS".
@@ -104,12 +142,8 @@ const CONNECTORS = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
 export function initialsOf(displayName: string): string {
   const clean = displayName.replace(/^@/, '').trim();
   if (!clean) return '?';
-  if (displayName.startsWith('@')) return clean[0]!.toUpperCase();
+  if (displayName.startsWith('@')) return initialsFromWords([clean]) || '?';
   const words = clean.split(/\s+/);
   const significant = words.filter((w) => !CONNECTORS.has(w.toLowerCase()));
-  return (significant.length > 0 ? significant : words)
-    .map((n) => n[0] ?? '')
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+  return initialsFromWords(significant.length > 0 ? significant : words) || '?';
 }

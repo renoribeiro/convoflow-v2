@@ -5,6 +5,7 @@ import {
   channelOfProvider,
   hasInstagramInstance,
   initialsOf,
+  nameInitials,
   instancesOfChannel,
   isAwaitingReplyRow,
   otherChannel,
@@ -99,5 +100,42 @@ describe('textos', () => {
     expect(initialsOf('Cliente do Instagram')).toBe('CI');
     expect(initialsOf('Ana de Souza')).toBe('AS');
     expect(initialsOf('')).toBe('?');
+  });
+
+  // `n[0]` pegava metade do emoji (um "surrogate" solto) e o avatar mostrava
+  // um caractere quebrado. Nenhuma inicial pode ter um surrogate sozinho.
+  const semMeioEmoji = (s: string) => expect(s).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+
+  it('iniciais do WhatsApp (nameInitials): nome que começa com emoji usa as letras', () => {
+    for (const [nome, esperado] of [
+      ['🌸 Maria', 'M'],
+      ['🌸Maria Souza', 'MS'],
+      ['Maria 🌸 Recrutamento', 'MR'],
+      ['👩🏽‍💼 Ana Lima', 'AL'],
+      ['❤️ Bia', 'B'],
+      ['Helena Duarte', 'HD'],
+      ['Ana de Souza', 'AD'], // no WhatsApp o conector conta, como sempre contou
+      ['(Ana) Paula', 'AP'],
+      ['élio ramos', 'ÉR'],
+      ['  Maria   Souza  ', 'MS'],
+    ] as const) {
+      const iniciais = nameInitials(nome);
+      expect(iniciais, nome).toBe(esperado);
+      semMeioEmoji(iniciais);
+    }
+  });
+
+  it('nome só de emoji mostra o primeiro emoji inteiro; vazio devolve vazio', () => {
+    expect(nameInitials('🌸🌸')).toBe('🌸');
+    expect(nameInitials('👩🏽‍💼')).toBe('👩🏽‍💼');
+    expect(nameInitials('')).toBe('');
+    expect(nameInitials('   ')).toBe('');
+  });
+
+  it('iniciais do Instagram (initialsOf) também não quebram o emoji', () => {
+    expect(initialsOf('🌸 Maria')).toBe('M');
+    expect(initialsOf('Maria 🌸 da Silva')).toBe('MS');
+    expect(initialsOf('🌸')).toBe('🌸');
+    for (const nome of ['🌸 Maria', '🤝 Fechado', '😊']) semMeioEmoji(initialsOf(nome));
   });
 });

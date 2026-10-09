@@ -22,6 +22,7 @@ import {
   asChannel,
   hasInstagramInstance,
   initialsOf,
+  nameInitials,
   INSTANCE_SELECTOR_ALL_LABEL,
   instancesOfChannel,
   SLA_CRITICAL_HINT_BY_CHANNEL,
@@ -469,7 +470,7 @@ export const ConversationsList = ({
                 ) : conversation.channel === 'instagram' ? (
                   initialsOf(conversation.contact_name)
                 ) : (
-                  conversation.contact_name.split(' ').map((n: string) => n[0] ?? '').join('').toUpperCase().slice(0, 2)
+                  nameInitials(conversation.contact_name)
                 )}
               </AvatarFallback>
             </Avatar>

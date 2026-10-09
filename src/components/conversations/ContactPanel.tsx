@@ -40,7 +40,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsBelowXl } from '@/hooks/use-mobile';
-import { initialsOf } from '@/lib/conversations/channel';
+import { initialsOf, nameInitials } from '@/lib/conversations/channel';
 import { contactDisplayName, instagramHandle } from '@/lib/instagram/contactProfile';
 import { ContactLinkSection } from '@/components/conversations/ContactLinkSection';
 
@@ -238,9 +238,7 @@ function ContactPanelBody({
     : null;
   const initials = isInstagramContact
     ? initialsOf(displayName)
-    : contact.name
-      ? contact.name.split(' ').map((n: string) => n?.[0] ?? '').join('').toUpperCase().slice(0, 2)
-      : 'C';
+    : (contact.name && nameInitials(contact.name)) || 'C';
 
   return (
     <div className="flex h-full flex-col">

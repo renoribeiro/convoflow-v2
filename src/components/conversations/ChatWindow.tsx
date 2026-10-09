@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense, lazy } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -73,6 +73,7 @@ import { invalidateConversationCounts } from '@/lib/conversations/countKeys';
 import {
   asChannel,
   initialsOf,
+  nameInitials,
   type ConversationChannel,
 } from '@/lib/conversations/channel';
 import { contactDisplayName, instagramHandle } from '@/lib/instagram/contactProfile';
@@ -109,6 +110,11 @@ import { AudioRecorder } from './AudioRecorder';
 import { SendTemplateDialog } from './SendTemplateDialog';
 import { ConversationOwnerControl } from './ConversationOwnerControl';
 import { BotSessionBadge } from './BotSessionBadge';
+import { insertAtSelection } from './composerInsert';
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+// O seletor de emoji (biblioteca + lista em português) só baixa no primeiro clique.
+const EmojiPickerPanel = lazy(() => import('./EmojiPickerPanel'));
 
 interface ChatWindowProps {
   conversationId?: string;
@@ -228,6 +234,16 @@ export const ChatWindow = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Onde o cursor deve ficar depois de um emoji. Ao trocar o valor do campo o
+  // navegador joga o cursor para o fim; o efeito devolve, e o próximo emoji cai
+  // logo depois do anterior.
+  const pendingCaretRef = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const caret = pendingCaretRef.current;
+    if (caret === null) return;
+    pendingCaretRef.current = null;
+    textareaRef.current?.setSelectionRange(caret, caret);
+  }, [message]);
   const typingTimerRef = useRef<number | null>(null);
   const lastTypingSentRef = useRef<number>(0);
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -422,10 +438,14 @@ export const ChatWindow = ({
   }, [messages, searchOpen]);
 
   useEffect(() => {
+    // O seletor fica aberto para vários emojis seguidos: clicar nele, no botão
+    // que o abre (é o próprio botão que fecha) ou no campo de mensagem (para
+    // digitar entre um emoji e outro) não o fecha. Qualquer outro clique fecha.
     const handleClickOutside = (event: MouseEvent) => {
-      if (showEmojiPicker && !(event.target as Element).closest('.emoji-picker')) {
-        setShowEmojiPicker(false);
-      }
+      if (!showEmojiPicker) return;
+      const target = event.target as Element;
+      if (target.closest('.emoji-picker, [data-emoji-toggle]') || target === textareaRef.current) return;
+      setShowEmojiPicker(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -437,9 +457,12 @@ export const ChatWindow = ({
     if (!showEmojiPicker && !quickRepliesOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        const wasEmojiOpen = showEmojiPicker;
         setShowEmojiPicker(false);
         setQuickRepliesOpen(false);
         e.stopPropagation();
+        // O foco estava na busca do seletor, que some: devolve ao campo.
+        if (wasEmojiOpen) refocusComposer();
       }
     };
     window.addEventListener('keydown', onKey, true);
@@ -989,10 +1012,24 @@ export const ChatWindow = ({
     setSaveQuickReplyOpen(true);
   };
 
+  // O emoji entra onde está o cursor do campo (o <textarea> guarda a seleção
+  // mesmo sem foco, enquanto o clique está no seletor). O cursor volta para
+  // logo depois dele (ver pendingCaretRef) e o seletor continua aberto.
   const handleEmojiSelect = (emoji: string) => {
-    setMessage((prev) => prev + emoji);
-    setShowEmojiPicker(false);
+    const el = textareaRef.current;
+    const { text, caret } = insertAtSelection(message, emoji, el?.selectionStart, el?.selectionEnd);
+    pendingCaretRef.current = caret;
+    setMessage(text);
     requestAnimationFrame(autoGrow);
+  };
+
+  const toggleEmojiPicker = () => {
+    if (showEmojiPicker) {
+      setShowEmojiPicker(false);
+      refocusComposer();
+    } else {
+      setShowEmojiPicker(true);
+    }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1008,7 +1045,6 @@ export const ChatWindow = ({
 
   const handleAttachClick = () => fileInputRef.current?.click();
 
-  const commonEmojis = ['😀', '😂', '😍', '🤔', '👍', '👎', '❤️', '🔥', '💯', '🎉', '😢', '😡', '🙏', '👏', '💪'];
   const hasText = message.trim().length > 0;
   // Instagram: sem áudio — o botão Enviar fica sempre no lugar.
   const showAudioButton = !isInstagram && !hasText && !pendingFile;
@@ -1055,7 +1091,7 @@ export const ChatWindow = ({
               <AvatarFallback>
                 {isInstagram
                   ? initialsOf(headerName)
-                  : contact?.name ? contact.name.split(' ').map((n) => n?.[0] ?? '').join('').toUpperCase().slice(0, 2) : 'C'}
+                  : (contact?.name && nameInitials(contact.name)) || 'C'}
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0">
@@ -1398,21 +1434,24 @@ export const ChatWindow = ({
           />
 
           {showEmojiPicker && (
-            <div className="emoji-picker mb-2 p-2 border border-border rounded-lg bg-background">
-              <div className="grid grid-cols-8 gap-1">
-                {commonEmojis.map((emoji, index) => (
-                  <Button
-                    key={index}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-lg hover:bg-muted"
-                    onClick={() => handleEmojiSelect(emoji)}
-                  >
-                    {emoji}
-                  </Button>
-                ))}
-              </div>
+            <div className="emoji-picker mb-2">
+              <ErrorBoundary
+                fallback={
+                  <p className="p-3 text-sm text-muted-foreground border border-border rounded-lg">
+                    Não foi possível abrir os emojis. Recarregue a página e tente de novo.
+                  </p>
+                }
+              >
+                <Suspense
+                  fallback={
+                    <div className="cf-emoji-picker-loading flex items-center justify-center text-sm text-muted-foreground border border-border rounded-lg">
+                      Carregando emojis…
+                    </div>
+                  }
+                >
+                  <EmojiPickerPanel onEmojiSelect={handleEmojiSelect} />
+                </Suspense>
+              </ErrorBoundary>
             </div>
           )}
 
@@ -1442,7 +1481,15 @@ export const ChatWindow = ({
 
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowEmojiPicker(!showEmojiPicker)} aria-label="Adicionar emoji">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleEmojiPicker}
+                      aria-label="Adicionar emoji"
+                      aria-expanded={showEmojiPicker}
+                      data-emoji-toggle
+                    >
                       <Smile className="w-5 h-5" />
                     </Button>
                   </TooltipTrigger>
