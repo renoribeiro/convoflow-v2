@@ -47,7 +47,7 @@ import {
  * src/lib/legal/versions.ts — src/lib/signup/publicSignupHandler.test.ts exige
  * que as duas sejam iguais. Mudou a página, mude os dois.
  */
-export const SIGNUP_TERMS_VERSION = '2026-09-28';
+export const SIGNUP_TERMS_VERSION = '2026-10-10';
 export const SIGNUP_PRIVACY_VERSION = '2026-09-12';
 
 /** A ação declarada no widget do Turnstile; o servidor confere. */

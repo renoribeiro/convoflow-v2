@@ -21,17 +21,24 @@ import type { BillingOverview, ContaBillingRow } from '@/lib/billing/adminBillin
 // ---- Supabase: só a tabela tenants responde; as outras quebram o teste ----
 const tabelasLidas: string[] = [];
 let contas: ContaBillingRow[] = [];
+let lojas: Array<{ kind: string; parent_tenant_id: string; atendentes_extra: number }> = [];
 
 vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
     tabelasLidas.push(table);
+    let soLojas = false;
     const b: any = {
       select: () => b,
-      eq: () => b,
+      eq: (c: string, v: unknown) => {
+        if (c === 'kind' && v === 'store') soLojas = true;
+        return b;
+      },
       order: () => b,
       then: (res: (v: unknown) => unknown) =>
         Promise.resolve(
-          table === 'tenants' ? { data: contas, error: null } : { data: null, error: { message: `tabela proibida: ${table}` } },
+          table === 'tenants'
+            ? { data: soLojas ? lojas : contas, error: null }
+            : { data: null, error: { message: `tabela proibida: ${table}` } },
         ).then(res),
     };
     return b;
@@ -67,6 +74,12 @@ vi.mock('@/services/stripeService', () => ({
 
 vi.mock('@/components/admin/billing/CouponManager', () => ({
   CouponManager: () => <div>gerenciador de cupons</div>,
+}));
+
+// A janela de vagas tem teste próprio (AttendantSeatsDialog.test.tsx).
+vi.mock('@/components/admin/billing/AttendantSeatsDialog', () => ({
+  AttendantSeatsDialog: ({ conta }: { conta: { id: string; name: string | null } | null }) =>
+    conta ? <div data-testid="janela-atendentes">{`${conta.id}|${conta.name}`}</div> : null,
 }));
 
 import { BillingDashboard } from './BillingDashboard';
@@ -143,6 +156,7 @@ const nomesNa = (nome: string) =>
 beforeEach(() => {
   tabelasLidas.length = 0;
   contas = CONTAS.map((c) => ({ ...c }));
+  lojas = [];
   overview = structuredClone(OVERVIEW);
   getBillingOverview.mockClear();
   getStripeStatus.mockClear();
@@ -177,6 +191,58 @@ describe('Faturamento — listas das Contas', () => {
     expect(within(tabela('Cancelamento agendado')).getByText('02/11/2026')).toBeInTheDocument();
     // Lojas extras na lista de pagantes.
     expect(within(tabela('Contas pagantes')).getByText('2')).toBeInTheDocument();
+  });
+});
+
+describe('Faturamento — atendentes extras: concedido × cobrado', () => {
+  it('aponta a Conta paga com diferença e a sem preço; a de acesso manual fica sem cobrança', async () => {
+    contas = [
+      conta('Alfa Imóveis', { subscription_status: 'active', subscription_id: 'sub_a', atendente_extra_preco_centavos: 4990, atendentes_extra_cobrados: 1 }),
+      conta('Beta em Teste', { subscription_status: 'trialing', atendente_extra_preco_centavos: null, atendentes_extra_cobrados: 0 }),
+      conta('Conta Teste Gerente', { manual_access_granted: true }),
+      conta('Delta Em Dia', { subscription_status: 'active', subscription_id: 'sub_d', atendente_extra_preco_centavos: 3990, atendentes_extra_cobrados: 2 }),
+    ];
+    lojas = [
+      { kind: 'store', parent_tenant_id: 't-Alfa Imóveis', atendentes_extra: 2 },
+      { kind: 'store', parent_tenant_id: 't-Alfa Imóveis', atendentes_extra: 1 },
+      { kind: 'store', parent_tenant_id: 't-Beta em Teste', atendentes_extra: 1 },
+      { kind: 'store', parent_tenant_id: 't-Conta Teste Gerente', atendentes_extra: 4 },
+      { kind: 'store', parent_tenant_id: 't-Delta Em Dia', atendentes_extra: 2 },
+    ];
+    renderTab();
+    const aviso = await screen.findByTestId('atendentes-divergencias');
+    expect(aviso).toHaveTextContent('Alfa Imóveis: 3 concedido(s), 1 cobrado(s).');
+    expect(aviso).toHaveTextContent('Beta em Teste: 1 concedido(s) e nenhum preço definido.');
+    expect(aviso).not.toHaveTextContent('Conta Teste Gerente');
+    expect(aviso).not.toHaveTextContent('Delta Em Dia');
+    expect(screen.getByTestId('situacao-t-Alfa Imóveis')).toHaveTextContent('Diferença');
+    expect(screen.getByTestId('situacao-t-Beta em Teste')).toHaveTextContent('Sem preço');
+    expect(screen.getByTestId('situacao-t-Conta Teste Gerente')).toHaveTextContent('Sem cobrança (acesso manual)');
+    expect(screen.getByTestId('situacao-t-Delta Em Dia')).toHaveTextContent('Cobrança em dia');
+    const linhaAlfa = within(tabela('Atendentes por Loja')).getAllByRole('row').find((r) => within(r).queryByText('Alfa Imóveis')) as HTMLElement;
+    expect(within(linhaAlfa).getByText(/R\$\s?49,90\/mês/)).toBeInTheDocument();
+  });
+
+  it('a receita mensal mostra os atendentes extras numa parcela própria', async () => {
+    overview = { ...structuredClone(OVERVIEW), mrr: { ...OVERVIEW.mrr, extraAttendants: 14970 } };
+    renderTab();
+    await waitFor(() => expect(within(cartao('Receita mensal recorrente')).getByText(/Atendentes extras R\$\s?149,70/)).toBeInTheDocument());
+  });
+});
+
+describe('Faturamento — atendentes por Loja', () => {
+  it('lista TODAS as Contas, inclusive as de acesso manual, e abre a janela da escolhida', async () => {
+    renderTab();
+    await waitFor(() => expect(nomesNa('Atendentes por Loja')).toHaveLength(CONTAS.length));
+    // "Conta Teste Gerente" não está em lista nenhuma de cobrança, mas está aqui.
+    expect(nomesNa('Atendentes por Loja')).toContain('Conta Teste Gerente');
+    expect(screen.queryByTestId('janela-atendentes')).toBeNull();
+
+    const linha = within(tabela('Atendentes por Loja'))
+      .getAllByRole('row')
+      .find((r) => within(r).queryByText('Conta Teste Gerente'));
+    await userEvent.click(within(linha as HTMLElement).getByRole('button', { name: 'Atendentes' }));
+    expect(screen.getByTestId('janela-atendentes')).toHaveTextContent('t-Conta Teste Gerente|Conta Teste Gerente');
   });
 });
 
@@ -265,7 +331,8 @@ describe('Faturamento — o que saiu da tela', () => {
   it('não lê subscriptions nem stripe_transactions; sem "Produto Stripe" nem id da conta antiga', async () => {
     renderTab();
     await waitFor(() => expect(valorDo('Contas pagantes')).toBe('2'));
-    expect(tabelasLidas).toEqual(['tenants']);
+    // Contas e Lojas (vagas extras de atendente): as duas leituras são de tenants.
+    expect([...new Set(tabelasLidas)]).toEqual(['tenants']);
     expect(screen.queryByText('Produto Stripe')).toBeNull();
     expect(screen.queryByText(/prod_Tmg5IInlTr4hi3/)).toBeNull();
     expect(screen.queryByText(/Nenhuma assinatura ou transação encontrada/)).toBeNull();

@@ -1,5 +1,11 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { BillingOverview, StripeStatus } from '@/lib/billing/adminBilling';
+import type {
+  AttendantSetPriceResult,
+  AttendantStatusInfo,
+  AttendantSyncResult,
+  BillingOverview,
+  StripeStatus,
+} from '@/lib/billing/adminBilling';
 
 // Commission payment interface
 export interface CommissionPayment {
@@ -104,6 +110,42 @@ class StripeService {
     });
     if (error) throw await this.functionError(error);
     return data as BillingOverview;
+  }
+
+  /**
+   * Admin: atendentes extras de uma Conta — preço, quanto foi concedido nas
+   * Lojas, quanto a assinatura cobra e o estado dela. Só leitura.
+   */
+  async getAttendantStatus(tenantId: string): Promise<AttendantStatusInfo> {
+    const { data, error } = await supabase.functions.invoke('stripe-admin', {
+      body: { action: 'attendant_status', payload: { tenantId } }
+    });
+    if (error) throw await this.functionError(error);
+    return data as AttendantStatusInfo;
+  }
+
+  /**
+   * Admin: define o preço por atendente extra da Conta (centavos/mês). Cria um
+   * preço novo no Stripe e troca no item da assinatura, sem proporcional.
+   */
+  async setAttendantPrice(tenantId: string, priceCents: number, note?: string): Promise<AttendantSetPriceResult> {
+    const { data, error } = await supabase.functions.invoke('stripe-admin', {
+      body: { action: 'set_attendant_price', payload: { tenantId, priceCents, note } }
+    });
+    if (error) throw await this.functionError(error);
+    return data as AttendantSetPriceResult;
+  }
+
+  /**
+   * Admin: faz a assinatura da Conta cobrar as vagas extras concedidas
+   * (cria, muda ou remove o item; proporcional na próxima fatura).
+   */
+  async syncAttendantItem(tenantId: string): Promise<AttendantSyncResult> {
+    const { data, error } = await supabase.functions.invoke('stripe-admin', {
+      body: { action: 'sync_attendant_item', payload: { tenantId } }
+    });
+    if (error) throw await this.functionError(error);
+    return data as AttendantSyncResult;
   }
 
   /**

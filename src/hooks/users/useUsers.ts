@@ -17,7 +17,6 @@ export interface UserRow {
   avatar_url: string | null;
   last_login_at: string | null;
   login_count: number;
-  last_ip: string | null;
   created_at: string;
 }
 
@@ -32,6 +31,10 @@ export interface UsersFilters {
 /**
  * Lista profiles respeitando RLS hierárquica. O Supabase aplica as policies
  * automaticamente, então cada caller só recebe os profiles que pode enxergar.
+ *
+ * Sem IP e sem navegador: isso é só do superadmin, e chega pela
+ * admin_users_activity() (useAdminUsersActivity), nunca por aqui — esta
+ * consulta também serve a Equipe (gerente e gestor).
  */
 export function useUsers(filters: UsersFilters = {}) {
   return useQuery({
@@ -42,7 +45,7 @@ export function useUsers(filters: UsersFilters = {}) {
       const builder = (supabase as any).from('profiles');
       let query = builder
         .select(
-          'id, user_id, tenant_id, parent_id, affiliate_id, role, status, first_name, last_name, phone, avatar_url, last_login_at, login_count, last_ip, created_at',
+          'id, user_id, tenant_id, parent_id, affiliate_id, role, status, first_name, last_name, phone, avatar_url, last_login_at, login_count, created_at',
         )
         .order('created_at', { ascending: false });
 

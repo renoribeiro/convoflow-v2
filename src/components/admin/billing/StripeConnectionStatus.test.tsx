@@ -140,6 +140,30 @@ describe('StripeConnectionStatus', () => {
     expect(within(loja).getByText(/não existe na conta do Stripe conectada/)).toBeInTheDocument();
   });
 
+  it('produto do atendente extra encontrado', async () => {
+    status = {
+      ...base(),
+      attendantProduct: { env: 'STRIPE_PRODUCT_ATTENDANT', configured: true, found: true, id: 'prod_FAKEatendente', active: true, name: 'Atendente extra', error: null },
+    };
+    renderTab();
+    const produto = await screen.findByTestId('produto-STRIPE_PRODUCT_ATTENDANT');
+    expect(within(produto).getByText('OK')).toBeInTheDocument();
+    expect(produto.textContent).toMatch(/Atendente extra/);
+    expect(produto.textContent).toMatch(/STRIPE_PRODUCT_ATTENDANT: prod_FAKEatendente/);
+  });
+
+  it('secret do produto não definida: problema, com o efeito dito', async () => {
+    status = {
+      ...base(),
+      attendantProduct: { env: 'STRIPE_PRODUCT_ATTENDANT', configured: false, found: false, id: null, active: null, name: null, error: 'A secret STRIPE_PRODUCT_ATTENDANT não está definida: atendentes extras não são cobrados.' },
+    };
+    renderTab();
+    const produto = await screen.findByTestId('produto-STRIPE_PRODUCT_ATTENDANT');
+    expect(within(produto).getByText('Problema')).toBeInTheDocument();
+    expect(within(produto).getByText(/atendentes extras não são cobrados/)).toBeInTheDocument();
+    expect(produto.textContent).toMatch(/não definida/);
+  });
+
   it('sem conexão: mostra o motivo e ainda o endereço do webhook', async () => {
     status = { ...base(), connected: false, secretConfigured: false, account: null, error: 'Stripe não configurado: defina a secret STRIPE_SECRET_KEY no projeto do Supabase.' };
     renderTab();

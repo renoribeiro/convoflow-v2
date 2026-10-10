@@ -10,7 +10,9 @@
 //   2. login de superadmin (o cargo vem de profiles, lido no servidor).
 //
 // Secrets: STRIPE_SECRET_KEY (a mesma do checkout e do webhook) e, para o
-// estado e a receita mensal, STRIPE_PRICE_GERENTE / STRIPE_PRICE_STORE_SLOT.
+// estado e a receita mensal, STRIPE_PRICE_GERENTE / STRIPE_PRICE_STORE_SLOT /
+// STRIPE_PRODUCT_ATTENDANT (atendente extra: preço e item por Conta, ações
+// attendant_* — ver _shared/attendant-billing.ts).
 // A tabela stripe_config não é lida nem gravada.
 // =============================================================================
 
@@ -66,7 +68,8 @@ serve(async (req) => {
             .select('role')
             .eq('user_id', user.id)
             .single();
-          caller = profile?.role === 'superadmin' ? { kind: 'superadmin' } : { kind: 'other' };
+          // userId vai para o histórico do preço do atendente extra.
+          caller = profile?.role === 'superadmin' ? { kind: 'superadmin', userId: user.id } : { kind: 'other' };
         }
       }
     }

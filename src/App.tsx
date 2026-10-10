@@ -58,7 +58,7 @@ const queryClient = createQueryClient();
 
 // Componente de loading para páginas
 const PageLoadingSkeleton = () => (
-  <div className="space-y-6 p-6">
+  <div className="space-y-6 p-6" data-testid="carregando-pagina">
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: 4 }).map((_, i) => (
         <DashboardCardSkeleton key={i} />
@@ -83,7 +83,12 @@ const App = () => (
           <ChatbotProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            {/* Comportamento do React Router 7, ligado ainda no 6 para a troca
+                de versão não mudar nada na tela. startTransition: ao trocar
+                de tela pelo menu, a tela atual fica até a nova carregar (sem
+                piscar o esqueleto). relativeSplatPath: sem efeito aqui (não há
+                rota "/*" com link relativo), só cala o aviso. */}
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
@@ -243,7 +248,8 @@ const App = () => (
                     </RoleGuard>
                   } />
                   {/* minRole="gestor": o Gestor administra a equipe da Loja
-                      dele (convida ate 5 atendentes). O backend ja permitia
+                      dele (convida os atendentes: 2 por Loja, mais com o
+                      ConvoFlow). O backend ja permitia
                       isso desde sempre -- so a rota estava fechada. */}
                   <Route path="team" element={
                     <RoleGuard minRole="gestor" fallbackPath="/dashboard">

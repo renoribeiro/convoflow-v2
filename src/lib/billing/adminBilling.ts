@@ -58,7 +58,19 @@ export interface StripeStatus {
   error: string | null;
   account: { id: string; name: string | null; email: string | null; country: string | null } | null;
   prices: { gerente: PriceCheck; storeSlot: PriceCheck };
+  /** Produto "Atendente extra" (secret STRIPE_PRODUCT_ATTENDANT). */
+  attendantProduct?: ProductCheck;
   webhook: WebhookCheck;
+}
+
+export interface ProductCheck {
+  env: string;
+  configured: boolean;
+  found: boolean;
+  id: string | null;
+  active: boolean | null;
+  name: string | null;
+  error: string | null;
 }
 
 export interface MrrBreakdown {
@@ -66,6 +78,8 @@ export interface MrrBreakdown {
   gross: number;
   plan: number;
   extraStores: number;
+  /** Atendentes extras. Opcional até o servidor novo estar no ar. */
+  extraAttendants?: number;
   other: number;
   discounts: number;
   subscriptions: number;
@@ -146,10 +160,15 @@ export interface ContaBillingRow {
   subscription_will_cancel: boolean | null;
   subscription_cancel_at: string | null;
   store_slots_extra: number | null;
+  manual_access_granted?: boolean | null;
+  /** Preço por atendente extra (centavos/mês) desta Conta. */
+  atendente_extra_preco_centavos?: number | null;
+  /** Atendentes extras que a assinatura cobra (webhook/sync). null = nunca sincronizado. */
+  atendentes_extra_cobrados?: number | null;
 }
 
 export const CONTA_BILLING_COLUMNS =
-  'id, name, kind, subscription_id, subscription_status, trial_ends_at, subscription_will_cancel, subscription_cancel_at, store_slots_extra';
+  'id, name, kind, subscription_id, subscription_status, trial_ends_at, subscription_will_cancel, subscription_cancel_at, store_slots_extra, manual_access_granted, atendente_extra_preco_centavos, atendentes_extra_cobrados';
 
 /** Status com pagamento pendente (o Stripe ainda tenta, ou parou de tentar sem cancelar). */
 export const PENDING_STATUSES = ['past_due', 'unpaid', 'incomplete'];
@@ -245,4 +264,138 @@ export function upcomingTotal(overview: BillingOverview | null | undefined): num
 /** Falhas que ainda não foram recuperadas. */
 export function unrecoveredFailures(overview: BillingOverview | null | undefined): number {
   return (overview?.failedPayments ?? []).filter((f) => !f.recovered).length;
+}
+
+// ---------------------------------------------------------------------------
+// Atendentes extras: concedido × cobrado (limite por Loja, entrega 2)
+// ---------------------------------------------------------------------------
+// Concedido = soma de tenants.atendentes_extra das Lojas da Conta (o superadmin
+// dá na janela "Atendentes"). Cobrado = tenants.atendentes_extra_cobrados da
+// Conta (o stripe-webhook e a sincronização da stripe-admin releem a
+// assinatura). Espelho de CHARGING_STATUSES em _shared/attendant-billing.ts.
+
+export const ATTENDANT_CHARGING_STATUSES: readonly string[] = ['active', 'trialing', 'past_due'];
+
+export type AttendantBillingState =
+  /** Nenhuma vaga extra e nada cobrado. */
+  | 'sem_extras'
+  /** Cobrado = concedido. */
+  | 'em_dia'
+  /** Assinatura viva e cobrado diferente do concedido: sincronizar. */
+  | 'diferenca'
+  /** Vagas extras numa assinatura viva, sem preço: definir o preço. */
+  | 'sem_preco'
+  /** Vagas extras sem assinatura (acesso manual): sem cobrança, por decisão. */
+  | 'sem_cobranca'
+  /** Assinatura na conta antiga do Stripe: não é tocada. */
+  | 'conta_antiga';
+
+export interface AttendantBillingCheck {
+  state: AttendantBillingState;
+  concedidos: number;
+  cobrados: number;
+}
+
+/** Soma das vagas extras de atendente por Conta, a partir das linhas das Lojas. */
+export function grantedAttendantsByConta(
+  rows: Array<{ kind?: string | null; parent_tenant_id?: string | null; atendentes_extra?: number | null }> | null | undefined,
+): Record<string, number> {
+  const soma: Record<string, number> = {};
+  for (const r of rows ?? []) {
+    if (r.kind !== 'store' || !r.parent_tenant_id) continue;
+    const n = typeof r.atendentes_extra === 'number' && r.atendentes_extra > 0 ? r.atendentes_extra : 0;
+    soma[r.parent_tenant_id] = (soma[r.parent_tenant_id] ?? 0) + n;
+  }
+  return soma;
+}
+
+export function attendantBillingCheck(
+  conta: ContaBillingRow,
+  concedidos: number,
+  legacyIds: ReadonlySet<string> = new Set(),
+): AttendantBillingCheck {
+  const cobrados = conta.atendentes_extra_cobrados ?? 0;
+  if (legacyIds.has(conta.id)) return { state: 'conta_antiga', concedidos, cobrados };
+  const viva = ATTENDANT_CHARGING_STATUSES.includes(conta.subscription_status ?? '');
+  if (!viva) return { state: concedidos > 0 ? 'sem_cobranca' : 'sem_extras', concedidos, cobrados: 0 };
+  if (concedidos > 0 && !conta.atendente_extra_preco_centavos) return { state: 'sem_preco', concedidos, cobrados };
+  if (cobrados !== concedidos) return { state: 'diferenca', concedidos, cobrados };
+  return { state: concedidos > 0 ? 'em_dia' : 'sem_extras', concedidos, cobrados };
+}
+
+/** O que pede ação do superadmin: diferença entre concedido e cobrado, ou falta de preço. */
+export function attendantBillingIssues(
+  contas: ContaBillingRow[],
+  concedidosPorConta: Record<string, number>,
+  legacyIds: ReadonlySet<string> = new Set(),
+): Array<{ conta: ContaBillingRow; check: AttendantBillingCheck }> {
+  return contas
+    .filter((c) => c.kind === 'account')
+    .map((conta) => ({ conta, check: attendantBillingCheck(conta, concedidosPorConta[conta.id] ?? 0, legacyIds) }))
+    .filter((x) => x.check.state === 'diferenca' || x.check.state === 'sem_preco');
+}
+
+export const ATTENDANT_STATE_LABEL: Record<AttendantBillingState, string> = {
+  sem_extras: 'Sem extras',
+  em_dia: 'Cobrança em dia',
+  diferenca: 'Diferença',
+  sem_preco: 'Sem preço',
+  sem_cobranca: 'Sem cobrança (acesso manual)',
+  conta_antiga: 'Conta antiga do Stripe',
+};
+
+// Espelho das respostas das ações attendant_* da stripe-admin
+// (supabase/functions/_shared/attendant-billing.ts).
+
+export type AttendantSyncState =
+  | 'not_configured'
+  | 'no_subscription'
+  | 'legacy'
+  | 'subscription_ended'
+  | 'past_due'
+  | 'no_price'
+  | 'invalid_price'
+  | 'synced';
+
+export interface AttendantSyncResult {
+  state: AttendantSyncState;
+  concedidos: number;
+  cobrados: number | null;
+  subscriptionStatus: string | null;
+  ops: string[];
+  message: string;
+}
+
+export interface AttendantSetPriceResult {
+  changed: boolean;
+  priceId: string | null;
+  priceCents: number | null;
+  archivedPrevious: boolean;
+  sync: AttendantSyncResult;
+}
+
+export interface AttendantStatusInfo {
+  configured: boolean;
+  productId: string | null;
+  priceCents: number | null;
+  priceId: string | null;
+  concedidos: number;
+  cobrados: number | null;
+  subscription: { state: 'none' | 'legacy' | 'ended' | 'past_due' | 'live'; status: string | null };
+  item: { quantity: number; priceId: string | null; unitAmount: number | null } | null;
+  priceChangeNeedsNotice: boolean;
+}
+
+/** "49,90" / "49.90" / "49" → 4990 centavos. Inválido → null. */
+export function parseReaisToCents(texto: string): number | null {
+  const limpo = texto.trim().replace(/^R\$\s*/i, '').replace(/\s/g, '');
+  if (!/^\d{1,4}([.,]\d{1,2})?$/.test(limpo)) return null;
+  const [inteiro, decimal = ''] = limpo.replace(',', '.').split('.');
+  return Number(inteiro) * 100 + Number((decimal + '00').slice(0, 2));
+}
+
+/** 4990 → "49,90" (para o campo de edição). */
+export function centsToReaisInput(cents: number | null | undefined): string {
+  if (typeof cents !== 'number') return '';
+  return (cents / 100).toFixed(2).replace('.', ',');
 }

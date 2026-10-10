@@ -21,7 +21,6 @@ import { BugReportSettings } from '@/components/admin/BugReportSettings';
 import { MaintenanceSettings } from '@/components/admin/MaintenanceSettings';
 import { RoleDescriptionCard } from '@/components/admin/RoleDescriptionCard';
 import { SystemSettings } from '@/components/settings/SystemSettings';
-import { InstagramConnectSettings } from '@/components/admin/InstagramConnectSettings';
 import { SignupLeadsTab } from '@/components/admin/SignupLeadsTab';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
 import {
@@ -710,7 +709,6 @@ const AdminDashboard = () => {
           <MaintenanceSettings />
           <BugReportSettings />
           <SystemSettings />
-          <InstagramConnectSettings />
         </TabsContent>
 
         <TabsContent value="overview" className="space-y-4">
@@ -977,7 +975,7 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-1">
                   {userForm.role === 'gestor'
                     ? 'Cada loja tem no máximo 1 gestor.'
-                    : 'Cada loja tem no máximo 5 atendentes.'}
+                    : 'Cada loja tem 2 atendentes (ativos e convites pendentes); mais vagas em Faturamento › Contas › Atendentes.'}
                 </p>
               </div>
             )}

@@ -23,7 +23,15 @@ import { RoleDescriptionCard } from '@/components/admin/RoleDescriptionCard';
 import { useRole, useTenant } from '@/contexts/TenantContext';
 import { useMyStores } from '@/hooks/useMyStores';
 import { useInviteUser } from '@/hooks/users/useManageUser';
+import { useStoreAttendantSeats } from '@/hooks/useStoreAttendantSeats';
 import { ROLE_LABELS, UserRole } from '@/types/userHierarchy';
+import {
+  freeSeatsLabel,
+  fullStoreMessage,
+  isStoreFull,
+  pendingInvitesLabel,
+  seatsCounterLabel,
+} from '@/lib/users/attendantSeats';
 
 interface InviteUserModalProps {
   open: boolean;
@@ -88,6 +96,18 @@ export function InviteUserModal({
 
   const lojaDoGestor = ehGestor ? tenant : null;
 
+  /**
+   * Vagas de atendente (2 por Loja + as extras do ConvoFlow). Só avisa antes:
+   * quem recusa de verdade é o servidor. Sem a leitura (carregando ou falhou),
+   * nada é bloqueado aqui.
+   */
+  const { byStore: vagasPorLoja } = useStoreAttendantSeats({
+    enabled: open && (callerRole === 'gerente' || callerRole === 'gestor'),
+  });
+  const lojaEscolhida = ehGestor ? lojaDoGestor?.id ?? null : tenantId || null;
+  const vagasDaEscolhida = lojaEscolhida ? vagasPorLoja[lojaEscolhida] : undefined;
+  const lojaCheia = role === 'atendente' && !!vagasDaEscolhida && isStoreFull(vagasDaEscolhida);
+
   // Loja em foco muda (ou o modal reabre) → o seletor acompanha.
   useEffect(() => {
     if (open) setTenantId(defaultTenantId ?? '');
@@ -123,6 +143,7 @@ export function InviteUserModal({
 
   const podeEnviar =
     !invite.isPending &&
+    !lojaCheia &&
     !!email &&
     !!firstName &&
     !!lastName &&
@@ -192,10 +213,6 @@ export function InviteUserModal({
                 ))}
               </SelectContent>
             </Select>
-            {/*
-              Sem hideStoreCaps: este modal não mostra o aviso de limite por
-              loja, então o cartão pode dizer "Criar até 5 atendentes na loja".
-            */}
             <RoleDescriptionCard role={role} />
           </div>
 
@@ -210,6 +227,12 @@ export function InviteUserModal({
               <Store className="h-4 w-4 text-muted-foreground flex-shrink-0" />
               <span className="text-sm">
                 Entra na sua Loja: <strong>{lojaDoGestor?.name ?? '—'}</strong>
+                {vagasDaEscolhida && (
+                  <span className="block text-xs text-muted-foreground">
+                    {seatsCounterLabel(vagasDaEscolhida)}
+                    {pendingInvitesLabel(vagasDaEscolhida) && ` · ${pendingInvitesLabel(vagasDaEscolhida)}`}
+                  </span>
+                )}
               </span>
             </div>
           )}
@@ -233,11 +256,16 @@ export function InviteUserModal({
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {stores.map((loja) => (
-                        <SelectItem key={loja.id} value={loja.id}>
-                          {loja.name}
-                        </SelectItem>
-                      ))}
+                      {stores.map((loja) => {
+                        const vagas = vagasPorLoja[loja.id];
+                        return (
+                          <SelectItem key={loja.id} value={loja.id}>
+                            {role === 'atendente' && vagas
+                              ? `${loja.name} — ${freeSeatsLabel(vagas)}`
+                              : loja.name}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -246,6 +274,16 @@ export function InviteUserModal({
                 </>
               )}
             </div>
+          )}
+
+          {lojaCheia && vagasDaEscolhida && (
+            <Alert variant="destructive" role="alert">
+              <AlertDescription>
+                {fullStoreMessage(vagasDaEscolhida)}
+                {vagasDaEscolhida.pendentes > 0 &&
+                  ' Convite pendente também ocupa vaga: se algum não vai ser aceito, cancele-o em Equipe, no menu de ações da pessoa.'}
+              </AlertDescription>
+            </Alert>
           )}
 
           {precisaNomeDaConta && (

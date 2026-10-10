@@ -5,6 +5,13 @@ import { ArrowRight, Play, MessageSquare, TrendingUp, Users } from 'lucide-react
 import { Link } from 'react-router-dom';
 import { salesTrialOn, signupEntryPath, startCtaLabel } from '@/lib/signup/release';
 import { TRIAL_DAYS } from '@/lib/billing/trialOffer';
+import { HERO_STATS, heroStatsOn, type HeroStatIcon } from '@/lib/landing/socialProof';
+
+const ICONES_DOS_NUMEROS: Record<HeroStatIcon, typeof TrendingUp> = {
+  conversoes: TrendingUp,
+  empresas: Users,
+  mensagens: MessageSquare,
+};
 
 export const HeroSection = () => {
   /**
@@ -90,37 +97,31 @@ export const HeroSection = () => {
               </p>
             ) : null}
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-              className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto px-4 sm:px-0"
-            >
-              <div className="flex flex-col items-center">
-                <div className="flex items-center justify-center w-16 h-16 bg-brand-dark/10 rounded-full mb-4">
-                  <TrendingUp className="w-8 h-8 text-brand-dark" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">+300%</h3>
-                <p className="text-muted-foreground">Aumento em conversões</p>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <div className="flex items-center justify-center w-16 h-16 bg-brand-dark/10 rounded-full mb-4">
-                  <Users className="w-8 h-8 text-brand-dark" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">50k+</h3>
-                <p className="text-muted-foreground">Empresas atendidas</p>
-              </div>
-              
-              <div className="flex flex-col items-center">
-                <div className="flex items-center justify-center w-16 h-16 bg-brand-dark/10 rounded-full mb-4">
-                  <MessageSquare className="w-8 h-8 text-brand-dark" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground">1M+</h3>
-                <p className="text-muted-foreground">Mensagens processadas</p>
-              </div>
-            </motion.div>
+            {/* A faixa de números só aparece com a chave ligada
+                (src/lib/landing/socialProof.ts). Desligada, some inteira:
+                nunca um cartão só, que deixaria buraco na grade de 3. */}
+            {heroStatsOn() ? (
+              <motion.div
+                data-testid="hero-numeros"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+                className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto px-4 sm:px-0"
+              >
+                {HERO_STATS.map((stat) => {
+                  const Icone = ICONES_DOS_NUMEROS[stat.icon];
+                  return (
+                    <div key={stat.icon} className="flex flex-col items-center">
+                      <div className="flex items-center justify-center w-16 h-16 bg-brand-dark/10 rounded-full mb-4">
+                        <Icone className="w-8 h-8 text-brand-dark" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-foreground">{stat.value}</h3>
+                      <p className="text-muted-foreground">{stat.label}</p>
+                    </div>
+                  );
+                })}
+              </motion.div>
+            ) : null}
           </div>
         </div>
       </HeroHighlight>

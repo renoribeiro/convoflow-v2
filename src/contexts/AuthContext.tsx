@@ -5,6 +5,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { clearActiveTenant } from '@/lib/activeTenant';
+import { loginErrorToast } from '@/lib/auth/loginErrorToast';
+import { createLoginTracker } from '@/lib/auth/loginTracking';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -33,10 +36,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const queryClient = useQueryClient();
   const previousUserId = useRef<string | null>(null);
 
+  // Registra cada ENTRADA (senha, link de convite, link de nova senha) uma
+  // vez só por sessão — recarregar, voltar à aba e renovar o token não contam.
+  // Ver src/lib/auth/loginTracking.ts.
+  const [registrarEntrada] = useState(() =>
+    createLoginTracker({
+      invoke: async (accessToken) => {
+        const { error } = await supabase.functions.invoke('track-login', {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (error) logger.warn('[AuthContext] track-login falhou', { message: error.message });
+        return { error };
+      },
+      storage: (() => {
+        try {
+          return window.localStorage;
+        } catch {
+          return null;
+        }
+      })(),
+    }),
+  );
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        registrarEntrada(event, session);
         const newUserId = session?.user?.id ?? null;
 
         // Limpa o cache do TanStack Query quando o usuário muda (login, logout,
@@ -71,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, [queryClient]);
+  }, [queryClient, registrarEntrada]);
 
 
 
@@ -85,18 +111,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         toast({
-          title: "Erro no login",
-          description: error.message,
+          ...loginErrorToast(error),
           variant: "destructive",
         });
         throw error;
       }
 
-      // fire-and-forget: registra evento de login para tracking de atividade.
-      // Falha aqui não pode bloquear o login.
-      supabase.functions.invoke('track-login').catch((err) => {
-        console.warn('[AuthContext] track-login failed:', err);
-      });
+      // O registro da entrada (track-login) sai do onAuthStateChange, para
+      // valer também para convite e nova senha — não daqui.
 
       toast({
         title: "Login realizado com sucesso!",

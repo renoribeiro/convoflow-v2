@@ -68,6 +68,20 @@ export interface SendResult {
    * (ver `instagram-send-message/logic.ts`: outside_window, token_expired…).
    */
   reason?: string;
+  /** Código de erro do provider, quando há (Meta: `error.code`, ex. "131047"). */
+  errorCode?: string;
+  /**
+   * Mensagem crua do provider (Meta: em inglês, com `error_data.details`).
+   * `error` é a frase para a tela; esta é a que vai para
+   * `messages.error_message`, para a falha poder ser pesquisada depois.
+   */
+  providerError?: string;
+  /**
+   * Telefone que o provider confirmou como destinatário. Meta: `contacts[0].wa_id`
+   * da resposta de envio (SKILL §2.1). No Brasil ele pode vir SEM o 9 do
+   * celular, e é com essa forma que a resposta do cliente chega no webhook.
+   */
+  recipientId?: string;
 }
 
 export interface SendTextOptions {

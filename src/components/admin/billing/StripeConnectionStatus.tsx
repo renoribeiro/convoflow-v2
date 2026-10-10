@@ -11,6 +11,7 @@ import {
   formatCents,
   stripeWebhookUrl,
   type PriceCheck,
+  type ProductCheck,
   type StripeStatus,
 } from '@/lib/billing/adminBilling';
 import { stripeService } from '@/services/stripeService';
@@ -112,6 +113,21 @@ export function StripeConnectionStatus() {
         </Card>
       ) : null}
 
+      {status?.connected && status.attendantProduct ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Produto do atendente extra</CardTitle>
+            <CardDescription>
+              Cada Conta tem o próprio preço neste produto, definido em Contas › Atendentes. Sem ele, as vagas extras
+              valem, mas não são cobradas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Produto check={status.attendantProduct} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Webhook</CardTitle>
@@ -155,6 +171,32 @@ export function StripeConnectionStatus() {
           </ul>
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function Produto({ check }: { check: ProductCheck }) {
+  return (
+    <div className="space-y-1 rounded-md border p-3 text-sm" data-testid={`produto-${check.env}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-medium">Atendente extra</span>
+        {check.found && check.active !== false ? (
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">OK</Badge>
+        ) : (
+          <Badge variant="destructive">Problema</Badge>
+        )}
+      </div>
+      {check.found ? (
+        <p>
+          {check.name ?? 'Produto encontrado'}
+          {check.active === false ? ' (produto arquivado no Stripe)' : ''}
+        </p>
+      ) : (
+        <p className="text-destructive">{check.error ?? 'Produto não encontrado.'}</p>
+      )}
+      <p className="break-all font-mono text-xs text-muted-foreground">
+        {check.env}: {check.id ?? 'não definida'}
+      </p>
     </div>
   );
 }

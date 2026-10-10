@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
 import { corsHeaders } from '../_shared/validation.ts';
 import { matchVerifyToken } from '../_shared/cryptoSignature.ts';
+import { cancelLinkedWhatsAppFollowups } from '../_shared/contact-link-reply.ts';
 import {
   isWellFormedSignatureHeader,
   parseInstagramDelivery,
@@ -39,6 +40,12 @@ import {
  * NÃO aciona bot, automações, rodízio, regra de tempo de resposta nem webhooks
  * de saída — decisão do dono para esta fatia. Esta função não chama o bot; as
  * triggers do banco têm `WHEN (channel = 'whatsapp')` (migração 20260923000001).
+ *
+ * A ÚNICA exceção (2026-10-09, migração 20261009000001): quando o contato do
+ * Instagram foi VINCULADO à mão ao contato do WhatsApp da mesma pessoa, a
+ * mensagem do cliente cancela os follow-ups do WhatsApp dela, exatamente como
+ * uma resposta no WhatsApp (`_shared/contact-link-reply.ts`). Sem vínculo,
+ * nada muda. Nada no SQL da entrada muda por isso.
  *
  * Anexo, reação, leitura, resposta a story, edição, mensagem apagada: fora do
  * escopo. Registra o tipo no log e devolve 200. Nada é gravado pela metade.
@@ -214,6 +221,10 @@ Deno.serve(async (req: Request) => {
 
     if (outcome === 'stored' || outcome === 'duplicate') {
       logger.info('instagram-webhook: mensagem', line);
+      // Cliente respondeu no Instagram e o contato está vinculado ao do
+      // WhatsApp: os follow-ups do WhatsApp dela param como se ela tivesse
+      // respondido lá. Não-fatal; só age em 'stored' + 'inbound'.
+      await cancelLinkedWhatsAppFollowups(supabase, r, logger);
     } else {
       // unknown_account, inactive_instance, own_account, echo_without_contact,
       // invalid: nada foi gravado, e alguém pode precisar saber por quê.

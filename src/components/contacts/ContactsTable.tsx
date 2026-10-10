@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TableSkeleton, Skeleton } from '@/components/shared/Skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { MoreHorizontal, MessageCircle, Edit, Trash2, AlertCircle, Users } from 'lucide-react';
+import { MoreHorizontal, MessageCircle, Edit, Trash2, AlertCircle, Users, Link2, Unlink } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -19,7 +19,10 @@ import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { logger } from '@/lib/logger';
 import { ChannelLogo } from '@/components/conversations/ChannelLogo';
-import { CHANNEL_LABEL } from '@/lib/conversations/channel';
+import { LinkContactDialog } from '@/components/contacts/LinkContactDialog';
+import { useCan } from '@/contexts/TenantContext';
+import { useContactLinkIndex, useUnlinkContact } from '@/hooks/useContactLinks';
+import { CHANNEL_LABEL, otherChannel } from '@/lib/conversations/channel';
 import { contactDisplayName } from '@/lib/instagram/contactProfile';
 import {
   contactChannel,
@@ -74,18 +77,27 @@ interface ContactsTableProps {
   whatsappInstanceId?: string | null;
   /** Canal: filtrado no servidor e parte da chave do cache. */
   channel?: ContactChannelFilter;
+  /** A Loja tem Instagram: só então o menu oferece vincular WhatsApp ↔ Instagram. */
+  canLinkChannels?: boolean;
   onEdit: (id: string) => void;
 }
 
 
 
 
-export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', onEdit }: ContactsTableProps) => {
+export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', canLinkChannels = false, onEdit }: ContactsTableProps) => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     contactId: string | null;
     contactName: string;
   }>({ isOpen: false, contactId: null, contactName: '' });
+  // Vínculo WhatsApp ↔ Instagram (migração 20261009000001): a linha vinculada
+  // ganha a marca, e o menu oferece vincular ou desvincular.
+  const linkIndex = useContactLinkIndex();
+  const canManageContacts = useCan('contacts.manage');
+  const unlinkMutation = useUnlinkContact();
+  const [linkSource, setLinkSource] = useState<Contact | null>(null);
+  const [unlinkTarget, setUnlinkTarget] = useState<Contact | null>(null);
   // Construir query dinâmica baseada nos filtros
   const buildQuery = () => {
     const query = {
@@ -143,8 +155,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', on
       });
     }
 
-    // Filtro de canal — no servidor. Contato nunca é juntado entre canais: a
-    // mesma pessoa no WhatsApp e no Instagram são duas linhas.
+    // Filtro de canal — no servidor. A mesma pessoa no WhatsApp e no Instagram
+    // são duas linhas, mesmo vinculadas (o vínculo só as marca).
     if (channel !== 'all') {
       filters_array.push({
         column: 'channel',
@@ -308,6 +320,18 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', on
             <span className="sr-only">{CHANNEL_LABEL[contactChannel(contact)]}: </span>
           </span>
           <span className="min-w-0">{displayName(contact)}</span>
+          {linkIndex.byContact.has(contact.id) && (
+            <span
+              title={`Vinculado ao contato do ${CHANNEL_LABEL[otherChannel(contactChannel(contact))]}`}
+              className="flex-shrink-0 text-muted-foreground"
+              data-contact-linked
+            >
+              <Link2 className="h-3.5 w-3.5" aria-hidden />
+              <span className="sr-only">
+                (vinculado ao contato do {CHANNEL_LABEL[otherChannel(contactChannel(contact))]})
+              </span>
+            </span>
+          )}
         </p>
         <p className="text-sm text-muted-foreground whitespace-nowrap">{contactIdentifier(contact)}</p>
         {contact.email && (
@@ -551,6 +575,23 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', on
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
                   </DropdownMenuItem>
+                  {linkIndex.byContact.has(contact.id) ? (
+                    linkIndex.byContact.get(contact.id)?.can_unlink && (
+                      <DropdownMenuItem onClick={() => setUnlinkTarget(contact)}>
+                        <Unlink className="mr-2 h-4 w-4" />
+                        Desvincular
+                      </DropdownMenuItem>
+                    )
+                  ) : (
+                    canManageContacts && canLinkChannels && (
+                      <DropdownMenuItem onClick={() => setLinkSource(contact)}>
+                        <Link2 className="mr-2 h-4 w-4" />
+                        {contactChannel(contact) === 'whatsapp'
+                          ? 'Vincular a contato do Instagram'
+                          : 'Vincular a contato do WhatsApp'}
+                      </DropdownMenuItem>
+                    )
+                  )}
                   <DropdownMenuItem
                     onClick={() => handleDeleteClick(contact.id, displayName(contact))}
                     className="text-red-600"
@@ -593,6 +634,30 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', on
         variant="destructive"
         isLoading={deleteMutation.isPending}
         icon={<Trash2 className="h-5 w-5 text-red-500" />}
+      />
+
+      <LinkContactDialog
+        open={!!linkSource}
+        onOpenChange={(open) => {
+          if (!open) setLinkSource(null);
+        }}
+        source={linkSource}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!unlinkTarget}
+        onClose={() => setUnlinkTarget(null)}
+        onConfirm={() => {
+          if (!unlinkTarget) return;
+          unlinkMutation.mutate({ contactId: unlinkTarget.id }, { onSettled: () => setUnlinkTarget(null) });
+        }}
+        title="Desvincular contatos?"
+        description="Os dois contatos voltam a ser independentes, cada um no seu canal. O que foi gravado no contato do WhatsApp ao vincular continua lá."
+        confirmText="Desvincular"
+        cancelText="Cancelar"
+        variant="destructive"
+        isLoading={unlinkMutation.isPending}
+        icon={<Unlink className="h-5 w-5 text-red-500" />}
       />
     </div>
   );

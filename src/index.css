@@ -278,3 +278,45 @@
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30% { transform: translateY(-3px); opacity: 1; }
 }
+
+/* Seletor de emoji do compositor (emoji-picker-element, ver EmojiPickerPanel.tsx).
+   As variáveis no elemento valem mais que as do :host da biblioteca, então as
+   cores seguem o tema do app nos dois modos. No celular, 8 colunas menores
+   cabem na tela de 360 px; a partir de 640 px, 10 colunas. */
+emoji-picker.cf-emoji-picker,
+.cf-emoji-picker-loading {
+  height: 18rem;
+  max-width: 100%;
+}
+.cf-emoji-picker-loading {
+  width: 18rem;
+}
+emoji-picker.cf-emoji-picker {
+  color-scheme: light;
+  --emoji-padding: 0.375rem;
+  --border-radius: var(--radius);
+  --background: hsl(var(--background));
+  --border-color: hsl(var(--border));
+  --indicator-color: hsl(var(--primary));
+  --input-border-color: hsl(var(--input));
+  --input-font-color: hsl(var(--foreground));
+  --input-placeholder-color: hsl(var(--muted-foreground));
+  --category-font-color: hsl(var(--foreground));
+  --button-hover-background: hsl(var(--muted));
+  --button-active-background: hsl(var(--muted));
+  --outline-color: hsl(var(--ring));
+}
+.dark emoji-picker.cf-emoji-picker {
+  color-scheme: dark;
+}
+@media (min-width: 640px) {
+  emoji-picker.cf-emoji-picker {
+    --num-columns: 10;
+    --emoji-padding: 0.5rem;
+    height: 20rem;
+  }
+  .cf-emoji-picker-loading {
+    width: 26rem;
+    height: 20rem;
+  }
+}

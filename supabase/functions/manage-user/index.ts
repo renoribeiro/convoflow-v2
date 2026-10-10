@@ -7,7 +7,8 @@
 //   update           — atualiza campos editáveis do profile (nome, telefone, ...).
 //   suspend          — UPDATE status='suspended' (e cascade nos descendentes)
 //                      e bane o login de todos eles (Supabase Auth).
-//   reactivate       — tira o ban do login e faz UPDATE status='active'.
+//   reactivate       — confere a vaga na Loja (atendente), tira o ban do login e
+//                      faz UPDATE status='active'. Excluído não volta por aqui.
 //   reset_password   — gera link de recuperação via auth.admin.
 //   soft_delete      — UPDATE status='deleted' (mantém histórico/comissões) + ban.
 //   transfer         — move parent_id (somente superadmin).
@@ -27,6 +28,13 @@ import {
 import { can, CAPABILITY_DENIAL_MESSAGES, normalizeRole } from '../_shared/capabilities.ts';
 import { contaSlug, sufixoAleatorio } from '../_shared/conta-slug.ts';
 import { setLoginBan, statusBansLogin } from '../_shared/login-ban.ts';
+import {
+  checkAttendantEntry,
+  EXCLUIDO_NAO_REATIVA,
+  reactivationPlan,
+  seatErrorFromDb,
+  type StoreSeatRow,
+} from '../_shared/store-seats.ts';
 import {
   classifyAuthEmailError,
   recordAuthEmailFailure,
@@ -152,34 +160,64 @@ function ensureCanCreate(caller: CallerProfile, role: UserRole): void {
 }
 
 /**
- * Per-store membership caps: 1 gestor + up to 5 atendentes per store.
- * Pre-checked here (before inviteUserByEmail) so we never leave an orphan auth
- * user when the DB trigger `enforce_store_membership_limits` would reject.
+ * Lugar na Loja: 1 gestor (contando quem não foi excluído) e as vagas de
+ * atendente da Loja (2 por padrão + as extras do superadmin; ocupam vaga só
+ * ativo e pendente — ver _shared/store-seats.ts).
+ *
+ * Conferido aqui ANTES do convite (para não deixar usuário órfão no Auth) e
+ * antes de liberar o login na reativação. Quem decide de verdade é o trigger
+ * `enforce_store_membership_limits`, que também segura dois convites
+ * simultâneos; isto só dá a resposta clara mais cedo.
+ *
+ * `excluirPerfilId`: na reativação, a própria pessoa não entra na conta.
  */
 async function ensureStoreHasRoom(
   admin: SupabaseClient,
   storeTenantId: string,
   role: UserRole,
+  excluirPerfilId?: string,
 ): Promise<void> {
-  if (role !== 'gestor' && role !== 'atendente') return;
-  const { count, error } = await admin
+  if (role === 'gestor') {
+    const { count, error } = await admin
+      .from('profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', storeTenantId)
+      .eq('role', 'gestor')
+      .neq('status', 'deleted');
+    if (error) {
+      throw new SecureError(`Falha ao checar limites da loja: ${error.message}`, 'CAP_CHECK_FAILED', 500);
+    }
+    if ((count ?? 0) >= 1) {
+      throw new SecureError('Esta loja já possui um gestor.', 'STORE_FULL', 409);
+    }
+    return;
+  }
+  if (role !== 'atendente') return;
+
+  const { data: loja, error: lojaErr } = await admin
+    .from('tenants')
+    .select('kind, atendentes_incluidos, atendentes_extra')
+    .eq('id', storeTenantId)
+    .maybeSingle();
+  if (lojaErr) {
+    throw new SecureError(`Falha ao checar limites da loja: ${lojaErr.message}`, 'CAP_CHECK_FAILED', 500);
+  }
+
+  let consulta = admin
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', storeTenantId)
-    .eq('role', role)
-    .neq('status', 'deleted');
+    .eq('role', 'atendente')
+    .in('status', ['active', 'pending']);
+  if (excluirPerfilId) consulta = consulta.neq('id', excluirPerfilId);
+  const { count, error } = await consulta;
   if (error) {
     throw new SecureError(`Falha ao checar limites da loja: ${error.message}`, 'CAP_CHECK_FAILED', 500);
   }
-  const cap = role === 'gestor' ? 1 : 5;
-  if ((count ?? 0) >= cap) {
-    throw new SecureError(
-      role === 'gestor'
-        ? 'Esta loja já possui um gestor.'
-        : 'Esta loja já atingiu o limite de 5 atendentes.',
-      'STORE_FULL',
-      409,
-    );
+
+  const vaga = checkAttendantEntry(loja as StoreSeatRow | null, count ?? 0);
+  if (!vaga.ok) {
+    throw new SecureError(vaga.message, vaga.code, vaga.status);
   }
 }
 
@@ -447,6 +485,12 @@ async function actionCreate(
   if (inviteError || !invite?.user) {
     // Termômetro do envio de e-mail (auth_email_failures). Não muda a resposta.
     await recordAuthEmailFailure(admin, 'manage_user_invite', inviteError as AuthLikeError | null);
+    // Dois convites ao mesmo tempo para a última vaga: o trigger recusa o
+    // segundo, mas pelo Auth a mensagem chega como "Database error...".
+    // Conferir de novo devolve a frase certa ("Esta Loja já tem 2 de 2...").
+    if (resolvedTenantId) {
+      await ensureStoreHasRoom(admin, resolvedTenantId, effectiveRole);
+    }
     throw new SecureError(
       `Falha ao convidar usuário: ${inviteError?.message ?? 'desconhecida'}`,
       'INVITE_FAILED',
@@ -511,6 +555,8 @@ async function actionUpdate(
     .eq('id', body.targetProfileId);
 
   if (error) {
+    const lugar = seatErrorFromDb(error);
+    if (lugar) throw new SecureError(lugar, 'STORE_FULL', 409);
     throw new SecureError(`Falha ao atualizar profile: ${error.message}`, 'UPDATE_FAILED', 500);
   }
   return { success: true };
@@ -527,6 +573,19 @@ async function actionChangeStatus(
   }
   await ensureCanManage(admin, caller, body.targetProfileId);
   const target = await fetchTarget(admin, body.targetProfileId);
+
+  // Reativar: o lugar na Loja é conferido ANTES de liberar o login. Excluído
+  // não volta por aqui; atendente suspenso volta a ocupar vaga e precisa de
+  // uma livre. Recusado aqui, nada mudou — nem o login.
+  if (newStatus === 'active') {
+    const plano = reactivationPlan(target);
+    if (plano === 'refuse_deleted') {
+      throw new SecureError(EXCLUIDO_NAO_REATIVA, 'DELETED_CANNOT_REACTIVATE', 409);
+    }
+    if (plano === 'needs_seat' && target.tenant_id) {
+      await ensureStoreHasRoom(admin, target.tenant_id, 'atendente', target.id);
+    }
+  }
 
   // Item 14, lote 4 (H5): reativar tira o ban do login ANTES de gravar
   // 'active' — se falhar, nada mudou (ver _shared/login-ban.ts).
@@ -592,6 +651,16 @@ async function actionChangeStatus(
     .update({ status: newStatus })
     .eq('id', target.id);
   if (error) {
+    // A reativação já liberou o login: se o status não pôde ser gravado (a
+    // última vaga foi ocupada nesse meio-tempo), o login volta a ser barrado.
+    if (newStatus === 'active' && statusBansLogin(target.status)) {
+      const reban = await setLoginBan(admin.auth.admin, [target.user_id], true);
+      if (reban.failed.length > 0) {
+        console.error('manage-user: falha ao barrar de novo o login', { target: target.id });
+      }
+    }
+    const lugar = seatErrorFromDb(error);
+    if (lugar) throw new SecureError(lugar, 'STORE_FULL', 409);
     throw new SecureError(
       `Falha ao alterar status: ${error.message}`,
       'STATUS_FAILED',

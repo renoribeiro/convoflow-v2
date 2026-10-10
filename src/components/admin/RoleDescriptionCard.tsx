@@ -27,7 +27,7 @@ interface RoleDescriptionCardProps {
   role: UserRole | null;
   /**
    * Marque quando o formulário já mostrar o limite de usuários por loja
-   * ("Cada loja tem no máximo 1 gestor." / "...5 atendentes."). O cartão então
+   * ("Cada loja tem no máximo 1 gestor." / "...2 atendentes..."). O cartão então
    * omite as frases que repetiriam esse aviso — ver STORE_CAP_ITEMS.
    */
   hideStoreCaps?: boolean;

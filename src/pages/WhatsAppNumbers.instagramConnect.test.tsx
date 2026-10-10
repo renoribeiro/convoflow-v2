@@ -7,10 +7,11 @@ import { MemoryRouter, Routes, Route, useLocation } from 'react-router-dom';
 /**
  * Fatia 4b — conectar, reconectar, desligar e religar o Instagram pela tela.
  *
- *   - Loja sem a chave do superadmin (a VagaCerta): nada muda — sem seção,
- *     sem botão.
- *   - Loja liberada (a Loja Teste): seção com "Conectar Instagram", e
- *     "Reconectar" no cartão, que manda a instância ao servidor.
+ *   - O banco diz não (a Conta, onde o Instagram nunca fica): sem seção, sem
+ *     botão. Desde a 20261008000002 não há chave por Loja: em toda Loja o
+ *     banco diz sim para Gestor/Gerente.
+ *   - Loja: seção com "Conectar Instagram", e "Reconectar" no cartão, que
+ *     manda a instância ao servidor.
  *   - "Desligar" pede confirmação que diz o que se perde, e chama a RPC.
  *   - Na volta do Instagram a tela conclui UMA vez e limpa a barra.
  */
@@ -75,7 +76,7 @@ const NOW = new Date('2026-10-25T12:00:00Z');
 const STATE = 'c'.repeat(64);
 
 const whatsapp = {
-  id: 'wa-1', name: 'Vaga Certa', instance_key: '100000000000099', status: 'open', is_active: true,
+  id: 'wa-1', name: 'Loja Exemplo Centro', instance_key: '100000000000099', status: 'open', is_active: true,
   provider: 'official', created_at: '2026-06-11T22:42:51.000Z', updated_at: '2026-06-11T22:42:51.000Z',
 };
 const igAccount = (over: Record<string, unknown> = {}) => ({
@@ -131,18 +132,18 @@ afterEach(() => {
 });
 
 describe('Instagram pela tela — quem vê o quê', () => {
-  it('Loja sem a chave e sem Instagram (a VagaCerta): nenhuma seção, nenhum botão', async () => {
+  it('o banco diz não (a Conta) e não há Instagram: nenhuma seção, nenhum botão', async () => {
     h.rows = [whatsapp];
     h.enabled = false;
     renderPage();
-    await screen.findByText('Vaga Certa');
+    await screen.findByText('Loja Exemplo Centro');
     await waitFor(() => expect(h.rpc).toHaveBeenCalledWith('instagram_connect_enabled', { p_tenant_id: 't1' }));
     expect(screen.queryByText('Contas do Instagram')).toBeNull();
     expect(screen.queryByText('Conectar Instagram')).toBeNull();
     expect(screen.queryByText('Reconectar')).toBeNull();
   });
 
-  it('Loja liberada sem conta: seção vazia com "Conectar Instagram" que leva ao Instagram', async () => {
+  it('Loja sem conta: seção vazia com "Conectar Instagram" que leva ao Instagram', async () => {
     h.rows = [whatsapp];
     h.enabled = true;
     h.invoke.mockResolvedValue({ data: { ok: true, mode: 'connect', url: 'https://www.instagram.com/oauth/authorize?x=1' }, error: null });
@@ -159,14 +160,14 @@ describe('Instagram pela tela — quem vê o quê', () => {
   it('servidor recusa o começo: mostra a mensagem dele e não sai da tela', async () => {
     h.enabled = true;
     h.invoke.mockResolvedValue({
-      data: { ok: false, reason: 'not_enabled', message: 'A conexão do Instagram ainda não foi liberada para esta Loja.' },
+      data: { ok: false, reason: 'forbidden_tenant', message: 'Você não pode conectar o Instagram nesta Loja.' },
       error: null,
     });
     renderPage();
     fireEvent.click(await screen.findByTestId('instagram-connect'));
     await waitFor(() =>
       expect(h.toast).toHaveBeenCalledWith(expect.objectContaining({
-        description: 'A conexão do Instagram ainda não foi liberada para esta Loja.', variant: 'destructive',
+        description: 'Você não pode conectar o Instagram nesta Loja.', variant: 'destructive',
       })),
     );
     expect(assign).not.toHaveBeenCalled();
@@ -187,7 +188,7 @@ describe('Instagram pela tela — quem vê o quê', () => {
     );
   });
 
-  it('conta que já existe numa Loja SEM a chave: sem Reconectar (e o cartão manda escrever), mas Desligar existe', async () => {
+  it('conta posta numa Conta (o banco diz não): sem Reconectar (e o cartão manda escrever), mas Desligar existe', async () => {
     h.rows = [igAccount({ connection_config: { igUsername: 'convoflow', tokenExpiresAt: '2026-10-20T00:00:00Z' } })];
     h.enabled = false;
     renderPage();

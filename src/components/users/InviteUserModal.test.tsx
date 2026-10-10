@@ -11,6 +11,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 const { mockMutateAsync } = vi.hoisted(() => ({ mockMutateAsync: vi.fn() }));
 
@@ -30,6 +31,15 @@ vi.mock('@/hooks/useMyStores', () => ({
 vi.mock('@/hooks/users/useManageUser', () => ({
   useInviteUser: () => ({ mutateAsync: mockMutateAsync, isPending: false }),
 }));
+
+type VagasFake = { store_id: string; usados: number; limite: number; pendentes: number; livres: number };
+let vagas: Record<string, VagasFake> = {};
+vi.mock('@/hooks/useStoreAttendantSeats', () => ({
+  useStoreAttendantSeats: () => ({ seats: Object.values(vagas), byStore: vagas, isLoading: false, error: null }),
+}));
+const vagasDe = (id: string, usados: number, pendentes = 0, limite = 2): VagasFake => ({
+  store_id: id, usados, limite, pendentes, livres: Math.max(limite - usados, 0),
+});
 
 vi.mock('@/components/admin/RoleDescriptionCard', () => ({
   RoleDescriptionCard: () => null,
@@ -54,6 +64,19 @@ function abrir(defaultTenantId?: string | null) {
   );
 }
 
+// O Select do Radix usa captura de ponteiro, que o jsdom não tem.
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.releasePointerCapture = () => {};
+}
+
+/** Troca a Função no seletor (Radix Select). */
+async function escolherFuncao(rotulo: string) {
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText('Função'));
+  await user.click(await screen.findByRole('option', { name: rotulo }));
+}
+
 const preencherBasico = () => {
   fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Ana' } });
   fireEvent.change(screen.getByLabelText('Sobrenome'), { target: { value: 'Souza' } });
@@ -69,6 +92,80 @@ beforeEach(() => {
     { id: LOJA_A, name: 'Loja Teste' },
     { id: LOJA_B, name: 'Filial Norte' },
   ];
+  vagas = {};
+});
+
+describe('Loja cheia (2 atendentes por Loja, 2026-10-09)', () => {
+  const AVISO = 'Esta Loja já tem 2 de 2 atendentes. Para ter mais, fale com o ConvoFlow: contato@convoflow.com.br';
+
+  it('gestor com a Loja cheia: aviso com o contato e o envio travado', () => {
+    callerRole = 'gestor';
+    tenant = { id: LOJA_A, name: 'Loja Teste' };
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 2) };
+    abrir();
+    preencherBasico();
+    expect(screen.getByRole('alert')).toHaveTextContent(AVISO);
+    expect(screen.getByRole('button', { name: 'Enviar convite' })).toBeDisabled();
+  });
+
+  it('com convite pendente, o aviso diz como liberar a vaga', () => {
+    callerRole = 'gestor';
+    tenant = { id: LOJA_A, name: 'Loja Teste' };
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 2, 1) };
+    abrir();
+    expect(screen.getByRole('alert')).toHaveTextContent('Convite pendente também ocupa vaga');
+  });
+
+  it('gestor com vaga: mostra o contador e deixa enviar', async () => {
+    callerRole = 'gestor';
+    tenant = { id: LOJA_A, name: 'Loja Teste' };
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 1) };
+    abrir();
+    preencherBasico();
+    expect(screen.getByText('Atendentes: 1 de 2')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar convite' }));
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalledTimes(1));
+  });
+
+  it('gerente convidando Gestor: a vaga de atendente não importa', () => {
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 2), [LOJA_B]: vagasDe(LOJA_B, 0) };
+    abrir(LOJA_A);
+    preencherBasico();
+    // O gerente começa em Gestor, e o gestor não ocupa vaga de atendente.
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar convite' })).not.toBeDisabled();
+  });
+
+  it('gerente convidando Atendente: a Loja mostra as vagas livres e a cheia trava', async () => {
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 2), [LOJA_B]: vagasDe(LOJA_B, 1) };
+    abrir(LOJA_A);
+    preencherBasico();
+    await escolherFuncao('Atendente');
+    expect(screen.getByText('Loja Teste — sem vaga de atendente')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(AVISO);
+    expect(screen.getByRole('button', { name: 'Enviar convite' })).toBeDisabled();
+  });
+
+  it('gerente convidando Atendente para uma Loja com vaga', async () => {
+    vagas = { [LOJA_A]: vagasDe(LOJA_A, 2), [LOJA_B]: vagasDe(LOJA_B, 1) };
+    abrir(LOJA_B);
+    preencherBasico();
+    await escolherFuncao('Atendente');
+    expect(screen.getByText('Filial Norte — 1 vaga livre')).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar convite' })).not.toBeDisabled();
+  });
+
+  it('sem a leitura das vagas, nada é travado (quem decide é o servidor)', () => {
+    callerRole = 'gestor';
+    tenant = { id: LOJA_A, name: 'Loja Teste' };
+    vagas = {};
+    abrir();
+    preencherBasico();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar convite' })).not.toBeDisabled();
+  });
 });
 
 describe('nunca mais um campo de UUID', () => {

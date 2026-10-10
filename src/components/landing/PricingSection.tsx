@@ -14,7 +14,7 @@ export const PricingSection = () => {
 
   const features = [
     '5 lojas incluídas (extra por R$ 99,90/mês)',
-    'Gestores e atendentes por loja',
+    '1 gestor e 2 atendentes por loja (mais sob consulta)',
     'WhatsApp Business API integrado',
     'Chatbots inteligentes ilimitados',
     'Multi-atendimento em tempo real',

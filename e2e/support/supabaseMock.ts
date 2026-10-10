@@ -267,7 +267,7 @@ function buildRows(table: string, n: number, role: MockRole, tree: SelectNode[],
 }
 
 // ----------------------------------------------------------------- session --
-function sessionFor(role: MockRole) {
+export function sessionFor(role: MockRole) {
   const b64 = (o: unknown) => Buffer.from(JSON.stringify(o)).toString('base64url');
   const exp = Math.floor(NOW / 1000) + 30 * 24 * 3600;
   const user = {
@@ -318,17 +318,35 @@ function functionResponse(name: string): unknown {
 }
 
 // ------------------------------------------------------------------ install --
-export async function installSupabaseMock(context: BrowserContext, role: MockRole): Promise<void> {
+/**
+ * `sessao: false` liga o backend falso SEM gravar sessão: serve para quem chega
+ * de fora sem estar logado (link de convite, rota protegida) e mesmo assim não
+ * pode falar com o Supabase real.
+ */
+export async function installSupabaseMock(
+  context: BrowserContext,
+  role: MockRole,
+  { sessao = true }: { sessao?: boolean } = {},
+): Promise<void> {
   const session = sessionFor(role);
 
   await context.addInitScript(
-    ({ session, key, activeTenant }) => {
+    ({ session, key, activeTenant, sessao }) => {
+      // Sem sessão: só limpa na PRIMEIRA carga da aba. Uma sessão que o próprio
+      // app criar depois (o link de convite cria) tem de sobreviver ao reload.
+      if (!sessao) {
+        if (!window.sessionStorage.getItem('e2e-sem-sessao')) {
+          window.sessionStorage.setItem('e2e-sem-sessao', '1');
+          window.localStorage.removeItem(key);
+        }
+        return;
+      }
       window.localStorage.setItem(key, JSON.stringify(session));
       // Superadmin não tem Conta própria: entra "dentro" de uma, como no produto.
       if (activeTenant) window.localStorage.setItem('convoflow-active-tenant', activeTenant);
       else window.localStorage.removeItem('convoflow-active-tenant');
     },
-    { session, key: 'convoflow-auth', activeTenant: role === 'superadmin' ? IDS.tenant : null },
+    { session, key: 'convoflow-auth', activeTenant: role === 'superadmin' ? IDS.tenant : null, sessao },
   );
 
   const cors = {

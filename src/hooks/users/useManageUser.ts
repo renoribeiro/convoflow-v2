@@ -60,6 +60,8 @@ function invalidateUserLists(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: [QUERY_KEYS.USERS] });
   qc.invalidateQueries({ queryKey: [QUERY_KEYS.TEAM] });
   qc.invalidateQueries({ queryKey: [QUERY_KEYS.USER_DETAILS] });
+  // Convidar, suspender, reativar e excluir mudam as vagas de atendente.
+  qc.invalidateQueries({ queryKey: [QUERY_KEYS.ATTENDANT_SEATS] });
 }
 
 export function useInviteUser() {
@@ -124,6 +126,24 @@ export function useSoftDeleteUser() {
       invalidateUserLists(qc);
     },
     onError: (err: Error) => toast.error(`Falha ao excluir: ${err.message}`),
+  });
+}
+
+/**
+ * Cancelar um convite pendente. É a mesma exclusão do servidor (soft_delete);
+ * só a frase muda, porque para quem olha a Equipe isto é "desfazer o convite"
+ * — e o convite pendente ocupa uma vaga de atendente até ser cancelado.
+ */
+export function useCancelInvite() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (targetProfileId: string) =>
+      invokeManageUser({ targetProfileId, action: 'soft_delete' }),
+    onSuccess: () => {
+      toast.success('Convite cancelado. A vaga ficou livre.');
+      invalidateUserLists(qc);
+    },
+    onError: (err: Error) => toast.error(`Falha ao cancelar o convite: ${err.message}`),
   });
 }
 

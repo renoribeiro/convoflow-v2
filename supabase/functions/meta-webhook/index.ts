@@ -5,6 +5,7 @@ import { applyReplyCancellations } from '../_shared/followup-reply.ts';
 import { corsHeaders, DataSanitizer } from '../_shared/validation.ts';
 import { verifyMetaSignatureAny, matchVerifyToken } from '../_shared/cryptoSignature.ts';
 import { appSlotName, isDuplicateInsertError, summarizeDelivery, type MetaAppSlot } from '../_shared/meta-webhook-delivery.ts';
+import { camposDoStatusFalho } from '../_shared/meta-error-fields.ts';
 import { ProviderFactory } from '../_shared/provider-factory.ts';
 import { MetaProvider } from '../_shared/whatsapp-providers/meta.ts';
 import {
@@ -493,9 +494,20 @@ async function handleStatusUpdate(
   // Meta status values: sent, delivered, read, failed
   const normalized = metaStatus.toLowerCase();
 
+  // Falha que a Meta só conta depois de aceitar o envio (ex.: pagamento,
+  // número sem WhatsApp): guarda o código e a mensagem dela na linha, para a
+  // próxima falha poder ser explicada (migração 20261008000001).
+  const patch: Record<string, unknown> = { status: normalized };
+  if (normalized === 'failed') {
+    const falha = camposDoStatusFalho(status);
+    patch.error_code = falha.error_code;
+    patch.error_message = falha.error_message;
+    logger.warn('Meta message failed', { id: messageId, code: falha.error_code, app });
+  }
+
   await supabase
     .from('messages')
-    .update({ status: normalized })
+    .update(patch)
     .eq('evolution_message_id', messageId);
 
   logger.info('Meta message status updated', { id: messageId, status: normalized, app });

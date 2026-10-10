@@ -637,6 +637,7 @@ export default function Conversations() {
                 panelOpen={isContactPanelOpen}
                 onPanelOpenChange={setIsContactPanelOpen}
                 onChannelDetected={handleConversationChannel}
+                onOpenConversation={setSelectedConversation}
               />
             </div>
           ) : (
@@ -667,6 +668,7 @@ export default function Conversations() {
                   panelOpen={isContactPanelOpen}
                   onPanelOpenChange={setIsContactPanelOpen}
                   onChannelDetected={handleConversationChannel}
+                  onOpenConversation={setSelectedConversation}
                 />
               </motion.div>
             </AnimatePresence>

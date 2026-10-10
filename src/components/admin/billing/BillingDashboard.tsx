@@ -21,6 +21,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResponsiveTable } from '@/components/shared/ResponsiveTable';
 import { supabase } from '@/integrations/supabase/client';
 import {
+  ATTENDANT_STATE_LABEL,
+  attendantBillingCheck,
+  attendantBillingIssues,
+  grantedAttendantsByConta,
   CONTA_BILLING_COLUMNS,
   currentMonthRevenue,
   formatCents,
@@ -40,6 +44,7 @@ import {
 import { stripeService } from '@/services/stripeService';
 import { CouponManager } from '@/components/admin/billing/CouponManager';
 import { StripeConnectionStatus } from '@/components/admin/billing/StripeConnectionStatus';
+import { AttendantSeatsDialog } from '@/components/admin/billing/AttendantSeatsDialog';
 
 /**
  * Administração › Faturamento (superadmin).
@@ -64,7 +69,22 @@ export function BillingDashboard() {
         .eq('kind', 'account')
         .order('name', { ascending: true });
       if (error) throw error;
-      return (data ?? []) as ContaBillingRow[];
+      // Colunas novas (atendentes extras) ainda fora dos tipos gerados.
+      return (data ?? []) as unknown as ContaBillingRow[];
+    },
+  });
+
+  // Vagas extras de atendente concedidas nas Lojas, para somar por Conta.
+  const lojasQuery = useQuery({
+    queryKey: ['admin-billing', 'lojas-atendentes'],
+    queryFn: async () => {
+      // Cast local: colunas novas, fora dos tipos gerados.
+      const { data, error } = await (supabase as any)
+        .from('tenants')
+        .select('kind, parent_tenant_id, atendentes_extra')
+        .eq('kind', 'store');
+      if (error) throw error;
+      return (data ?? []) as Array<{ kind: string | null; parent_tenant_id: string | null; atendentes_extra: number | null }>;
     },
   });
 
@@ -157,8 +177,8 @@ export function BillingDashboard() {
             valor={valorStripe(formatCents(overview?.mrr.net))}
             nota={
               overview
-                ? `Plano ${formatCents(overview.mrr.plan)} · Lojas extras ${formatCents(overview.mrr.extraStores)} · Cupons −${formatCents(overview.mrr.discounts)}`
-                : 'Com lojas extras e cupons'
+                ? `Plano ${formatCents(overview.mrr.plan)} · Lojas extras ${formatCents(overview.mrr.extraStores)} · Atendentes extras ${formatCents(overview.mrr.extraAttendants ?? 0)} · Cupons −${formatCents(overview.mrr.discounts)}`
+                : 'Com lojas extras, atendentes extras e cupons'
             }
           />
           <Cartao
@@ -246,6 +266,12 @@ export function BillingDashboard() {
             vazio="Nenhuma Conta pagante"
             carregando={carregandoContas}
             detalhe={{ header: 'Lojas extras', cell: (c) => String(c.store_slots_extra ?? 0) }}
+          />
+          <AtendentesPorConta
+            contas={contasQuery.data ?? []}
+            carregando={carregandoContas || lojasQuery.isLoading}
+            concedidosPorConta={grantedAttendantsByConta(lojasQuery.data)}
+            legacyIds={legacyIds}
           />
         </TabsContent>
 
@@ -370,6 +396,105 @@ function ListaDeContas({
           ]}
         />
       </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Todas as Contas — pagantes, em teste e com acesso manual —, cada uma com o
+ * botão que abre as vagas de atendente das Lojas dela. As quatro listas acima
+ * separam por situação de cobrança; esta não, porque a vaga extra também é
+ * dada a quem tem acesso manual.
+ *
+ * Entrega 2: ao lado, o concedido (soma das Lojas) × o cobrado pela assinatura
+ * (gravado pelo stripe-webhook e pela sincronização). Diferença ou falta de
+ * preço numa assinatura viva aparece no aviso do topo do cartão.
+ */
+function AtendentesPorConta({
+  contas,
+  carregando,
+  concedidosPorConta,
+  legacyIds,
+}: {
+  contas: ContaBillingRow[];
+  carregando: boolean;
+  concedidosPorConta: Record<string, number>;
+  legacyIds: ReadonlySet<string>;
+}) {
+  const [aberta, setAberta] = useState<{ id: string; name: string | null } | null>(null);
+  const problemas = attendantBillingIssues(contas, concedidosPorConta, legacyIds);
+  const checar = (c: ContaBillingRow) => attendantBillingCheck(c, concedidosPorConta[c.id] ?? 0, legacyIds);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Atendentes por Loja</CardTitle>
+        <CardDescription>
+          Toda Loja tem 2 vagas de atendente. Para dar mais a uma Loja, ou definir o preço do atendente extra da Conta,
+          abra a Conta em "Atendentes". Conta com acesso manual (sem assinatura) recebe as vagas sem cobrança.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {problemas.length ? (
+          <Alert variant="destructive" data-testid="atendentes-divergencias">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Cobrança de atendentes extras fora do concedido</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc space-y-1 pl-4">
+                {problemas.map(({ conta, check }) => (
+                  <li key={conta.id}>
+                    {conta.name ?? '—'}:{' '}
+                    {check.state === 'sem_preco'
+                      ? `${check.concedidos} concedido(s) e nenhum preço definido. Abra "Atendentes" e defina o preço.`
+                      : `${check.concedidos} concedido(s), ${check.cobrados} cobrado(s). Abra "Atendentes" e clique em "Sincronizar cobrança".`}
+                  </li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+        <ResponsiveTable
+          ariaLabel="Atendentes por Loja"
+          rows={contas}
+          rowKey={(c) => c.id}
+          loading={carregando}
+          empty="Nenhuma Conta"
+          columns={[
+            { key: 'conta', header: 'Conta', card: 'title', cellClassName: 'font-medium', cell: (c) => c.name ?? '—' },
+            { key: 'concedidos', header: 'Extras concedidos', cell: (c) => String(concedidosPorConta[c.id] ?? 0) },
+            {
+              key: 'cobrados',
+              header: 'Cobrados',
+              cell: (c) => (checar(c).state === 'sem_cobranca' || checar(c).state === 'conta_antiga' ? '—' : String(c.atendentes_extra_cobrados ?? 0)),
+            },
+            {
+              key: 'preco',
+              header: 'Preço por extra',
+              cell: (c) => (c.atendente_extra_preco_centavos ? `${formatCents(c.atendente_extra_preco_centavos)}/mês` : '—'),
+            },
+            {
+              key: 'situacao',
+              header: 'Situação',
+              card: 'badge',
+              cell: (c) => {
+                const s = checar(c).state;
+                const alerta = s === 'diferenca' || s === 'sem_preco';
+                return (
+                  <Badge variant={alerta ? 'destructive' : 'secondary'} data-testid={`situacao-${c.id}`}>
+                    {ATTENDANT_STATE_LABEL[s]}
+                  </Badge>
+                );
+              },
+            },
+          ]}
+          actionsHeader="Vagas"
+          actions={(c) => (
+            <Button size="sm" variant="outline" onClick={() => setAberta({ id: c.id, name: c.name ?? null })}>
+              Atendentes
+            </Button>
+          )}
+        />
+      </CardContent>
+      <AttendantSeatsDialog conta={aberta} onOpenChange={(v) => !v && setAberta(null)} />
     </Card>
   );
 }

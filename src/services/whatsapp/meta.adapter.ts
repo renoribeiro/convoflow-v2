@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import { corpoDaEdgeFunction } from '@/lib/edgeFunctionError';
+import { motivoDaRecusaMeta } from '@/lib/whatsapp/metaErrors';
 import type { IWhatsAppProvider } from './provider.interface';
 import {
   WhatsAppAdapterError,
@@ -87,49 +89,57 @@ export class MetaAdapter implements IWhatsAppProvider {
         },
       });
       if (error) {
-        logger.error('[MetaAdapter] whatsapp-send-message non-2xx', {
-          error: error.message,
-          context: (error as any).context,
-        });
-        return { status: 'failed', error: error.message };
+        // Toda recusa do whatsapp-send-message vem como 4xx/5xx, e aí o
+        // supabase-js só diz "non-2xx status code". O motivo real — e o código
+        // da Meta — estão no corpo, que precisa ser aberto aqui.
+        const body = await corpoDaEdgeFunction(error);
+        return this.recusa(body?.code, body?.error, body?.meta_message, error.message);
       }
       const res = data as {
         ok?: boolean;
         messageId?: string;
         error?: string;
-        meta_code?: number;
-        meta_subcode?: number;
-        meta_status?: number;
-        meta_raw?: unknown;
+        code?: number | string;
+        meta_message?: string | null;
+        raw?: { contacts?: Array<{ wa_id?: string }> } | null;
       } | null;
       if (!res?.ok) {
-        // Log completo no console para diagnóstico (não em produção: já vai pro logger sanitizado)
-        logger.warn('[MetaAdapter] Meta send failed', {
-          error: res?.error,
-          meta_code: res?.meta_code,
-          meta_subcode: res?.meta_subcode,
-          meta_status: res?.meta_status,
-          meta_raw: res?.meta_raw,
-        });
-        return {
-          status: 'failed',
-          error: res?.error
-            ? `${res.error}${res.meta_code ? ` (Meta code ${res.meta_code})` : ''}`
-            : 'Falha ao enviar pelo edge function.',
-        };
+        return this.recusa(res?.code, res?.error, res?.meta_message, null);
       }
-      return { providerMessageId: res.messageId, status: 'sent' };
+      const recipientId = res.raw?.contacts?.[0]?.wa_id;
+      return {
+        providerMessageId: res.messageId,
+        status: 'sent',
+        ...(recipientId ? { recipientId } : {}),
+      };
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       logger.error('[MetaAdapter] invokeSend exception', { error: msg });
       return {
         status: 'failed',
-        error:
-          'Edge function whatsapp-send-message indisponível. ' +
-          'Para envios via Meta Cloud API, implemente o endpoint em supabase/functions/whatsapp-send-message ' +
-          'usando ProviderFactory.getProvider(instance).sendMessage(...).',
+        error: 'Não foi possível falar com o servidor de envio. Confira a internet e tente de novo.',
       };
     }
+  }
+
+  /** Recusa do servidor ou da Meta, com o motivo em pt-BR e o código preservado. */
+  private recusa(
+    code: unknown,
+    mensagem: unknown,
+    daMeta: unknown,
+    generica: string | null,
+  ): SendResult {
+    const codigo =
+      typeof code === 'number' || (typeof code === 'string' && code.trim()) ? String(code) : undefined;
+    const doServidor = typeof mensagem === 'string' ? mensagem : null;
+    const crua = typeof daMeta === 'string' && daMeta.trim() ? daMeta : doServidor;
+    logger.warn('[MetaAdapter] envio recusado', { code: codigo, error: crua ?? generica });
+    return {
+      status: 'failed',
+      error: motivoDaRecusaMeta(codigo, doServidor ?? 'O servidor recusou o envio.'),
+      ...(codigo ? { errorCode: codigo } : {}),
+      ...(crua ? { providerError: crua } : {}),
+    };
   }
 
   sendText(toPhone: string, content: string, options?: SendTextOptions): Promise<SendResult> {

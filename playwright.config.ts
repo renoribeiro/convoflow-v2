@@ -5,7 +5,15 @@ import { defineConfig, devices } from '@playwright/test';
  * Cobre a superfície pública (landing, /auth, rotas legais, 404) — clique real
  * no navegador. O dashboard exige sessão do Supabase e é coberto pelos testes
  * de componente do Vitest (jsdom + userEvent), que também clicam de verdade.
+ *
+ * CONTRA UM SITE JÁ NO AR. `E2E_BASE_URL=https://...` troca o alvo (Preview do
+ * Vercel, produção ou `vite preview` do build) e dispensa o servidor local.
+ * Preview do Vercel exige login: gere o cookie com o link de acesso
+ * temporário e passe o arquivo em `E2E_STORAGE_STATE`. O backend continua
+ * falso (e2e/support/supabaseMock.ts): nada chega ao Supabase real.
  */
+const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:8080';
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -15,7 +23,8 @@ export default defineConfig({
   reporter: [['list']],
   timeout: 30_000,
   use: {
-    baseURL: 'http://localhost:8080',
+    baseURL: BASE_URL,
+    storageState: process.env.E2E_STORAGE_STATE || undefined,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
@@ -25,10 +34,12 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:8080',
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        command: 'npm run dev',
+        url: 'http://localhost:8080',
+        reuseExistingServer: true,
+        timeout: 120_000,
+      },
 });

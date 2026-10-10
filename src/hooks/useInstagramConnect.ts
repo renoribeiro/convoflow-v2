@@ -6,8 +6,9 @@ import type { InstagramConnectSuccess } from '@/lib/instagram/connectFlow';
 /**
  * Fatia 4b do Instagram: a tela fala com o servidor por aqui.
  *
- *   enabled    `instagram_connect_enabled(Loja)` — a chave do superadmin, o
- *              cargo e o alcance, decididos no banco. Qualquer erro = false:
+ *   enabled    `instagram_connect_enabled(Loja)` — é Loja (nunca Conta), o
+ *              cargo e o alcance, decididos no banco. Desde a 20261008000002
+ *              não há chave por Loja: vale em toda Loja. Qualquer erro = false:
  *              o botão some em vez de aparecer e falhar.
  *   start      pede à edge function a URL de autorização e leva o navegador
  *              para o Instagram.
@@ -84,20 +85,5 @@ export async function setInstagramAccountActive(
     return { ok: false, message: String(d.message ?? 'Não foi possível alterar a conta.') };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : 'Não foi possível alterar a conta.' };
-  }
-}
-
-export async function setInstagramConnectEnabled(
-  tenantId: string,
-  enabled: boolean,
-): Promise<{ ok: true } | { ok: false; message: string }> {
-  try {
-    const res = await rpc('set_instagram_connect_enabled', { p_tenant_id: tenantId, p_enabled: enabled });
-    if (!res || res.error) return { ok: false, message: res?.error?.message ?? 'Não foi possível salvar.' };
-    const d = (res.data ?? {}) as Record<string, unknown>;
-    if (d.ok === true) return { ok: true };
-    return { ok: false, message: String(d.message ?? 'Não foi possível salvar.') };
-  } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : 'Não foi possível salvar.' };
   }
 }

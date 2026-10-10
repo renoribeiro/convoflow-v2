@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useLojaContactLastMessage } from '@/hooks/useLojaStats';
+import { useContactLinkIndex } from '@/hooks/useContactLinks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { contactChannel, contactIdentifier, type ContactIdentity } from '@/lib/contacts/identity';
 import { contactDisplayName } from '@/lib/instagram/contactProfile';
@@ -69,6 +70,7 @@ export const FunnelBoard = () => {
   // "Nunca" em quem estava fora dessa janela e (b) passaria a esconder o
   // último contato de conversas que um atendente restrito não vê.
   const { data: lastMessages = [] } = useLojaContactLastMessage();
+  const linkIndex = useContactLinkIndex();
   const lastMessageByContact = new Map(lastMessages.map((r) => [r.contact_id, r.last_at]));
 
   // Processar dados para criar estrutura do funil
@@ -77,6 +79,9 @@ export const FunnelBoard = () => {
     name: stage.name,
     color: stage.color || 'bg-gray-100 text-gray-800',
     leads: contactsData?.filter(contact => {
+      // Mesma pessoa vinculada nos dois canais: um cartão só, o do WhatsApp
+      // (é nele que a etapa e as automações valem).
+      if (linkIndex.hiddenInstagramIds.has(contact.id)) return false;
       // Aplicar atualizações otimistas
       const currentStageId = optimisticUpdates[contact.id] || contact.current_stage_id;
       return currentStageId === stage.id;

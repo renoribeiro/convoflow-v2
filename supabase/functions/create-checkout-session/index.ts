@@ -3,6 +3,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14.14.0?target=deno";
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from "../_shared/capabilities.ts";
 import { checkoutBlockReason, trialDaysForCheckout } from "../_shared/subscription-state.ts";
+import {
+  ATTENDANT_PRODUCT_ENV,
+  decideCheckoutAttendants,
+  grantedAttendants,
+  type PriceLike,
+} from "../_shared/attendant-billing.ts";
 
 // =============================================================================
 // create-checkout-session
@@ -14,6 +20,10 @@ import { checkoutBlockReason, trialDaysForCheckout } from "../_shared/subscripti
 //                                (inclui 5 lojas). Fallback: STRIPE_PRICE_ID (legado).
 //   - STRIPE_PRICE_STORE_SLOT  → Price recorrente de loja extra, R$ 99,90/mês
 //                                (quantidade = nº de lojas extras). Opcional.
+//   - STRIPE_PRODUCT_ATTENDANT → produto "Atendente extra". A Conta que já tem
+//                                vagas extras de atendente (dadas pelo superadmin
+//                                antes de assinar) leva o item junto, ao preço
+//                                dela (tenants.atendente_extra_price_id).
 //   - APP_URL (opcional)       → fallback de origem para os redirects
 //
 // O corpo da requisição aceita { extraSlots?: number } para já contratar lojas
@@ -201,7 +211,7 @@ serve(async (req) => {
     // Já assinante? Evita checkout duplicado.
     const { data: tenant } = await admin
       .from("tenants")
-      .select("name, kind, subscription_id, subscription_status, stripe_customer_id")
+      .select("name, kind, subscription_id, subscription_status, stripe_customer_id, atendente_extra_price_id")
       .eq("id", tenantId)
       .maybeSingle();
 
@@ -252,6 +262,37 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
+    // ---- Atendentes extras que a Conta já tem ----
+    // Vagas dadas pelo superadmin antes de a Conta assinar (acesso manual)
+    // entram na assinatura, ao preço da Conta. Sem produto ou sem preço válido
+    // o checkout não sai: vaga extra de graça numa assinatura paga não é opção.
+    // Antes de criar o cliente no Stripe, para uma recusa não deixar nada.
+    const attendantProduct = Deno.env.get(ATTENDANT_PRODUCT_ENV)?.trim() || null;
+    const concedidos = await grantedAttendants(admin, tenantId);
+    const attendantPriceId = (tenant.atendente_extra_price_id as string | null) ?? null;
+    let attendantPrice: PriceLike | null = null;
+    if (concedidos > 0 && attendantProduct && attendantPriceId) {
+      try {
+        attendantPrice = await stripe.prices.retrieve(attendantPriceId);
+      } catch (err) {
+        if (!naoExiste(err)) throw err;
+      }
+    }
+    const atendentes = decideCheckoutAttendants({
+      concedidos,
+      productId: attendantProduct,
+      priceId: attendantPriceId,
+      price: attendantPrice,
+      tenantId,
+    });
+    if (atendentes.kind === "blocked") {
+      console.warn("checkout recusado por atendentes extras:", tenantId, atendentes.reason);
+      return new Response(
+        JSON.stringify({ error: atendentes.error }),
+        { status: atendentes.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const customerId = await clienteDaConta(stripe, admin, {
       tenantId,
       nome: (tenant.name as string | null) ?? null,
@@ -267,6 +308,10 @@ serve(async (req) => {
     ];
     if (extraSlots > 0 && slotPrice) {
       lineItems.push({ price: slotPrice, quantity: extraSlots });
+    }
+    const extraAttendants = atendentes.kind === "add" ? atendentes.quantity : 0;
+    if (atendentes.kind === "add") {
+      lineItems.push({ price: atendentes.price, quantity: atendentes.quantity });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -284,7 +329,7 @@ serve(async (req) => {
       payment_method_collection: "always",
       allow_promotion_codes: true,
       subscription_data: {
-        metadata: { tenant_id: tenantId, extra_slots: String(extraSlots) },
+        metadata: { tenant_id: tenantId, extra_slots: String(extraSlots), extra_attendants: String(extraAttendants) },
         ...(diasDeTeste
           ? {
             trial_period_days: diasDeTeste,
@@ -294,7 +339,7 @@ serve(async (req) => {
           }
           : {}),
       },
-      metadata: { tenant_id: tenantId, extra_slots: String(extraSlots) },
+      metadata: { tenant_id: tenantId, extra_slots: String(extraSlots), extra_attendants: String(extraAttendants) },
       success_url: successUrl,
       cancel_url: cancelUrl,
     });

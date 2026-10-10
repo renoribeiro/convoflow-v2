@@ -14,12 +14,21 @@ export interface MyStore {
  * Lojas (stores) pertencentes à Conta do Gerente logado — os tenants cujo
  * `parent_tenant_id` é a Conta (account) do gerente. Vazio para qualquer outra
  * role. Usado pelo seletor de loja e pela comparação de métricas entre lojas.
+ *
+ * `superadminAccountId`: o superadmin não tem Conta própria; a tela de Equipe
+ * passa a Conta em foco para listar as Lojas dela. Ignorado para os demais
+ * cargos, e sem ele o superadmin continua sem consulta, como sempre foi.
  */
-export const useMyStores = () => {
+export const useMyStores = (options?: { superadminAccountId?: string | null }) => {
   const { profile } = useTenant();
   const role = normalizeRole(profile?.role as AnyUserRole | undefined);
-  const accountId = profile?.tenant_id ?? null;
-  const enabled = role === 'gerente' && !!accountId;
+  const accountId =
+    role === 'gerente'
+      ? profile?.tenant_id ?? null
+      : role === 'superadmin'
+        ? options?.superadminAccountId ?? null
+        : null;
+  const enabled = !!accountId;
 
   const query = useQuery({
     // Primeiro segmento 'tenant' → cache estático (ver queryClient.ts).

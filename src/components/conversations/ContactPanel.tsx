@@ -35,11 +35,14 @@ import { LeadTagsDialog } from '@/components/etiquetas/LeadTagsDialog';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useContactFollowups } from '@/hooks/useContactFollowups';
+import { useContactLinkIndex } from '@/hooks/useContactLinks';
 import { useTenant } from '@/contexts/TenantContext';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useIsBelowXl } from '@/hooks/use-mobile';
-import { initialsOf } from '@/lib/conversations/channel';
+import { initialsOf, nameInitials } from '@/lib/conversations/channel';
 import { contactDisplayName, instagramHandle } from '@/lib/instagram/contactProfile';
+import { ContactLinkSection } from '@/components/conversations/ContactLinkSection';
 
 interface ContactPanelProps {
   open: boolean;
@@ -48,7 +51,19 @@ interface ContactPanelProps {
   contactId?: string;
   contact: any | null;
   isLoading?: boolean;
+  /** Abre outra conversa na mesma tela (o atalho para o outro canal do vínculo). */
+  onOpenConversation?: (conversationId: string) => void;
 }
+
+// O perfil do contato do WhatsApp vinculado — mesmas colunas que o painel lê
+// da conversa (useConversation), para o corpo do painel não saber a diferença.
+const PROFILE_SELECT = `
+  id, name, phone, channel, external_id, username, email, avatar_url, notes, custom_fields,
+  lead_source_id, current_stage_id, last_interaction_at, created_at, updated_at, tenant_id,
+  stage:funnel_stages!contacts_current_stage_id_fkey ( name, color ),
+  lead_sources:lead_source_id ( name ),
+  contact_tags ( tag_id, tags ( id, name, color ) )
+`;
 
 function CollapsibleSection({
   title,
@@ -82,6 +97,7 @@ function ContactPanelBody({
   contactId,
   contact,
   isLoading,
+  onOpenConversation,
 }: Omit<ContactPanelProps, 'open'>) {
   const { tenant } = useTenant();
   const queryClient = useQueryClient();
@@ -90,12 +106,36 @@ function ContactPanelBody({
   const notesTimerRef = useRef<number | null>(null);
   const lastSavedNotesRef = useRef<string>('');
 
+  // Vínculo WhatsApp ↔ Instagram (migração 20261009000001). Na conversa do
+  // Instagram vinculada, o perfil (funil, etiquetas, notas, campos, fonte e
+  // follow-ups) é o do contato do WhatsApp — é ele que o Funil mostra e que as
+  // automações usam. O cabeçalho continua sendo a identidade desta conversa.
+  const linkIndex = useContactLinkIndex();
+  const link = contactId ? linkIndex.byContact.get(contactId) : undefined;
+  const mainContactId =
+    link && (contact as { channel?: string | null } | null)?.channel === 'instagram' ? link.whatsapp_contact_id : null;
+  const mainContactQuery = useQuery({
+    queryKey: ['contacts', 'profile', mainContactId, tenant?.id],
+    enabled: !!mainContactId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select(PROFILE_SELECT)
+        .eq('id', mainContactId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return data as any;
+    },
+  });
+  const profileContact: any = mainContactId ? mainContactQuery.data ?? null : contact;
+  const profileContactId: string | undefined = mainContactId ?? contactId;
+
   // Sync local notes when the contact changes.
   useEffect(() => {
-    const next = contact?.notes ?? '';
+    const next = profileContact?.notes ?? '';
     setNotes(next);
     lastSavedNotesRef.current = next;
-  }, [contactId, contact?.notes]);
+  }, [profileContactId, profileContact?.notes]);
 
   const { data: funnelStages = [] } = useSupabaseQuery({
     table: 'funnel_stages',
@@ -104,43 +144,44 @@ function ContactPanelBody({
     enabled: !!tenant?.id,
   });
 
-  const { data: followups = [], isLoading: followupsLoading } = useContactFollowups(contactId);
+  const { data: followups = [], isLoading: followupsLoading } = useContactFollowups(profileContactId);
 
   const updateContactMutation = useSupabaseMutation({
     table: 'contacts',
     operation: 'update',
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, tenant?.id] });
+      if (mainContactId) queryClient.invalidateQueries({ queryKey: ['contacts', 'profile', mainContactId] });
     },
   });
 
   const currentTagIds = useMemo(
     () =>
-      ((contact?.contact_tags ?? []) as any[])
+      ((profileContact?.contact_tags ?? []) as any[])
         .map((ct) => ct.tags?.id)
         .filter(Boolean) as string[],
-    [contact],
+    [profileContact],
   );
 
   const tags = useMemo(
     () =>
-      ((contact?.contact_tags ?? []) as any[])
+      ((profileContact?.contact_tags ?? []) as any[])
         .map((ct) => ct.tags)
         .filter(Boolean) as Array<{ id: string; name: string; color: string }>,
-    [contact],
+    [profileContact],
   );
 
   const customFields = useMemo(() => {
-    const raw = contact?.custom_fields;
+    const raw = profileContact?.custom_fields;
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return [];
     return Object.entries(raw as Record<string, unknown>).filter(([, v]) => v != null && v !== '');
-  }, [contact]);
+  }, [profileContact]);
 
   const handleStageChange = (stageId: string) => {
-    if (!contactId) return;
+    if (!profileContactId) return;
     updateContactMutation.mutate({
       data: { current_stage_id: stageId || null },
-      options: { filter: { column: 'id', operator: 'eq', value: contactId } },
+      options: { filter: { column: 'id', operator: 'eq', value: profileContactId } },
     });
   };
 
@@ -149,11 +190,11 @@ function ContactPanelBody({
     setNotes(value);
     if (notesTimerRef.current) window.clearTimeout(notesTimerRef.current);
     notesTimerRef.current = window.setTimeout(() => {
-      if (!contactId || value === lastSavedNotesRef.current) return;
+      if (!profileContactId || value === lastSavedNotesRef.current) return;
       lastSavedNotesRef.current = value;
       updateContactMutation.mutate({
         data: { notes: value || null },
-        options: { filter: { column: 'id', operator: 'eq', value: contactId } },
+        options: { filter: { column: 'id', operator: 'eq', value: profileContactId } },
       });
     }, 1000);
   };
@@ -164,7 +205,7 @@ function ContactPanelBody({
     };
   }, []);
 
-  if (isLoading) {
+  if (isLoading || (mainContactId && mainContactQuery.isLoading)) {
     return (
       <div className="p-4 space-y-4">
         <div className="flex flex-col items-center gap-2">
@@ -186,7 +227,7 @@ function ContactPanelBody({
     );
   }
 
-  const stageColor: string | undefined = contact.stage?.color ?? undefined;
+  const stageColor: string | undefined = profileContact?.stage?.color ?? undefined;
   const isInstagramContact = (contact as { channel?: string | null }).channel === 'instagram';
   // Sem nome: "Cliente do Instagram" no Instagram; no WhatsApp, o de sempre.
   const displayName = isInstagramContact
@@ -197,9 +238,7 @@ function ContactPanelBody({
     : null;
   const initials = isInstagramContact
     ? initialsOf(displayName)
-    : contact.name
-      ? contact.name.split(' ').map((n: string) => n?.[0] ?? '').join('').toUpperCase().slice(0, 2)
-      : 'C';
+    : (contact.name && nameInitials(contact.name)) || 'C';
 
   return (
     <div className="flex h-full flex-col">
@@ -243,21 +282,36 @@ function ContactPanelBody({
       </div>
 
       <ScrollArea className="flex-1 min-h-0">
+        {/* Mesma pessoa no outro canal */}
+        {contactId && (
+          <ContactLinkSection
+            contact={{
+              id: contactId,
+              channel: (contact as { channel?: string | null }).channel,
+              name: contact.name,
+              phone: contact.phone,
+              username: (contact as { username?: string | null }).username,
+            }}
+            link={link}
+            onOpenConversation={onOpenConversation}
+          />
+        )}
+
         {/* Funil */}
         <CollapsibleSection title="Funil" icon={<ListChecks className="w-4 h-4 text-muted-foreground" />}>
           <div className="space-y-2">
-            {contact.stage?.name ? (
+            {profileContact?.stage?.name ? (
               <Badge
                 variant="outline"
                 className="text-xs"
                 style={stageColor ? { backgroundColor: `${stageColor}20`, color: stageColor, borderColor: stageColor } : undefined}
               >
-                {contact.stage.name}
+                {profileContact.stage.name}
               </Badge>
             ) : (
               <p className="text-xs text-muted-foreground">Sem etapa definida</p>
             )}
-            <Select value={contact.current_stage_id ?? ''} onValueChange={handleStageChange}>
+            <Select value={profileContact?.current_stage_id ?? ''} onValueChange={handleStageChange}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue placeholder="Mover para etapa..." />
               </SelectTrigger>
@@ -286,7 +340,7 @@ function ContactPanelBody({
             size="sm"
             className="mt-2 h-7 text-xs"
             onClick={() => setIsTagDialogOpen(true)}
-            disabled={!contactId}
+            disabled={!profileContactId}
           >
             <Plus className="w-3.5 h-3.5 mr-1" />
             Adicionar
@@ -295,7 +349,7 @@ function ContactPanelBody({
 
         {/* Fonte do lead */}
         <CollapsibleSection title="Fonte do lead" icon={<Info className="w-4 h-4 text-muted-foreground" />} defaultOpen={false}>
-          <p className="text-sm text-foreground">{contact.lead_sources?.name || 'Não informada'}</p>
+          <p className="text-sm text-foreground">{profileContact?.lead_sources?.name || 'Não informada'}</p>
         </CollapsibleSection>
 
         {/* Campos personalizados */}
@@ -371,11 +425,11 @@ function ContactPanelBody({
         </CollapsibleSection>
       </ScrollArea>
 
-      {contactId && (
+      {profileContactId && (
         <LeadTagsDialog
           open={isTagDialogOpen}
           onOpenChange={setIsTagDialogOpen}
-          contactId={contactId}
+          contactId={profileContactId}
           currentTagIds={currentTagIds}
         />
       )}

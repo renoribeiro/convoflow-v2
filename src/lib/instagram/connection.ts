@@ -104,9 +104,9 @@ export function formatInstagramValidity(d: Date): string {
 }
 
 /**
- * Contato para reconectar onde o botão Reconectar não aparece — Loja sem a
- * chave da fatia 4b (o superadmin libera por Loja) ou quem não tem a
- * capability whatsapp.configure.
+ * Contato para reconectar onde o botão Reconectar não aparece — conta posta
+ * numa Conta (o botão só existe em Loja) ou quem não tem a capability
+ * whatsapp.configure.
  */
 export const INSTAGRAM_RECONNECT_CONTACT = 'contato@convoflow.com.br';
 

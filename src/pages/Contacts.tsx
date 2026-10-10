@@ -15,7 +15,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useWhatsAppInstancesWithAdapter } from '@/hooks/useWhatsAppApi';
 import { ContactChannelFilter } from '@/components/contacts/ContactChannelFilter';
-import { buildContactsCsv, type ContactExportRow } from '@/lib/contacts/exportCsv';
+import { buildContactsCsv, linkedContactLabel, type ContactExportRow } from '@/lib/contacts/exportCsv';
+import { useContactLinks } from '@/hooks/useContactLinks';
+import { linkedCounterpartId } from '@/lib/contacts/links';
 import { type ContactChannelFilter as ChannelFilterValue } from '@/lib/contacts/identity';
 import {
   INSTANCE_SELECTOR_ALL_LABEL,
@@ -36,6 +38,7 @@ export default function Contacts() {
   });
   const { tenant } = useTenant();
   const { instances } = useWhatsAppInstancesWithAdapter();
+  const { data: contactLinks = [] } = useContactLinks();
 
   // Canal. O filtro só aparece na Loja que tem conta de Instagram; sem ela o
   // canal fica em "Todos" e a tela é a de sempre.
@@ -84,6 +87,7 @@ export default function Contacts() {
       let query = supabase
         .from('contacts')
         .select(`
+          id,
           name,
           email,
           phone,
@@ -113,7 +117,34 @@ export default function Contacts() {
         return;
       }
 
-      const csvContent = '﻿' + buildContactsCsv(rows as unknown as ContactExportRow[]);
+      // "Vinculado a": o outro contato do vínculo. Ele pode estar fora da
+      // exportação (filtro de canal ou de conexão) — esses vêm numa consulta só.
+      const exported = rows as unknown as ContactExportRow[];
+      const byId = new Map(exported.filter((r) => r.id).map((r) => [r.id as string, r]));
+      const counterpartOf = new Map<string, string>();
+      for (const link of contactLinks) {
+        for (const id of [link.whatsapp_contact_id, link.instagram_contact_id]) {
+          if (byId.has(id)) counterpartOf.set(id, linkedCounterpartId(link, id));
+        }
+      }
+      const missing = [...new Set(counterpartOf.values())].filter((id) => !byId.has(id));
+      const others = new Map<string, ContactExportRow>(byId);
+      if (missing.length > 0) {
+        const { data: extra } = await supabase
+          .from('contacts')
+          .select('id, name, phone, channel, username')
+          .in('id', missing);
+        for (const c of (extra ?? []) as unknown as ContactExportRow[]) {
+          if (c.id) others.set(c.id, c);
+        }
+      }
+      const linkedTo = new Map<string, string>();
+      for (const [id, otherId] of counterpartOf) {
+        const other = others.get(otherId);
+        if (other) linkedTo.set(id, linkedContactLabel(other));
+      }
+
+      const csvContent = '﻿' + buildContactsCsv(exported, linkedTo);
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -194,6 +225,7 @@ export default function Contacts() {
             filters={filters}
             whatsappInstanceId={activeInstanceId}
             channel={channel}
+            canLinkChannels={hasInstagram}
             onEdit={(id) => { setSelectedContact(id); setIsModalOpen(true); }}
           />
         </div>
