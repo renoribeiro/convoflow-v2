@@ -10,15 +10,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Search, Store, UserPlus } from 'lucide-react';
+import { Pencil, Search, Store, UserPlus } from 'lucide-react';
 import { useUsers } from '@/hooks/users/useUsers';
 import { UsersTable } from '@/components/users/UsersTable';
 import { InviteUserModal } from '@/components/users/InviteUserModal';
 import { NewStoreDialog } from '@/components/stores/NewStoreDialog';
-import { useMyStores } from '@/hooks/useMyStores';
+import { useMyStores, type MyStore } from '@/hooks/useMyStores';
 import { useAccountStoreSlots } from '@/hooks/useAccountStoreSlots';
 import { useRole, useTenant } from '@/contexts/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { canRenameStore } from '@/lib/stores/storeRename';
 
 export default function TeamPage() {
   const role = useRole();
@@ -26,14 +27,58 @@ export default function TeamPage() {
   const [search, setSearch] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
   const [novaLojaOpen, setNovaLojaOpen] = useState(false);
+  // A Loja que está sendo renomeada fica guardada depois de fechar a janela,
+  // para o título não piscar de "Renomear" para "Nova" durante a animação.
+  const [renomearOpen, setRenomearOpen] = useState(false);
+  const [lojaRenomeada, setLojaRenomeada] = useState<{ id: string; name: string } | null>(null);
 
   const isGerente = role === 'gerente';
+  const isSuperadmin = role === 'superadmin';
+  const tenantKind = tenant?.kind ?? null;
+  // Superadmin com uma Conta em foco vê as Lojas dela (para poder renomeá-las).
+  const contaDoSuperadmin = isSuperadmin && tenantKind === 'account' ? tenant?.id ?? null : null;
 
   const { data: users = [], isLoading } = useUsers({ search });
-  // Os dois hooks abaixo só consultam quando o cargo é gerente; para os demais
-  // não sai query nenhuma e a tela fica exatamente como era.
-  const { stores, isLoading: lojasCarregando } = useMyStores();
+  // Os dois hooks abaixo só consultam para o gerente (e a lista de Lojas, para
+  // o superadmin com uma Conta em foco); para os demais não sai query nenhuma.
+  const { stores, isLoading: lojasCarregando } = useMyStores({
+    superadminAccountId: contaDoSuperadmin,
+  });
   const { capacity, isLoading: vagasCarregando } = useAccountStoreSlots();
+
+  /**
+   * O cartão de Lojas, por cargo:
+   *  - gerente: as Lojas da Conta dele, com "Abrir";
+   *  - superadmin com uma Conta em foco: as Lojas dessa Conta, com "Abrir";
+   *  - gestor, ou superadmin com uma Loja em foco: só a Loja aberta;
+   *  - atendente: nenhum cartão — a tela continua só a lista de pessoas.
+   * O lápis de renomear aparece onde `canRenameStore` deixa; o banco confere
+   * de novo em rename_store.
+   */
+  const lojaAberta: MyStore | null =
+    tenant && tenantKind === 'store'
+      ? { id: tenant.id, name: tenant.name, parent_tenant_id: tenant.parent_tenant_id ?? null }
+      : null;
+  const cartaoDeLojas: { titulo: string; lojas: MyStore[]; lista: boolean } | null = isGerente
+    ? { titulo: 'Lojas da sua Conta', lojas: stores, lista: true }
+    : contaDoSuperadmin
+      ? { titulo: 'Lojas desta Conta', lojas: stores, lista: true }
+      : (role === 'gestor' || isSuperadmin) && lojaAberta
+        ? { titulo: role === 'gestor' ? 'Sua Loja' : 'Loja em foco', lojas: [lojaAberta], lista: false }
+        : null;
+
+  const quemRenomeia = profile
+    ? {
+        role: profile.role,
+        tenant_id: profile.tenant_id,
+        capabilities: (profile as { capabilities?: unknown }).capabilities,
+      }
+    : null;
+
+  const abrirRenomear = (loja: MyStore) => {
+    setLojaRenomeada({ id: loja.id, name: loja.name });
+    setRenomearOpen(true);
+  };
 
   /**
    * Nome da Loja por id, para a coluna "Loja" da tabela de pessoas.
@@ -130,25 +175,27 @@ export default function TeamPage() {
         }
       />
 
-      {isGerente && (
+      {cartaoDeLojas && (
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Lojas da sua Conta</CardTitle>
+            <CardTitle className="text-sm font-medium">{cartaoDeLojas.titulo}</CardTitle>
           </CardHeader>
           <CardContent>
-            {lojasCarregando ? (
+            {cartaoDeLojas.lista && lojasCarregando ? (
               <div className="space-y-2">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-11 w-full rounded-md" />
                 ))}
               </div>
-            ) : stores.length === 0 ? (
+            ) : cartaoDeLojas.lojas.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Nenhuma loja cadastrada ainda. Use "Nova Loja" para criar a primeira.
+                {isGerente
+                  ? 'Nenhuma loja cadastrada ainda. Use "Nova Loja" para criar a primeira.'
+                  : 'Esta Conta ainda não tem Lojas.'}
               </p>
             ) : (
               <ul className="space-y-2">
-                {stores.map((loja) => {
+                {cartaoDeLojas.lojas.map((loja) => {
                   const emFoco = loja.id === tenantId;
                   return (
                     <li
@@ -158,20 +205,36 @@ export default function TeamPage() {
                       <span className="flex items-center gap-2 min-w-0">
                         <Store className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="truncate text-sm">{loja.name}</span>
-                        {emFoco && (
+                        {emFoco && cartaoDeLojas.lista && (
                           <Badge variant="secondary" className="flex-shrink-0">
                             Em foco
                           </Badge>
                         )}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={emFoco}
-                        onClick={() => setActiveTenant(loja.id)}
-                      >
-                        {emFoco ? 'Aberta' : 'Abrir'}
-                      </Button>
+                      <span className="flex items-center gap-1 flex-shrink-0">
+                        {canRenameStore(quemRenomeia, loja) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            title="Renomear"
+                            aria-label={`Renomear ${loja.name}`}
+                            onClick={() => abrirRenomear(loja)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {cartaoDeLojas.lista && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={emFoco}
+                            onClick={() => setActiveTenant(loja.id)}
+                          >
+                            {emFoco ? 'Aberta' : 'Abrir'}
+                          </Button>
+                        )}
+                      </span>
                     </li>
                   );
                 })}
@@ -225,6 +288,14 @@ export default function TeamPage() {
 
       {isGerente && (
         <NewStoreDialog open={novaLojaOpen} onOpenChange={setNovaLojaOpen} />
+      )}
+
+      {lojaRenomeada && (
+        <NewStoreDialog
+          open={renomearOpen}
+          onOpenChange={setRenomearOpen}
+          store={lojaRenomeada}
+        />
       )}
     </div>
   );

@@ -23,7 +23,13 @@ interface TenantContextType {
   tenantId: string | null;
   loading: boolean;
   error: string | null;
-  refreshTenant: () => Promise<void>;
+  /**
+   * Recarrega perfil e Conta. Com `{ silent: true }` relê só a linha da
+   * Conta/Loja aberta, sem passar por `loading` — o AuthGuard troca o painel
+   * inteiro por um carregando enquanto `loading` é true, e um rename não
+   * justifica desmontar a tela em que a pessoa está.
+   */
+  refreshTenant: (options?: { silent?: boolean }) => Promise<void>;
   /**
    * Merge raso em `tenants.settings`. Passe `{ silent: true }` quando a tela
    * chamadora já dá o próprio retorno — sem isso saem dois toasts (o genérico
@@ -194,8 +200,25 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setLoading(false);
   };
 
-  const refreshTenant = async () => {
-    await loadTenantData();
+  const refreshTenant = async (options?: { silent?: boolean }) => {
+    if (!options?.silent) {
+      await loadTenantData();
+      return;
+    }
+
+    const id = tenant?.id;
+    if (!id) return;
+    const { data, error: rowError } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (rowError || !data) {
+      console.error('[TenantContext] Erro ao reler a Conta aberta:', rowError);
+      return;
+    }
+    // Só troca se a pessoa não mudou de Conta/Loja enquanto a leitura voltava.
+    setTenant(prev => (prev && prev.id === data.id ? data : prev));
   };
 
   const setActiveTenant = (tenantId: string | null) => {

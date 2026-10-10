@@ -8,26 +8,39 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { UserRole } from '@/types/userHierarchy';
 
 // ── estado que cada teste ajusta ─────────────────────────────────────────────
 
+type TenantFake = { id: string; name: string; kind: string; parent_tenant_id: string | null };
+
+const CONTA = 'conta-1';
+const CONTA_TENANT: TenantFake = { id: CONTA, name: 'Grupo Silva', kind: 'account', parent_tenant_id: null };
+
 let currentRole: UserRole | null = 'gerente';
+let currentTenant: TenantFake | null = CONTA_TENANT;
+let profileTenantId: string | null = CONTA;
+let profileCapabilities: Record<string, boolean> | null = null;
 let stores: Array<{ id: string; name: string; parent_tenant_id: string | null }> = [];
 let storesLoading = false;
 let capacity = 5;
 let slotsLoading = false;
 const setActiveTenant = vi.fn();
-
-const CONTA = 'conta-1';
+const useMyStoresArgs: unknown[] = [];
 
 vi.mock('@/contexts/TenantContext', () => ({
   useRole: () => currentRole,
   useTenant: () => ({
-    profile: { id: 'perfil-1', role: currentRole, tenant_id: CONTA },
-    tenant: { id: CONTA, name: 'Grupo Silva' },
-    tenantId: CONTA,
+    profile: {
+      id: 'perfil-1',
+      role: currentRole,
+      tenant_id: profileTenantId,
+      capabilities: profileCapabilities,
+    },
+    tenant: currentTenant,
+    tenantId: currentTenant?.id ?? null,
     setActiveTenant,
   }),
 }));
@@ -37,7 +50,10 @@ vi.mock('@/hooks/users/useUsers', () => ({
 }));
 
 vi.mock('@/hooks/useMyStores', () => ({
-  useMyStores: () => ({ stores, isLoading: storesLoading }),
+  useMyStores: (options?: unknown) => {
+    useMyStoresArgs.push(options);
+    return { stores, isLoading: storesLoading };
+  },
 }));
 
 vi.mock('@/hooks/useAccountStoreSlots', () => ({
@@ -57,8 +73,14 @@ vi.mock('@/components/users/InviteUserModal', () => ({
   InviteUserModal: () => null,
 }));
 vi.mock('@/components/stores/NewStoreDialog', () => ({
-  NewStoreDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="nova-loja-dialog" /> : null,
+  NewStoreDialog: ({ open, store }: { open: boolean; store?: { id: string; name: string } | null }) =>
+    open ? (
+      store ? (
+        <div data-testid="renomear-loja-dialog">{store.id}</div>
+      ) : (
+        <div data-testid="nova-loja-dialog" />
+      )
+    ) : null,
 }));
 
 import TeamPage from './TeamPage';
@@ -74,6 +96,10 @@ const botaoNovaLoja = () => screen.queryByRole('button', { name: /Nova Loja/i })
 
 beforeEach(() => {
   currentRole = 'gerente';
+  currentTenant = CONTA_TENANT;
+  profileTenantId = CONTA;
+  profileCapabilities = null;
+  useMyStoresArgs.length = 0;
   stores = [
     { id: 'loja-1', name: 'Matriz', parent_tenant_id: CONTA },
     { id: 'loja-2', name: 'Filial Norte', parent_tenant_id: CONTA },
@@ -105,6 +131,8 @@ describe('lista de Lojas', () => {
     'não mostra lista de Lojas nem "Nova Loja" para %s',
     (role) => {
       currentRole = role;
+      // Superadmin sem Conta em foco: nada para listar.
+      if (role === 'superadmin') currentTenant = null;
       renderPage();
       expect(screen.queryByText('Lojas da sua Conta')).not.toBeInTheDocument();
       expect(screen.queryByText('Matriz')).not.toBeInTheDocument();
@@ -196,5 +224,78 @@ describe('"Nova Loja" e o limite do plano', () => {
     capacity = 0;
     renderPage();
     expect(botaoNovaLoja()).toBeEnabled();
+  });
+});
+
+// ── renomear Loja ────────────────────────────────────────────────────────────
+
+describe('lápis de renomear Loja', () => {
+  const LOJA_TENANT: TenantFake = { id: 'loja-1', name: 'Matriz', kind: 'store', parent_tenant_id: CONTA };
+  const lapis = () => screen.queryAllByRole('button', { name: /^Renomear / });
+
+  it('gerente: um lápis em cada Loja da Conta, e ele abre a janela daquela Loja', async () => {
+    renderPage();
+    expect(lapis()).toHaveLength(2);
+    await userEvent.click(screen.getByRole('button', { name: 'Renomear Filial Norte' }));
+    expect(screen.getByTestId('renomear-loja-dialog')).toHaveTextContent('loja-2');
+  });
+
+  it('gerente: Loja que não é da Conta dele fica sem lápis', () => {
+    stores = [
+      { id: 'loja-1', name: 'Matriz', parent_tenant_id: CONTA },
+      { id: 'loja-x', name: 'De Outra Conta', parent_tenant_id: 'conta-9' },
+    ];
+    renderPage();
+    expect(screen.getByRole('button', { name: 'Renomear Matriz' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Renomear De Outra Conta' })).not.toBeInTheDocument();
+  });
+
+  it('gerente sem store.admin não vê lápis', () => {
+    profileCapabilities = { 'store.admin': false };
+    renderPage();
+    expect(screen.getByText('Matriz')).toBeInTheDocument();
+    expect(lapis()).toHaveLength(0);
+  });
+
+  it('gestor: cartão "Sua Loja" com a Loja dele e o lápis, sem "Abrir"', async () => {
+    currentRole = 'gestor';
+    currentTenant = LOJA_TENANT;
+    profileTenantId = 'loja-1';
+    renderPage();
+    expect(screen.getByText('Sua Loja')).toBeInTheDocument();
+    expect(screen.queryByText('Lojas da sua Conta')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Abr/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Renomear Matriz' }));
+    expect(screen.getByTestId('renomear-loja-dialog')).toHaveTextContent('loja-1');
+  });
+
+  it('atendente: nem cartão nem lápis — nem com store.admin concedido à mão', () => {
+    currentRole = 'atendente';
+    currentTenant = LOJA_TENANT;
+    profileTenantId = 'loja-1';
+    profileCapabilities = { 'store.admin': true };
+    renderPage();
+    expect(screen.queryByText('Sua Loja')).not.toBeInTheDocument();
+    expect(lapis()).toHaveLength(0);
+  });
+
+  it('superadmin com uma Conta em foco: as Lojas dela, com lápis', () => {
+    currentRole = 'superadmin';
+    profileTenantId = null;
+    renderPage();
+    expect(useMyStoresArgs.at(-1)).toEqual({ superadminAccountId: CONTA });
+    expect(screen.getByText('Lojas desta Conta')).toBeInTheDocument();
+    expect(lapis()).toHaveLength(2);
+    expect(botaoNovaLoja()).not.toBeInTheDocument();
+  });
+
+  it('superadmin com uma Loja em foco: só ela, com lápis', () => {
+    currentRole = 'superadmin';
+    profileTenantId = null;
+    currentTenant = LOJA_TENANT;
+    renderPage();
+    expect(useMyStoresArgs.at(-1)).toEqual({ superadminAccountId: null });
+    expect(screen.getByText('Loja em foco')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Renomear Matriz' })).toBeInTheDocument();
   });
 });

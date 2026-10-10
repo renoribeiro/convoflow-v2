@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Store } from 'lucide-react';
+import { Loader2, Pencil, Store } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -14,34 +14,44 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useTenant } from '@/contexts/TenantContext';
 import { useCreateStore } from '@/hooks/useCreateStore';
+import { useRenameStore } from '@/hooks/useRenameStore';
 import { STORE_NAME_MAX, validateStoreName } from '@/lib/stores/storeName';
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /**
+   * Com uma Loja aqui, a janela é a de RENOMEAR essa Loja: o campo já vem com
+   * o nome atual e salvar muda só o nome. Sem ela, é a criação de sempre.
+   */
+  store?: { id: string; name: string } | null;
 }
 
 /**
- * Criação de Loja. Um campo só: o nome.
+ * Criação de Loja e, com `store`, renomear uma Loja. Um campo só: o nome.
  *
  * O erro do servidor aparece DENTRO da janela e ela não fecha — quem errou o
  * nome ou esbarrou no limite de vagas precisa ler a mensagem com o campo ainda
  * na frente. O sucesso é que sai por toast, junto com o atalho para entrar na
  * Loja nova, que é quase sempre o passo seguinte.
  */
-export const NewStoreDialog = ({ open, onOpenChange }: Props) => {
+export const NewStoreDialog = ({ open, onOpenChange, store = null }: Props) => {
+  const editando = !!store;
   const [nome, setNome] = useState('');
   const [erro, setErro] = useState<string | null>(null);
   const { setActiveTenant } = useTenant();
   const criarLoja = useCreateStore();
+  const renomearLoja = useRenameStore();
+  const pendente = editando ? renomearLoja.isPending : criarLoja.isPending;
 
   // Janela reaberta começa limpa — inclusive sem o erro da tentativa anterior.
+  // Renomeando, começa com o nome atual da Loja.
   useEffect(() => {
     if (open) {
-      setNome('');
+      setNome(store?.name ?? '');
       setErro(null);
     }
-  }, [open]);
+  }, [open, store?.id, store?.name]);
 
   const submeter = async () => {
     const validado = validateStoreName(nome);
@@ -51,6 +61,25 @@ export const NewStoreDialog = ({ open, onOpenChange }: Props) => {
     }
 
     setErro(null);
+
+    if (store) {
+      // Nada mudou além de espaços: não há o que gravar.
+      if (validado.value === store.name) {
+        onOpenChange(false);
+        return;
+      }
+      try {
+        const loja = await renomearLoja.mutateAsync({ storeId: store.id, name: validado.value });
+        onOpenChange(false);
+        toast.success('Loja renomeada.', {
+          description: `Agora ela se chama ${loja.name}.`,
+        });
+      } catch (err) {
+        setErro(err instanceof Error ? err.message : 'Não foi possível renomear a loja.');
+      }
+      return;
+    }
+
     try {
       const loja = await criarLoja.mutateAsync(validado.value);
       onOpenChange(false);
@@ -71,12 +100,13 @@ export const NewStoreDialog = ({ open, onOpenChange }: Props) => {
       <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Store className="h-5 w-5" />
-            Nova Loja
+            {editando ? <Pencil className="h-5 w-5" /> : <Store className="h-5 w-5" />}
+            {editando ? 'Renomear Loja' : 'Nova Loja'}
           </DialogTitle>
           <DialogDescription>
-            A Loja nasce vazia, dentro da sua Conta. Depois de criar, convide o
-            Gestor e os Atendentes dela em Equipe.
+            {editando
+              ? 'Muda só o nome. Equipe, números de WhatsApp, conversas e histórico da Loja continuam como estão.'
+              : 'A Loja nasce vazia, dentro da sua Conta. Depois de criar, convide o Gestor e os Atendentes dela em Equipe.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -95,7 +125,7 @@ export const NewStoreDialog = ({ open, onOpenChange }: Props) => {
               if (erro) setErro(null);
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !criarLoja.isPending) {
+              if (e.key === 'Enter' && !pendente) {
                 e.preventDefault();
                 void submeter();
               }
@@ -117,13 +147,13 @@ export const NewStoreDialog = ({ open, onOpenChange }: Props) => {
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            disabled={criarLoja.isPending}
+            disabled={pendente}
           >
             Cancelar
           </Button>
-          <Button type="button" onClick={() => void submeter()} disabled={criarLoja.isPending}>
-            {criarLoja.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Criar Loja
+          <Button type="button" onClick={() => void submeter()} disabled={pendente}>
+            {pendente && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            {editando ? 'Salvar nome' : 'Criar Loja'}
           </Button>
         </DialogFooter>
       </DialogContent>
