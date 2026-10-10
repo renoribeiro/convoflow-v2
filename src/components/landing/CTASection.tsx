@@ -5,6 +5,7 @@ import { ArrowRight, Mail, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { salesTrialOn, signupEntryPath, startCtaLabel } from '@/lib/signup/release';
 import { TRIAL_DAYS } from '@/lib/billing/trialOffer';
+import { ctaSubtitle } from '@/lib/landing/socialProof';
 
 export const CTASection = () => {
   return (
@@ -34,9 +35,13 @@ export const CTASection = () => {
             Pronto para multiplicar suas vendas no WhatsApp?
           </h2>
           
-          <p className="text-lg sm:text-xl mb-6 sm:mb-8 opacity-90 max-w-2xl mx-auto px-4 sm:px-0">
-            Junte-se a mais de 50.000 empresas que já revolucionaram 
-            seu atendimento e vendas com o ConvoFlow
+          {/* "Mais de X empresas" só com a chave ligada
+              (src/lib/landing/socialProof.ts). Desligada, uma frase sem número. */}
+          <p
+            data-testid="cta-subtitulo"
+            className="text-lg sm:text-xl mb-6 sm:mb-8 opacity-90 max-w-2xl mx-auto px-4 sm:px-0"
+          >
+            {ctaSubtitle()}
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 px-4 sm:px-0">
