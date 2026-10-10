@@ -65,6 +65,23 @@ vi.mock('@/hooks/useAccountStoreSlots', () => ({
   }),
 }));
 
+type VagasFake = {
+  store_id: string; store_name: string; account_id: string | null; incluidos: number; extra: number;
+  limite: number; ativos: number; pendentes: number; usados: number; livres: number;
+};
+let vagas: Record<string, VagasFake> = {};
+const useSeatsArgs: unknown[] = [];
+vi.mock('@/hooks/useStoreAttendantSeats', () => ({
+  useStoreAttendantSeats: (options?: unknown) => {
+    useSeatsArgs.push(options);
+    return { seats: Object.values(vagas), byStore: vagas, isLoading: false, error: null };
+  },
+}));
+const vagasDe = (id: string, nome: string, ativos: number, pendentes: number, limite = 2): VagasFake => ({
+  store_id: id, store_name: nome, account_id: CONTA, incluidos: 2, extra: limite - 2, limite,
+  ativos, pendentes, usados: ativos + pendentes, livres: Math.max(limite - ativos - pendentes, 0),
+});
+
 // Stubs: o que estas telas fazem por dentro é assunto dos testes delas.
 vi.mock('@/components/users/UsersTable', () => ({
   UsersTable: () => <div data-testid="users-table" />,
@@ -108,6 +125,76 @@ beforeEach(() => {
   capacity = 5;
   slotsLoading = false;
   setActiveTenant.mockClear();
+  vagas = {};
+  useSeatsArgs.length = 0;
+});
+
+// ── vagas de atendente (limite por Loja, 2026-10-09) ────────────────────────
+
+describe('vagas de atendente por Loja', () => {
+  it('mostra "Atendentes: X de Y" embaixo de cada Loja do gerente', () => {
+    vagas = {
+      'loja-1': vagasDe('loja-1', 'Matriz', 1, 0),
+      'loja-2': vagasDe('loja-2', 'Filial Norte', 0, 0),
+    };
+    renderPage();
+    expect(screen.getByTestId('vagas-loja-1')).toHaveTextContent('Atendentes: 1 de 2');
+    expect(screen.getByTestId('vagas-loja-2')).toHaveTextContent('Atendentes: 0 de 2');
+    expect(screen.getByTestId('vagas-loja-1')).not.toHaveTextContent('Loja cheia');
+  });
+
+  it('Loja cheia diz que está cheia e conta o convite pendente', () => {
+    vagas = { 'loja-1': vagasDe('loja-1', 'Matriz', 1, 1) };
+    renderPage();
+    const linha = screen.getByTestId('vagas-loja-1');
+    expect(linha).toHaveTextContent('Atendentes: 2 de 2');
+    expect(linha).toHaveTextContent('1 convite pendente');
+    expect(linha).toHaveTextContent('Loja cheia');
+  });
+
+  it('vaga extra aparece no limite', () => {
+    vagas = { 'loja-1': vagasDe('loja-1', 'Matriz', 2, 0, 3) };
+    renderPage();
+    expect(screen.getByTestId('vagas-loja-1')).toHaveTextContent('Atendentes: 2 de 3');
+    expect(screen.getByTestId('vagas-loja-1')).not.toHaveTextContent('Loja cheia');
+  });
+
+  it('gerente não manda alcance: a RPC já sabe quais Lojas são dele', () => {
+    renderPage();
+    expect(useSeatsArgs.at(-1)).toEqual({ tenantId: null, enabled: true });
+  });
+
+  it('gestor vê o contador da própria Loja', () => {
+    currentRole = 'gestor';
+    currentTenant = { id: 'loja-1', name: 'Matriz', kind: 'store', parent_tenant_id: CONTA };
+    profileTenantId = 'loja-1';
+    vagas = { 'loja-1': vagasDe('loja-1', 'Matriz', 2, 0) };
+    renderPage();
+    expect(screen.getByText('Sua Loja')).toBeInTheDocument();
+    expect(screen.getByTestId('vagas-loja-1')).toHaveTextContent('Atendentes: 2 de 2');
+  });
+
+  it('superadmin manda a Conta em foco', () => {
+    currentRole = 'superadmin';
+    profileTenantId = null;
+    renderPage();
+    expect(useSeatsArgs.at(-1)).toEqual({ tenantId: CONTA, enabled: true });
+  });
+
+  it('superadmin com uma Loja em foco manda a Loja', () => {
+    currentRole = 'superadmin';
+    profileTenantId = null;
+    currentTenant = { id: 'loja-1', name: 'Matriz', kind: 'store', parent_tenant_id: CONTA };
+    renderPage();
+    expect(useSeatsArgs.at(-1)).toEqual({ tenantId: 'loja-1', enabled: true });
+  });
+
+  it('atendente não tem cartão de Lojas, então não consulta vagas', () => {
+    currentRole = 'atendente';
+    currentTenant = { id: 'loja-1', name: 'Matriz', kind: 'store', parent_tenant_id: CONTA };
+    renderPage();
+    expect(useSeatsArgs.at(-1)).toEqual({ tenantId: null, enabled: false });
+  });
 });
 
 // ── lista de Lojas ───────────────────────────────────────────────────────────

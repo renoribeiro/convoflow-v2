@@ -51,7 +51,7 @@ export interface RoleDescription {
  * ela — se o texto mudar num lugar, muda nos dois, e o filtro de duplicata não
  * para de funcionar em silêncio.
  */
-const GESTOR_CRIA_ATENDENTES = 'Criar até 5 atendentes na loja';
+const GESTOR_CRIA_ATENDENTES = 'Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)';
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
   atendente: {
@@ -120,7 +120,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
 /**
  * Frases que repetem o limite de usuários por loja. O formulário de criação do
  * AdminDashboard já mostra esse limite embaixo do seletor de Loja
- * ("Cada loja tem no máximo 1 gestor." / "...5 atendentes."), então lá o cartão
+ * ("Cada loja tem no máximo 1 gestor." / "...2 atendentes..."), então lá o cartão
  * omite estas linhas em vez de dizer a mesma coisa duas vezes.
  *
  * Só vale para o contexto que já mostra o aviso — no convite (InviteUserModal),

@@ -69,6 +69,12 @@ vi.mock('@/components/admin/billing/CouponManager', () => ({
   CouponManager: () => <div>gerenciador de cupons</div>,
 }));
 
+// A janela de vagas tem teste próprio (AttendantSeatsDialog.test.tsx).
+vi.mock('@/components/admin/billing/AttendantSeatsDialog', () => ({
+  AttendantSeatsDialog: ({ conta }: { conta: { id: string; name: string | null } | null }) =>
+    conta ? <div data-testid="janela-atendentes">{`${conta.id}|${conta.name}`}</div> : null,
+}));
+
 import { BillingDashboard } from './BillingDashboard';
 
 // ---------------------------------------------------------------------------
@@ -177,6 +183,22 @@ describe('Faturamento — listas das Contas', () => {
     expect(within(tabela('Cancelamento agendado')).getByText('02/11/2026')).toBeInTheDocument();
     // Lojas extras na lista de pagantes.
     expect(within(tabela('Contas pagantes')).getByText('2')).toBeInTheDocument();
+  });
+});
+
+describe('Faturamento — atendentes por Loja', () => {
+  it('lista TODAS as Contas, inclusive as de acesso manual, e abre a janela da escolhida', async () => {
+    renderTab();
+    await waitFor(() => expect(nomesNa('Atendentes por Loja')).toHaveLength(CONTAS.length));
+    // "Conta Teste Gerente" não está em lista nenhuma de cobrança, mas está aqui.
+    expect(nomesNa('Atendentes por Loja')).toContain('Conta Teste Gerente');
+    expect(screen.queryByTestId('janela-atendentes')).toBeNull();
+
+    const linha = within(tabela('Atendentes por Loja'))
+      .getAllByRole('row')
+      .find((r) => within(r).queryByText('Conta Teste Gerente'));
+    await userEvent.click(within(linha as HTMLElement).getByRole('button', { name: 'Atendentes' }));
+    expect(screen.getByTestId('janela-atendentes')).toHaveTextContent('t-Conta Teste Gerente|Conta Teste Gerente');
   });
 });
 

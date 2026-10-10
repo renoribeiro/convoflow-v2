@@ -40,6 +40,7 @@ import {
 import { stripeService } from '@/services/stripeService';
 import { CouponManager } from '@/components/admin/billing/CouponManager';
 import { StripeConnectionStatus } from '@/components/admin/billing/StripeConnectionStatus';
+import { AttendantSeatsDialog } from '@/components/admin/billing/AttendantSeatsDialog';
 
 /**
  * Administração › Faturamento (superadmin).
@@ -247,6 +248,7 @@ export function BillingDashboard() {
             carregando={carregandoContas}
             detalhe={{ header: 'Lojas extras', cell: (c) => String(c.store_slots_extra ?? 0) }}
           />
+          <AtendentesPorConta contas={contasQuery.data ?? []} carregando={carregandoContas} />
         </TabsContent>
 
         <TabsContent value="stripe" className="space-y-4">
@@ -370,6 +372,46 @@ function ListaDeContas({
           ]}
         />
       </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Todas as Contas — pagantes, em teste e com acesso manual —, cada uma com o
+ * botão que abre as vagas de atendente das Lojas dela. As quatro listas acima
+ * separam por situação de cobrança; esta não, porque a vaga extra também é
+ * dada a quem tem acesso manual.
+ */
+function AtendentesPorConta({ contas, carregando }: { contas: ContaBillingRow[]; carregando: boolean }) {
+  const [aberta, setAberta] = useState<{ id: string; name: string | null } | null>(null);
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Atendentes por Loja</CardTitle>
+        <CardDescription>
+          Toda Loja tem 2 vagas de atendente. Para dar mais a uma Loja, como combinado com o cliente, abra a Conta em
+          "Atendentes".
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveTable
+          ariaLabel="Atendentes por Loja"
+          rows={contas}
+          rowKey={(c) => c.id}
+          loading={carregando}
+          empty="Nenhuma Conta"
+          columns={[
+            { key: 'conta', header: 'Conta', card: 'title', cellClassName: 'font-medium', cell: (c) => c.name ?? '—' },
+          ]}
+          actionsHeader="Vagas"
+          actions={(c) => (
+            <Button size="sm" variant="outline" onClick={() => setAberta({ id: c.id, name: c.name ?? null })}>
+              Atendentes
+            </Button>
+          )}
+        />
+      </CardContent>
+      <AttendantSeatsDialog conta={aberta} onOpenChange={(v) => !v && setAberta(null)} />
     </Card>
   );
 }

@@ -20,6 +20,12 @@ import { useAccountStoreSlots } from '@/hooks/useAccountStoreSlots';
 import { useRole, useTenant } from '@/contexts/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { canRenameStore } from '@/lib/stores/storeRename';
+import { useStoreAttendantSeats } from '@/hooks/useStoreAttendantSeats';
+import {
+  isStoreFull,
+  pendingInvitesLabel,
+  seatsCounterLabel,
+} from '@/lib/users/attendantSeats';
 
 export default function TeamPage() {
   const role = useRole();
@@ -66,6 +72,16 @@ export default function TeamPage() {
       : (role === 'gestor' || isSuperadmin) && lojaAberta
         ? { titulo: role === 'gestor' ? 'Sua Loja' : 'Loja em foco', lojas: [lojaAberta], lista: false }
         : null;
+
+  /**
+   * Vagas de atendente de cada Loja do cartão ("Atendentes: 1 de 2"). O
+   * superadmin passa a Conta ou a Loja em foco; gerente e gestor, nada (a RPC
+   * já sabe o alcance de cada um).
+   */
+  const { byStore: vagasPorLoja } = useStoreAttendantSeats({
+    tenantId: isSuperadmin ? contaDoSuperadmin ?? lojaAberta?.id ?? null : null,
+    enabled: !!cartaoDeLojas,
+  });
 
   const quemRenomeia = profile
     ? {
@@ -197,6 +213,8 @@ export default function TeamPage() {
               <ul className="space-y-2">
                 {cartaoDeLojas.lojas.map((loja) => {
                   const emFoco = loja.id === tenantId;
+                  const vagas = vagasPorLoja[loja.id];
+                  const pendentes = vagas ? pendingInvitesLabel(vagas) : null;
                   return (
                     <li
                       key={loja.id}
@@ -204,12 +222,26 @@ export default function TeamPage() {
                     >
                       <span className="flex items-center gap-2 min-w-0">
                         <Store className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="truncate text-sm">{loja.name}</span>
-                        {emFoco && cartaoDeLojas.lista && (
-                          <Badge variant="secondary" className="flex-shrink-0">
-                            Em foco
-                          </Badge>
-                        )}
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span className="truncate text-sm">{loja.name}</span>
+                            {emFoco && cartaoDeLojas.lista && (
+                              <Badge variant="secondary" className="flex-shrink-0">
+                                Em foco
+                              </Badge>
+                            )}
+                          </span>
+                          {vagas && (
+                            <span
+                              className="block text-xs text-muted-foreground"
+                              data-testid={`vagas-${loja.id}`}
+                            >
+                              {seatsCounterLabel(vagas)}
+                              {pendentes && ` · ${pendentes}`}
+                              {isStoreFull(vagas) && ' · Loja cheia'}
+                            </span>
+                          )}
+                        </span>
                       </span>
                       <span className="flex items-center gap-1 flex-shrink-0">
                         {canRenameStore(quemRenomeia, loja) && (

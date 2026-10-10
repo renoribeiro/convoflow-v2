@@ -28,7 +28,7 @@ export default function TermsOfService() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Termos de Uso</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 28 de setembro de 2026
+                Última atualização: 9 de outubro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -124,6 +124,12 @@ export default function TermsOfService() {
                         O acesso à plataforma é prestado mediante assinatura do <strong>Plano Gerente</strong>, no
                         valor de <strong>R$ 499,90 (quatrocentos e noventa e nove reais e noventa centavos) por
                         mês</strong>, que inclui a operação de até 5 (cinco) lojas.
+                      </p>
+                      <p className="text-muted-foreground mb-2">
+                        Cada loja, inclusive as adicionais, comporta <strong>1 (um) gestor e até 2 (dois)
+                        atendentes</strong>. Ocupam vaga de atendente os usuários ativos e os convites ainda não
+                        aceitos; usuários suspensos não ocupam. Para ter mais atendentes em uma loja, o cliente
+                        deve entrar em contato com o ConvoFlow pelo e-mail contato@convoflow.com.br.
                       </p>
                       <p className="text-muted-foreground">
                         Cada loja adicional é contratada por <strong>R$ 99,90 (noventa e nove reais e noventa

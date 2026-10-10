@@ -243,7 +243,8 @@ const App = () => (
                     </RoleGuard>
                   } />
                   {/* minRole="gestor": o Gestor administra a equipe da Loja
-                      dele (convida ate 5 atendentes). O backend ja permitia
+                      dele (convida os atendentes: 2 por Loja, mais com o
+                      ConvoFlow). O backend ja permitia
                       isso desde sempre -- so a rota estava fechada. */}
                   <Route path="team" element={
                     <RoleGuard minRole="gestor" fallbackPath="/dashboard">

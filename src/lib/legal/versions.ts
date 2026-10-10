@@ -11,8 +11,8 @@
 // e a data na página.
 // =============================================================================
 
-/** TermsOfService.tsx — "Última atualização: 28 de setembro de 2026" (teste grátis, entrega 4). */
-export const TERMS_VERSION = '2026-09-28';
+/** TermsOfService.tsx — "Última atualização: 9 de outubro de 2026" (atendentes por loja, cláusula 4.1). */
+export const TERMS_VERSION = '2026-10-09';
 
 /** PrivacyPolicy.tsx — "Última atualização: 12 de setembro de 2026". */
 export const PRIVACY_VERSION = '2026-09-12';

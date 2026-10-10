@@ -52,6 +52,12 @@ export const QUERY_KEYS = {
      */
     TEAM_DIRECTORY: 'team-directory',
     /**
+     * Vagas de atendente por Loja (RPC store_attendant_seats). semiStatic
+     * (5 min): mudam quando alguém é convidado, suspenso, reativado ou excluído,
+     * e os hooks de useManageUser invalidam na hora nesses casos.
+     */
+    ATTENDANT_SEATS: 'attendant-seats',
+    /**
      * Rodízio de conversas novas (RPC conversation_rotation_get) e os
      * responsáveis indisponíveis (RPC loja_ineligible_owners). semiStatic
      * (5 min): mudam quando o gestor salva ou quando entra/sai gente, e os

@@ -306,12 +306,12 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'O e-mail é o login da pessoa. O telefone é opcional. Preencha o nome de verdade: é ele que o time vê quando uma conversa é transferida e é por ele que os relatórios separam quem atendeu o quê. Ao trocar a Função, o cartão logo abaixo lista o que aquele cargo pode e o que não pode fazer. Leia antes de enviar.',
         note:
-          'Cada Loja aceita no máximo 1 Gestor e até 5 Atendentes.',
+          'Cada Loja tem 1 Gestor e 2 vagas de Atendente; o convite pendente já ocupa a vaga. Com a Loja cheia, o convite de Atendente não sai: cancele um convite pendente ou suspenda alguém, ou fale com o ConvoFlow (contato@convoflow.com.br) para ter mais vagas.',
       },
       {
         title: 'Escolha a Loja e clique em "Enviar convite"',
         body:
-          'Para Gestor e Atendente aparece uma lista com as Lojas da sua Conta, já marcada na que você colocou em foco. Confira se é a certa antes de enviar: é ela que define quais conversas e contatos a pessoa vai enxergar.',
+          'Para Gestor e Atendente aparece uma lista com as Lojas da sua Conta, já marcada na que você colocou em foco. Para Atendente, cada Loja da lista mostra quantas vagas livres tem. Confira se é a certa antes de enviar: é ela que define quais conversas e contatos a pessoa vai enxergar.',
         note:
           'Como Gestor você não escolhe nada aqui: o convite entra na sua Loja, que é a única que você administra.',
       },

@@ -10,13 +10,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { UserDetailsDialog } from './UserDetailsDialog';
 import { useState } from 'react';
-import { Eye, MoreHorizontal, Pause, Play, RotateCcw, Trash2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Pause, Play, RotateCcw, Trash2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RoleBadge } from './RoleBadge';
 import { UserStatusBadge } from './UserStatusBadge';
 import { UserRow } from '@/hooks/users/useUsers';
 import {
+  useCancelInvite,
   useSuspendUser,
   useReactivateUser,
   useResetUserPassword,
@@ -46,6 +47,7 @@ export function UsersTable({ rows, tenantNames }: UsersTableProps) {
   const reactivate = useReactivateUser();
   const resetPwd = useResetUserPassword();
   const softDelete = useSoftDeleteUser();
+  const cancelInvite = useCancelInvite();
 
   const nomeDe = (u: UserRow) => [u.first_name, u.last_name].filter(Boolean).join(' ') || '—';
   const ultimoAcesso = (u: UserRow) =>
@@ -92,30 +94,52 @@ export function UsersTable({ rows, tenantNames }: UsersTableProps) {
               <DropdownMenuItem onClick={() => resetPwd.mutate(u.id)}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Redefinir senha
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {u.status === 'active' ? (
+              {/*
+                Por status (limite de atendentes por Loja, 2026-10-09):
+                  ativo     → Suspender (libera a vaga) e Excluir;
+                  suspenso  → Reativar (o servidor confere se há vaga) e Excluir;
+                  pendente  → Cancelar convite (o convite ocupa vaga até sair);
+                  excluído  → nada: quem foi excluído volta só com convite novo.
+              */}
+              {u.status !== 'deleted' && <DropdownMenuSeparator />}
+              {u.status === 'active' && (
                 <DropdownMenuItem onClick={() => suspend.mutate(u.id)}>
                   <Pause className="mr-2 h-4 w-4" /> Suspender
                 </DropdownMenuItem>
-              ) : (
+              )}
+              {u.status === 'suspended' && (
                 <DropdownMenuItem onClick={() => reactivate.mutate(u.id)}>
                   <Play className="mr-2 h-4 w-4" /> Reativar
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      'Excluir este usuário? Descendentes serão suspensos.',
-                    )
-                  ) {
-                    softDelete.mutate(u.id);
-                  }
-                }}
-              >
-                <Trash2 className="mr-2 h-4 w-4" /> Excluir
-              </DropdownMenuItem>
+              {u.status === 'pending' && (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => {
+                    if (window.confirm('Cancelar este convite? A vaga dele fica livre.')) {
+                      cancelInvite.mutate(u.id);
+                    }
+                  }}
+                >
+                  <XCircle className="mr-2 h-4 w-4" /> Cancelar convite
+                </DropdownMenuItem>
+              )}
+              {(u.status === 'active' || u.status === 'suspended') && (
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        'Excluir este usuário? Descendentes serão suspensos.',
+                      )
+                    ) {
+                      softDelete.mutate(u.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

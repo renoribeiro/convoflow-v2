@@ -18,14 +18,14 @@ describe('RoleDescriptionCard', () => {
     expect(screen.getByText('Não pode')).toBeTruthy();
     // Os 5 itens de `can`, incluindo o último — com MAX_VISIBLE_ITEMS = 5
     // nenhum deles cai fora.
-    expect(screen.getByText('Criar até 5 atendentes na loja')).toBeTruthy();
+    expect(screen.getByText('Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)')).toBeTruthy();
     expect(screen.getByText('Configurar o WhatsApp da loja')).toBeTruthy();
     expect(screen.queryByText(OVERFLOW)).toBeNull();
   });
 
   it('gestor com hideStoreCaps omite a linha do limite por loja', () => {
     render(<RoleDescriptionCard role="gestor" hideStoreCaps />);
-    expect(screen.queryByText('Criar até 5 atendentes na loja')).toBeNull();
+    expect(screen.queryByText('Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)')).toBeNull();
     // O resto da lista continua lá.
     expect(screen.getByText('Configurar o WhatsApp da loja')).toBeTruthy();
     expect(screen.queryByText(OVERFLOW)).toBeNull();

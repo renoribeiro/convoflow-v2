@@ -975,7 +975,7 @@ const AdminDashboard = () => {
                 <p className="text-xs text-muted-foreground mt-1">
                   {userForm.role === 'gestor'
                     ? 'Cada loja tem no máximo 1 gestor.'
-                    : 'Cada loja tem no máximo 5 atendentes.'}
+                    : 'Cada loja tem 2 atendentes (ativos e convites pendentes); mais vagas em Faturamento › Contas › Atendentes.'}
                 </p>
               </div>
             )}
