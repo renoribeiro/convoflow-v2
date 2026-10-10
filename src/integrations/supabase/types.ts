@@ -3335,7 +3335,6 @@ export type Database = {
           id: string
           invite_intent_active: boolean | null
           is_active: boolean | null
-          last_ip: unknown
           last_login_at: string | null
           last_name: string | null
           login_count: number
@@ -3359,7 +3358,6 @@ export type Database = {
           id?: string
           invite_intent_active?: boolean | null
           is_active?: boolean | null
-          last_ip?: unknown
           last_login_at?: string | null
           last_name?: string | null
           login_count?: number
@@ -3383,7 +3381,6 @@ export type Database = {
           id?: string
           invite_intent_active?: boolean | null
           is_active?: boolean | null
-          last_ip?: unknown
           last_login_at?: string | null
           last_name?: string | null
           login_count?: number
@@ -4807,6 +4804,7 @@ export type Database = {
           ip: unknown
           metadata: Json | null
           profile_id: string
+          session_id: string | null
           user_agent: string | null
         }
         Insert: {
@@ -4816,6 +4814,7 @@ export type Database = {
           ip?: unknown
           metadata?: Json | null
           profile_id: string
+          session_id?: string | null
           user_agent?: string | null
         }
         Update: {
@@ -4825,6 +4824,7 @@ export type Database = {
           ip?: unknown
           metadata?: Json | null
           profile_id?: string
+          session_id?: string | null
           user_agent?: string | null
         }
         Relationships: [
@@ -5845,6 +5845,23 @@ export type Database = {
         Args: { tenant_uuid: string }
         Returns: undefined
       }
+      admin_users_activity: {
+        Args: never
+        Returns: {
+          account_name: string
+          conversations_30d: number
+          conversations_7d: number
+          last_login_ip: string
+          last_login_user_agent: string
+          last_message_at: string
+          last_seen_at: string
+          last_sign_in_at: string
+          messages_30d: number
+          messages_7d: number
+          profile_id: string
+          tenant_name: string
+        }[]
+      }
       business_minutes_between: {
         Args: { p_from: string; p_settings: Json; p_to: string }
         Returns: number
@@ -6483,6 +6500,7 @@ export type Database = {
           resultado: string
         }[]
       }
+      purge_access_logs: { Args: { p_batch?: number }; Returns: Json }
       recompute_campaign_metrics: {
         Args: { p_campaign_id: string }
         Returns: undefined

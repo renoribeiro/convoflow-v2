@@ -1,17 +1,25 @@
 // =============================================================================
-// track-login — registra um evento de login em user_activity_log
+// track-login — registra UMA entrada (login) em user_activity_log
 // =============================================================================
-// Chamada pelo cliente (fire-and-forget) após sign-in bem-sucedido.
-// Supabase Auth não expõe hook server-side em sign-in, então a edge é
-// necessária para capturar IP real (header x-forwarded-for) com privilégio.
+// Chamada pelo navegador (fire-and-forget) quando aparece uma sessão que ele
+// ainda não registrou: senha, link de convite, link de nova senha
+// (src/lib/auth/loginTracking.ts). Supabase Auth não expõe hook server-side em
+// sign-in, então a edge é necessária para capturar IP real (header
+// x-forwarded-for) com privilégio.
+//
+// Uma linha por sessão: a regra mora em _shared/track-login.ts e o índice
+// único do banco (20261010000002) garante. Recarregar, voltar à aba e renovar
+// o token não contam.
 //
 // Trigger SQL `after_insert_user_activity_log` propaga para
-// profiles.last_login_at / login_count / last_ip.
+// profiles.last_login_at / login_count. IP e navegador ficam só no histórico,
+// que só o superadmin lê.
 // =============================================================================
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { buildCorsHeaders, SecureError, createErrorResponse } from '../_shared/validation.ts';
+import { trackLogin, type TrackLoginStore } from '../_shared/track-login.ts';
 
 function extractIp(req: Request): string | null {
   const xff = req.headers.get('x-forwarded-for');
@@ -66,35 +74,55 @@ Deno.serve(async (req: Request) => {
       throw new SecureError('Token inválido', 'UNAUTHORIZED', 401);
     }
 
-    const { data: profile, error: profileErr } = await admin
-      .from('profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (profileErr || !profile) {
+    const store: TrackLoginStore = {
+      async profileIdFor(userId) {
+        const { data, error } = await admin
+          .from('profiles')
+          .select('id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (error) throw new SecureError('Falha ao ler o perfil', 'PROFILE_READ_FAILED', 500);
+        return data?.id ?? null;
+      },
+      async hasLegacyLoginBetween(profileId, from, to) {
+        const { count, error } = await admin
+          .from('user_activity_log')
+          .select('id', { count: 'exact', head: true })
+          .eq('profile_id', profileId)
+          .eq('event_type', 'login')
+          .is('session_id', null)
+          .gte('created_at', from.toISOString())
+          .lte('created_at', to.toISOString());
+        if (error) throw new SecureError('Falha ao ler o histórico', 'LOG_READ_FAILED', 500);
+        return (count ?? 0) > 0;
+      },
+      async insertLogin(row) {
+        const { error } = await admin.from('user_activity_log').insert(row);
+        if (!error) return 'inserted';
+        if (error.code === '23505') return 'duplicate';
+        throw new SecureError(`Falha ao registrar login: ${error.message}`, 'INSERT_FAILED', 500);
+      },
+    };
+
+    const outcome = await trackLogin(
+      {
+        userId: user.id,
+        accessToken: token,
+        ip: extractIp(req),
+        userAgent: req.headers.get('user-agent') || null,
+        now: new Date(),
+      },
+      store,
+    );
+
+    if (outcome === 'no_session') {
+      throw new SecureError('Token sem sessão', 'NO_SESSION', 400);
+    }
+    if (outcome === 'no_profile') {
       throw new SecureError('Profile não encontrado', 'NO_PROFILE', 404);
     }
 
-    const ip = extractIp(req);
-    const userAgent = req.headers.get('user-agent') || null;
-
-    const { error: insertErr } = await admin.from('user_activity_log').insert({
-      profile_id: profile.id,
-      event_type: 'login',
-      ip,
-      user_agent: userAgent,
-      metadata: {},
-    });
-
-    if (insertErr) {
-      throw new SecureError(
-        `Falha ao registrar login: ${insertErr.message}`,
-        'INSERT_FAILED',
-        500,
-      );
-    }
-
-    return json({ success: true }, 200, cors);
+    return json({ success: true, outcome }, 200, cors);
   } catch (err) {
     if (err instanceof SecureError) {
       return createErrorResponse(err, undefined, req.headers.get('origin'));

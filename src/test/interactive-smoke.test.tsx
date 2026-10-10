@@ -197,6 +197,13 @@ vi.mock('@/integrations/supabase/client', () => {
 // esconder travamento de verdade.
 const TEMPO_LIMITE = 30_000;
 
+// Ajuda como superadmin: a tela com mais botões de todas (uma entrada por
+// tela, nó e gatilho, todas visíveis ao superadmin). Medido em 2026-10-10:
+// 6,2 a 6,7 s sozinha — igual com a ajuda de antes e de depois do item 7 —,
+// e acima de 30 s nas três tentativas com a suíte inteira em paralelo, duas
+// vezes seguidas, no ensaio da cópia pública. Lentidão, não travamento.
+const TEMPO_LIMITE_CLIQUES: Record<string, number> = { Ajuda: 60_000 };
+
 // ------------------------------------------------------------------ utilidade
 const Moldura = ({ children }: { children: React.ReactNode }) => {
   const qc = new QueryClient({
@@ -399,7 +406,7 @@ describe('telas do dashboard: renderizam e aguentam clique', () => {
       const falhas = await clicarTudo();
       expect(falhas, `${nome}: botões que lançaram`).toEqual([]);
       expect(erroDeConsole, `${nome}: erros de console após clique`).toEqual([]);
-    }, TEMPO_LIMITE);
+    }, TEMPO_LIMITE_CLIQUES[nome] ?? TEMPO_LIMITE);
   }
 
   it('Construtor de fluxo do chatbot: renderiza e nenhum botão explode', async () => {

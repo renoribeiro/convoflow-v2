@@ -45,7 +45,6 @@ const pessoa = (status: UserRow['status']): UserRow => ({
   avatar_url: null,
   last_login_at: null,
   login_count: 0,
-  last_ip: null,
   created_at: '2026-10-01T12:00:00Z',
 });
 

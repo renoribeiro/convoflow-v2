@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -10,8 +10,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Search, UserPlus } from 'lucide-react';
 import { useUsers, UsersFilters } from '@/hooks/users/useUsers';
+import { useAdminUsersActivity } from '@/hooks/users/useAdminUsersActivity';
 import { UsersTable } from '@/components/users/UsersTable';
 import { InviteUserModal } from '@/components/users/InviteUserModal';
 import { ROLE_LABELS, STATUS_LABELS, UserRole, UserStatus } from '@/types/userHierarchy';
@@ -23,6 +25,20 @@ export default function UsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const { data: users = [], isLoading } = useUsers({ ...filters, search });
+  // Uma chamada para todo mundo (admin_users_activity): entrada, visto por
+  // último, mensagens, Loja/Conta, IP e navegador. Só o superadmin executa.
+  const atividade = useAdminUsersActivity();
+
+  // A coluna "Loja" lê nome por tenant_id; aqui ele vem da própria atividade,
+  // sem consulta extra. Antes esta tela não passava nada e a coluna era "—".
+  const tenantNames = useMemo(() => {
+    const nomes: Record<string, string> = {};
+    for (const u of users) {
+      const nome = atividade.data?.[u.id]?.tenant_name;
+      if (u.tenant_id && nome) nomes[u.tenant_id] = nome;
+    }
+    return nomes;
+  }, [users, atividade.data]);
 
   return (
     <div className="space-y-6">
@@ -99,16 +115,26 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
+      {atividade.isError && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Não foi possível carregar a atividade das pessoas (visto por último, mensagens, IP e
+            navegador). A lista abaixo mostra só o que está no perfil; recarregue a página para tentar
+            de novo.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <Card>
         <CardContent className="pt-6">
-          {isLoading ? (
+          {isLoading || atividade.isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-10 w-full rounded-md" />
               ))}
             </div>
           ) : (
-            <UsersTable rows={users} />
+            <UsersTable rows={users} tenantNames={tenantNames} activity={atividade.data} />
           )}
         </CardContent>
       </Card>

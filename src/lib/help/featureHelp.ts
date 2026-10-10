@@ -1306,20 +1306,29 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     minRole: 'superadmin',
     title: 'Gestão de Usuários',
     whatItDoes:
-      'É a lista de todo mundo no sistema, de todas as Contas, não só do seu time. Serve para achar um usuário quando você só tem o e-mail e não sabe de qual Loja ele é.',
+      'É a lista de todo mundo no sistema, de todas as Contas, não só do seu time, com o rastro de uso de cada pessoa: quando entrou, quando esteve com o ConvoFlow aberto pela última vez e quanto atendeu. Serve para achar alguém e para ver se a pessoa está usando o sistema de verdade.',
     howToConfigure: [
-      'Busque pelo e-mail ou pelo nome.',
-      'Confira o cargo e a Conta a que a pessoa pertence antes de mudar qualquer coisa.',
-      'Para convidar alguém, use o convite indicando o cargo e a Conta.',
+      'Busque pelo nome ou pelo telefone. A busca daqui não procura e-mail: se você só tem o e-mail, use a busca da tela Administração, que procura por nome e por e-mail.',
+      'Use os filtros de função e de status para estreitar a lista, por exemplo só os Atendentes suspensos.',
+      'Leia "Visto por último" para saber se a pessoa está usando o sistema. Ele é mais fiel que "Último acesso".',
+      'Abra "Ver detalhes" no menu de Ações para ver tudo da pessoa: Conta, conversas em 7 e 30 dias, IP e navegador do último login.',
+      'Para trazer um cliente novo, clique em "Convidar usuário". Daqui sai só convite de Gerente, com o "Nome da Conta" que é criada junto.',
     ],
     example:
-      'Chega um "não consigo entrar". Você busca o e-mail e vê que a Conta da pessoa está com acesso vencido: o problema é cobrança, não senha.',
+      'Chega um "não consigo entrar". Você busca o nome e vê "Visto por último: há 2 horas": a pessoa estava usando até agora há pouco, então o problema é desta tentativa, não de acesso bloqueado. Se fosse "há 40 dias", você olharia antes a assinatura da Conta.',
     tips: [
-      'Cargo errado é a causa mais comum de "essa tela não abre para mim". Confira aqui antes de investigar permissão.',
+      'Último acesso é a última vez que a pessoa ENTROU: digitou a senha, ou abriu o link do convite ou de nova senha. Quem deixa o sistema aberto por semanas não entra de novo, então essa data pode parecer velha mesmo com a pessoa trabalhando todo dia.',
+      'Visto por último é a última vez que o ConvoFlow esteve aberto na tela dela, com precisão de cerca de 1 hora. É a coluna para saber se a pessoa sumiu.',
+      '"Nunca" quer dizer que a pessoa nunca entrou: convite ainda não aceito, por exemplo.',
+      'Mensagens 7d / 30d e Última mensagem contam só o que a própria pessoa mandou pelo ConvoFlow. Robô, campanha e follow-up automático não entram. A contagem começa em 21/09/2026, quando o sistema passou a guardar quem enviou cada mensagem: "—" quer dizer nenhuma desde essa data, não "nunca". Até 21/10/2026, os 30 dias ainda incluem dias anteriores a esse início.',
+      'Nada aqui mostra o texto das mensagens nem o nome dos clientes: só datas e números. É a mesma regra que deixa as conversas fora do alcance do superadmin.',
+      'IP e navegador do último login só aparecem para você, superadmin. Gerente e Gestor não veem os de ninguém, nem pela Equipe.',
+      'Os registros de acesso (entradas, renovações de login, IP e navegador) são apagados sozinhos quando passam de 6 meses, toda madrugada, como diz a Política de Privacidade.',
+      'Em tela menor, algumas colunas saem da tabela para caber; todas continuam em "Ver detalhes". No celular, cada pessoa vira um cartão com "Visto por último".',
+      'Esta tela não muda o cargo de ninguém: não existe botão para isso. O cargo é decidido no convite. Cargo errado é a causa mais comum de "essa tela não abre para mim", então confira aqui antes de investigar permissão.',
       PUBLIC_SIGNUP_ENABLED
         ? 'Há duas portas de entrada: o convite, feito aqui, e o cadastro pelo site, que cria uma Conta nova com um Gerente. Quem entra pelo site aparece também em Administração › Cadastros.'
         : 'Hoje o convite é a única porta de entrada. O cadastro pelo site está pronto, mas desligado: a aba Administração › Cadastros mostra a chave.',
-      'Mudar o cargo de alguém muda o que ela vê na hora. Avise a pessoa antes.',
     ],
     category: 'tela',
     area: 'Admin',
