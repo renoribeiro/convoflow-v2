@@ -198,13 +198,16 @@ export function decideSubscriptionWrite(
 
 /**
  * O UPDATE de `tenants`. `extraSlots` nulo = não mexer nas vagas (Price de
- * vaga não configurado). `stripe_customer_id` nulo nunca apaga o que existe.
+ * vaga não configurado). `extraAttendants` nulo = não mexer nos atendentes
+ * extras cobrados (produto "Atendente extra" não configurado).
+ * `stripe_customer_id` nulo nunca apaga o que existe.
  */
 export function buildTenantPatch(
   state: SubscriptionState,
   decision: { action: 'update' | 'adopt' },
   extraSlots: number | null,
   nowIso: string,
+  extraAttendants: number | null = null,
 ): Record<string, unknown> {
   const patch: Record<string, unknown> = {
     subscription_status: state.subscription_status,
@@ -215,6 +218,7 @@ export function buildTenantPatch(
   };
   if (state.stripe_customer_id) patch.stripe_customer_id = state.stripe_customer_id;
   if (extraSlots !== null) patch.store_slots_extra = extraSlots;
+  if (extraAttendants !== null) patch.atendentes_extra_cobrados = extraAttendants;
   if (decision.action === 'adopt') {
     patch.subscription_id = state.subscription_id;
     patch.plan_type = 'gerente';

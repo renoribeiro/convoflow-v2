@@ -12,6 +12,8 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
 const cryptoProvider = Stripe.createSubtleCryptoProvider();
 
 const SLOT_PRICE = Deno.env.get('STRIPE_PRICE_STORE_SLOT') ?? '';
+// Produto 'Atendente extra' (reconhecido pelo PRODUTO, não pelo preço). Vazio = não mexe.
+const ATTENDANT_PRODUCT = Deno.env.get('STRIPE_PRODUCT_ATTENDANT') ?? '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -109,12 +111,13 @@ serve(async (req) => {
         }
       },
       slotPriceId: SLOT_PRICE,
+      attendantProductId: ATTENDANT_PRODUCT,
       now: () => new Date(),
     });
 
     switch (outcome.result) {
       case 'written':
-        console.log(`Conta ${outcome.tenantId}: assinatura ${outcome.subscriptionId} -> ${outcome.status} (${outcome.action}, vagas extras: ${outcome.patch.store_slots_extra ?? 'inalterado'}, cancela: ${outcome.patch.subscription_will_cancel})`)
+        console.log(`Conta ${outcome.tenantId}: assinatura ${outcome.subscriptionId} -> ${outcome.status} (${outcome.action}, vagas extras: ${outcome.patch.store_slots_extra ?? 'inalterado'}, atendentes extras: ${outcome.patch.atendentes_extra_cobrados ?? 'inalterado'}, cancela: ${outcome.patch.subscription_will_cancel})`)
         break;
       case 'ignored':
         // other_subscription com as DUAS assinaturas vivas e cobranca em

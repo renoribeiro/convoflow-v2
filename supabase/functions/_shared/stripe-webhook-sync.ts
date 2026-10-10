@@ -20,6 +20,7 @@
  *     sem Price de vaga configurado, não mexe).
  */
 import { deriveExtraSlots } from './stripe-slot-sync.ts';
+import { chargedAttendants, type SubscriptionLike as AttendantSubscriptionLike } from './attendant-billing.ts';
 import {
   buildTenantPatch,
   decideSubscriptionWrite,
@@ -38,6 +39,12 @@ export interface StripeSyncDeps {
   updateTenant: (tenantId: string, patch: Record<string, unknown>) => Promise<void>;
   /** Price da vaga de Loja extra; vazio = não mexe nas vagas. */
   slotPriceId: string;
+  /**
+   * Produto "Atendente extra" (secret STRIPE_PRODUCT_ATTENDANT); vazio = não
+   * mexe em atendentes_extra_cobrados. Reconhecido pelo PRODUTO, nunca pelo
+   * preço de Loja extra.
+   */
+  attendantProductId?: string;
   now: () => Date;
 }
 
@@ -104,7 +111,11 @@ export async function syncSubscriptionFromEvent(
   // chamada ao Stripe. As regras de erro das vagas continuam as de sempre.
   const extras = await deriveExtraSlots(async () => raw, state.subscription_id, deps.slotPriceId);
 
-  const patch = buildTenantPatch(state, decisao, extras, deps.now().toISOString());
+  // Atendentes extras na assinatura (0 se ela não cobra mais; null = produto
+  // não configurado, não mexe).
+  const atendentes = chargedAttendants(raw as AttendantSubscriptionLike, deps.attendantProductId ?? null);
+
+  const patch = buildTenantPatch(state, decisao, extras, deps.now().toISOString(), atendentes);
   await deps.updateTenant(conta.id, patch);
 
   return {

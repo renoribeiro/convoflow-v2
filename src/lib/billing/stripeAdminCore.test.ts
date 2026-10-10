@@ -331,10 +331,14 @@ describe('quem pode chamar', () => {
 
   it('backend: só as ações da lista curta', () => {
     expect([...BACKEND_ACTIONS].sort()).toEqual(
-      ['archive_coupon', 'billing_overview', 'create_coupon', 'get_status', 'list_coupons'].sort(),
+      [
+        'archive_coupon', 'billing_overview', 'create_coupon', 'get_status', 'list_coupons',
+        // atendentes extras: só ler o estado e garantir o produto (sem dinheiro)
+        'attendant_status', 'ensure_attendant_product',
+      ].sort(),
     );
     for (const a of BACKEND_ACTIONS) expect(authorize(a, { kind: 'backend' })).toBeNull();
-    for (const a of ['process_batch_commissions', 'get_balance', 'save_config', 'get_transaction_stats', 'test_connection']) {
+    for (const a of ['process_batch_commissions', 'get_balance', 'save_config', 'get_transaction_stats', 'test_connection', 'set_attendant_price', 'sync_attendant_item']) {
       expect(authorize(a, { kind: 'backend' })?.message).toMatch(/Forbidden/);
     }
   });
@@ -706,6 +710,7 @@ describe('billing_overview', () => {
       subscriptions: 2,
       plan: 99980,
       extraStores: 19980,
+      extraAttendants: 0,
       other: 0,
       gross: 119960,
       discounts: 34985,

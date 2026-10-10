@@ -28,7 +28,7 @@ export default function TermsOfService() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Termos de Uso</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 9 de outubro de 2026
+                Última atualização: 10 de outubro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -131,6 +131,14 @@ export default function TermsOfService() {
                         aceitos; usuários suspensos não ocupam. Para ter mais atendentes em uma loja, o cliente
                         deve entrar em contato com o ConvoFlow pelo e-mail contato@convoflow.com.br.
                       </p>
+                      <p className="text-muted-foreground mb-2">
+                        Cada <strong>atendente adicional</strong> (vaga além das 2 da loja) é cobrado mensalmente,
+                        de forma cumulativa à mensalidade do plano, ao <strong>preço por atendente adicional
+                        combinado com o cliente</strong> e informado a ele antes da contratação. O atendente
+                        adicional contratado no meio do ciclo é cobrado proporcionalmente aos dias restantes do
+                        ciclo, na fatura seguinte; a redução gera crédito proporcional na fatura seguinte. A
+                        alteração do preço por atendente adicional segue a regra de reajuste do parágrafo abaixo.
+                      </p>
                       <p className="text-muted-foreground">
                         Cada loja adicional é contratada por <strong>R$ 99,90 (noventa e nove reais e noventa
                         centavos) por mês</strong>, cobrada de forma cumulativa à mensalidade do plano. Os preços
@@ -171,9 +179,10 @@ export default function TermsOfService() {
                       </p>
                       <p className="text-muted-foreground mb-2">
                         Não havendo cancelamento, <strong>a mensalidade do plano</strong> (cláusula 4.1),
-                        acrescida das lojas adicionais contratadas, <strong>é cobrada automaticamente na data de
-                        término do teste</strong>, no cartão cadastrado. A partir dessa data, a assinatura segue a
-                        renovação mensal da cláusula 4.2.
+                        acrescida das lojas adicionais e dos atendentes adicionais contratados, <strong>é cobrada
+                        automaticamente na data de término do teste</strong>, no cartão cadastrado. Lojas e
+                        atendentes adicionais contratados durante o teste também não são cobrados antes do término
+                        dele. A partir dessa data, a assinatura segue a renovação mensal da cláusula 4.2.
                       </p>
                       <p className="text-muted-foreground">
                         O teste grátis é concedido <strong>uma única vez por Conta</strong>: uma Conta que já teve
@@ -230,10 +239,11 @@ export default function TermsOfService() {
                     <div>
                       <h3 className="font-medium mb-2">4.7. Tributos</h3>
                       <p className="text-muted-foreground">
-                        Os valores anunciados são <strong>finais e já incluem todos os tributos</strong> incidentes
-                        sobre a prestação do serviço. Não há taxa de adesão, taxa de instalação ou qualquer cobrança
-                        adicional além das expressamente previstas nesta seção. A nota fiscal correspondente é
-                        emitida a cada ciclo de faturamento.
+                        Os valores anunciados, inclusive o preço por atendente adicional informado ao cliente, são{' '}
+                        <strong>finais e já incluem todos os tributos</strong> incidentes sobre a prestação do
+                        serviço. Não há taxa de adesão, taxa de instalação ou qualquer cobrança adicional além das
+                        expressamente previstas nesta seção: o plano, as lojas adicionais e os atendentes
+                        adicionais. A nota fiscal correspondente é emitida a cada ciclo de faturamento.
                       </p>
                     </div>
                   </div>

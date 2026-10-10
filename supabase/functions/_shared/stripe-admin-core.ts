@@ -25,11 +25,26 @@
 // `discount_value` em REAIS no banco, convertido só na chamada ao Stripe.
 // =============================================================================
 
+import {
+  ATTENDANT_PRODUCT_ENV,
+  AttendantBillingError,
+  attendantStatus,
+  ensureAttendantProduct,
+  setAttendantPrice,
+  syncAttendantItem,
+  type AttendantBillingDeps,
+} from './attendant-billing.ts';
+
 // ---------------------------------------------------------------------------
 // Contrato
 // ---------------------------------------------------------------------------
 
 export type StripeAdminAction =
+  // Atendentes extras (limite por Loja, entrega 2 — ver attendant-billing.ts)
+  | 'attendant_status'
+  | 'set_attendant_price'
+  | 'sync_attendant_item'
+  | 'ensure_attendant_product'
   | 'get_status'
   | 'billing_overview'
   | 'get_config'
@@ -43,16 +58,26 @@ export type StripeAdminAction =
   | 'list_coupons'
   | 'archive_coupon';
 
-/** O que o backend (pg_net / chave secreta) pode pedir. */
+/**
+ * O que o backend (pg_net / chave secreta) pode pedir. Dos atendentes extras,
+ * só ler o estado de uma Conta e garantir o produto (idempotente, sem dinheiro
+ * envolvido). Mudar preço ou item da assinatura é só com login de superadmin.
+ */
 export const BACKEND_ACTIONS: readonly StripeAdminAction[] = [
   'get_status',
   'billing_overview',
   'list_coupons',
   'create_coupon',
   'archive_coupon',
+  'attendant_status',
+  'ensure_attendant_product',
 ];
 
-export type AdminCaller = { kind: 'superadmin' } | { kind: 'backend' } | { kind: 'other' } | null;
+export type AdminCaller =
+  | { kind: 'superadmin'; userId?: string | null }
+  | { kind: 'backend' }
+  | { kind: 'other' }
+  | null;
 
 /** A única fonte da chave do Stripe. */
 export const STRIPE_SECRET_ENV = 'STRIPE_SECRET_KEY';
@@ -482,7 +507,41 @@ export interface StripeStatus {
   error: string | null;
   account: { id: string; name: string | null; email: string | null; country: string | null } | null;
   prices: { gerente: PriceCheck; storeSlot: PriceCheck };
+  /** Produto "Atendente extra" (secret STRIPE_PRODUCT_ATTENDANT). */
+  attendantProduct: ProductCheck;
   webhook: WebhookCheck;
+}
+
+export interface ProductCheck {
+  env: string;
+  configured: boolean;
+  found: boolean;
+  id: string | null;
+  active: boolean | null;
+  name: string | null;
+  error: string | null;
+}
+
+function emptyProduct(env: string, id: string | undefined): ProductCheck {
+  return { env, configured: !!id, found: false, id: id ?? null, active: null, name: null, error: null };
+}
+
+async function checkProduct(stripe: StripeLike, env: string, id: string | undefined): Promise<ProductCheck> {
+  const vazio = emptyProduct(env, id);
+  if (!id) return { ...vazio, error: `A secret ${env} não está definida: atendentes extras não são cobrados.` };
+  try {
+    const p = await stripe.products.retrieve(id);
+    if (p?.deleted) return { ...vazio, error: `O produto de ${env} foi apagado no Stripe.` };
+    return { ...vazio, found: true, active: p?.active ?? null, name: p?.name ?? null };
+  } catch (e) {
+    const naoExiste = (e as { code?: string })?.code === 'resource_missing';
+    return {
+      ...vazio,
+      error: naoExiste
+        ? `O produto de ${env} não existe na conta do Stripe conectada.`
+        : `Não foi possível ler o produto de ${env}: ${mensagem(e)}`,
+    };
+  }
 }
 
 export function webhookUrl(getEnv: (n: string) => string | undefined): string {
@@ -561,6 +620,7 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
   const url = webhookUrl(deps.getEnv);
   const gerenteId = deps.getEnv(PRICE_GERENTE_ENV)?.trim() || undefined;
   const slotId = deps.getEnv(PRICE_STORE_SLOT_ENV)?.trim() || undefined;
+  const attendantId = deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || undefined;
   const semConexao = (secretConfigured: boolean, mode: StripeMode, error: string): StripeStatus => ({
     secretConfigured,
     connected: false,
@@ -571,6 +631,7 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
       gerente: emptyPrice(PRICE_GERENTE_ENV, gerenteId),
       storeSlot: emptyPrice(PRICE_STORE_SLOT_ENV, slotId),
     },
+    attendantProduct: emptyProduct(ATTENDANT_PRODUCT_ENV, attendantId),
     webhook: {
       url,
       expectedEvents: [...WEBHOOK_EVENTS],
@@ -595,9 +656,10 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
     return semConexao(true, cliente.mode, `A chave não conectou ao Stripe: ${mensagem(e)}`);
   }
 
-  const [gerente, storeSlot, webhook] = await Promise.all([
+  const [gerente, storeSlot, attendantProduct, webhook] = await Promise.all([
     checkPrice(cliente.stripe, PRICE_GERENTE_ENV, gerenteId),
     checkPrice(cliente.stripe, PRICE_STORE_SLOT_ENV, slotId),
+    checkProduct(cliente.stripe, ATTENDANT_PRODUCT_ENV, attendantId),
     checkWebhook(cliente.stripe, url),
   ]);
 
@@ -608,6 +670,7 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
     error: null,
     account,
     prices: { gerente, storeSlot },
+    attendantProduct,
     webhook,
   };
 }
@@ -650,6 +713,8 @@ export interface MrrBreakdown {
   gross: number;
   plan: number;
   extraStores: number;
+  /** Atendentes extras (produto "Atendente extra", preço de cada Conta). */
+  extraAttendants: number;
   other: number;
   discounts: number;
   /** Assinaturas que entram na conta (ativas ou com pagamento pendente). */
@@ -748,18 +813,20 @@ function activeDiscounts(sub: any, nowMs: number): any[] {
 }
 
 /**
- * Receita mensal de UMA assinatura: plano, lojas extras, outros e o desconto
- * dos cupons em vigor. Percentual incide sobre o total; valor fixo desconta
+ * Receita mensal de UMA assinatura: plano, lojas extras, atendentes extras,
+ * outros e o desconto dos cupons em vigor. Plano e Loja extra pelo PREÇO;
+ * atendente extra pelo PRODUTO (cada Conta tem o seu preço). Percentual incide sobre o total; valor fixo desconta
  * por mês, sem passar de zero.
  */
 export function subscriptionMrr(
   // deno-lint-ignore no-explicit-any
   sub: any,
-  prices: { gerente?: string; storeSlot?: string },
+  prices: { gerente?: string; storeSlot?: string; attendantProduct?: string },
   nowMs: number,
-): { gross: number; plan: number; extraStores: number; other: number; discounts: number; net: number; unknownItems: number } {
+): { gross: number; plan: number; extraStores: number; extraAttendants: number; other: number; discounts: number; net: number; unknownItems: number } {
   let plan = 0;
   let extraStores = 0;
+  let extraAttendants = 0;
   let other = 0;
   let unknownItems = 0;
   for (const item of sub?.items?.data ?? []) {
@@ -769,11 +836,13 @@ export function subscriptionMrr(
       continue;
     }
     const priceId = item?.price?.id;
+    const produto = typeof item?.price?.product === 'string' ? item.price.product : item?.price?.product?.id;
     if (prices.storeSlot && priceId === prices.storeSlot) extraStores += valor;
     else if (prices.gerente && priceId === prices.gerente) plan += valor;
+    else if (prices.attendantProduct && produto === prices.attendantProduct) extraAttendants += valor;
     else other += valor;
   }
-  const gross = plan + extraStores + other;
+  const gross = plan + extraStores + extraAttendants + other;
   let discounts = 0;
   for (const d of activeDiscounts(sub, nowMs)) {
     const c = d.coupon;
@@ -785,6 +854,7 @@ export function subscriptionMrr(
     gross: Math.round(gross),
     plan: Math.round(plan),
     extraStores: Math.round(extraStores),
+    extraAttendants: Math.round(extraAttendants),
     other: Math.round(other),
     discounts: Math.round(discounts),
     net: Math.round(gross - discounts),
@@ -858,6 +928,7 @@ export async function billingOverview(deps: StripeAdminDeps): Promise<BillingOve
   const prices = {
     gerente: deps.getEnv(PRICE_GERENTE_ENV)?.trim() || undefined,
     storeSlot: deps.getEnv(PRICE_STORE_SLOT_ENV)?.trim() || undefined,
+    attendantProduct: deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || undefined,
   };
 
   // --- As Contas (só Conta assina; Loja herda) ---
@@ -920,7 +991,7 @@ export async function billingOverview(deps: StripeAdminDeps): Promise<BillingOve
   }
 
   // --- Receita mensal recorrente ---
-  const mrr: MrrBreakdown = { net: 0, gross: 0, plan: 0, extraStores: 0, other: 0, discounts: 0, subscriptions: 0 };
+  const mrr: MrrBreakdown = { net: 0, gross: 0, plan: 0, extraStores: 0, extraAttendants: 0, other: 0, discounts: 0, subscriptions: 0 };
   for (const s of assinaturas) {
     if (!MRR_STATUSES.includes(s.status)) continue;
     const r = subscriptionMrr(s, prices, nowMs);
@@ -929,6 +1000,7 @@ export async function billingOverview(deps: StripeAdminDeps): Promise<BillingOve
     mrr.gross += r.gross;
     mrr.plan += r.plan;
     mrr.extraStores += r.extraStores;
+    mrr.extraAttendants += r.extraAttendants;
     mrr.other += r.other;
     mrr.discounts += r.discounts;
     mrr.net += r.net;
@@ -1164,12 +1236,47 @@ export async function handleStripeAdmin(
       case 'archive_coupon':
         return ok(await archiveCoupon(deps, payload));
 
+      // ---- Atendentes extras (attendant-billing.ts) ----
+      case 'attendant_status':
+        return ok(await attendantStatus(await attendantDeps(deps), tenantDoPayload(payload)));
+
+      case 'set_attendant_price': {
+        const p = (payload ?? {}) as { tenantId?: unknown; priceCents?: unknown; note?: unknown };
+        return ok(await setAttendantPrice(await attendantDeps(deps), p.tenantId, p.priceCents, p.note));
+      }
+
+      case 'sync_attendant_item':
+        return ok(await syncAttendantItem(await attendantDeps(deps), tenantDoPayload(payload)));
+
+      case 'ensure_attendant_product': {
+        const { stripe } = await getStripeClient(deps);
+        const configurado = deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || null;
+        return ok({ env: ATTENDANT_PRODUCT_ENV, ...(await ensureAttendantProduct(stripe, configurado)) });
+      }
+
       default:
         return { status: 400, body: { error: `Unknown action: ${nome}` } };
     }
   } catch (e: unknown) {
     // Como antes: 400 com a mensagem (o dialog de cupom mostra o texto).
-    const status = e instanceof AdminError ? e.status : 400;
+    const status = e instanceof AdminError || e instanceof AttendantBillingError ? e.status : 400;
     return { status, body: { error: mensagem(e) } };
   }
+}
+
+function tenantDoPayload(payload: unknown): unknown {
+  return (payload as { tenantId?: unknown } | null)?.tenantId;
+}
+
+/** O Stripe da secret, o banco de serviço e o produto da secret, para attendant-billing.ts. */
+async function attendantDeps(deps: StripeAdminDeps): Promise<AttendantBillingDeps> {
+  const { stripe } = await getStripeClient(deps);
+  return {
+    stripe,
+    db: deps.db,
+    productId: deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || null,
+    now: deps.now,
+    actorUserId: deps.caller?.kind === 'superadmin' ? deps.caller.userId ?? null : null,
+    log: deps.log,
+  };
 }
