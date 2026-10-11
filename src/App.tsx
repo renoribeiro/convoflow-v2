@@ -83,12 +83,11 @@ const App = () => (
           <ChatbotProvider>
             <Toaster />
             <Sonner />
-            {/* Comportamento do React Router 7, ligado ainda no 6 para a troca
-                de versão não mudar nada na tela. startTransition: ao trocar
-                de tela pelo menu, a tela atual fica até a nova carregar (sem
-                piscar o esqueleto). relativeSplatPath: sem efeito aqui (não há
-                rota "/*" com link relativo), só cala o aviso. */}
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            {/* React Router 7: a troca de tela vai dentro de startTransition
+                (a tela atual fica um instante enquanto a nova baixa, depois
+                vem o esqueleto). Era o aviso v7_startTransition, ligado no 6
+                antes da troca de versão. */}
+            <BrowserRouter>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
