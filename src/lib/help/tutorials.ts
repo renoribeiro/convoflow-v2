@@ -318,10 +318,10 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confirme que a pessoa conseguiu entrar',
         body:
-          'Ela recebe um e-mail de convite, clica no link e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Volte em Equipe e veja se o nome aparece na lista. Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
+          'Ela recebe um e-mail de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Volte em Equipe e veja se o nome aparece na lista. Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
         screen: '/dashboard/team',
         note:
-          'O link do convite vale por UM acesso só. Se ela abrir no celular e depois tentar no computador, o segundo dá "Este link expirou ou já foi usado". Nesse caso é só pedir um novo pela própria tela, ou usar "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa o rodízio de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
+          'O convite vale por 24 horas e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa o rodízio de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
       },
       {
         title: 'Divida as conversas novas entre a equipe',
@@ -637,9 +637,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Crie sua senha pelo link do e-mail',
         body:
-          'Abra o e-mail do ConvoFlow e clique no link. Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
+          'Abra o e-mail do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
         note:
-          'O link vale por um acesso. Se ele não abrir, peça outro na mesma tela, informando o seu e-mail.',
+          'O botão e o código de 6 dígitos do e-mail valem por 24 horas e por um acesso. Se o botão não abrir, vá em "Esqueci minha senha" na tela de login, clique em "Já tenho um código" e digite o código. Ou peça um código novo na mesma tela.',
       },
       {
         title: 'Clique em "Começar teste grátis" e cadastre o cartão',

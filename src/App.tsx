@@ -92,9 +92,9 @@ const App = () => (
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/auth" element={<Auth />} />
-                {/* Convite e recuperacao de senha caem aqui. Rota PUBLICA de
-                    proposito: quem chega ainda nao tem senha para logar, so a
-                    sessao que o link do e-mail criou. */}
+                {/* Convite, nova senha e "Esqueci minha senha" caem aqui. Rota
+                    PUBLICA de proposito: quem chega ainda nao tem senha para
+                    logar, so o link ou o codigo do e-mail. */}
                 <Route path="/definir-senha" element={<DefinirSenha />} />
                 <Route path="/login" element={<Login />} />
                 {/* Cadastro pelo site (teste grátis, entrega 2). Com a chave

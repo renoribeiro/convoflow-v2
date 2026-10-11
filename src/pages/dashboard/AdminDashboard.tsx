@@ -337,7 +337,9 @@ const AdminDashboard = () => {
           isActive: userForm.isActive,
           tenantId: userForm.tenantId || null,
           newTenantName: userForm.newTenantName.trim() || null,
-          redirectTo: window.location.origin,
+          // Link antigo do convite (ConfirmationURL) cai aqui; sem o caminho
+          // ele caía na página de vendas, sem tela para criar a senha.
+          redirectTo: `${window.location.origin}/definir-senha`,
         }
       });
 

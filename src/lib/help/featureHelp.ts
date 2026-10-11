@@ -1245,7 +1245,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Os cargos vão de Atendente (atende) a Gestor (administra a Loja) e Gerente (administra várias Lojas).',
       'Loja nova já nasce com acesso: ela herda o da sua Conta. Quem você convidar entra direto, sem precisar de liberação separada para cada Loja.',
       'A coluna "Loja" diz onde cada pessoa trabalha, e "Ver detalhes" no menu de Ações abre o resto: telefone, último acesso e o que o cargo dela alcança.',
-      'O link do convite vale por um acesso só. Quem perdeu o prazo, ou esqueceu a senha, resolve sozinho pelo "Esqueci minha senha" da tela de login. Você também pode disparar pelo "Redefinir senha" no menu de Ações.',
+      'O convite chega por e-mail com um botão e um código de 6 dígitos, e vale por 24 horas. Quando a pessoa usa um, o outro deixa de valer. Quem perdeu o prazo, ou esqueceu a senha, resolve sozinho pelo "Esqueci minha senha" da tela de login: recebe um código novo e cria a senha. Você também pode disparar pelo "Redefinir senha" no menu de Ações.',
       'O plano Gerente inclui 5 Lojas. Quando elas acabam, "Nova Loja" fica cinza e o motivo aparece ao passar o mouse. Lojas adicionais são contratadas em Configurações › Assinatura.',
       'Cada Loja tem 1 Gestor e 2 vagas de Atendente, inclusive as Lojas adicionais. O Gestor não ocupa vaga de Atendente. Ocupam vaga quem está ativo e o convite pendente; quem está suspenso não. Para ter mais Atendentes em uma Loja, fale com o ConvoFlow: contato@convoflow.com.br. O atendente adicional é cobrado por mês, junto com o plano, ao preço combinado.',
       'Com a Loja cheia, "Convidar" avisa antes de você preencher e não deixa enviar convite de Atendente para ela. Para abrir vaga: cancele um convite pendente ("Cancelar convite" no menu de Ações) ou suspenda alguém.',
@@ -1317,7 +1317,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Chega um "não consigo entrar". Você busca o nome e vê "Visto por último: há 2 horas": a pessoa estava usando até agora há pouco, então o problema é desta tentativa, não de acesso bloqueado. Se fosse "há 40 dias", você olharia antes a assinatura da Conta.',
     tips: [
-      'Último acesso é a última vez que a pessoa ENTROU: digitou a senha, ou abriu o link do convite ou de nova senha. Quem deixa o sistema aberto por semanas não entra de novo, então essa data pode parecer velha mesmo com a pessoa trabalhando todo dia.',
+      'Último acesso é a última vez que a pessoa ENTROU: digitou a senha, ou usou o botão ou o código de um e-mail de convite ou de nova senha. Quem deixa o sistema aberto por semanas não entra de novo, então essa data pode parecer velha mesmo com a pessoa trabalhando todo dia.',
       'Visto por último é a última vez que o ConvoFlow esteve aberto na tela dela, com precisão de cerca de 1 hora. É a coluna para saber se a pessoa sumiu.',
       '"Nunca" quer dizer que a pessoa nunca entrou: convite ainda não aceito, por exemplo.',
       'Mensagens 7d / 30d e Última mensagem contam só o que a própria pessoa mandou pelo ConvoFlow. Robô, campanha e follow-up automático não entram. A contagem começa em 21/09/2026, quando o sistema passou a guardar quem enviou cada mensagem: "—" quer dizer nenhuma desde essa data, não "nunca". Até 21/10/2026, os 30 dias ainda incluem dias anteriores a esse início.',
@@ -1510,7 +1510,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Preencha nome, sobrenome, e-mail, o nome da empresa e um telefone com DDD. O nome da empresa vira o nome da sua Conta.',
       'Marque a caixa dos Termos de Uso e da Política de Privacidade. Os links abrem numa aba nova; guardamos a data do seu aceite e a versão que você leu.',
       'Espere a verificação "não sou um robô" terminar e clique em "Criar minha conta".',
-      'Abra o e-mail do ConvoFlow e clique no link para criar sua senha. Você entra no sistema como Gerente da sua Conta.',
+      'Abra o e-mail do ConvoFlow, clique no botão e depois em "Continuar" para criar sua senha. Você entra no sistema como Gerente da sua Conta. Se o botão não abrir, use o código de 6 dígitos do mesmo e-mail: "Esqueci minha senha" na tela de login, depois "Já tenho um código".',
       'Na tela seguinte, clique em "Começar teste grátis" e cadastre o cartão no Stripe. Nada é cobrado hoje: a cobrança só acontece no fim do teste.',
     ],
     example: `A Ana, dona de uma imobiliária, se cadastra às 10h com o e-mail da empresa. Às 10h02 cria a senha pelo link, cadastra o cartão e entra. A primeira cobrança só acontece ${TRIAL_DAYS} dias depois, se ela não cancelar.`,

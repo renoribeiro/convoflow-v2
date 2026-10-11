@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -12,50 +12,39 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { registrarEnvioBarradoNoNavegador } from '@/lib/signup/authEmailFailure';
+import { lerChegada, mensagemDoErroDoLink, TIPO_DO_CODIGO } from '@/lib/auth/linkDoEmail';
 import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 
 /** Mínimo de caracteres da senha. Mesma regra do Supabase Auth por padrão. */
 const MIN_SENHA = 8;
 
-/**
- * Traduz o erro que o Supabase devolve no fragmento da URL.
- *
- * O link de convite e o de recuperação são de USO ÚNICO. Abrir no celular e
- * depois no computador queima o primeiro acesso e o segundo chega aqui com
- * `otp_expired` — foi exatamente o que aconteceu em 2026-08-18. Sem esta
- * tradução o usuário via um fragmento em inglês na barra de endereço da página
- * de vendas e não tinha ideia do que fazer.
- */
-function mensagemDoErro(code: string | null, description: string | null): string {
-  if (code === 'otp_expired') {
-    return 'Este link expirou ou já foi usado. Cada link vale por um acesso só. Peça um novo abaixo.';
-  }
-  if (code === 'access_denied') {
-    return 'Este link não é mais válido. Peça um novo abaixo.';
-  }
-  return description || 'Não foi possível validar este link. Peça um novo abaixo.';
-}
+/** Link do e-mail que funcionou no Supabase mas não virou sessão aqui. */
+const LINK_SEM_ACESSO =
+  'O link não trouxe um acesso válido. Isso acontece quando ele já foi aberto antes: cada link vale por um acesso só. Peça um código novo abaixo.';
 
 /**
- * Define ou redefine a senha.
+ * Define ou redefine a senha, e é também o "Esqueci minha senha".
  *
- * Atende os DOIS caminhos, porque o problema é o mesmo nos dois: a pessoa chega
- * com uma sessão criada por um link de e-mail e sem senha para entrar de novo.
+ * Quem chega aqui:
+ *   - CONVITE e NOVA SENHA pelo link do e-mail. O link novo traz `token_hash`
+ *     e a tela só o usa quando a pessoa clica em "Continuar"; o antigo chega
+ *     com a sessão pronta no fragmento. Ver src/lib/auth/linkDoEmail.ts.
+ *   - "Esqueci minha senha" da tela de login, sem link nenhum: e-mail, código
+ *     de 6 dígitos, senha nova.
  *
- *   - CONVITE     → `manage-user` manda o convidado para cá. Antes mandava para
- *                   /dashboard, onde não havia nada que deixasse definir senha:
- *                   o convidado entrava uma vez e nunca mais.
- *   - RECUPERAÇÃO → o link de "Esqueci minha senha" cai aqui.
- *
- * Como o cliente do Supabase está com `detectSessionInUrl`, quando este
- * componente monta o token do fragmento já virou sessão. Por isso a decisão é
- * pela sessão, e não por ler o token na mão.
+ * O alerta vermelho só aparece para quem chegou por um link que falhou. Até
+ * 2026-10-11 ele aparecia para toda visita sem sessão, inclusive para quem só
+ * queria pedir o código, e dizia que o link "já tinha sido aberto" sem link
+ * nenhum ter sido aberto.
  */
 export const DefinirSenha = () => {
   const { session, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Lido UMA vez, na montagem: o supabase-js limpa o fragmento assim que o processa.
+  const [chegada] = useState(() => lerChegada(window.location.search, window.location.hash));
 
   const [senha, setSenha] = useState('');
   const [confirmacao, setConfirmacao] = useState('');
@@ -64,34 +53,53 @@ export const DefinirSenha = () => {
   const [erroForm, setErroForm] = useState<string | null>(null);
   const [pronto, setPronto] = useState(false);
 
-  // Entrada por CÓDIGO, para quem chegou sem sessão.
-  const [emailReenvio, setEmailReenvio] = useState('');
+  // Link novo: só o clique em "Continuar" usa o acesso.
+  const [continuando, setContinuando] = useState(false);
+  const [linkAceito, setLinkAceito] = useState(false);
+  const [erroDoLinkNovo, setErroDoLinkNovo] = useState<string | null>(null);
+
+  // "Esqueci minha senha": e-mail → código → senha.
+  const [etapa, setEtapa] = useState<'email' | 'codigo'>('email');
+  const [email, setEmail] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [enviadoPara, setEnviadoPara] = useState<string | null>(null);
+  const [reenviado, setReenviado] = useState(false);
   const [codigo, setCodigo] = useState('');
   const [verificando, setVerificando] = useState(false);
   const [erroCodigo, setErroCodigo] = useState<string | null>(null);
-  const [reenviando, setReenviando] = useState(false);
-  const [reenviado, setReenviado] = useState(false);
 
-  /**
-   * Erro do fragmento, lido UMA vez na montagem. Precisa ser no estado inicial:
-   * o supabase-js limpa o hash assim que processa, e a partir daí não dá mais
-   * para saber por que a pessoa chegou sem sessão.
-   */
-  const erroDoLink = useMemo(() => {
-    const hash = window.location.hash?.replace(/^#/, '') ?? '';
-    if (!hash) return null;
-    const params = new URLSearchParams(hash);
-    if (!params.get('error') && !params.get('error_code')) return null;
-    return mensagemDoErro(params.get('error_code'), params.get('error_description'));
-  }, []);
+  const erroDoLink = chegada.tipo === 'erro' ? chegada.mensagem : erroDoLinkNovo;
 
-  // Tira o fragmento da barra de endereço depois de lido — ele não ajuda mais
-  // ninguém e um F5 com ele ainda ali só repete a mesma tela de erro.
+  // Erro no fragmento: tira da barra depois de lido. Um F5 com ele ali só
+  // repetiria a mesma tela de erro.
   useEffect(() => {
-    if (erroDoLink) {
-      window.history.replaceState(null, '', window.location.pathname);
+    if (chegada.tipo === 'erro') {
+      navigate('/definir-senha', { replace: true });
     }
-  }, [erroDoLink]);
+  }, [chegada, navigate]);
+
+  const continuar = async () => {
+    if (chegada.tipo !== 'link_novo') return;
+    setContinuando(true);
+    setErroDoLinkNovo(null);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash: chegada.tokenHash,
+        type: chegada.otpType,
+      });
+      if (error) throw error;
+      // A sessão nova chega pelo AuthContext e o formulário de senha aparece.
+      setLinkAceito(true);
+    } catch (err) {
+      const e = err as { message?: string; code?: string };
+      logger.warn('[DefinirSenha] link do e-mail recusado', { code: e?.code, message: e?.message });
+      setErroDoLinkNovo(mensagemDoErroDoLink(e));
+    } finally {
+      setContinuando(false);
+      // O token_hash sai da barra: usado ou recusado, ele não serve mais.
+      navigate('/definir-senha', { replace: true });
+    }
+  };
 
   const salvar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,14 +136,42 @@ export const DefinirSenha = () => {
   };
 
   /**
+   * Manda o e-mail de nova senha (com o código de 6 dígitos).
+   * Mesma resposta com ou sem erro: a tela não confirma se o e-mail existe.
+   */
+  const enviarCodigo = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const destino = email.trim();
+    if (!destino) return;
+
+    setEnviando(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(destino, {
+        redirectTo: `${window.location.origin}/definir-senha`,
+      });
+      if (error) throw error;
+    } catch (err) {
+      logger.warn('[DefinirSenha] envio do código falhou', {
+        message: err instanceof Error ? err.message : 'desconhecido',
+      });
+      // Termômetro do envio de e-mail (limite por hora / endereço recusado).
+      // Sem esperar: não muda nada do que a pessoa vê.
+      void registrarEnvioBarradoNoNavegador(
+        err as { status?: number; code?: string; message?: string },
+      );
+    } finally {
+      setReenviado(enviadoPara !== null);
+      setEnviadoPara(destino);
+      setEtapa('codigo');
+      setEnviando(false);
+    }
+  };
+
+  /**
    * Troca o código de 6 dígitos por uma sessão.
    *
-   * Existe porque o LINK não é confiável: ele vale por um acesso só, e em
-   * 2026-08-18 os logs do Auth mostraram três vezes o mesmo padrão — um
-   * primeiro `/verify` bem-sucedido que ninguém pediu (varredura de e-mail ou
-   * pré-carregamento do navegador) e, logo depois, o acesso do usuário
-   * chegando num token já gasto. Com código não há nada para um robô consumir:
-   * ele é inútil sem alguém digitando.
+   * Vale para o código do e-mail de NOVA SENHA e para o do e-mail de CONVITE:
+   * ver TIPO_DO_CODIGO em src/lib/auth/linkDoEmail.ts.
    */
   const verificarCodigo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,19 +186,19 @@ export const DefinirSenha = () => {
     setVerificando(true);
     try {
       const { error } = await supabase.auth.verifyOtp({
-        email: emailReenvio.trim(),
+        email: email.trim(),
         token: limpo,
-        type: 'recovery',
+        type: TIPO_DO_CODIGO,
       });
       if (error) throw error;
-      // A sessão criada aqui derruba o ramo "sem sessão" e o formulário de
-      // senha aparece sozinho — quem manda é o `session` do AuthContext.
+      // A sessão criada aqui leva ao formulário de senha: quem manda é o
+      // `session` do AuthContext.
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Código inválido.';
       logger.warn('[DefinirSenha] verifyOtp falhou', { message: msg });
       setErroCodigo(
         /expired|invalid|not found/i.test(msg)
-          ? 'Código inválido ou vencido. Peça um novo abaixo.'
+          ? 'Código inválido ou vencido. Confira o e-mail digitado ou peça um código novo.'
           : msg,
       );
     } finally {
@@ -170,35 +206,17 @@ export const DefinirSenha = () => {
     }
   };
 
-  const reenviarLink = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!emailReenvio.trim()) return;
+  if (pronto) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
-    setReenviando(true);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(emailReenvio.trim(), {
-        redirectTo: `${window.location.origin}/definir-senha`,
-      });
-      if (error) throw error;
-      setReenviado(true);
-    } catch (err) {
-      logger.warn('[DefinirSenha] reenvio falhou', {
-        message: err instanceof Error ? err.message : 'desconhecido',
-      });
-      // Termômetro do envio de e-mail (limite por hora / endereço recusado).
-      // Sem esperar: não muda nada do que a pessoa vê.
-      void registrarEnvioBarradoNoNavegador(
-        err as { status?: number; code?: string; message?: string },
-      );
-      // Mesma resposta com ou sem erro: não confirmamos se o e-mail existe.
-      setReenviado(true);
-    } finally {
-      setReenviando(false);
-    }
-  };
+  // Link novo esperando o clique. Vem antes do "carregando" e da sessão: quem
+  // já está logado com outra conta também precisa clicar, senão trocaria a
+  // senha da conta errada.
+  const esperandoClique = chegada.tipo === 'link_novo' && !linkAceito && !erroDoLinkNovo;
 
-  // Esperando o AuthProvider resolver o token do link.
-  if (isLoading) {
+  // Esperando o AuthProvider (sessão do link antigo) ou a sessão do clique.
+  if (!esperandoClique && (isLoading || (linkAceito && !session))) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted">
         <Loader2 className="h-10 w-10 animate-spin text-muted-foreground" />
@@ -206,11 +224,29 @@ export const DefinirSenha = () => {
     );
   }
 
-  if (pronto) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  const comSessao = !esperandoClique && !!session;
+  const ehConvite = chegada.tipo === 'link_novo' && chegada.otpType === 'invite';
+  const alertaDoLink = !comSessao && !esperandoClique
+    ? erroDoLink ?? (chegada.tipo === 'link_antigo' ? LINK_SEM_ACESSO : null)
+    : null;
 
-  const semSessao = !session;
+  let titulo: string;
+  let descricao: string;
+  if (esperandoClique) {
+    titulo = ehConvite ? 'Aceite seu convite' : 'Crie sua nova senha';
+    descricao = 'Clique em Continuar para criar sua senha.';
+  } else if (comSessao) {
+    titulo = 'Defina sua senha';
+    descricao = 'É com ela que você vai entrar daqui pra frente.';
+  } else if (etapa === 'codigo') {
+    titulo = 'Digite o código';
+    descricao = enviadoPara
+      ? `Enviamos um código de 6 dígitos para ${enviadoPara}. Ele vale por 24 horas.`
+      : 'Digite o seu e-mail e o código de 6 dígitos que chegou para você.';
+  } else {
+    titulo = alertaDoLink ? 'Peça um código novo' : 'Esqueci minha senha';
+    descricao = 'Digite o e-mail da sua conta. Enviamos um código de 6 dígitos para você criar uma senha nova.';
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted flex items-center justify-center p-4">
@@ -236,100 +272,25 @@ export const DefinirSenha = () => {
               <img src={logoVertical} alt="ConvoFlow" className="h-20 w-auto dark:hidden" />
               <img src={logoVerticalDark} alt="ConvoFlow" className="h-20 w-auto hidden dark:block" />
             </div>
-            <CardTitle className="text-xl">
-              {semSessao ? 'Confirme seu acesso' : 'Defina sua senha'}
-            </CardTitle>
-            <CardDescription>
-              {semSessao
-                ? 'Digite o código que enviamos para o seu e-mail.'
-                : 'É com ela que você vai entrar daqui pra frente.'}
-            </CardDescription>
+            <CardTitle className="text-xl">{titulo}</CardTitle>
+            <CardDescription>{descricao}</CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {(erroDoLink || semSessao) && (
+            {alertaDoLink && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertTitle>Não deu para usar este link</AlertTitle>
-                <AlertDescription>
-                  {erroDoLink ??
-                    'O link não trouxe um acesso válido. Isso acontece quando ele já foi aberto antes: cada link vale por um acesso só.'}
-                </AlertDescription>
+                <AlertDescription>{alertaDoLink}</AlertDescription>
               </Alert>
             )}
 
-            {semSessao ? (
-              <div className="space-y-4">
-                <form onSubmit={verificarCodigo} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reenvio-email">Seu e-mail</Label>
-                    <Input
-                      id="reenvio-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      value={emailReenvio}
-                      onChange={(ev) => setEmailReenvio(ev.target.value)}
-                      autoComplete="email"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="codigo-acesso">Código recebido por e-mail</Label>
-                    <Input
-                      id="codigo-acesso"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                      maxLength={6}
-                      placeholder="000000"
-                      value={codigo}
-                      onChange={(ev) => setCodigo(ev.target.value.replace(/\D/g, ''))}
-                      className="text-center text-lg tracking-[0.5em]"
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      São 6 dígitos. O código não se gasta sozinho. Diferente do link,
-                      só funciona se alguém digitar.
-                    </p>
-                  </div>
-
-                  {erroCodigo && (
-                    <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>{erroCodigo}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  <Button type="submit" className="w-full" disabled={verificando}>
-                    {verificando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                    Continuar
-                  </Button>
-                </form>
-
-                <div className="border-t border-border pt-4">
-                  {reenviado ? (
-                    <Alert>
-                      <Check className="h-4 w-4" />
-                      <AlertTitle>Enviado</AlertTitle>
-                      <AlertDescription>
-                        Se esse e-mail estiver cadastrado, o código chega em instantes.
-                      </AlertDescription>
-                    </Alert>
-                  ) : (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="w-full"
-                      disabled={reenviando || !emailReenvio.trim()}
-                      onClick={() => reenviarLink()}
-                    >
-                      {reenviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                      Não recebi, enviar de novo
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ) : (
+            {esperandoClique ? (
+              <Button className="w-full" onClick={continuar} disabled={continuando}>
+                {continuando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Continuar
+              </Button>
+            ) : comSessao ? (
               <form onSubmit={salvar} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="nova-senha">Nova senha</Label>
@@ -389,6 +350,101 @@ export const DefinirSenha = () => {
                   Salvar e entrar
                 </Button>
               </form>
+            ) : etapa === 'email' ? (
+              <form onSubmit={enviarCodigo} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="esqueci-email">Seu e-mail</Label>
+                  <Input
+                    id="esqueci-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(ev) => setEmail(ev.target.value)}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+
+                <Button type="submit" className="w-full" disabled={enviando || !email.trim()}>
+                  {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                  Enviar código
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setEtapa('codigo')}
+                >
+                  Já tenho um código
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                <form onSubmit={verificarCodigo} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="esqueci-email">Seu e-mail</Label>
+                    <Input
+                      id="esqueci-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(ev) => setEmail(ev.target.value)}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="codigo-acesso">Código recebido por e-mail</Label>
+                    <Input
+                      id="codigo-acesso"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={codigo}
+                      onChange={(ev) => setCodigo(ev.target.value.replace(/\D/g, ''))}
+                      className="text-center text-lg tracking-[0.5em]"
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Serve o código do e-mail de nova senha ou do e-mail de convite.
+                    </p>
+                  </div>
+
+                  {erroCodigo && (
+                    <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertDescription>{erroCodigo}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <Button type="submit" className="w-full" disabled={verificando}>
+                    {verificando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    Continuar
+                  </Button>
+                </form>
+
+                <div className="border-t border-border pt-4 space-y-2">
+                  {reenviado && (
+                    <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4" />
+                      Enviamos de novo. Use o código mais recente.
+                    </p>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full"
+                    disabled={enviando || !email.trim()}
+                    onClick={() => enviarCodigo()}
+                  >
+                    {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                    {enviadoPara ? 'Não recebi, enviar de novo' : 'Enviar um código novo'}
+                  </Button>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
