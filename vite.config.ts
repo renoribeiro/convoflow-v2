@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
 
 // `import.meta.env` lido INTEIRO (sem `.CHAVE`), em qualquer arquivo, inclusive
@@ -11,6 +10,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 // para o JavaScript do site. Foi o devtools do zustand, até 2026-10-08. O site
 // lê só as chaves de que precisa (src/lib/env.ts); este guarda derruba o build
 // se o objeto inteiro voltar a aparecer.
+//
+// O padrão casa aspas simples ou duplas (esbuild, até o Vite 7). No Vite 8 o
+// minificador escreve BASE_URL:`/` (com crase) e este padrão deixa de casar
+// SEM erro nenhum: ao subir para o 8, ponha a crase nas classes de aspas e
+// prove com um build que vaza de propósito.
 const WHOLE_ENV_OBJECT = /["']?BASE_URL["']?\s*:\s*["'][^"']*["']\s*,\s*["']?DEV["']?\s*:/;
 
 const guardWholeEnvObject = (): Plugin => ({
@@ -70,15 +74,15 @@ export default defineConfig(({ mode }) => {
 
   return {
     server: {
-      // Só a própria máquina: o Vite 5 tem falhas de leitura de arquivo no
-      // servidor de desenvolvimento (corrigidas só no Vite 6). Sem host "::"
-      // e sem túnel (ngrok/loca.lt) — o padrão do Vite já aceita localhost.
+      // Só a própria máquina. Era obrigatório no Vite 5 (falhas de leitura de
+      // arquivo no servidor de desenvolvimento, corrigidas no Vite 6); no
+      // Vite 7 continua assim por escolha: abrir para a rede local ou para
+      // um túnel (ngrok/loca.lt) é decisão à parte, não vem com a troca.
       host: "localhost",
       port: 8080,
     },
     plugins: [
       react(),
-      mode === 'development' && componentTagger(),
       // PWA Plugin - only in production
       VitePWA({
         registerType: 'autoUpdate',
@@ -186,6 +190,11 @@ export default defineConfig(({ mode }) => {
     },
     // Build optimizations
     build: {
+      // Navegadores que o site atende: os mesmos do Vite 5 (o padrão dele,
+      // "modules"). O Vite 7 subiu o padrão para Safari/iOS 16 e Chrome 107;
+      // sem esta linha, iPhone com iOS 15 e Safari 14 podiam receber uma tela
+      // em branco. Mexer aqui é decidir quem deixa de conseguir abrir o site.
+      target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
       // Warn if chunks exceed 500KB
       chunkSizeWarningLimit: 500,
       rollupOptions: {
