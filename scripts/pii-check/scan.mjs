@@ -69,20 +69,33 @@ function escapeRegExp(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Como uma entrada da lista é comparada (recebe a entrada já normalizada):
+ * 'uuid' | 'email' | 'digits' (telefone e outros números) | 'token' (id com
+ * algarismo, como os do Stripe) | 'phrase' (nome, por palavra inteira) — ou
+ * null, quando é curta demais para valer.
+ */
+export function denyEntryKind(entry) {
+  if (entry.length < MIN_DENY_LEN) return null;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(entry)) return 'uuid';
+  if (entry.includes('@')) return 'email';
+  if (/^\+?[\d\s().-]+$/.test(entry)) return entry.replace(/\D/g, '').length >= 8 ? 'digits' : null;
+  if (/^[a-z0-9_]+$/.test(entry) && /\d/.test(entry)) return 'token';
+  return 'phrase';
+}
+
 export function parseDenylist(text) {
   const deny = { uuids: new Set(), emails: new Set(), tokens: new Set(), digits: new Set(), phrases: [] };
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim();
     if (!line || line.startsWith('#')) continue;
     const entry = normalize(line).trim();
-    if (entry.length < MIN_DENY_LEN) continue;
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(entry)) deny.uuids.add(entry);
-    else if (entry.includes('@')) deny.emails.add(entry);
-    else if (/^\+?[\d\s().-]+$/.test(entry)) {
-      const d = entry.replace(/\D/g, '');
-      if (d.length >= 8) deny.digits.add(d);
-    } else if (/^[a-z0-9_]+$/.test(entry) && /\d/.test(entry)) deny.tokens.add(entry);
-    else deny.phrases.push(entry);
+    const kind = denyEntryKind(entry);
+    if (kind === 'uuid') deny.uuids.add(entry);
+    else if (kind === 'email') deny.emails.add(entry);
+    else if (kind === 'digits') deny.digits.add(entry.replace(/\D/g, ''));
+    else if (kind === 'token') deny.tokens.add(entry);
+    else if (kind === 'phrase') deny.phrases.push(entry);
   }
   // Uma regex só para todas as frases: mais longas primeiro, borda de palavra Unicode.
   deny.phraseRe = deny.phrases.length
@@ -99,9 +112,19 @@ export function parseDenylist(text) {
   return deny;
 }
 
+/** Lista sem nenhuma entrada que valha (vazia, só comentário, só linha curta). */
+export function isDenylistEmpty(deny) {
+  return !deny.uuids.size && !deny.emails.size && !deny.tokens.size && !deny.digits.size && !deny.phrases.length;
+}
+
+/**
+ * null quando não há lista que sirva: arquivo ausente OU vazio. Os dois casos
+ * são o mesmo para quem chama — lista vazia não confere nome nenhum.
+ */
 export function loadDenylist(file) {
   if (!file || !fs.existsSync(file)) return null;
-  return parseDenylist(fs.readFileSync(file, 'utf8'));
+  const deny = parseDenylist(fs.readFileSync(file, 'utf8'));
+  return isDenylistEmpty(deny) ? null : deny;
 }
 
 function denyFindings(line, deny) {
@@ -135,12 +158,19 @@ function emailAllowed(email, config) {
   if (config.allowedEmails.has(e)) return true;
   const domain = e.split('@')[1];
   if (JID_DOMAINS.some((d) => domain === d || domain.endsWith('.' + d))) return true;
+  return isExampleEmail(e, config);
+}
+
+/** E-mail inventado: TLD reservado (.test, .example…) ou domínio de exemplo do config.json. */
+export function isExampleEmail(email, config) {
+  const domain = String(email).toLowerCase().trim().split('@')[1] ?? '';
+  if (!domain) return false;
   if (RESERVED_TLDS.includes(domain.split('.').pop())) return true;
   return config.allowedEmailDomains.some((d) => domain === d || domain.endsWith('.' + d));
 }
 
 // DDDs que existem (Anatel). Número com DDD fora daqui não é telefone brasileiro.
-const DDD = new Set(
+export const DDD = new Set(
   '11 12 13 14 15 16 17 18 19 21 22 24 27 28 31 32 33 34 35 37 38 41 42 43 44 45 46 47 48 49 51 53 54 55 61 62 63 64 65 66 67 68 69 71 73 74 75 77 79 81 82 83 84 85 86 87 88 89 91 92 93 94 95 96 97 98 99'.split(
     ' ',
   ),
