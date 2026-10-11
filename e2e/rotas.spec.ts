@@ -53,6 +53,32 @@ async function contaBloqueada(context: BrowserContext) {
   );
 }
 
+/** Guarda os pedidos de nova senha e de verificação que a tela faz ao Supabase. */
+async function registrarPedidosDeAuth(page: Page) {
+  const pedidos = { recover: [] as Array<{ url: string }>, verify: [] as Array<{ corpo: unknown }> };
+  page.on('request', (r) => {
+    if (r.method() !== 'POST') return;
+    if (r.url().includes('/auth/v1/recover')) pedidos.recover.push({ url: r.url() });
+    if (r.url().includes('/auth/v1/verify')) pedidos.verify.push({ corpo: r.postDataJSON() });
+  });
+  return pedidos;
+}
+
+/** O /verify do Supabase falso: devolve uma sessão, ou o erro de link já usado. */
+async function respostaDoVerify(context: BrowserContext, como: 'sessao' | 'gasto') {
+  await context.route(/\/auth\/v1\/verify/, (route) => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
+    if (como === 'gasto') {
+      return route.fulfill({
+        status: 403,
+        headers: { ...CORS, 'content-type': 'application/json' },
+        body: JSON.stringify({ code: 403, error_code: 'otp_expired', msg: 'Email link is invalid or has expired' }),
+      });
+    }
+    return responderJson(route, sessionFor('gerente'));
+  });
+}
+
 const titulo = (page: Page) => page.locator('main h1').first();
 const naoEncontrada = (page: Page) => page.getByRole('heading', { name: 'Página não encontrada' });
 
@@ -143,7 +169,7 @@ test.describe('guardas', () => {
 
 // --------------------------------------------------- links que chegam de fora --
 test.describe('links que chegam de fora', () => {
-  test('/definir-senha com o token do convite no link pede a senha nova', async ({ context }) => {
+  test('/definir-senha com o link ANTIGO do e-mail (sessão no fragmento) pede a senha nova', async ({ context }) => {
     const page = await abrirComo(context, 'gerente', { sessao: false });
     const s = sessionFor('gerente');
     const fragmento = new URLSearchParams({
@@ -164,7 +190,65 @@ test.describe('links que chegam de fora', () => {
   test('/definir-senha com link vencido explica o erro e limpa o endereço', async ({ context }) => {
     const page = await abrirComo(context, 'gerente', { sessao: false });
     await page.goto('/definir-senha#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired');
-    await expect(page.getByText('Confirme seu acesso')).toBeVisible();
+    await expect(page.getByText('Peça um código novo', { exact: true })).toBeVisible();
+    await expect(page.getByText(/expirou ou já foi usado/)).toBeVisible();
+    await expect(page).toHaveURL(/\/definir-senha$/);
+  });
+
+  test('"Esqueci minha senha": sem alerta, envia o código e aceita o código digitado', async ({ context }) => {
+    const page = await abrirComo(context, 'gerente', { sessao: false });
+    const pedidos = await registrarPedidosDeAuth(page);
+    await respostaDoVerify(context, 'sessao');
+    await page.goto('/auth');
+    await page.getByText('Esqueci minha senha').click();
+    await expect(page).toHaveURL(/\/definir-senha$/);
+    await expect(page.getByText('Esqueci minha senha')).toBeVisible();
+    await expect(page.getByText('Não deu para usar este link')).toHaveCount(0);
+
+    await page.getByLabel('Seu e-mail').fill('pessoa@exemplo.com.br');
+    await page.getByRole('button', { name: 'Enviar código' }).click();
+    await expect(page.getByLabel('Código recebido por e-mail')).toBeVisible();
+    expect(pedidos.recover).toHaveLength(1);
+    expect(pedidos.recover[0].url).toContain(encodeURIComponent('/definir-senha'));
+
+    await page.getByLabel('Código recebido por e-mail').fill('123456');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByLabel('Nova senha')).toBeVisible();
+    expect(pedidos.verify).toHaveLength(1);
+    expect(pedidos.verify[0].corpo).toMatchObject({ email: 'pessoa@exemplo.com.br', token: '123456', type: 'email' });
+  });
+
+  for (const tipo of ['recovery', 'invite'] as const) {
+    test(`link NOVO (${tipo}): abrir não usa o acesso; só "Continuar" usa`, async ({ context }) => {
+      const page = await abrirComo(context, 'gerente', { sessao: false });
+      const pedidos = await registrarPedidosDeAuth(page);
+      await respostaDoVerify(context, 'sessao');
+      await page.goto(`/definir-senha?token_hash=hash-falso-${tipo}&type=${tipo}`);
+      await expect(page.getByRole('button', { name: 'Continuar' })).toBeVisible();
+      await expect(page.getByText(tipo === 'invite' ? 'Aceite seu convite' : 'Crie sua nova senha')).toBeVisible();
+      // Tempo de sobra para um robô (ou um efeito da tela) gastar o link.
+      await page.waitForTimeout(2500);
+      expect(pedidos.verify).toHaveLength(0);
+
+      await page.getByRole('button', { name: 'Continuar' }).click();
+      await expect(page.getByLabel('Nova senha')).toBeVisible();
+      expect(pedidos.verify).toHaveLength(1);
+      // O supabase-js acrescenta gotrue_meta_security; com token_hash o Supabase
+      // recusa e-mail junto, então ele não pode ir.
+      expect(pedidos.verify[0].corpo).toMatchObject({ token_hash: `hash-falso-${tipo}`, type: tipo });
+      expect(pedidos.verify[0].corpo).not.toHaveProperty('email');
+      await expect(page).toHaveURL(/\/definir-senha$/);
+    });
+  }
+
+  test('link NOVO já usado: explica e oferece código novo', async ({ context }) => {
+    const page = await abrirComo(context, 'gerente', { sessao: false });
+    await respostaDoVerify(context, 'gasto');
+    await page.goto('/definir-senha?token_hash=hash-falso&type=invite');
+    await page.getByRole('button', { name: 'Continuar' }).click();
+    await expect(page.getByText('Não deu para usar este link')).toBeVisible();
+    await expect(page.getByText(/expirou ou já foi usado/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Enviar código' })).toBeVisible();
     await expect(page).toHaveURL(/\/definir-senha$/);
   });
 
