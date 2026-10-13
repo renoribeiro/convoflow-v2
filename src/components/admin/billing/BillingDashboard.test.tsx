@@ -22,6 +22,8 @@ import type { BillingOverview, ContaBillingRow } from '@/lib/billing/adminBillin
 const tabelasLidas: string[] = [];
 let contas: ContaBillingRow[] = [];
 let lojas: Array<{ kind: string; parent_tenant_id: string; atendentes_extra: number }> = [];
+// Aba Cobranças (nota fiscal, parte 1): billing_charges, lida só quando a aba abre.
+let cobrancasPlataforma: Array<Record<string, unknown>> = [];
 
 vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
@@ -34,11 +36,14 @@ vi.mock('@/integrations/supabase/client', () => {
         return b;
       },
       order: () => b,
+      limit: () => b,
       then: (res: (v: unknown) => unknown) =>
         Promise.resolve(
           table === 'tenants'
             ? { data: soLojas ? lojas : contas, error: null }
-            : { data: null, error: { message: `tabela proibida: ${table}` } },
+            : table === 'billing_charges'
+              ? { data: cobrancasPlataforma, error: null }
+              : { data: null, error: { message: `tabela proibida: ${table}` } },
         ).then(res),
     };
     return b;
@@ -155,6 +160,7 @@ const nomesNa = (nome: string) =>
 
 beforeEach(() => {
   tabelasLidas.length = 0;
+  cobrancasPlataforma = [];
   contas = CONTAS.map((c) => ({ ...c }));
   lojas = [];
   overview = structuredClone(OVERVIEW);
@@ -179,7 +185,9 @@ describe('Faturamento — cartões das Contas', () => {
 describe('Faturamento — listas das Contas', () => {
   it('em teste (com a data), pendente, cancelamento agendado e pagantes', async () => {
     renderTab();
-    await waitFor(() => expect(nomesNa('Contas pagantes')).toEqual(['Alfa Imóveis', 'Delta Saindo']));
+    // 1º teste do arquivo: o primeiro render carrega o painel inteiro; 5 s de folga
+    // para a suíte completa numa máquina carregada.
+    await waitFor(() => expect(nomesNa('Contas pagantes')).toEqual(['Alfa Imóveis', 'Delta Saindo']), { timeout: 5_000 });
 
     expect(nomesNa('Em teste')).toEqual(['Beta em Teste']);
     expect(within(tabela('Em teste')).getByText('03/10/2026')).toBeInTheDocument();
@@ -339,8 +347,35 @@ describe('Faturamento — o que saiu da tela', () => {
     expect(screen.queryByText('Total Faturado')).toBeNull();
   });
 
-  it('as abas: Contas, Stripe, Cupons e Conexão', async () => {
+  it('as abas: Contas, Stripe, Cobranças, Cupons e Conexão', async () => {
     renderTab();
-    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Contas', 'Stripe', 'Cupons', 'Conexão']);
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['Contas', 'Stripe', 'Cobranças', 'Cupons', 'Conexão']);
+  });
+
+  it('aba Cobranças: toda cobrança, com a Conta, o total e a sem Conta identificada', async () => {
+    cobrancasPlataforma = [
+      {
+        id: 'c1', stripe_invoice_id: 'in_FAKE1', tenant_id: 'aaaaaaaa-0000-4000-8000-000000000001', amount_paid_cents: 49990,
+        currency: 'brl', paid_at: '2026-10-13T15:00:00Z', period_start: null, period_end: null,
+        hosted_invoice_url: 'https://invoice.stripe.com/i/FAKE1', amount_refunded_cents: 0, refunded_at: null,
+        nota_status: 'aguardando_emissao', conta: { name: 'Conta Inventada' },
+      },
+      {
+        id: 'c2', stripe_invoice_id: 'in_FAKE2', tenant_id: null, amount_paid_cents: 9990, currency: 'brl',
+        paid_at: '2026-10-12T15:00:00Z', period_start: null, period_end: null, hosted_invoice_url: null,
+        amount_refunded_cents: 9990, refunded_at: '2026-10-13T10:00:00Z', nota_status: 'aguardando_emissao', conta: null,
+      },
+    ];
+    const user = userEvent.setup();
+    renderTab();
+    await user.click(screen.getByRole('tab', { name: 'Cobranças' }));
+    const lista = await screen.findByLabelText('Cobranças de todas as Contas');
+    await waitFor(() => expect(lista).toHaveTextContent('Conta Inventada'));
+    expect(lista).toHaveTextContent('Conta não identificada');
+    expect(lista).toHaveTextContent('Reembolsada');
+    expect(screen.getByTestId('totais-cobrancas')).toHaveTextContent(/2 cobranças · recebido R\$\s?599,80 · devolvido R\$\s?99,90 · 1 sem Conta identificada/);
+    // a coluna da nota fiscal segue escondida (NOTA_FISCAL_VISIVEL)
+    expect(lista).not.toHaveTextContent(/Aguardando emissão/);
+    expect(tabelasLidas).toContain('billing_charges');
   });
 });

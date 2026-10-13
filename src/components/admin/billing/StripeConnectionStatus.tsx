@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw, XCircle } from 'lucide-react';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { AlertTriangle, CheckCircle2, ListChecks, Loader2, RefreshCw, XCircle } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +15,7 @@ import {
   type StripeStatus,
 } from '@/lib/billing/adminBilling';
 import { stripeService } from '@/services/stripeService';
+import { useToast } from '@/hooks/use-toast';
 
 /**
  * Aba Conexão do Faturamento (superadmin). SÓ mostra o estado: a chave do
@@ -30,6 +31,23 @@ export function StripeConnectionStatus() {
   const status: StripeStatus | undefined = consulta.data;
   const urlDoWebhook = status?.webhook.url ?? stripeWebhookUrl(env.get('SUPABASE_URL') ?? '');
   const faltando = new Set(status?.webhook.missingEvents ?? []);
+  const { toast } = useToast();
+  // A única escrita desta aba: marca no endpoint do Stripe os eventos que
+  // faltam, sem tirar nenhum. Aparece só quando falta algum.
+  const marcarEventos = useMutation({
+    mutationFn: () => stripeService.ensureWebhookEvents(),
+    onSuccess: (r) => {
+      toast({
+        title: r.added.length ? 'Eventos marcados no Stripe' : 'Nada a marcar',
+        description: r.added.length ? r.added.join(', ') : 'O webhook já recebia todos os eventos.',
+      });
+      void consulta.refetch();
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Não foi possível marcar os eventos', description: e.message, variant: 'destructive' }),
+  });
+  const podeMarcar =
+    !!status?.connected && status.webhook.found && !status.webhook.error && status.webhook.missingEvents.length > 0;
 
   return (
     <div className="space-y-4">
@@ -133,7 +151,7 @@ export function StripeConnectionStatus() {
           <CardTitle>Webhook</CardTitle>
           <CardDescription>
             É por ele que o estado de cada assinatura chega à Conta. No Stripe, o endpoint precisa apontar para este
-            endereço e receber os 6 eventos abaixo.
+            endereço e receber os {WEBHOOK_EVENTS.length} eventos abaixo.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -169,6 +187,26 @@ export function StripeConnectionStatus() {
               );
             })}
           </ul>
+          {podeMarcar ? (
+            <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/20">
+              <p>
+                Faltam {status?.webhook.missingEvents.length} evento(s). Sem eles, o que chega por esses eventos não é
+                gravado (por exemplo, o reembolso na lista de cobranças).
+              </p>
+              <Button
+                size="sm"
+                onClick={() => marcarEventos.mutate()}
+                disabled={marcarEventos.isPending}
+                className="gap-2"
+              >
+                {marcarEventos.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ListChecks className="h-4 w-4" />}
+                Marcar os eventos que faltam
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Só acrescenta eventos ao endpoint do Stripe. Nenhum é tirado e o segredo do webhook não muda.
+              </p>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>

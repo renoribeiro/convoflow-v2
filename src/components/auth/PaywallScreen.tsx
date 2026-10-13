@@ -10,6 +10,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { supabase } from '@/integrations/supabase/client';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { DadosFiscaisCard } from '@/components/billing/DadosFiscaisCard';
+import { useDadosFiscais } from '@/hooks/useDadosFiscais';
 import {
   COMO_CANCELAR_NO_TESTE,
   TRIAL_DAYS,
@@ -70,6 +72,11 @@ import {
  * troca esta tela pelo sistema sozinho. Nesse estado NÃO há botão de pagar:
  * um segundo checkout criaria uma segunda assinatura.
  *
+ * DADOS PARA A NOTA FISCAL (nota fiscal, parte 1). O Gerente preenche CPF ou
+ * CNPJ, nome e endereço AQUI, antes do botão: quem volta a assinar assina por
+ * esta tela, sem chegar à aba Assinatura. Sem eles o botão fica travado (e o
+ * create-checkout-session recusaria do mesmo jeito).
+ *
  * QUEM É O DONO DA CONTA. Seria útil dizer ao gestor "fale com fulano", e
  * deliberadamente não dizemos: o RLS de `tenants` só entrega a linha da própria
  * Loja (`id = get_current_user_tenant_id()`), e o perfil do Gerente vive em
@@ -79,7 +86,7 @@ import {
  */
 export const PaywallScreen = () => {
   const role = useRole();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { tenant, refreshTenant, profile } = useTenant();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -112,6 +119,10 @@ export const PaywallScreen = () => {
       return data ? data.subscription_id == null : null;
     },
   });
+
+  // Dados para a nota fiscal da Conta do gerente: obrigatórios para assinar.
+  const dadosFiscais = useDadosFiscais(podeAssinar ? contaId : null);
+  const faltamDadosFiscais = podeAssinar && !dadosFiscais.completos;
 
   const variante = paywallVariant({
     role,
@@ -149,6 +160,10 @@ export const PaywallScreen = () => {
   const ehConta = tenant?.kind === 'account';
 
   const handleAssinar = async () => {
+    if (faltamDadosFiscais) {
+      setFalha('Preencha e salve os dados para a nota fiscal (CPF ou CNPJ, nome e endereço) antes de continuar.');
+      return;
+    }
     setFalha(null);
     setEnviando(true);
     try {
@@ -198,7 +213,11 @@ export const PaywallScreen = () => {
 
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md border-2 border-brand-primary/20">
+      <Card
+        className={`w-full border-2 border-brand-primary/20 ${
+          faltamDadosFiscais && variante !== 'confirmando' ? 'max-w-xl' : 'max-w-md'
+        }`}
+      >
         {carregandoConta ? (
           // Não pisca "Acesso bloqueado" na cara de quem acabou de se cadastrar.
           <CardContent className="flex justify-center py-16">
@@ -290,6 +309,8 @@ export const PaywallScreen = () => {
 
               {retorno === 'cancel' ? <SaiuDoPagamento /> : null}
 
+              <DadosFiscaisCard contaId={contaId} podeEditar obrigatorio emailPadrao={user?.email ?? ''} semCartao />
+
               {falha ? (
                 <Alert variant="destructive">
                   <AlertTriangle className="h-4 w-4" />
@@ -303,12 +324,13 @@ export const PaywallScreen = () => {
 
               <Button
                 onClick={handleAssinar}
-                disabled={enviando}
+                disabled={enviando || faltamDadosFiscais}
                 className="w-full bg-green-600 hover:bg-green-700"
               >
                 {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Começar teste grátis
               </Button>
+              {faltamDadosFiscais ? <AvisoDadosFiscais /> : null}
               <p className="text-center text-xs text-muted-foreground">
                 O cartão é cadastrado no ambiente seguro do Stripe.
               </p>
@@ -389,6 +411,8 @@ export const PaywallScreen = () => {
 
             {retorno === 'cancel' ? <SaiuDoPagamento /> : null}
 
+            <DadosFiscaisCard contaId={contaId} podeEditar obrigatorio emailPadrao={user?.email ?? ''} semCartao />
+
             {falha ? (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
@@ -405,12 +429,13 @@ export const PaywallScreen = () => {
 
             <Button
               onClick={handleAssinar}
-              disabled={enviando}
+              disabled={enviando || faltamDadosFiscais}
               className="w-full bg-green-600 hover:bg-green-700"
             >
               {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Assinar agora por {PLAN_PRICE_LABEL}/mês
             </Button>
+            {faltamDadosFiscais ? <AvisoDadosFiscais /> : null}
 
             <Button
               variant="outline"
@@ -464,6 +489,13 @@ export const PaywallScreen = () => {
     </div>
   );
 };
+
+/** Por que o botão está travado. */
+const AvisoDadosFiscais = () => (
+  <p className="text-center text-xs text-muted-foreground" data-testid="assinar-precisa-dados">
+    Preencha e salve os dados para a nota fiscal acima para continuar.
+  </p>
+);
 
 /** Aviso de quem voltou do Stripe pelo "voltar", sem concluir. */
 const SaiuDoPagamento = () => (

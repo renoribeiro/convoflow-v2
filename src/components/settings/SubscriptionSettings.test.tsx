@@ -7,39 +7,53 @@
  *   - o antigo "Gerenciar Assinatura" (que só mostrava um toast) sumiu;
  *   - a confirmação traz o texto do teste ou do período pago, com a data que o
  *     servidor devolveu, e só então agenda;
- *   - com uma Loja em foco, o Gerente vê a assinatura da CONTA.
+ *   - com uma Loja em foco, o Gerente vê a assinatura da CONTA;
+ *   - nota fiscal, parte 1: sem os "Dados para a nota fiscal" o botão de
+ *     assinar fica travado e não chama o checkout; a lista "Cobranças" mostra
+ *     os pagamentos, sem a coluna da nota (NOTA_FISCAL_VISIVEL desligada).
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockInvoke, mockToast, mockRefresh, linhaDaConta } = vi.hoisted(() => ({
+const { mockInvoke, mockToast, mockRefresh, linhaDaConta, dadosFiscais, cobrancas } = vi.hoisted(() => ({
   mockInvoke: vi.fn(),
   mockToast: vi.fn(),
   mockRefresh: vi.fn().mockResolvedValue(undefined),
   linhaDaConta: { valor: null as Record<string, unknown> | null },
+  dadosFiscais: { valor: null as Record<string, unknown> | null },
+  cobrancas: { valor: [] as Record<string, unknown>[] },
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     functions: { invoke: mockInvoke },
-    from: () => ({
+    from: (tabela: string) => ({
       select: () => ({
-        eq: () => ({ maybeSingle: async () => ({ data: linhaDaConta.valor, error: null }) }),
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: tabela === 'tenant_billing_details' ? dadosFiscais.valor : linhaDaConta.valor,
+            error: null,
+          }),
+          order: () => ({ limit: async () => ({ data: cobrancas.valor, error: null }) }),
+        }),
       }),
     }),
   },
 }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ user: { email: 'eu@exemplo.com.br' } }) }));
 vi.mock('@/lib/rewardful', () => ({ getRewardfulReferral: () => null }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
 
 let gerente = true;
 let tenant: Record<string, unknown> = {};
 let profile: Record<string, unknown> | null = null;
+let superadmin = false;
 vi.mock('@/contexts/TenantContext', () => ({
   useTenant: () => ({ tenant, profile, refreshTenant: mockRefresh }),
   useIsGerente: () => gerente,
+  useIsSuperAdmin: () => superadmin,
 }));
 
 import { SubscriptionSettings } from './SubscriptionSettings';
@@ -65,8 +79,28 @@ const renderizar = () =>
 
 const botao = (nome: RegExp) => screen.queryByRole('button', { name: nome });
 
+/** Uma linha de tenant_billing_details completa (documento inventado). */
+const DADOS_OK = {
+  tenant_id: 'conta-1',
+  person_type: 'cnpj',
+  tax_id: '11222333000181',
+  legal_name: 'Fulano Comércio Ltda',
+  cep: '60000000',
+  street: 'Rua Exemplo',
+  number: '100',
+  complement: null,
+  district: 'Centro',
+  city: 'Fortaleza',
+  city_ibge_code: '2304400',
+  state: 'CE',
+  invoice_email: 'nota@exemplo.com.br',
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
+  superadmin = false;
+  dadosFiscais.valor = { ...DADOS_OK };
+  cobrancas.valor = [];
   gerente = true;
   tenant = { ...CONTA_ATIVA };
   profile = { tenant_id: 'conta-1' };
@@ -178,5 +212,99 @@ describe('Conta de cobrança', () => {
     renderizar();
     expect(await screen.findByRole('button', { name: /Cancelar assinatura/ })).toBeInTheDocument();
     expect(screen.queryByText('Sem assinatura ativa')).toBeNull();
+  });
+});
+
+describe('dados para a nota fiscal (parte 1)', () => {
+  const SEM_ASSINATURA = { ...CONTA_ATIVA, subscription_status: null, subscription_id: null, manual_access_granted: false };
+
+  it('sem os dados: o formulário aparece, "Assinar" fica travado e o checkout não é chamado', async () => {
+    tenant = { ...SEM_ASSINATURA };
+    dadosFiscais.valor = null;
+    renderizar();
+    expect(await screen.findByRole('form', { name: 'Dados para a nota fiscal' })).toBeInTheDocument();
+    expect(screen.getByText('Obrigatório para assinar')).toBeInTheDocument();
+    const assinar = botao(/Assinar Agora/)!;
+    expect(assinar).toBeDisabled();
+    expect(screen.getByTestId('assinar-precisa-dados')).toHaveTextContent('Preencha e salve os dados');
+    fireEvent.click(assinar);
+    expect(mockInvoke).not.toHaveBeenCalled();
+    // Loja extra antes de assinar também passa pelo checkout: travada igual.
+    expect(botao(/Contratar 1 loja/)).toBeDisabled();
+    // o e-mail do login já vem sugerido
+    expect(screen.getByLabelText('E-mail para receber a nota')).toHaveValue('eu@exemplo.com.br');
+  });
+
+  it('com os dados: resumo com o documento mascarado e "Assinar" abre o checkout', async () => {
+    tenant = { ...SEM_ASSINATURA };
+    mockInvoke.mockResolvedValue({ data: { url: 'https://checkout.stripe.com/c/FAKE' }, error: null });
+    const original = window.location;
+    Object.defineProperty(window, 'location', { configurable: true, value: { ...original, href: '' } });
+    try {
+      renderizar();
+      const resumo = await screen.findByTestId('dados-fiscais-resumo');
+      expect(resumo).toHaveTextContent('Fulano Comércio Ltda');
+      expect(resumo).toHaveTextContent('CNPJ ••.•••.•••/••••-81');
+      expect(resumo).not.toHaveTextContent('11222333');
+      const assinar = botao(/Assinar Agora/)!;
+      await waitFor(() => expect(assinar).toBeEnabled());
+      await act(async () => {
+        fireEvent.click(assinar);
+      });
+      await waitFor(() => expect(mockInvoke).toHaveBeenCalledWith('create-checkout-session', expect.anything()));
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: original });
+    }
+  });
+
+  it('Conta com acesso manual não paga: sem o selo de obrigatório', async () => {
+    tenant = { ...SEM_ASSINATURA, manual_access_granted: true };
+    dadosFiscais.valor = null;
+    renderizar();
+    expect(await screen.findByRole('form', { name: 'Dados para a nota fiscal' })).toBeInTheDocument();
+    expect(screen.queryByText('Obrigatório para assinar')).toBeNull();
+  });
+
+  it('superadmin vê o resumo, sem botão de alterar', async () => {
+    gerente = false;
+    superadmin = true;
+    renderizar();
+    expect(await screen.findByTestId('dados-fiscais-resumo')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Alterar/ })).toBeNull();
+    expect(screen.queryByRole('form', { name: 'Dados para a nota fiscal' })).toBeNull();
+  });
+});
+
+describe('Cobranças', () => {
+  it('lista os pagamentos com o recibo do Stripe e o reembolso, sem a coluna da nota', async () => {
+    cobrancas.valor = [
+      {
+        id: 'c1', stripe_invoice_id: 'in_FAKE1', tenant_id: 'conta-1', amount_paid_cents: 49990, currency: 'brl',
+        paid_at: '2026-10-13T15:00:00Z', period_start: '2026-10-13T15:00:00Z', period_end: '2026-11-13T15:00:00Z',
+        hosted_invoice_url: 'https://invoice.stripe.com/i/FAKE1', amount_refunded_cents: 0, refunded_at: null, nota_status: 'aguardando_emissao',
+      },
+      {
+        id: 'c2', stripe_invoice_id: 'in_FAKE2', tenant_id: 'conta-1', amount_paid_cents: 49990, currency: 'brl',
+        paid_at: '2026-09-13T15:00:00Z', period_start: null, period_end: null,
+        hosted_invoice_url: 'https://exemplo.com.br/nao-e-do-stripe', amount_refunded_cents: 49990, refunded_at: '2026-09-15T15:00:00Z', nota_status: 'aguardando_emissao',
+      },
+    ];
+    renderizar();
+    const lista = await screen.findByLabelText('Cobranças da Conta');
+    await waitFor(() => expect(lista).toHaveTextContent('13/10/2026'));
+    expect(lista).toHaveTextContent(/R\$\s?499,90/);
+    expect(lista).toHaveTextContent('Paga');
+    expect(lista).toHaveTextContent('Reembolsada');
+    expect(lista).toHaveTextContent('15/09/2026');
+    const links = screen.getAllByRole('link', { name: /Ver no Stripe/ });
+    // link que não é do Stripe não vira link
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute('href', 'https://invoice.stripe.com/i/FAKE1');
+    expect(lista).not.toHaveTextContent(/Nota fiscal|Aguardando emissão/);
+  });
+
+  it('sem cobrança: a frase do vazio', async () => {
+    renderizar();
+    expect(await screen.findByText(/Nenhuma cobrança ainda/)).toBeInTheDocument();
   });
 });

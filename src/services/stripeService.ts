@@ -100,6 +100,18 @@ class StripeService {
   }
 
   /**
+   * Admin: marca no endpoint do stripe-webhook os eventos que faltam (sem tirar
+   * nenhum). Idempotente. Escreve só na configuração do webhook no Stripe.
+   */
+  async ensureWebhookEvents(): Promise<{ url: string; added: string[]; alreadyComplete: boolean }> {
+    const { data, error } = await supabase.functions.invoke('stripe-admin', {
+      body: { action: 'ensure_webhook_events' }
+    });
+    if (error) throw await this.functionError(error);
+    return data as { url: string; added: string[]; alreadyComplete: boolean };
+  }
+
+  /**
    * Admin: números ao vivo da conta do Stripe da secret (receita mensal,
    * próximas cobranças, receita por mês, falhas) e as Contas com assinatura
    * fora dela.

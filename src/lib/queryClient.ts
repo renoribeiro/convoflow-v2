@@ -34,6 +34,14 @@ export const QUERY_KEYS = {
      * invalidação em `useQuickReplies`, não o TTL.
      */
     QUICK_REPLIES: 'quick-replies',
+    /**
+     * "Dados para a nota fiscal" da Conta (tenant_billing_details) e as
+     * cobranças pagas (billing_charges). semiStatic (5 min): os dados mudam
+     * quando o Gerente salva (o hook grava o resultado no cache na hora); as
+     * cobranças, uma vez por mês.
+     */
+    BILLING_DETAILS: 'billing-details',
+    BILLING_CHARGES: 'billing-charges',
 
     // Static data - rarely changes
     TENANT: 'tenant',

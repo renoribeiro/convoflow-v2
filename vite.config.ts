@@ -131,6 +131,19 @@ export default defineConfig(({ mode }) => {
               handler: 'NetworkOnly',
             },
             {
+              // Dados para a nota fiscal (CPF/CNPJ, endereço) e cobranças: dado
+              // pessoal, NUNCA no cache do navegador. Vem ANTES da regra geral
+              // do REST (a primeira regra que casa é a que vale).
+              urlPattern: /^https:\/\/.*\.supabase\.co\/rest\/v1\/(tenant_billing_details|billing_charges)/i,
+              handler: 'NetworkOnly',
+            },
+            {
+              // Busca de CEP e de município (dados para a nota fiscal): sempre
+              // da rede, sem cache. Ver src/lib/billing/cep.ts.
+              urlPattern: /^https:\/\/(viacep\.com\.br|brasilapi\.com\.br|servicodados\.ibge\.gov\.br)\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
               // Cache REST API and Storage requests
               urlPattern: /^https:\/\/.*\.supabase\.co\/(rest|storage)\/.*/i,
               handler: 'NetworkFirst',

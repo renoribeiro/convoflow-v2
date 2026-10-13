@@ -51,6 +51,27 @@ vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
 }));
 
+// Dados para a nota fiscal (parte 1): preenchidos por padrão — estes testes
+// são do checkout. O bloco "sem os dados" no fim trava o botão.
+const { dadosFiscaisEstado } = vi.hoisted(() => ({
+  dadosFiscaisEstado: { completos: true },
+}));
+vi.mock('@/hooks/useDadosFiscais', () => ({
+  useDadosFiscais: () => ({
+    dados: dadosFiscaisEstado.completos
+      ? {
+          tenant_id: 'conta-teste', person_type: 'cnpj', tax_id: '11222333000181', legal_name: 'Fulano Ltda',
+          cep: '60000000', street: 'Rua Exemplo', number: '1', complement: null, district: 'Centro',
+          city: 'Fortaleza', city_ibge_code: '2304400', state: 'CE', invoice_email: 'nota@exemplo.com.br',
+        }
+      : null,
+    completos: dadosFiscaisEstado.completos,
+    carregando: false,
+    erro: null,
+  }),
+  useSalvarDadosFiscais: () => ({ mutate: vi.fn(), isPending: false }),
+}));
+
 import { PaywallScreen } from './PaywallScreen';
 import { PLAN_PRICE_LABEL, SUPORTE_EMAIL } from '@/lib/billing/checkout';
 
@@ -76,6 +97,7 @@ const botaoAssinar = () => screen.queryByRole('button', { name: /assinar agora/i
 
 beforeEach(() => {
   vi.clearAllMocks();
+  dadosFiscaisEstado.completos = true;
   role = 'gerente';
   tenant = CONTA;
   hrefAtribuido = '';
@@ -172,6 +194,24 @@ describe('GERENTE — bloqueado, mas com caminho de pagamento', () => {
   it('oferece contato de suporte mesmo podendo pagar', () => {
     renderPaywall();
     expect(screen.getByText(SUPORTE_EMAIL)).toBeInTheDocument();
+  });
+
+  it('com os dados para a nota fiscal: mostra o resumo, mascarado', () => {
+    renderPaywall();
+    const resumo = screen.getByTestId('dados-fiscais-resumo');
+    expect(resumo).toHaveTextContent('Fulano Ltda');
+    expect(resumo).not.toHaveTextContent('11222333');
+  });
+
+  it('SEM os dados para a nota fiscal: formulário na tela, botão travado, checkout não é chamado', async () => {
+    dadosFiscaisEstado.completos = false;
+    renderPaywall();
+    expect(screen.getByRole('form', { name: 'Dados para a nota fiscal' })).toBeInTheDocument();
+    expect(botaoAssinar()).toBeDisabled();
+    expect(screen.getByTestId('assinar-precisa-dados')).toBeInTheDocument();
+    await userEvent.click(botaoAssinar()!);
+    expect(mockInvoke).not.toHaveBeenCalled();
+    expect(hrefAtribuido).toBe('');
   });
 });
 

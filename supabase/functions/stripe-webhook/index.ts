@@ -3,6 +3,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14.14.0?target=deno'
 import { syncSubscriptionFromEvent } from '../_shared/stripe-webhook-sync.ts'
 import type { TenantBillingRow } from '../_shared/subscription-state.ts'
+import { recordChargeFromEvent, type ChargeRow } from '../_shared/billing-charges.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-12-18.acacia',
@@ -78,6 +79,12 @@ serve(async (req) => {
     })
   }
 
+  // Dois trabalhos independentes por evento: o estado da assinatura na Conta
+  // (o de sempre, intocado) e o registro da cobrança (nota fiscal, parte 1).
+  // Um não impede o outro; se qualquer um falhar, a resposta é 500 e o Stripe
+  // reenvia — os dois são idempotentes.
+  const falhas: string[] = []
+
   try {
     // Todo evento de assinatura -- checkout, customer.subscription.* e
     // invoice.* -- vira "releia a assinatura e copie o estado de agora para a
@@ -130,7 +137,94 @@ serve(async (req) => {
       default:
         break;
     }
+  } catch (err) {
+    console.error(`Erro na assinatura do evento ${event.id}: ${err.message}`)
+    falhas.push(`assinatura: ${err.message}`)
+  }
 
+  try {
+    // Toda fatura paga vira uma linha de billing_charges (uma por fatura) e
+    // todo reembolso é anotado nela. Ver _shared/billing-charges.ts.
+    const cobranca = await recordChargeFromEvent(event, {
+      retrieveInvoice: (id) => stripe.invoices.retrieve(id),
+      retrieveCharge: (id) => stripe.charges.retrieve(id, { expand: ['refunds'] }),
+      loadAccountBySubscriptionId: async (subscriptionId) => {
+        const { data, error } = await supabase
+          .from('tenants').select('id').eq('subscription_id', subscriptionId).eq('kind', 'account').limit(1);
+        if (error) throw error;
+        return (data?.[0]?.id as string | undefined) ?? null;
+      },
+      loadAccountById: async (id) => {
+        const { data, error } = await supabase
+          .from('tenants').select('id').eq('id', id).eq('kind', 'account').maybeSingle();
+        // id que nao e uuid: "nao e Conta nenhuma", como no loadTenantById acima.
+        if (error) return null;
+        return (data?.id as string | undefined) ?? null;
+      },
+      loadAccountByCustomerId: async (customerId) => {
+        const { data, error } = await supabase
+          .from('tenants').select('id').eq('stripe_customer_id', customerId).eq('kind', 'account').limit(1);
+        if (error) throw error;
+        return (data?.[0]?.id as string | undefined) ?? null;
+      },
+      insertChargeIfNew: async (row: ChargeRow) => {
+        const { data, error } = await supabase
+          .from('billing_charges')
+          .upsert(row, { onConflict: 'stripe_invoice_id', ignoreDuplicates: true })
+          .select('id');
+        if (error) throw error;
+        return (data?.length ?? 0) > 0 ? 'inserted' : 'exists';
+      },
+      findInvoiceIdByCharge: async (chargeId, paymentIntentId) => {
+        const filtro = paymentIntentId
+          ? `stripe_charge_id.eq.${chargeId},stripe_payment_intent_id.eq.${paymentIntentId}`
+          : `stripe_charge_id.eq.${chargeId}`;
+        const { data, error } = await supabase
+          .from('billing_charges').select('stripe_invoice_id').or(filtro).limit(1);
+        if (error) throw error;
+        return (data?.[0]?.stripe_invoice_id as string | undefined) ?? null;
+      },
+      updateRefund: async (invoiceId, patch) => {
+        const { data, error } = await supabase
+          .from('billing_charges')
+          .update({ ...patch, updated_at: new Date().toISOString() })
+          .eq('stripe_invoice_id', invoiceId)
+          .select('id');
+        if (error) throw error;
+        return data?.length ?? 0;
+      },
+    });
+
+    switch (cobranca.result) {
+      case 'recorded':
+        console.log(`Cobranca ${cobranca.invoiceId} gravada (Conta ${cobranca.tenantId ?? 'nao identificada'}, ${cobranca.row.amount_paid_cents} centavos, nota: ${cobranca.row.nota_status})`)
+        break;
+      case 'already_recorded':
+        console.log(`Cobranca ${cobranca.invoiceId} ja estava gravada.`)
+        break;
+      case 'not_paid':
+        console.log(`Fatura ${cobranca.invoiceId} nao esta paga (${cobranca.status}); nada gravado.`)
+        break;
+      case 'refund_recorded':
+        console.log(`Reembolso da cobranca ${cobranca.chargeId} gravado na fatura ${cobranca.invoiceId}: ${cobranca.patch.amount_refunded_cents} centavos.`)
+        break;
+      case 'refund_without_invoice':
+        console.warn(`Reembolso da cobranca ${cobranca.chargeId} sem fatura correspondente; nada gravado.`)
+        break;
+      default:
+        break;
+    }
+  } catch (err) {
+    console.error(`Erro ao gravar a cobranca do evento ${event.id}: ${err.message}`)
+    falhas.push(`cobranca: ${err.message}`)
+  }
+
+  if (falhas.length) {
+    // Sem log do evento: o reenvio do Stripe precisa passar pela guarda acima.
+    return new Response(`Error processing webhook: ${falhas.join(' | ')}`, { status: 500 })
+  }
+
+  try {
     // Log event to DB
     const { error: logError } = await supabase.from('stripe_webhook_logs').insert({
         stripe_event_id: event.id,

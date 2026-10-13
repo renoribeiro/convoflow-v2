@@ -91,9 +91,10 @@ describe('summarizeContas', () => {
 });
 
 describe('espelho do servidor', () => {
-  it('os mesmos 6 eventos do webhook', () => {
+  it('os mesmos 8 eventos do webhook', () => {
     expect([...WEBHOOK_EVENTS]).toEqual([...WEBHOOK_EVENTS_SERVIDOR]);
-    expect(WEBHOOK_EVENTS).toHaveLength(6);
+    expect(WEBHOOK_EVENTS).toHaveLength(8);
+    expect(WEBHOOK_EVENTS).toEqual(expect.arrayContaining(['invoice.paid', 'charge.refunded']));
   });
 
   it('o mesmo endereço do webhook', () => {

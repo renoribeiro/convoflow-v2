@@ -8,6 +8,7 @@
 //
 // Lista privada (nomes, e-mails e ids reais — fora do git):
 //   --denylist <arquivo>  >  env PII_DENYLIST_FILE  >  ops-privado/pii-denylist.txt
+// Arquivo vazio (ou só com comentário) vale como ausente: avisa e roda só os padrões.
 //
 // Saída 0 = limpo, 1 = achou, 2 = erro de uso.
 
@@ -101,7 +102,7 @@ function main() {
   }
 
   if (!deny && !opts.quiet) {
-    console.error(`pii-check: lista privada não encontrada (${path.relative(root, denyFile) || denyFile}) — só os padrões rodaram.`);
+    console.error(`pii-check: lista privada não encontrada ou vazia (${path.relative(root, denyFile) || denyFile}) — só os padrões rodaram.`);
   }
 
   if (findings.length === 0) return 0;

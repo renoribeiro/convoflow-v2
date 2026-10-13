@@ -150,7 +150,16 @@ function fakeStripe(w: World) {
         return p;
       },
     },
-    webhookEndpoints: { list: async (p: unknown) => (log('webhookEndpoints.list', p), page(w.webhooks ?? [])) },
+    webhookEndpoints: {
+      list: async (p: unknown) => (log('webhookEndpoints.list', p), page(w.webhooks ?? [])),
+      update: async (id: string, p: Row) => {
+        log('webhookEndpoints.update', id, p);
+        const e = (w.webhooks ?? []).find((x) => x.id === id);
+        if (!e) throw missing('webhook_endpoint');
+        Object.assign(e, p);
+        return e;
+      },
+    },
     subscriptions: {
       list: async (p: unknown) => (log('subscriptions.list', p), page(w.subscriptions ?? [])),
       retrieve: async (id: string) => {
@@ -335,6 +344,8 @@ describe('quem pode chamar', () => {
         'archive_coupon', 'billing_overview', 'create_coupon', 'get_status', 'list_coupons',
         // atendentes extras: só ler o estado e garantir o produto (sem dinheiro)
         'attendant_status', 'ensure_attendant_product',
+        // nota fiscal, parte 1: marcar no endpoint os eventos que faltam
+        'ensure_webhook_events',
       ].sort(),
     );
     for (const a of BACKEND_ACTIONS) expect(authorize(a, { kind: 'backend' })).toBeNull();
@@ -496,13 +507,68 @@ describe('cupons', () => {
 // 4. Estado da conexão
 // ---------------------------------------------------------------------------
 
+describe('ensure_webhook_events', () => {
+  const NOSSO = 'https://proj.supabase.co/functions/v1/stripe-webhook';
+  const SEIS_ANTIGOS = WEBHOOK_EVENTS.filter((e) => e !== 'invoice.paid' && e !== 'charge.refunded');
+
+  it('acrescenta só os que faltam, sem tirar nenhum (nem um evento a mais que já estava)', async () => {
+    const webhooks: Row[] = [
+      { id: 'we_1', url: 'https://outro.site/hook', status: 'enabled', enabled_events: ['invoice.paid'] },
+      { id: 'we_2', url: NOSSO, status: 'enabled', enabled_events: [...SEIS_ANTIGOS, 'customer.created'] },
+    ];
+    const t = setup({ world: { webhooks } });
+    const r = await t.call('ensure_webhook_events');
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ url: NOSSO, added: ['invoice.paid', 'charge.refunded'], alreadyComplete: false });
+    const update = t.calls.filter((c) => c.method === 'webhookEndpoints.update');
+    expect(update).toHaveLength(1);
+    expect(update[0]!.args[0]).toBe('we_2');
+    expect((update[0]!.args[1] as Row).enabled_events).toEqual([...SEIS_ANTIGOS, 'customer.created', 'invoice.paid', 'charge.refunded']);
+    // o endpoint dos outros não é tocado
+    expect(webhooks[0]!.enabled_events).toEqual(['invoice.paid']);
+    expect(t.db.writes).toEqual([]);
+  });
+
+  it('idempotente: rodar de novo não grava nada', async () => {
+    const t = setup({ world: { webhooks: [{ id: 'we_2', url: NOSSO, status: 'enabled', enabled_events: [...WEBHOOK_EVENTS] }] } });
+    expect((await t.call('ensure_webhook_events')).body).toEqual({ url: NOSSO, added: [], alreadyComplete: true });
+    expect(t.calls.some((c) => c.method === 'webhookEndpoints.update')).toBe(false);
+  });
+
+  it("endpoint com '*' já recebe tudo", async () => {
+    const t = setup({ world: { webhooks: [{ id: 'we_2', url: NOSSO, status: 'enabled', enabled_events: ['*'] }] } });
+    expect((await t.call('ensure_webhook_events')).body).toMatchObject({ added: [], alreadyComplete: true });
+    expect(t.calls.some((c) => c.method === 'webhookEndpoints.update')).toBe(false);
+  });
+
+  it('sem endpoint no nosso endereço: recusa (404) e não cria nada', async () => {
+    const t = setup({ world: { webhooks: [{ id: 'we_1', url: 'https://outro.site/hook', status: 'enabled', enabled_events: [] }] } });
+    const r = await t.call('ensure_webhook_events');
+    expect(r.status).toBe(404);
+    expect((r.body as { error: string }).error).toMatch(/Nenhum webhook do Stripe aponta/);
+    expect(t.calls.some((c) => c.method === 'webhookEndpoints.update')).toBe(false);
+  });
+
+  it('o backend (pg_net com o segredo do cron) pode pedir', async () => {
+    const t = setup({ caller: { kind: 'backend' }, world: { webhooks: [{ id: 'we_2', url: NOSSO, status: 'enabled', enabled_events: [...SEIS_ANTIGOS] }] } });
+    expect((await t.call('ensure_webhook_events')).status).toBe(200);
+  });
+
+  it('login que não é superadmin: recusado, sem tocar o Stripe', async () => {
+    const t = setup({ caller: { kind: 'other' }, world: { webhooks: [{ id: 'we_2', url: NOSSO, status: 'enabled', enabled_events: [] }] } });
+    const r = await t.call('ensure_webhook_events');
+    expect((r.body as { error: string }).error).toMatch(/Forbidden/);
+    expect(t.calls).toEqual([]);
+  });
+});
+
 describe('get_status', () => {
   const precos = {
     [PRICE_GERENTE]: { id: PRICE_GERENTE, active: true, unit_amount: 49990, currency: 'brl', recurring: { interval: 'month', interval_count: 1 }, product: { name: 'Conta Gerente' } },
     [PRICE_SLOT]: { id: PRICE_SLOT, active: true, unit_amount: 9990, currency: 'brl', recurring: { interval: 'month', interval_count: 1 }, product: { name: 'Loja extra' } },
   };
 
-  it('conectado: conta, os dois preços e o webhook com os 6 eventos', async () => {
+  it('conectado: conta, os dois preços e o webhook com os 8 eventos', async () => {
     const t = setup({
       world: {
         prices: precos,
@@ -541,7 +607,7 @@ describe('get_status', () => {
     expect(s.prices.storeSlot.found).toBe(false);
     expect(s.prices.storeSlot.error).toBe('O preço de STRIPE_PRICE_STORE_SLOT não existe na conta do Stripe conectada.');
     expect(s.webhook.enabled).toBe(false);
-    expect(s.webhook.missingEvents).toEqual(['customer.subscription.created', 'customer.subscription.updated']);
+    expect(s.webhook.missingEvents).toEqual(['customer.subscription.created', 'customer.subscription.updated', 'invoice.paid', 'charge.refunded']);
   });
 
   it('sem webhook para o nosso endereço', async () => {

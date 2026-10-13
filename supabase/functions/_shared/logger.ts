@@ -29,7 +29,8 @@ export class EdgeLogger {
   }
   
   private sanitizeContext(context: LogContext): LogContext {
-    const sensitiveKeys = ['apikey', 'password', 'token', 'secret', 'key', 'authorization'];
+    // cpf/cnpj/tax_id: dado pessoal da nota fiscal (tenant_billing_details).
+    const sensitiveKeys = ['apikey', 'password', 'token', 'secret', 'key', 'authorization', 'cpf', 'cnpj', 'tax_id', 'documento'];
     const sanitized: LogContext = {};
     
     for (const [key, value] of Object.entries(context)) {
@@ -53,7 +54,7 @@ export class EdgeLogger {
     if (typeof obj === 'object' && obj !== null) {
       const sanitized: any = {};
       for (const [key, value] of Object.entries(obj)) {
-        const sensitiveKeys = ['apikey', 'password', 'token', 'secret', 'key'];
+        const sensitiveKeys = ['apikey', 'password', 'token', 'secret', 'key', 'cpf', 'cnpj', 'tax_id', 'documento'];
         if (sensitiveKeys.some(sensitive => key.toLowerCase().includes(sensitive))) {
           sanitized[key] = '***';
         } else {
