@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Check, AlertTriangle, CreditCard, Loader2, Store, RotateCcw, XCircle } from 'lucide-react';
-import { useTenant, useIsGerente } from '@/contexts/TenantContext';
+import { useTenant, useIsGerente, useIsSuperAdmin } from '@/contexts/TenantContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -36,6 +36,10 @@ import {
   subscriptionActions,
 } from '@/lib/billing/subscriptionActions';
 import { gerenciarAssinatura, type ManageResponse } from '@/lib/billing/manageSubscription';
+import { useDadosFiscais } from '@/hooks/useDadosFiscais';
+import { DadosFiscaisCard } from '@/components/billing/DadosFiscaisCard';
+import { CobrancasDaConta } from '@/components/billing/CobrancasDaConta';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -63,6 +67,8 @@ export const SubscriptionSettings = () => {
   const { refreshTenant } = useTenantCtx();
   const queryClient = useQueryClient();
   const isGerente = useIsGerente();
+  const isSuperAdmin = useIsSuperAdmin();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [buyingSlots, setBuyingSlots] = useState(false);
@@ -91,6 +97,18 @@ export const SubscriptionSettings = () => {
   });
   const conta = buscarConta ? consultaConta.data ?? null : tenant;
   const contaAlvoId = conta?.id ?? null;
+
+  // A Conta dos "Dados para a nota fiscal" e das cobranças: para o Gerente, a
+  // própria Conta; para o superadmin, a Conta em foco (ou a Conta-mãe da Loja
+  // em foco). Gestor e Atendente não chegam a esta aba.
+  const contaFiscalId = isGerente
+    ? contaId ?? contaAlvoId
+    : isSuperAdmin && conta
+      ? (conta.kind === 'account' ? conta.id : ((conta.parent_tenant_id as string | null) ?? null))
+      : null;
+  const dadosFiscais = useDadosFiscais(contaFiscalId);
+  // Assinar exige os dados (o create-checkout-session recusa sem eles).
+  const podeIrAoCheckout = dadosFiscais.completos;
 
   /**
    * O estado da Conta volta pelo stripe-webhook, não pela edge function. Depois
@@ -160,6 +178,14 @@ export const SubscriptionSettings = () => {
   const totalSlots = includedSlots + purchasedExtra;
 
   const startCheckout = async (body: { extraSlots?: number }, setBusy: (v: boolean) => void) => {
+    if (!podeIrAoCheckout) {
+      toast({
+        title: 'Faltam os dados para a nota fiscal',
+        description: 'Preencha CPF ou CNPJ, nome e endereço no quadro "Dados para a nota fiscal" e salve. Depois é só assinar.',
+        variant: 'destructive',
+      });
+      return;
+    }
     try {
       setBusy(true);
       // `criarSessaoDeCheckout` já anexa o referral do Rewardful, já checa a
@@ -324,8 +350,22 @@ export const SubscriptionSettings = () => {
 
   const confirmacao = previa?.phase ? cancelConfirmation(previa.phase, previa.endsAt) : null;
 
+  const quadroDadosFiscais =
+    contaFiscalId && (isGerente || isSuperAdmin) ? (
+      <DadosFiscaisCard
+        contaId={contaFiscalId}
+        podeEditar={isGerente}
+        // Conta com acesso manual não paga: os dados não são cobrados dela
+        // (o selo some). Se ela decidir assinar, o checkout exige do mesmo jeito.
+        obrigatorio={!temAssinatura && !(conta as { manual_access_granted?: boolean | null }).manual_access_granted}
+        emailPadrao={user?.email ?? ''}
+      />
+    ) : null;
+
   return (
     <div className="space-y-6">
+      {/* Sem assinatura, os dados vêm ANTES do plano: é a ordem de quem vai assinar. */}
+      {!temAssinatura ? quadroDadosFiscais : null}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -423,14 +463,21 @@ export const SubscriptionSettings = () => {
               ) : null}
             </>
           ) : (
-            <Button
-              onClick={handleSubscribe}
-              disabled={loading}
-              className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
-            >
-              {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Assinar Agora por {PLAN_PRICE_LABEL}/mês
-            </Button>
+            <>
+              {!podeIrAoCheckout && !dadosFiscais.carregando ? (
+                <span className="text-xs text-muted-foreground md:mr-auto" data-testid="assinar-precisa-dados">
+                  Preencha e salve os dados para a nota fiscal acima para assinar.
+                </span>
+              ) : null}
+              <Button
+                onClick={handleSubscribe}
+                disabled={loading || !podeIrAoCheckout}
+                className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
+              >
+                {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
+                Assinar Agora por {PLAN_PRICE_LABEL}/mês
+              </Button>
+            </>
           )}
         </CardFooter>
       </Card>
@@ -509,13 +556,16 @@ export const SubscriptionSettings = () => {
                 className="w-20"
               />
             </div>
-            <Button onClick={handleBuySlots} disabled={buyingSlots}>
+            <Button onClick={handleBuySlots} disabled={buyingSlots || (!temAssinatura && !podeIrAoCheckout)}>
               {buyingSlots ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Contratar {extraSlots} loja{extraSlots > 1 ? 's' : ''} por {SLOT_PRICE_LABEL}/mês cada
             </Button>
           </CardFooter>
         </Card>
       )}
+
+      {temAssinatura ? quadroDadosFiscais : null}
+      {contaFiscalId && (isGerente || isSuperAdmin) ? <CobrancasDaConta contaId={contaFiscalId} /> : null}
     </div>
   );
 };

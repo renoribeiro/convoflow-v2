@@ -424,6 +424,80 @@ export type Database = {
           },
         ]
       }
+      billing_charges: {
+        Row: {
+          amount_paid_cents: number
+          amount_refunded_cents: number
+          created_at: string
+          currency: string
+          hosted_invoice_url: string | null
+          id: string
+          invoice_pdf_url: string | null
+          nota_status: string
+          paid_at: string
+          period_end: string | null
+          period_start: string | null
+          refunded_at: string | null
+          stripe_charge_id: string | null
+          stripe_customer_id: string | null
+          stripe_invoice_id: string
+          stripe_payment_intent_id: string | null
+          stripe_subscription_id: string | null
+          tenant_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_paid_cents: number
+          amount_refunded_cents?: number
+          created_at?: string
+          currency: string
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          nota_status?: string
+          paid_at: string
+          period_end?: string | null
+          period_start?: string | null
+          refunded_at?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id: string
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_paid_cents?: number
+          amount_refunded_cents?: number
+          created_at?: string
+          currency?: string
+          hosted_invoice_url?: string | null
+          id?: string
+          invoice_pdf_url?: string | null
+          nota_status?: string
+          paid_at?: string
+          period_end?: string | null
+          period_start?: string | null
+          refunded_at?: string | null
+          stripe_charge_id?: string | null
+          stripe_customer_id?: string | null
+          stripe_invoice_id?: string
+          stripe_payment_intent_id?: string | null
+          stripe_subscription_id?: string | null
+          tenant_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_charges_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       bug_reports: {
         Row: {
           attachment_type: string | null
@@ -4483,6 +4557,71 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      tenant_billing_details: {
+        Row: {
+          cep: string
+          city: string
+          city_ibge_code: string | null
+          complement: string | null
+          created_at: string
+          district: string
+          invoice_email: string
+          legal_name: string
+          number: string
+          person_type: string
+          state: string
+          street: string
+          tax_id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          cep: string
+          city: string
+          city_ibge_code?: string | null
+          complement?: string | null
+          created_at?: string
+          district: string
+          invoice_email: string
+          legal_name: string
+          number: string
+          person_type: string
+          state: string
+          street: string
+          tax_id: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          cep?: string
+          city?: string
+          city_ibge_code?: string | null
+          complement?: string | null
+          created_at?: string
+          district?: string
+          invoice_email?: string
+          legal_name?: string
+          number?: string
+          person_type?: string
+          state?: string
+          street?: string
+          tax_id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_billing_details_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
         ]
       }
       tenant_module_settings: {

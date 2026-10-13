@@ -5,7 +5,9 @@
  *   1. Não existe campo para salvar chave — a chave é a secret do Supabase.
  *   2. "Testar Conexão" só consulta de novo (get_status); não grava nada.
  *   3. O endereço do webhook é o real (…/functions/v1/stripe-webhook) e a
- *      lista tem os 6 eventos que o stripe-webhook precisa.
+ *      lista tem os 8 eventos que o stripe-webhook precisa.
+ *   4. A única escrita é "Marcar os eventos que faltam" (ensure_webhook_events),
+ *      e o botão só aparece quando falta algum evento.
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,6 +19,7 @@ import type { StripeStatus } from '@/lib/billing/adminBilling';
 
 let status: StripeStatus;
 const getStripeStatus = vi.fn(async () => status);
+const ensureWebhookEvents = vi.fn(async () => ({ url: 'x', added: ['invoice.paid', 'charge.refunded'], alreadyComplete: false }));
 const chamadas: string[] = [];
 
 vi.mock('@/services/stripeService', () => ({
@@ -28,6 +31,7 @@ vi.mock('@/services/stripeService', () => ({
         if (typeof nome !== 'string') return undefined;
         chamadas.push(nome);
         if (nome === 'getStripeStatus') return () => getStripeStatus();
+        if (nome === 'ensureWebhookEvents') return () => ensureWebhookEvents();
         return () => {
           throw new Error(`método proibido na aba Conexão: ${nome}`);
         };
@@ -43,13 +47,15 @@ vi.mock('@/lib/env', () => ({
 import { StripeConnectionStatus } from './StripeConnectionStatus';
 
 const URL_WEBHOOK = 'https://pqjkuwyshybxldzpfbbs.supabase.co/functions/v1/stripe-webhook';
-const SEIS = [
+const OITO = [
   'checkout.session.completed',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted',
   'invoice.payment_succeeded',
   'invoice.payment_failed',
+  'invoice.paid',
+  'charge.refunded',
 ];
 
 function base(): StripeStatus {
@@ -63,7 +69,7 @@ function base(): StripeStatus {
       gerente: { env: 'STRIPE_PRICE_GERENTE', configured: true, found: true, id: 'price_gerente', active: true, unitAmount: 49990, currency: 'brl', interval: 'month', intervalCount: 1, productName: 'ConvoFlow Conta', error: null },
       storeSlot: { env: 'STRIPE_PRICE_STORE_SLOT', configured: true, found: true, id: 'price_loja', active: true, unitAmount: 9990, currency: 'brl', interval: 'month', intervalCount: 1, productName: 'Loja extra', error: null },
     },
-    webhook: { url: URL_WEBHOOK, expectedEvents: SEIS, found: true, enabled: true, missingEvents: [], error: null },
+    webhook: { url: URL_WEBHOOK, expectedEvents: OITO, found: true, enabled: true, missingEvents: [], error: null },
   };
 }
 
@@ -79,6 +85,7 @@ function renderTab() {
 beforeEach(() => {
   status = base();
   getStripeStatus.mockClear();
+  ensureWebhookEvents.mockClear();
   chamadas.length = 0;
 });
 
@@ -112,12 +119,14 @@ describe('StripeConnectionStatus', () => {
     expect(new Set(chamadas)).toEqual(new Set(['getStripeStatus']));
   });
 
-  it('webhook: o endereço real e os 6 eventos', async () => {
+  it('webhook: o endereço real e os 8 eventos', async () => {
     renderTab();
     await screen.findByText('Endpoint encontrado e ativo.');
     expect(screen.getByTestId('webhook-url').textContent).toBe(URL_WEBHOOK);
     const eventos = within(screen.getByRole('list', { name: 'Eventos do webhook' })).getAllByRole('listitem');
-    expect(eventos.map((e) => e.textContent)).toEqual(SEIS);
+    expect(eventos.map((e) => e.textContent)).toEqual(OITO);
+    // Nada faltando: nenhum botão de escrita.
+    expect(screen.queryByRole('button', { name: /Marcar os eventos que faltam/ })).toBeNull();
     expect(screen.queryByText(/api\/webhooks\/stripe/)).toBeNull();
     expect(screen.queryByText(/payment_intent/)).toBeNull();
   });
@@ -128,7 +137,27 @@ describe('StripeConnectionStatus', () => {
     renderTab();
     await screen.findByText('Conectado');
     expect(screen.getAllByLabelText('falta')).toHaveLength(2);
-    expect(screen.getAllByLabelText('ok')).toHaveLength(4);
+    expect(screen.getAllByLabelText('ok')).toHaveLength(6);
+  });
+
+  it('faltando eventos: "Marcar os eventos que faltam" chama ensure_webhook_events e consulta de novo', async () => {
+    const user = userEvent.setup();
+    status = base();
+    status.webhook.missingEvents = ['invoice.paid', 'charge.refunded'];
+    renderTab();
+    const botao = await screen.findByRole('button', { name: /Marcar os eventos que faltam/ });
+    expect(screen.getByText(/Faltam 2 evento/)).toBeInTheDocument();
+    await user.click(botao);
+    await waitFor(() => expect(ensureWebhookEvents).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(getStripeStatus).toHaveBeenCalledTimes(2));
+  });
+
+  it('sem endpoint encontrado, não oferece marcar eventos', async () => {
+    status = base();
+    status.webhook = { ...status.webhook, found: false, missingEvents: [...OITO] };
+    renderTab();
+    await screen.findByText(/Nenhum endpoint da conta conectada/);
+    expect(screen.queryByRole('button', { name: /Marcar os eventos que faltam/ })).toBeNull();
   });
 
   it('preço que não existe na conta conectada aparece como problema', async () => {

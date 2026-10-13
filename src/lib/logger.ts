@@ -53,7 +53,9 @@ class EnhancedSecureLogger {
   private sensitiveKeys = [
     'password', 'token', 'key', 'secret', 'apikey', 'api_key',
     'authorization', 'auth', 'credential', 'private', 'confidential',
-    'refresh_token', 'access_token', 'session_token', 'jwt', 'bearer'
+    'refresh_token', 'access_token', 'session_token', 'jwt', 'bearer',
+    // Dado pessoal da nota fiscal (tenant_billing_details): nunca em log.
+    'cpf', 'cnpj', 'tax_id', 'cpf_cnpj', 'documento'
   ];
 
   private config: LoggerConfig;

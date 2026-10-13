@@ -57,6 +57,21 @@ vi.mock('@/contexts/TenantContext', () => ({
 
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ logout: vi.fn() }) }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
+// Dados para a nota fiscal (parte 1): preenchidos — estes testes são da oferta
+// do teste grátis. O caso "sem os dados" está em PaywallScreen.test.tsx.
+vi.mock('@/hooks/useDadosFiscais', () => ({
+  useDadosFiscais: () => ({
+    dados: {
+      tenant_id: 'conta-1', person_type: 'cpf', tax_id: '11144477735', legal_name: 'Fulano de Teste',
+      cep: '60000000', street: 'Rua Exemplo', number: '1', complement: null, district: 'Centro',
+      city: 'Fortaleza', city_ibge_code: '2304400', state: 'CE', invoice_email: 'nota@exemplo.com.br',
+    },
+    completos: true,
+    carregando: false,
+    erro: null,
+  }),
+  useSalvarDadosFiscais: () => ({ mutate: vi.fn(), isPending: false }),
+}));
 
 import { PaywallScreen } from './PaywallScreen';
 import { PLAN_PRICE_LABEL } from '@/lib/billing/checkout';

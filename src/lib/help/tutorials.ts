@@ -642,9 +642,17 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'O botão e o código de 6 dígitos do e-mail valem por 24 horas e por um acesso. Se o botão não abrir, vá em "Esqueci minha senha" na tela de login, clique em "Já tenho um código" e digite o código. Ou peça um código novo na mesma tela.',
       },
       {
+        title: 'Preencha os dados para a nota fiscal',
+        body:
+          'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o e-mail que vai receber a nota e clique em "Salvar dados".',
+        helpKey: 'page:paywall',
+        note:
+          'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito.',
+      },
+      {
         title: 'Clique em "Começar teste grátis" e cadastre o cartão',
         body:
-          'A primeira tela mostra o que acontece: hoje você não paga nada, e ali estão a data e o valor da primeira cobrança. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.',
+          'A mesma tela mostra o que acontece: hoje você não paga nada, e ali estão a data e o valor da primeira cobrança. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.',
         helpKey: 'page:paywall',
       },
       {

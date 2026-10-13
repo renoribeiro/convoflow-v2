@@ -131,7 +131,7 @@ export interface BillingOverview {
   warnings: string[];
 }
 
-/** Os 6 eventos que o stripe-webhook precisa receber. Espelho de WEBHOOK_EVENTS. */
+/** Os 8 eventos que o stripe-webhook precisa receber. Espelho de WEBHOOK_EVENTS. */
 export const WEBHOOK_EVENTS: readonly string[] = [
   'checkout.session.completed',
   'customer.subscription.created',
@@ -139,6 +139,8 @@ export const WEBHOOK_EVENTS: readonly string[] = [
   'customer.subscription.deleted',
   'invoice.payment_succeeded',
   'invoice.payment_failed',
+  'invoice.paid',
+  'charge.refunded',
 ];
 
 /** Endereço do stripe-webhook a partir da URL do projeto. */

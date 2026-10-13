@@ -9,6 +9,12 @@ import {
   grantedAttendants,
   type PriceLike,
 } from "../_shared/attendant-billing.ts";
+import {
+  BILLING_DETAILS_MISSING_MESSAGE,
+  billingDetailsMissing,
+  stripeCustomerUpdate,
+  type BillingDetailsRow,
+} from "../_shared/billing-details.ts";
 
 // =============================================================================
 // create-checkout-session
@@ -41,6 +47,12 @@ import {
 // teste o Stripe cobra o plano. Conta que já assinou antes não ganha outro
 // teste (ver trialDaysForCheckout). O cliente do Stripe é UM por Conta, criado
 // aqui na primeira vez e reaproveitado depois (tenants.stripe_customer_id).
+//
+// Nota fiscal, parte 1 (2026-10-13): sem os "Dados para a nota fiscal" da
+// Conta (tenant_billing_details: CPF/CNPJ, nome, endereço, e-mail) o checkout
+// é recusado com 422 — a tela também trava o botão, mas quem decide é aqui.
+// Com eles, nome, e-mail e endereço vão para o cliente do Stripe e o
+// documento vai SÓ no metadata do cliente (ver _shared/billing-details.ts).
 // =============================================================================
 
 const corsHeaders = {
@@ -250,6 +262,28 @@ serve(async (req) => {
       );
     }
 
+    // ---- Dados para a nota fiscal (obrigatórios para assinar) ----
+    // Lidos com a chave de serviço; a linha já foi validada pelo gatilho do
+    // banco ao ser gravada. Nada daqui vai para log.
+    const { data: dadosFiscais, error: dadosFiscaisError } = await admin
+      .from("tenant_billing_details")
+      .select("person_type, tax_id, legal_name, cep, street, number, complement, district, city, city_ibge_code, state, invoice_email")
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+    if (dadosFiscaisError) {
+      console.error("Falha ao ler os dados para a nota fiscal:", dadosFiscaisError.code);
+      return new Response(
+        JSON.stringify({ error: "Não foi possível conferir os dados para a nota fiscal. Tente de novo em alguns minutos." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    if (billingDetailsMissing(dadosFiscais as BillingDetailsRow | null).length > 0) {
+      return new Response(
+        JSON.stringify({ error: BILLING_DETAILS_MISSING_MESSAGE, code: "billing_details_missing" }),
+        { status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // ---- Monta URLs de retorno a partir da origem da requisição ----
     const origin =
       req.headers.get("origin") || Deno.env.get("APP_URL") || "";
@@ -299,6 +333,13 @@ serve(async (req) => {
       email: user.email ?? null,
       atual: (tenant.stripe_customer_id as string | null) ?? null,
     });
+    // Nome, e-mail e endereço da nota no cliente do Stripe; o CPF/CNPJ só no
+    // metadata. Toda vez: o Gerente pode ter corrigido os dados desde a última.
+    await stripe.customers.update(
+      customerId,
+      stripeCustomerUpdate(dadosFiscais as BillingDetailsRow, tenantId) as Stripe.CustomerUpdateParams,
+    );
+
     const diasDeTeste = trialDaysForCheckout({
       subscription_id: (tenant.subscription_id as string | null) ?? null,
     });

@@ -45,6 +45,7 @@ import { stripeService } from '@/services/stripeService';
 import { CouponManager } from '@/components/admin/billing/CouponManager';
 import { StripeConnectionStatus } from '@/components/admin/billing/StripeConnectionStatus';
 import { AttendantSeatsDialog } from '@/components/admin/billing/AttendantSeatsDialog';
+import { CobrancasDaPlataforma } from '@/components/admin/billing/CobrancasDaPlataforma';
 
 /**
  * Administração › Faturamento (superadmin).
@@ -230,6 +231,7 @@ export function BillingDashboard() {
         <TabsList className="h-auto max-w-full flex-wrap">
           <TabsTrigger value="contas">Contas</TabsTrigger>
           <TabsTrigger value="stripe">Stripe</TabsTrigger>
+          <TabsTrigger value="cobrancas">Cobranças</TabsTrigger>
           <TabsTrigger value="coupons">Cupons</TabsTrigger>
           <TabsTrigger value="conexao">Conexão</TabsTrigger>
         </TabsList>
@@ -279,6 +281,10 @@ export function BillingDashboard() {
           <ProximasCobrancas linhas={overview?.upcoming ?? []} carregando={carregandoStripe} />
           <ReceitaPorMes linhas={overview?.revenueByMonth ?? []} carregando={carregandoStripe} />
           <Falhas linhas={overview?.failedPayments ?? []} carregando={carregandoStripe} />
+        </TabsContent>
+
+        <TabsContent value="cobrancas" className="space-y-4">
+          <CobrancasDaPlataforma />
         </TabsContent>
 
         <TabsContent value="coupons" className="space-y-4">

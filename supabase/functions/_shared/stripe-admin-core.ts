@@ -45,6 +45,8 @@ export type StripeAdminAction =
   | 'set_attendant_price'
   | 'sync_attendant_item'
   | 'ensure_attendant_product'
+  // Marca no endpoint do stripe-webhook os eventos de WEBHOOK_EVENTS que faltam.
+  | 'ensure_webhook_events'
   | 'get_status'
   | 'billing_overview'
   | 'get_config'
@@ -71,6 +73,7 @@ export const BACKEND_ACTIONS: readonly StripeAdminAction[] = [
   'archive_coupon',
   'attendant_status',
   'ensure_attendant_product',
+  'ensure_webhook_events',
 ];
 
 export type AdminCaller =
@@ -85,8 +88,11 @@ export const PRICE_GERENTE_ENV = 'STRIPE_PRICE_GERENTE';
 export const PRICE_STORE_SLOT_ENV = 'STRIPE_PRICE_STORE_SLOT';
 
 /**
- * Os 6 eventos que o stripe-webhook precisa receber
- * (docs/RUNBOOK_teste_gratis.md, etapa 1b).
+ * Os 8 eventos que o stripe-webhook precisa receber
+ * (docs/RUNBOOK_teste_gratis.md, etapa 1b). `invoice.paid` e `charge.refunded`
+ * entraram com a nota fiscal, parte 1 (2026-10-13): gravam cada cobrança paga
+ * e cada reembolso em billing_charges. A ação `ensure_webhook_events` marca no
+ * endpoint os que faltarem.
  */
 export const WEBHOOK_EVENTS: readonly string[] = [
   'checkout.session.completed',
@@ -95,6 +101,8 @@ export const WEBHOOK_EVENTS: readonly string[] = [
   'customer.subscription.deleted',
   'invoice.payment_succeeded',
   'invoice.payment_failed',
+  'invoice.paid',
+  'charge.refunded',
 ];
 
 export const WEBHOOK_FUNCTION = 'stripe-webhook';
@@ -614,6 +622,41 @@ async function checkWebhook(stripe: StripeLike, url: string): Promise<WebhookChe
   } catch (e) {
     return { ...base, error: `Não foi possível listar os webhooks: ${mensagem(e)}` };
   }
+}
+
+export interface EnsureWebhookEventsResult {
+  url: string;
+  /** Os eventos que estavam faltando e foram marcados agora. */
+  added: string[];
+  /** O endpoint já recebia tudo (ou todos os eventos, com '*'). */
+  alreadyComplete: boolean;
+}
+
+/**
+ * Marca no endpoint do stripe-webhook os eventos de WEBHOOK_EVENTS que faltam,
+ * SEM tirar nenhum dos que já estão lá. Idempotente: rodar de novo não muda
+ * nada. Não cria endpoint (isso troca o segredo de assinatura, que é uma
+ * secret do Supabase): sem endpoint no endereço, recusa com a explicação.
+ */
+export async function ensureWebhookEvents(deps: StripeAdminDeps): Promise<EnsureWebhookEventsResult> {
+  const url = webhookUrl(deps.getEnv);
+  const { stripe } = await getStripeClient(deps);
+  const list = await stripe.webhookEndpoints.list({ limit: 100 });
+  // deno-lint-ignore no-explicit-any
+  const endpoint = (list?.data ?? []).find((e: any) => e?.url === url);
+  if (!endpoint) {
+    throw new AdminError(
+      `Nenhum webhook do Stripe aponta para ${url}. Crie o endpoint no painel do Stripe (docs/RUNBOOK_teste_gratis.md, etapa 1b); esta ação só marca eventos.`,
+      404,
+    );
+  }
+  const atuais: string[] = endpoint.enabled_events ?? [];
+  if (atuais.includes('*')) return { url, added: [], alreadyComplete: true };
+  const faltando = WEBHOOK_EVENTS.filter((ev) => !atuais.includes(ev));
+  if (!faltando.length) return { url, added: [], alreadyComplete: true };
+  await stripe.webhookEndpoints.update(endpoint.id, { enabled_events: [...atuais, ...faltando] });
+  deps.log?.('info', 'webhook do Stripe: eventos marcados', { added: faltando });
+  return { url, added: faltando, alreadyComplete: false };
 }
 
 export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
@@ -1184,6 +1227,9 @@ export async function handleStripeAdmin(
 
       case 'billing_overview':
         return ok(await billingOverview(deps));
+
+      case 'ensure_webhook_events':
+        return ok(await ensureWebhookEvents(deps));
 
       // Compatibilidade com a tela antiga até o próximo deploy do site: diz se
       // a SECRET existe. Nunca lê stripe_config.
