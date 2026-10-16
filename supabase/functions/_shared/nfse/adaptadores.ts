@@ -112,12 +112,15 @@ export function bancoSupabase(db: SupabaseClient, contasTeste: string[], ambient
       return (data as Nota | null) ?? null;
     },
     async travar(id, ate, agora) {
-      const { data, error } = await db
-        .from('notas_fiscais')
-        .update({ travada_ate: ate.toISOString() })
-        .eq('id', id)
-        .or(`travada_ate.is.null,travada_ate.lt.${agora.toISOString()}`)
-        .select('id');
+      // Compare-and-swap: só grava se a trava ainda é a que foi lida. Dois
+      // processos ao mesmo tempo: um muda a linha, o outro não acha nada.
+      // (O filtro .or() com data no UPDATE falhou no PostgREST em 2026-10-16.)
+      const { data: atual, error: e1 } = await db.from('notas_fiscais').select('travada_ate').eq('id', id).single();
+      if (e1) falhou('ler trava', e1);
+      const antes = (atual as { travada_ate: string | null }).travada_ate;
+      if (antes && new Date(antes).getTime() >= agora.getTime()) return false;
+      const base = db.from('notas_fiscais').update({ travada_ate: ate.toISOString() }).eq('id', id);
+      const { data, error } = await (antes === null ? base.is('travada_ate', null) : base.eq('travada_ate', antes)).select('id');
       if (error) falhou('travar', error);
       return (data ?? []).length === 1;
     },
