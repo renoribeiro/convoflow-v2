@@ -4,7 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ResponsiveTable } from '@/components/shared/ResponsiveTable';
 import { supabase } from '@/integrations/supabase/client';
 import { QUERY_KEYS } from '@/lib/queryClient';
-import { COBRANCA_COLUMNS, type Cobranca } from '@/lib/billing/cobrancas';
+import { COBRANCA_COLUMNS, notaFiscalVisivel, type Cobranca } from '@/lib/billing/cobrancas';
+import { useNfseConfig } from '@/hooks/useNfseConfig';
+import { useIsSuperAdmin } from '@/contexts/TenantContext';
 import { colunasDeCobranca } from '@/components/billing/colunasDeCobranca';
 
 /** Quantas cobranças a aba mostra (as mais recentes): dois anos de mensalidade. */
@@ -13,10 +15,13 @@ const LIMITE = 24;
 /**
  * Configurações › Assinatura › Cobranças: cada pagamento da Conta, gravado pelo
  * stripe-webhook. O RLS entrega ao Gerente só as da própria Conta (e ao
- * superadmin, quando ele olha esta Conta). A coluna da nota fiscal fica
- * escondida até a parte 2 (NOTA_FISCAL_VISIVEL).
+ * superadmin, quando ele olha esta Conta). A coluna da nota fiscal
+ * aparece quando a produção está no ar (notaFiscalVisivel).
  */
 export function CobrancasDaConta({ contaId }: { contaId: string | null }) {
+  const ehSuperadmin = useIsSuperAdmin();
+  const config = useNfseConfig();
+  const notaVisivel = notaFiscalVisivel({ ehSuperadmin, ambienteAtivo: config.data?.ambiente_ativo });
   const consulta = useQuery({
     queryKey: [QUERY_KEYS.BILLING_CHARGES, 'conta', contaId],
     enabled: !!contaId,
@@ -54,7 +59,7 @@ export function CobrancasDaConta({ contaId }: { contaId: string | null }) {
               Nenhuma cobrança ainda. A primeira aparece aqui assim que o Stripe confirmar o pagamento.
             </p>
           }
-          columns={colunasDeCobranca({ comConta: false })}
+          columns={colunasDeCobranca({ comConta: false, notaVisivel, ehSuperadmin })}
         />
       </CardContent>
     </Card>

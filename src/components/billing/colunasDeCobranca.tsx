@@ -1,18 +1,25 @@
 import { ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { NotaFiscalCelula } from '@/components/billing/NotaFiscalCelula';
 import type { ResponsiveColumn } from '@/components/shared/ResponsiveTable';
 import { formatCents, formatDate } from '@/lib/billing/adminBilling';
 import {
   linkDoStripe,
-  NOTA_FISCAL_VISIVEL,
-  rotuloDaNota,
   SITUACAO_LABEL,
   situacaoDaCobranca,
   type Cobranca,
 } from '@/lib/billing/cobrancas';
 
 /** As colunas das duas listas (Conta e superadmin). */
-export function colunasDeCobranca({ comConta }: { comConta: boolean }): ResponsiveColumn<Cobranca>[] {
+export function colunasDeCobranca({
+  comConta,
+  notaVisivel,
+  ehSuperadmin,
+}: {
+  comConta: boolean;
+  notaVisivel: boolean;
+  ehSuperadmin: boolean;
+}): ResponsiveColumn<Cobranca>[] {
   const colunas: ResponsiveColumn<Cobranca>[] = [
     { key: 'data', header: 'Data', card: 'title', cell: (c) => formatDate(c.paid_at) },
   ];
@@ -57,8 +64,8 @@ export function colunasDeCobranca({ comConta }: { comConta: boolean }): Responsi
       cell: (c) => (c.period_start && c.period_end ? `${formatDate(c.period_start)} a ${formatDate(c.period_end)}` : '—'),
     },
   );
-  if (NOTA_FISCAL_VISIVEL) {
-    colunas.push({ key: 'nota', header: 'Nota fiscal', cell: (c) => rotuloDaNota(c.nota_status) });
+  if (notaVisivel) {
+    colunas.push({ key: 'nota', header: 'Nota fiscal', cell: (c) => <NotaFiscalCelula cobranca={c} ehSuperadmin={ehSuperadmin} /> });
   }
   colunas.push({
     key: 'recibo',

@@ -430,6 +430,7 @@ export type Database = {
           amount_refunded_cents: number
           created_at: string
           currency: string
+          fatura_itens: Json | null
           hosted_invoice_url: string | null
           id: string
           invoice_pdf_url: string | null
@@ -451,6 +452,7 @@ export type Database = {
           amount_refunded_cents?: number
           created_at?: string
           currency: string
+          fatura_itens?: Json | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_pdf_url?: string | null
@@ -472,6 +474,7 @@ export type Database = {
           amount_refunded_cents?: number
           created_at?: string
           currency?: string
+          fatura_itens?: Json | null
           hosted_invoice_url?: string | null
           id?: string
           invoice_pdf_url?: string | null
@@ -3307,6 +3310,177 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      nfse_config: {
+        Row: {
+          ambiente_ativo: string
+          atualizado_em: string
+          certificado_valido_ate: string | null
+          diario_rodado_em: string | null
+          id: boolean
+          p_tot_trib_sn: number
+          prefeitura_emissor_nacional: boolean | null
+          prefeitura_lida_em: string | null
+        }
+        Insert: {
+          ambiente_ativo?: string
+          atualizado_em?: string
+          certificado_valido_ate?: string | null
+          diario_rodado_em?: string | null
+          id?: boolean
+          p_tot_trib_sn?: number
+          prefeitura_emissor_nacional?: boolean | null
+          prefeitura_lida_em?: string | null
+        }
+        Update: {
+          ambiente_ativo?: string
+          atualizado_em?: string
+          certificado_valido_ate?: string | null
+          diario_rodado_em?: string | null
+          id?: boolean
+          p_tot_trib_sn?: number
+          prefeitura_emissor_nacional?: boolean | null
+          prefeitura_lida_em?: string | null
+        }
+        Relationships: []
+      }
+      nfse_config_historico: {
+        Row: {
+          alterado_em: string
+          alterado_por: string | null
+          alterado_por_nome: string | null
+          campo: string
+          id: number
+          valor_anterior: string | null
+          valor_novo: string | null
+        }
+        Insert: {
+          alterado_em?: string
+          alterado_por?: string | null
+          alterado_por_nome?: string | null
+          campo: string
+          id?: number
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Update: {
+          alterado_em?: string
+          alterado_por?: string | null
+          alterado_por_nome?: string | null
+          campo?: string
+          id?: number
+          valor_anterior?: string | null
+          valor_novo?: string | null
+        }
+        Relationships: []
+      }
+      notas_fiscais: {
+        Row: {
+          alertas_sefin: Json | null
+          ambiente: string
+          cancelada_em: string | null
+          chave_acesso: string | null
+          charge_id: string
+          created_at: string
+          descricao: string | null
+          email_enviado_em: string | null
+          email_tentativas: number
+          emitida_em: string | null
+          evento_cancelamento_path: string | null
+          id: string
+          id_dps: string | null
+          numero_dps: number
+          numero_nfse: string | null
+          pdf_path: string | null
+          proxima_tentativa_em: string | null
+          serie: string
+          status: string
+          tenant_id: string | null
+          tentativas: number
+          travada_ate: string | null
+          ultimo_erro_codigo: string | null
+          ultimo_erro_mensagem: string | null
+          updated_at: string
+          valor_centavos: number | null
+          verificar_antes_de_reenviar: boolean
+          xml_path: string | null
+        }
+        Insert: {
+          alertas_sefin?: Json | null
+          ambiente: string
+          cancelada_em?: string | null
+          chave_acesso?: string | null
+          charge_id: string
+          created_at?: string
+          descricao?: string | null
+          email_enviado_em?: string | null
+          email_tentativas?: number
+          emitida_em?: string | null
+          evento_cancelamento_path?: string | null
+          id?: string
+          id_dps?: string | null
+          numero_dps: number
+          numero_nfse?: string | null
+          pdf_path?: string | null
+          proxima_tentativa_em?: string | null
+          serie?: string
+          status?: string
+          tenant_id?: string | null
+          tentativas?: number
+          travada_ate?: string | null
+          ultimo_erro_codigo?: string | null
+          ultimo_erro_mensagem?: string | null
+          updated_at?: string
+          valor_centavos?: number | null
+          verificar_antes_de_reenviar?: boolean
+          xml_path?: string | null
+        }
+        Update: {
+          alertas_sefin?: Json | null
+          ambiente?: string
+          cancelada_em?: string | null
+          chave_acesso?: string | null
+          charge_id?: string
+          created_at?: string
+          descricao?: string | null
+          email_enviado_em?: string | null
+          email_tentativas?: number
+          emitida_em?: string | null
+          evento_cancelamento_path?: string | null
+          id?: string
+          id_dps?: string | null
+          numero_dps?: number
+          numero_nfse?: string | null
+          pdf_path?: string | null
+          proxima_tentativa_em?: string | null
+          serie?: string
+          status?: string
+          tenant_id?: string | null
+          tentativas?: number
+          travada_ate?: string | null
+          ultimo_erro_codigo?: string | null
+          ultimo_erro_mensagem?: string | null
+          updated_at?: string
+          valor_centavos?: number | null
+          verificar_antes_de_reenviar?: boolean
+          xml_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "billing_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       notifications: {
         Row: {
@@ -6571,6 +6745,10 @@ export type Database = {
           p_waba_id: string
         }
         Returns: Json
+      }
+      nfse_definir_p_tot_trib_sn: {
+        Args: { p_valor: number }
+        Returns: number
       }
       normalize_ad_referral: {
         Args: { p_referral: Json }

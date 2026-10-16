@@ -5,6 +5,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+// A tabela chega por parâmetro (string): com o tipo de todas as tabelas, o
+// genérico do supabase-js passa da profundidade que o TypeScript aguenta
+// (TS2589). Aqui o tipo da tabela não ajuda em nada.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const deTabela = (table: string) => (supabase as any).from(table);
+
 interface UseEnhancedSupabaseMutationOptions {
   table: string;
   operation: 'insert' | 'update' | 'delete' | 'upsert';
@@ -210,7 +216,7 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
         let query;
 
         switch (operation) {
-          case 'insert':
+          case 'insert': {
             // Adicionar tenant_id automaticamente se não for a tabela profiles, tenants ou affiliates
             let insertData = data;
             if (tenant?.id && table !== 'profiles' && table !== 'tenants' && table !== 'affiliates') {
@@ -218,11 +224,12 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
                 ? data.map(item => ({ ...item, tenant_id: tenant.id }))
                 : { ...data, tenant_id: tenant.id };
             }
-            query = supabase.from(table).insert(insertData).select();
+            query = deTabela(table).insert(insertData).select();
             break;
+          }
 
           case 'update':
-            query = supabase.from(table).update(data).select();
+            query = deTabela(table).update(data).select();
             if (mutationOptions?.filter) {
               const { column, operator, value } = mutationOptions.filter;
               query = query[operator](column, value);
@@ -230,14 +237,14 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
             break;
 
           case 'delete':
-            query = supabase.from(table).delete().select();
+            query = deTabela(table).delete().select();
             if (mutationOptions?.filter) {
               const { column, operator, value } = mutationOptions.filter;
               query = query[operator](column, value);
             }
             break;
 
-          case 'upsert':
+          case 'upsert': {
             // Adicionar tenant_id automaticamente se não for a tabela profiles, tenants ou affiliates
             let upsertData = data;
             if (tenant?.id && table !== 'profiles' && table !== 'tenants' && table !== 'affiliates') {
@@ -245,8 +252,9 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
                 ? data.map(item => ({ ...item, tenant_id: tenant.id }))
                 : { ...data, tenant_id: tenant.id };
             }
-            query = supabase.from(table).upsert(upsertData).select();
+            query = deTabela(table).upsert(upsertData).select();
             break;
+          }
 
           default:
             throw new Error(`Operação não suportada: ${operation}`);
