@@ -19,7 +19,7 @@ import { ErroPedido, idDaDps, montarDps, validarPedidoEmissao } from './dps.js';
 import { montarPedidoCancelamento } from './evento.js';
 import { ErroDeRede, gunzipBase64, gzipBase64 } from './sefin.js';
 
-export const ACOES = ['emitir', 'consultar_dps', 'consultar_nfse', 'cancelar', 'parametros', 'certificado'];
+export const ACOES = ['emitir', 'consultar_dps', 'consultar_nfse', 'cancelar', 'parametros', 'parametros_producao', 'certificado'];
 
 const RE_CHAVE = /^\d{50}$/;
 
@@ -57,6 +57,27 @@ async function chamar(http, metodo, url, corpo) {
   }
 }
 
+/** Convênio de Fortaleza e alíquota do serviço no ADN dado (só GET). */
+async function lerParametros(deps, adn) {
+  const conv = await chamar(deps.http, 'GET', `${adn}/parametrizacao/${MUNICIPIO_EMISSOR}/convenio`);
+  if (conv.falha) return conv.falha;
+  if (conv.r.status !== 200 || !conv.r.json?.parametrosConvenio) return incerta(`convenio respondeu ${conv.r.status}`);
+  const p = conv.r.json.parametrosConvenio;
+  const aliq = await chamar(deps.http, 'GET', `${adn}/parametrizacao/${MUNICIPIO_EMISSOR}/${SERVICO.codigoMunicipalAliquota}/historicoaliquotas`);
+  let aliquota = null;
+  if (!aliq.falha && aliq.r.status === 200) {
+    const hist = aliq.r.json?.aliquotas?.[SERVICO.codigoMunicipalAliquota];
+    const vigente = Array.isArray(hist) ? hist.find((h) => !h.DtFim) ?? hist[hist.length - 1] : null;
+    aliquota = vigente ? Number(vigente.Aliq) : null;
+  }
+  return {
+    resultado: 'ok',
+    aderenteEmissorNacional: Number(p.aderenteEmissorNacional) === 1,
+    aderenteAmbienteNacional: Number(p.aderenteAmbienteNacional) === 1,
+    aliquota,
+  };
+}
+
 async function buscarNfse(deps, base, chave) {
   const { r, falha } = await chamar(deps.http, 'GET', `${base}/nfse/${chave}`);
   if (falha) return falha;
@@ -86,25 +107,11 @@ export async function executarAcao(pedido, deps) {
     };
   }
 
-  if (acao === 'parametros') {
-    const conv = await chamar(deps.http, 'GET', `${amb.adn}/parametrizacao/${MUNICIPIO_EMISSOR}/convenio`);
-    if (conv.falha) return conv.falha;
-    if (conv.r.status !== 200 || !conv.r.json?.parametrosConvenio) return incerta(`convenio respondeu ${conv.r.status}`);
-    const p = conv.r.json.parametrosConvenio;
-    const aliq = await chamar(deps.http, 'GET', `${amb.adn}/parametrizacao/${MUNICIPIO_EMISSOR}/${SERVICO.codigoMunicipalAliquota}/historicoaliquotas`);
-    let aliquota = null;
-    if (!aliq.falha && aliq.r.status === 200) {
-      const hist = aliq.r.json?.aliquotas?.[SERVICO.codigoMunicipalAliquota];
-      const vigente = Array.isArray(hist) ? hist.find((h) => !h.DtFim) ?? hist[hist.length - 1] : null;
-      aliquota = vigente ? Number(vigente.Aliq) : null;
-    }
-    return {
-      resultado: 'ok',
-      aderenteEmissorNacional: Number(p.aderenteEmissorNacional) === 1,
-      aderenteAmbienteNacional: Number(p.aderenteAmbienteNacional) === 1,
-      aliquota,
-    };
-  }
+  if (acao === 'parametros') return lerParametros(deps, amb.adn);
+
+  // Só leitura, sempre no ADN de PRODUÇÃO, em qualquer ambiente: é como o
+  // sistema, ainda no teste, descobre que Fortaleza ligou o Emissor Nacional.
+  if (acao === 'parametros_producao') return lerParametros(deps, AMBIENTES.producao.adn);
 
   if (acao === 'emitir') {
     const p = validarPedidoEmissao(pedido);

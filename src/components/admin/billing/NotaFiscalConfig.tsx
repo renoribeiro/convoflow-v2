@@ -121,10 +121,18 @@ export function NotaFiscalConfig() {
               </dd>
             </div>
             <div data-testid="nfse-fortaleza">
-              <dt className="text-muted-foreground">Fortaleza no emissor nacional</dt>
+              <dt className="text-muted-foreground">Fortaleza no Emissor Nacional (produção)</dt>
               <dd className="mt-1">
-                {dados.prefeitura_emissor_nacional === null ? 'Ainda não lido' : dados.prefeitura_emissor_nacional ? 'Ligada' : 'Desligada'}
-                <p className="text-xs text-muted-foreground">Lida em {formatarQuando(dados.prefeitura_lida_em)}</p>
+                {dados.prefeitura_producao_emissor_nacional === null || dados.prefeitura_producao_emissor_nacional === undefined
+                  ? 'Ainda não lido'
+                  : dados.prefeitura_producao_emissor_nacional
+                    ? 'Ligada: já dá para ligar a nota fiscal em produção'
+                    : 'Desligada: a produção espera a Prefeitura'}
+                <p className="text-xs text-muted-foreground">Lida em {formatarQuando(dados.prefeitura_producao_lida_em ?? null)}</p>
+                <p className="text-xs text-muted-foreground" data-testid="nfse-fortaleza-teste">
+                  No ambiente de teste:{' '}
+                  {dados.prefeitura_emissor_nacional === null ? 'ainda não lido' : dados.prefeitura_emissor_nacional ? 'ligada' : 'desligada'}
+                </p>
               </dd>
             </div>
           </dl>

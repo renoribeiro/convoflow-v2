@@ -10,6 +10,7 @@
 //   NFSE_HMAC_SECRET     o segredo dividido com a Vercel
 //   NFSE_CONTAS_TESTE    ids das Contas de teste (vírgula): a restrita só emite para elas
 //   NFSE_EMAIL_TESTE     na restrita, o e-mail da nota vai SÓ para este endereço
+//   NFSE_EMAIL_AVISOS    quem recebe o e-mail de "Fortaleza ligou o Emissor Nacional"
 //   NFSE_FROM_EMAIL      remetente (cai para REPORT_FROM_EMAIL)
 //   RESEND_API_KEY, STRIPE_SECRET_KEY, STRIPE_PRICE_STORE_SLOT, STRIPE_PRODUCT_ATTENDANT (já existiam)
 // =============================================================================
@@ -33,7 +34,7 @@ export function clienteDeServico(): SupabaseClient {
 }
 
 /** Lê e confere as secrets. Devolve o motivo quando falta alguma. */
-export function lerConfiguracao(): { ok: true; ambiente: Ambiente; url: string; segredo: string; contasTeste: string[]; emailTeste: string | null } | { ok: false; motivo: string } {
+export function lerConfiguracao(): { ok: true; ambiente: Ambiente; url: string; segredo: string; contasTeste: string[]; emailTeste: string | null; emailAvisos: string | null } | { ok: false; motivo: string } {
   const ambiente = Deno.env.get('NFSE_AMBIENTE');
   const url = Deno.env.get('NFSE_FUNCAO_URL') ?? '';
   const segredo = Deno.env.get('NFSE_HMAC_SECRET') ?? '';
@@ -44,7 +45,15 @@ export function lerConfiguracao(): { ok: true; ambiente: Ambiente; url: string; 
     .split(',')
     .map((s) => s.trim())
     .filter((s) => /^[0-9a-f-]{36}$/i.test(s));
-  return { ok: true, ambiente, url, segredo, contasTeste, emailTeste: Deno.env.get('NFSE_EMAIL_TESTE')?.trim() || null };
+  return {
+    ok: true,
+    ambiente,
+    url,
+    segredo,
+    contasTeste,
+    emailTeste: Deno.env.get('NFSE_EMAIL_TESTE')?.trim() || null,
+    emailAvisos: Deno.env.get('NFSE_EMAIL_AVISOS')?.trim() || null,
+  };
 }
 
 function falhou(contexto: string, error: unknown): never {
@@ -195,12 +204,12 @@ function semAcento(s: string): string {
   return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
-export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url: string; segredo: string; contasTeste: string[]; emailTeste: string | null }, log: (m: string, c?: Record<string, unknown>) => void): Portas {
+export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url: string; segredo: string; contasTeste: string[]; emailTeste: string | null; emailAvisos?: string | null }, log: (m: string, c?: Record<string, unknown>) => void): Portas {
   const resendKey = Deno.env.get('RESEND_API_KEY') ?? '';
   const remetente = Deno.env.get('NFSE_FROM_EMAIL') || Deno.env.get('REPORT_FROM_EMAIL') || '';
-  const enviar = async (para: string[], assunto: string, html: string, anexos?: Array<{ nome: string; base64: string }>) => {
+  const enviar = async (para: string[], assunto: string, html: string, anexos?: Array<{ nome: string; base64: string }>): Promise<string | null> => {
     if (!resendKey || !remetente) throw new Error('RESEND_API_KEY ou remetente ausente');
-    await sendViaResend({
+    return await sendViaResend({
       apiKey: resendKey,
       from: remetente,
       to: para,
@@ -214,6 +223,7 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
     ambiente: cfg.ambiente,
     contasTeste: cfg.contasTeste,
     emailTeste: cfg.emailTeste,
+    emailAvisos: cfg.emailAvisos ?? null,
     agora: () => new Date(),
     banco: bancoSupabase(db, cfg.contasTeste, cfg.ambiente),
     nfse: criarClienteNfse({ url: cfg.url, segredo: cfg.segredo, ambiente: cfg.ambiente }),
@@ -236,11 +246,11 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
     },
     email: {
       async enviar(m) {
-        await enviar(m.para, m.assunto, m.html, m.anexos);
+        return await enviar(m.para, m.assunto, m.html, m.anexos);
       },
     },
     avisos: {
-      async superadmin(chave, titulo, mensagem) {
+      async superadmin(chave, titulo, mensagem, opts) {
         const { error } = await db.from('nfse_alertas').insert({ chave: chave.slice(0, 300), titulo });
         if (error) {
           if ((error as { code?: string }).code === '23505') return false; // já avisado
@@ -261,9 +271,12 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
             action_label: 'Abrir Faturamento',
             metadata: { source: 'nfse', chave },
           });
-          const { data } = await db.auth.admin.getUserById(uid);
-          if (data?.user?.email) emails.push(data.user.email);
+          if (!opts?.emails) {
+            const { data } = await db.auth.admin.getUserById(uid);
+            if (data?.user?.email) emails.push(data.user.email);
+          }
         }
+        if (opts?.emails) emails.push(...opts.emails.filter(Boolean));
         if (emails.length) {
           try {
             await enviar(emails, `[ConvoFlow] ${titulo}`, `<p>${mensagem.replace(/</g, '&lt;')}</p><p>Abra Administração, Faturamento, Cobranças.</p>`);
@@ -301,4 +314,33 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
     },
     log,
   };
+}
+
+/**
+ * Situação do e-mail de uma nota no Resend (delivered, bounced, complained = spam,
+ * opened, ...). Pelo id guardado; sem id (e-mails de antes de 2026-10-16),
+ * procura pelo assunto na lista recente e guarda o id achado. Devolve só a
+ * situação: nem destinatário nem conteúdo.
+ */
+export async function statusDoEmailNoResend(db: SupabaseClient, notaId: string): Promise<{ status: string | null; via: 'id' | 'lista' | 'nenhum'; detalhe?: string }> {
+  const chave = Deno.env.get('RESEND_API_KEY');
+  if (!chave) return { status: null, via: 'nenhum', detalhe: 'sem RESEND_API_KEY' };
+  const { data: nota } = await db.from('notas_fiscais').select('id, email_resend_id, numero_nfse, ambiente, email_enviado_em').eq('id', notaId).maybeSingle();
+  if (!nota) return { status: null, via: 'nenhum', detalhe: 'nota não encontrada' };
+  if (!nota.email_enviado_em) return { status: null, via: 'nenhum', detalhe: 'e-mail ainda não enviado' };
+  const cabecalhos = { Authorization: `Bearer ${chave}` };
+  if (nota.email_resend_id) {
+    const r = await fetch(`https://api.resend.com/emails/${encodeURIComponent(nota.email_resend_id)}`, { headers: cabecalhos });
+    if (!r.ok) return { status: null, via: 'id', detalhe: `Resend respondeu HTTP ${r.status}` };
+    const j = (await r.json()) as { last_event?: string };
+    return { status: j.last_event ?? null, via: 'id' };
+  }
+  const assunto = `${nota.ambiente === 'restrita' ? '[TESTE] ' : ''}Nota fiscal de serviço ConvoFlow nº ${nota.numero_nfse}`;
+  const r = await fetch('https://api.resend.com/emails?limit=100', { headers: cabecalhos });
+  if (!r.ok) return { status: null, via: 'lista', detalhe: `Resend respondeu HTTP ${r.status}` };
+  const lista = ((await r.json()) as { data?: Array<{ id: string; subject?: string; last_event?: string }> }).data ?? [];
+  const achado = lista.find((e) => e.subject === assunto);
+  if (!achado) return { status: null, via: 'lista', detalhe: 'não achei o e-mail pelo assunto' };
+  await db.from('notas_fiscais').update({ email_resend_id: achado.id }).eq('id', nota.id);
+  return { status: achado.last_event ?? null, via: 'lista' };
 }

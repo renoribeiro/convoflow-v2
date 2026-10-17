@@ -98,6 +98,7 @@ export interface Nota {
   travada_ate: string | null;
   ultimo_erro_codigo?: string | null;
   ultimo_erro_mensagem?: string | null;
+  email_resend_id?: string | null;
 }
 
 export interface Config {
@@ -107,6 +108,8 @@ export interface Config {
   prefeitura_emissor_nacional: boolean | null;
   prefeitura_lida_em: string | null;
   diario_rodado_em: string | null;
+  prefeitura_producao_emissor_nacional?: boolean | null;
+  prefeitura_producao_lida_em?: string | null;
 }
 
 // -----------------------------------------------------------------------------
@@ -145,18 +148,22 @@ export interface PortaArquivos {
 }
 
 export interface PortaEmail {
-  enviar(m: { para: string[]; assunto: string; html: string; anexos?: Array<{ nome: string; base64: string }> }): Promise<void>;
+  /** Devolve o id do e-mail no provedor (Resend), quando houver. */
+  enviar(m: { para: string[]; assunto: string; html: string; anexos?: Array<{ nome: string; base64: string }> }): Promise<string | null>;
 }
 
 export interface PortaAvisos {
   /** Sino + e-mail aos superadmins, uma vez por `chave`. Devolve true se avisou agora. */
-  superadmin(chave: string, titulo: string, mensagem: string): Promise<boolean>;
+  /** Sem `emails`, o e-mail vai aos superadmins; com `emails`, vai só a esses endereços (o sino vai sempre aos superadmins). */
+  superadmin(chave: string, titulo: string, mensagem: string, opts?: { emails?: string[] }): Promise<boolean>;
 }
 
 export interface Portas {
   ambiente: Ambiente;
   contasTeste: string[];
   emailTeste: string | null;
+  /** Para onde vai o aviso de "Fortaleza ligou" (secret NFSE_EMAIL_AVISOS). */
+  emailAvisos?: string | null;
   agora: () => Date;
   banco: PortaBanco;
   nfse: ClienteNfse;
@@ -182,7 +189,10 @@ export type Resultado =
   | 'certificado_vencido';
 
 const TRAVA_MS = 10 * 60_000;
-const LINK_ADMIN = '/admin/billing';
+
+/** Aviso único de que Fortaleza ligou o Emissor Nacional em produção. */
+export const ALERTA_FORTALEZA_LIGOU = 'prefeitura:producao:ligou';
+export const MENSAGEM_FORTALEZA_LIGOU = 'Fortaleza ligou o Emissor Nacional. Já dá para ligar a nota fiscal em produção.';
 
 // -----------------------------------------------------------------------------
 // Ajudantes
@@ -276,13 +286,17 @@ export async function enviarEmail(p: Portas, nota: Nota, cobranca?: Cobranca | n
       link,
       teste,
     });
-    await p.email.enviar({
+    const idEmail = await p.email.enviar({
       para,
       assunto: m.assunto,
       html: m.html,
       anexos: pdfB64 ? [{ nome: `nota-fiscal-${nota.numero_nfse ?? nota.numero_dps}.pdf`, base64: pdfB64 }] : undefined,
     });
-    await p.banco.atualizarNota(nota.id, { email_enviado_em: p.agora().toISOString(), email_tentativas: nota.email_tentativas + 1 });
+    await p.banco.atualizarNota(nota.id, {
+      email_enviado_em: p.agora().toISOString(),
+      email_tentativas: nota.email_tentativas + 1,
+      ...(idEmail ? { email_resend_id: idEmail } : {}),
+    });
     return true;
   } catch (e) {
     await p.banco.atualizarNota(nota.id, { email_tentativas: nota.email_tentativas + 1 });
@@ -685,6 +699,27 @@ export async function rodarDiario(p: Portas, config: Config): Promise<Record<str
     }
   } else if (ligada === false && p.ambiente === 'producao') {
     await avisarPrefeituraDesligada(p);
+  }
+
+  // Fortaleza em PRODUÇÃO, lida em qualquer ambiente. Ligou: avisa uma vez só
+  // (a chave do alerta não tem data). Não liga a produção: isso é do dono.
+  const prod = await p.nfse.chamar('parametros_producao');
+  if (prod.resultado === 'ok' && typeof prod.aderenteEmissorNacional === 'boolean') {
+    await p.banco.atualizarConfig({
+      prefeitura_producao_emissor_nacional: prod.aderenteEmissorNacional,
+      prefeitura_producao_lida_em: p.agora().toISOString(),
+    });
+    out.prefeituraProducao = prod.aderenteEmissorNacional;
+    if (prod.aderenteEmissorNacional) {
+      out.avisoProducao = await p.avisos.superadmin(
+        ALERTA_FORTALEZA_LIGOU,
+        'Fortaleza ligou o Emissor Nacional',
+        MENSAGEM_FORTALEZA_LIGOU,
+        { emails: p.emailAvisos ? [p.emailAvisos] : [] },
+      );
+    }
+  } else {
+    out.prefeituraProducao = prod.detalhe ?? prod.resultado;
   }
 
   // Toda cobrança paga tem tentativa de nota

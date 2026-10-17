@@ -31,7 +31,7 @@ export interface RespostaNfse {
   aliquota?: number | null;
 }
 
-export type AcaoNfse = 'emitir' | 'consultar_dps' | 'consultar_nfse' | 'cancelar' | 'parametros' | 'certificado';
+export type AcaoNfse = 'emitir' | 'consultar_dps' | 'consultar_nfse' | 'cancelar' | 'parametros' | 'parametros_producao' | 'certificado';
 
 export interface ClienteNfse {
   chamar(acao: AcaoNfse, dados?: Record<string, unknown>): Promise<RespostaNfse>;

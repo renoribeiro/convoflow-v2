@@ -3321,6 +3321,8 @@ export type Database = {
           p_tot_trib_sn: number
           prefeitura_emissor_nacional: boolean | null
           prefeitura_lida_em: string | null
+          prefeitura_producao_emissor_nacional: boolean | null
+          prefeitura_producao_lida_em: string | null
         }
         Insert: {
           ambiente_ativo?: string
@@ -3331,6 +3333,8 @@ export type Database = {
           p_tot_trib_sn?: number
           prefeitura_emissor_nacional?: boolean | null
           prefeitura_lida_em?: string | null
+          prefeitura_producao_emissor_nacional?: boolean | null
+          prefeitura_producao_lida_em?: string | null
         }
         Update: {
           ambiente_ativo?: string
@@ -3341,6 +3345,8 @@ export type Database = {
           p_tot_trib_sn?: number
           prefeitura_emissor_nacional?: boolean | null
           prefeitura_lida_em?: string | null
+          prefeitura_producao_emissor_nacional?: boolean | null
+          prefeitura_producao_lida_em?: string | null
         }
         Relationships: []
       }
@@ -3384,6 +3390,7 @@ export type Database = {
           created_at: string
           descricao: string | null
           email_enviado_em: string | null
+          email_resend_id: string | null
           email_tentativas: number
           emitida_em: string | null
           evento_cancelamento_path: string | null
@@ -3414,6 +3421,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           email_enviado_em?: string | null
+          email_resend_id?: string | null
           email_tentativas?: number
           emitida_em?: string | null
           evento_cancelamento_path?: string | null
@@ -3444,6 +3452,7 @@ export type Database = {
           created_at?: string
           descricao?: string | null
           email_enviado_em?: string | null
+          email_resend_id?: string | null
           email_tentativas?: number
           emitida_em?: string | null
           evento_cancelamento_path?: string | null

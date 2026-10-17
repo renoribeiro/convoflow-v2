@@ -15,6 +15,8 @@ import {
   processarCobranca,
   rodarCiclo,
   rodarDiario,
+  ALERTA_FORTALEZA_LIGOU,
+  MENSAGEM_FORTALEZA_LIGOU,
   type Cobranca,
   type Config,
   type DadosFiscais,
@@ -82,12 +84,14 @@ function montar(opts: { ambiente?: Ambiente; respostas?: Partial<Record<AcaoNfse
   const arquivos = new Map<string, Uint8Array | string>();
   const emails: Array<{ para: string[]; assunto: string; anexos?: unknown[] }> = [];
   const avisos: string[] = [];
+  const avisosDetalhe: Array<{ chave: string; titulo: string; mensagem: string; emails?: string[] }> = [];
   const filas = { ...(opts.respostas ?? {}) };
 
   const portas: Portas = {
     ambiente,
     contasTeste: [CONTA_TESTE],
     emailTeste: 'teste@example.com',
+    emailAvisos: 'dono@example.com',
     agora: () => agora,
     banco: {
       async config() { return { ...config }; },
@@ -149,11 +153,12 @@ function montar(opts: { ambiente?: Ambiente; respostas?: Partial<Record<AcaoNfse
       async urlAssinada(c, s) { return `https://exemplo.com.br/assinada/${c}?s=${s}`; },
       async baixar(c) { const v = arquivos.get(c); return v === undefined ? null : typeof v === 'string' ? new TextEncoder().encode(v) : v; },
     },
-    email: { async enviar(m) { emails.push(m); } },
+    email: { async enviar(m) { emails.push(m); return 're_FAKE_1'; } },
     avisos: {
-      async superadmin(chave) {
+      async superadmin(chave, titulo, mensagem, opts) {
         if (avisos.includes(chave)) return false;
         avisos.push(chave);
+        avisosDetalhe.push({ chave, titulo, mensagem, emails: opts?.emails });
         return true;
       },
     },
@@ -163,7 +168,7 @@ function montar(opts: { ambiente?: Ambiente; respostas?: Partial<Record<AcaoNfse
     log: () => {},
   };
   return {
-    portas, cobrancas, notas, chamadas, arquivos, emails, avisos, config,
+    portas, cobrancas, notas, chamadas, arquivos, emails, avisos, avisosDetalhe, config,
     andar(minutos: number) { agora = new Date(agora.getTime() + minutos * 60_000); },
   };
 }
@@ -184,6 +189,7 @@ describe('emissão', () => {
     expect(t.emails[0]!.para).toEqual(['teste@example.com']);
     expect(t.emails[0]!.assunto).toBe('[TESTE] Nota fiscal de serviço ConvoFlow nº 7');
     expect(t.emails[0]!.anexos).toHaveLength(1);
+    expect(nota.email_resend_id).toBe('re_FAKE_1');
     // O pedido leva o texto decidido, o percentual da configuração e o tomador.
     const pedido = t.chamadas.find((c) => c.acao === 'emitir')!.dados as Record<string, unknown>;
     expect(pedido).toMatchObject({ numero: 1, valorCentavos: 49990, pTotTribSN: '6.00', competencia: '2026-10-16' });
@@ -317,6 +323,7 @@ describe('cancelamento', () => {
         cancelar: [cancelar],
         certificado: [{ resultado: 'ok', validoAte: '2027-09-21T00:00:00Z', diasRestantes: 300 }],
         parametros: [{ resultado: 'ok', aderenteEmissorNacional: true }],
+        parametros_producao: [{ resultado: 'ok', aderenteEmissorNacional: false }],
       },
     });
     await processarCobranca(t.portas, 'c1');
@@ -368,6 +375,7 @@ describe('checagem diária', () => {
       respostas: {
         certificado: [{ resultado: 'ok', validoAte: '2026-10-26T00:00:00Z', diasRestantes: 10 }],
         parametros: [{ resultado: 'ok', aderenteEmissorNacional: true }],
+        parametros_producao: [{ resultado: 'ok', aderenteEmissorNacional: false }],
       },
     });
     const r = await rodarDiario(t.portas, await t.portas.banco.config());
@@ -382,11 +390,44 @@ describe('checagem diária', () => {
   it('cobrança paga há mais de 6 horas sem nota vira aviso', async () => {
     const t = montar({
       agora: new Date('2026-10-17T00:00:00Z'),
-      respostas: { certificado: [{ resultado: 'ok', validoAte: '2027-09-21T00:00:00Z', diasRestantes: 339 }], parametros: [{ resultado: 'ok', aderenteEmissorNacional: true }] },
+      respostas: { certificado: [{ resultado: 'ok', validoAte: '2027-09-21T00:00:00Z', diasRestantes: 339 }], parametros: [{ resultado: 'ok', aderenteEmissorNacional: true }], parametros_producao: [{ resultado: 'ok', aderenteEmissorNacional: false }] },
     });
     const r = await rodarDiario(t.portas, await t.portas.banco.config());
     expect(r).toMatchObject({ semTentativa: 1, paradas: 1 });
     expect(t.avisos.some((a) => a.startsWith('conciliacao:'))).toBe(true);
     expect(t.avisos.some((a) => a.startsWith('paradas:'))).toBe(true);
+  });
+
+  it('Fortaleza em PRODUÇÃO (leitura falsa): desligada não avisa; ligada avisa uma vez só, com e-mail só para o dono, e não liga nada', async () => {
+    const diario = { certificado: [{ resultado: 'ok', validoAte: '2027-09-21T00:00:00Z', diasRestantes: 339 }] as RespostaNfse[], parametros: [{ resultado: 'ok', aderenteEmissorNacional: true }] as RespostaNfse[] };
+    const t = montar({ respostas: { ...diario, parametros_producao: [{ resultado: 'ok', aderenteEmissorNacional: false }, { resultado: 'ok', aderenteEmissorNacional: true }] } });
+    const r1 = await rodarDiario(t.portas, await t.portas.banco.config());
+    expect(r1.prefeituraProducao).toBe(false);
+    expect(t.config.prefeitura_producao_emissor_nacional).toBe(false);
+    expect(t.config.prefeitura_producao_lida_em).toBe('2026-10-16T16:00:00.000Z');
+    expect(t.avisos).not.toContain(ALERTA_FORTALEZA_LIGOU);
+
+    t.andar(60 * 24);
+    const r2 = await rodarDiario(t.portas, await t.portas.banco.config());
+    expect(r2).toMatchObject({ prefeituraProducao: true, avisoProducao: true });
+    expect(t.config.prefeitura_producao_emissor_nacional).toBe(true);
+    expect(t.avisosDetalhe.filter((a) => a.chave === ALERTA_FORTALEZA_LIGOU)).toEqual([
+      {
+        chave: ALERTA_FORTALEZA_LIGOU,
+        titulo: 'Fortaleza ligou o Emissor Nacional',
+        mensagem: 'Fortaleza ligou o Emissor Nacional. Já dá para ligar a nota fiscal em produção.',
+        emails: ['dono@example.com'],
+      },
+    ]);
+    expect(MENSAGEM_FORTALEZA_LIGOU).toBe('Fortaleza ligou o Emissor Nacional. Já dá para ligar a nota fiscal em produção.');
+
+    // Lê "ligada" de novo nos dias seguintes: não repete o aviso.
+    t.andar(60 * 24);
+    const r3 = await rodarDiario(t.portas, await t.portas.banco.config());
+    expect(r3.avisoProducao).toBe(false);
+    expect(t.avisosDetalhe.filter((a) => a.chave === ALERTA_FORTALEZA_LIGOU)).toHaveLength(1);
+    // Não liga a produção: o sistema continua no teste e a config não muda de ambiente.
+    expect(t.portas.ambiente).toBe('restrita');
+    expect(t.config.ambiente_ativo).toBe('restrita');
   });
 });

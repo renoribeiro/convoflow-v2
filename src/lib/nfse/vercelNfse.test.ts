@@ -256,6 +256,28 @@ describe('ações contra a Sefin (HTTP simulado)', () => {
   });
 });
 
+describe('Fortaleza em produção, lida no ambiente de teste', () => {
+  it('parametros_producao só faz GET no ADN de PRODUÇÃO, mesmo com a função na restrita', async () => {
+    const urls: string[] = [];
+    const r = await executarAcao({ acao: 'parametros_producao' }, {
+      ambiente: 'restrita',
+      cert,
+      agora: () => AGORA,
+      http: async (metodo: string, url: string) => {
+        urls.push(`${metodo} ${url}`);
+        return String(url).endsWith('/convenio')
+          ? { status: 200, json: { parametrosConvenio: { aderenteEmissorNacional: 1, aderenteAmbienteNacional: 1 } } }
+          : { status: 404, json: null };
+      },
+    });
+    expect(r).toEqual({ resultado: 'ok', aderenteEmissorNacional: true, aderenteAmbienteNacional: true, aliquota: null });
+    expect(urls).toEqual([
+      'GET https://adn.nfse.gov.br/parametrizacao/2304400/convenio',
+      'GET https://adn.nfse.gov.br/parametrizacao/2304400/01.05.01.002/historicoaliquotas',
+    ]);
+  });
+});
+
 describe('atendimento (api/nfse.js)', () => {
   const segredo = 'd'.repeat(48);
   const env = () => ({ NFSE_HMAC_SECRET: segredo, NFSE_AMBIENTE: 'restrita', NFSE_CNPJ: CNPJ, NFSE_CERT_PFX_B64: PFX_B64, NFSE_CERT_SENHA: 'senha-ficticia' });

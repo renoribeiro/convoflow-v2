@@ -42,7 +42,8 @@ beforeEach(() => {
   estado.config = {
     id: true, p_tot_trib_sn: 6, ambiente_ativo: 'restrita',
     certificado_valido_ate: new Date(Date.now() + 10 * 86_400_000).toISOString(),
-    prefeitura_emissor_nacional: false, prefeitura_lida_em: '2026-10-15T12:00:00Z', diario_rodado_em: null,
+    prefeitura_emissor_nacional: true, prefeitura_lida_em: '2026-10-15T12:00:00Z', diario_rodado_em: null,
+    prefeitura_producao_emissor_nacional: false, prefeitura_producao_lida_em: '2026-10-15T12:00:00Z',
     atualizado_em: '2026-10-15T12:00:00Z',
   };
   estado.historico = [
@@ -66,7 +67,9 @@ describe('NotaFiscalConfig', () => {
     renderizar();
     expect(await screen.findByText(/Ambiente de teste do governo: notas sem validade, os clientes ainda não veem/)).toBeInTheDocument();
     expect(screen.getByTestId('nfse-certificado')).toHaveTextContent(/Vence em \d+ dia/);
-    expect(screen.getByTestId('nfse-fortaleza')).toHaveTextContent('Desligada');
+    expect(screen.getByTestId('nfse-fortaleza')).toHaveTextContent('Fortaleza no Emissor Nacional (produção)');
+    expect(screen.getByTestId('nfse-fortaleza')).toHaveTextContent('Desligada: a produção espera a Prefeitura');
+    expect(screen.getByTestId('nfse-fortaleza-teste')).toHaveTextContent('No ambiente de teste: ligada');
     await waitFor(() => expect(screen.getByTestId('nfse-historico')).toHaveTextContent('6,00% → 15,50% · Pessoa Inventada'));
   });
 
