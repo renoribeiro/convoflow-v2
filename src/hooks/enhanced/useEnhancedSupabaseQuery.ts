@@ -5,6 +5,12 @@ import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
 import { z } from 'zod';
 
+// A tabela chega por parâmetro (string): com o tipo de todas as tabelas, o
+// genérico do supabase-js passa da profundidade que o TypeScript aguenta
+// (TS2589). Aqui o tipo da tabela não ajuda em nada.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const deTabela = (table: string) => (supabase as any).from(table);
+
 interface QueryFilter {
   column: string;
   operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike' | 'in' | 'is';
@@ -145,7 +151,7 @@ export function useEnhancedSupabaseQuery(options: UseEnhancedSupabaseQueryOption
           });
         }
 
-        let query = supabase.from(table).select(select);
+        let query = deTabela(table).select(select);
 
         // Filtrar por tenant automaticamente se não for a tabela profiles, tenants ou affiliates
         if (tenant?.id && table !== 'profiles' && table !== 'tenants' && table !== 'affiliates') {
@@ -319,7 +325,7 @@ export function useEnhancedSupabaseQuerySingle(
     queryKey: [options.table, 'single', options.filters, tenant?.id],
     queryFn: async () => {
       try {
-        let query = supabase.from(options.table).select(options.select || '*');
+        let query = deTabela(options.table).select(options.select || '*');
         
         // Filtrar por tenant automaticamente
         if (tenant?.id && options.table !== 'profiles' && options.table !== 'tenants' && options.table !== 'affiliates') {
@@ -382,8 +388,7 @@ export function useEnhancedSupabaseCount(
     queryKey: ['count', table, filters, tenant?.id],
     queryFn: async () => {
       try {
-        let query = supabase
-          .from(table)
+        let query = deTabela(table)
           .select('*', { count: 'exact', head: true });
         
         // Filtrar por tenant automaticamente

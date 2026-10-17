@@ -10,14 +10,15 @@
  *   - com uma Loja em foco, o Gerente vê a assinatura da CONTA;
  *   - nota fiscal, parte 1: sem os "Dados para a nota fiscal" o botão de
  *     assinar fica travado e não chama o checkout; a lista "Cobranças" mostra
- *     os pagamentos, sem a coluna da nota (NOTA_FISCAL_VISIVEL desligada).
+ *     os pagamentos, sem a coluna da nota enquanto a produção não está no ar (notaFiscalVisivel).
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockInvoke, mockToast, mockRefresh, linhaDaConta, dadosFiscais, cobrancas } = vi.hoisted(() => ({
+const { mockInvoke, mockToast, mockRefresh, linhaDaConta, dadosFiscais, cobrancas, nfseConfig } = vi.hoisted(() => ({
+  nfseConfig: { valor: { ambiente_ativo: 'restrita' } as Record<string, unknown> | null },
   mockInvoke: vi.fn(),
   mockToast: vi.fn(),
   mockRefresh: vi.fn().mockResolvedValue(undefined),
@@ -31,6 +32,7 @@ vi.mock('@/integrations/supabase/client', () => ({
     functions: { invoke: mockInvoke },
     from: (tabela: string) => ({
       select: () => ({
+        limit: () => ({ maybeSingle: async () => ({ data: nfseConfig.valor, error: null }) }),
         eq: () => ({
           maybeSingle: async () => ({
             data: tabela === 'tenant_billing_details' ? dadosFiscais.valor : linhaDaConta.valor,
@@ -301,6 +303,28 @@ describe('Cobranças', () => {
     expect(links).toHaveLength(1);
     expect(links[0]).toHaveAttribute('href', 'https://invoice.stripe.com/i/FAKE1');
     expect(lista).not.toHaveTextContent(/Nota fiscal|Aguardando emissão/);
+  });
+
+  it('com a produção no ar, o Gerente vê a nota emitida com PDF e XML, sem ação de superadmin', async () => {
+    nfseConfig.valor = { ambiente_ativo: 'producao' };
+    cobrancas.valor = [
+      {
+        id: 'c1', stripe_invoice_id: 'in_FAKE1', tenant_id: 'conta-1', amount_paid_cents: 49990, currency: 'brl',
+        paid_at: '2026-10-13T15:00:00Z', period_start: null, period_end: null, hosted_invoice_url: null,
+        amount_refunded_cents: 0, refunded_at: null, nota_status: 'emitida',
+        notas: [{
+          id: 'n1', ambiente: 'producao', status: 'emitida', numero_nfse: '123', chave_acesso: null, emitida_em: '2026-10-13T15:05:00Z',
+          cancelada_em: null, ultimo_erro_codigo: null, ultimo_erro_mensagem: null, tentativas: 1, pdf_path: 'a.pdf', xml_path: 'a.xml',
+        }],
+      },
+    ];
+    renderizar();
+    const lista = await screen.findByLabelText('Cobranças da Conta');
+    await waitFor(() => expect(lista).toHaveTextContent('NFS-e 123'));
+    expect(lista).toHaveTextContent('Emitida');
+    expect(screen.getByRole('button', { name: /PDF/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /XML/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Cancelar nota|Emitir de novo/ })).toBeNull();
   });
 
   it('sem cobrança: a frase do vazio', async () => {

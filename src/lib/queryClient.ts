@@ -42,6 +42,12 @@ export const QUERY_KEYS = {
      */
     BILLING_DETAILS: 'billing-details',
     BILLING_CHARGES: 'billing-charges',
+    /**
+     * Nota fiscal automática: a linha única de nfse_config e o histórico do
+     * percentual. semiStatic (5 min): muda raramente, e o card do superadmin
+     * invalida ao salvar.
+     */
+    NFSE_CONFIG: 'nfse-config',
 
     // Static data - rarely changes
     TENANT: 'tenant',

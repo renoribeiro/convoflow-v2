@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 12 de setembro de 2026 • Conforme LGPD
+                Última atualização: 16 de outubro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -213,6 +213,10 @@ export default function PrivacyPolicy() {
                     <div className="p-3 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
                       <strong className="text-yellow-700 dark:text-yellow-400">Obrigações Legais:</strong>
                       <span className="text-muted-foreground"> Quando exigido por autoridades competentes</span>
+                    </div>
+                    <div className="p-3 border-l-4 border-slate-500 bg-slate-50 dark:bg-slate-900/40">
+                      <strong className="text-slate-700 dark:text-slate-300">Nota Fiscal:</strong>
+                      <span className="text-muted-foreground"> Para emitir a nota fiscal de serviço, enviamos à Receita Federal e à Prefeitura de Fortaleza, pelo Sistema Nacional da NFS-e, o CPF ou CNPJ, o nome ou razão social, o endereço e o e-mail informados para a nota, junto com o valor e a descrição do serviço. Guardamos a nota e o seu arquivo pelo prazo exigido pela legislação fiscal (5 anos).</span>
                     </div>
                     <div className="p-3 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
                       <strong className="text-blue-700 dark:text-blue-400">Transferência de Negócio:</strong>

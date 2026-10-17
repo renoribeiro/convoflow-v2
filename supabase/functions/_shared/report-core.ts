@@ -363,10 +363,11 @@ export interface SendEmailArgs {
   attachments?: Array<{ filename: string; content: string }>;
 }
 
+/** Envia pelo Resend e devolve o id do e-mail (null se o Resend não devolver). */
 export async function sendViaResend(opts: {
   apiKey: string; from: string; to: string[]; subject: string; html: string;
   attachments?: Array<{ filename: string; content: string }>;
-}): Promise<void> {
+}): Promise<string | null> {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
@@ -376,6 +377,8 @@ export async function sendViaResend(opts: {
     const detail = await res.text();
     throw new SecureError(`Falha no envio pelo Resend (HTTP ${res.status}): ${detail.slice(0, 300)}`, 'EMAIL_PROVIDER_ERROR', 502);
   }
+  const corpo = (await res.json().catch(() => null)) as { id?: unknown } | null;
+  return typeof corpo?.id === 'string' ? corpo.id : null;
 }
 
 /** Fábrica do transporte de e-mail usada pelo agendador (secrets → função). */

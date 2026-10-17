@@ -24,6 +24,9 @@ let contas: ContaBillingRow[] = [];
 let lojas: Array<{ kind: string; parent_tenant_id: string; atendentes_extra: number }> = [];
 // Aba Cobranças (nota fiscal, parte 1): billing_charges, lida só quando a aba abre.
 let cobrancasPlataforma: Array<Record<string, unknown>> = [];
+// Nota fiscal, parte 2: a linha única de nfse_config e o histórico do percentual.
+let nfseConfig: Record<string, unknown> | null = null;
+let nfseHistorico: Array<Record<string, unknown>> = [];
 
 vi.mock('@/integrations/supabase/client', () => {
   const builder = (table: string) => {
@@ -37,19 +40,23 @@ vi.mock('@/integrations/supabase/client', () => {
       },
       order: () => b,
       limit: () => b,
+      maybeSingle: async () => ({ data: nfseConfig, error: null }),
       then: (res: (v: unknown) => unknown) =>
         Promise.resolve(
           table === 'tenants'
             ? { data: soLojas ? lojas : contas, error: null }
             : table === 'billing_charges'
               ? { data: cobrancasPlataforma, error: null }
+              : table === 'nfse_config_historico'
+                ? { data: nfseHistorico, error: null }
               : { data: null, error: { message: `tabela proibida: ${table}` } },
         ).then(res),
     };
     return b;
   };
-  return { supabase: { from: (t: string) => builder(t) } };
+  return { supabase: { from: (t: string) => builder(t), rpc: vi.fn(), functions: { invoke: vi.fn() } } };
 });
+vi.mock('@/contexts/TenantContext', () => ({ useIsSuperAdmin: () => true }));
 
 // ---- Stripe (stripe-admin) ----
 let overview: BillingOverview | Error;
@@ -161,6 +168,8 @@ const nomesNa = (nome: string) =>
 beforeEach(() => {
   tabelasLidas.length = 0;
   cobrancasPlataforma = [];
+  nfseConfig = null;
+  nfseHistorico = [];
   contas = CONTAS.map((c) => ({ ...c }));
   lojas = [];
   overview = structuredClone(OVERVIEW);
@@ -374,8 +383,10 @@ describe('Faturamento — o que saiu da tela', () => {
     expect(lista).toHaveTextContent('Conta não identificada');
     expect(lista).toHaveTextContent('Reembolsada');
     expect(screen.getByTestId('totais-cobrancas')).toHaveTextContent(/2 cobranças · recebido R\$\s?599,80 · devolvido R\$\s?99,90 · 1 sem Conta identificada/);
-    // a coluna da nota fiscal segue escondida (NOTA_FISCAL_VISIVEL)
-    expect(lista).not.toHaveTextContent(/Aguardando emissão/);
+    // o superadmin sempre vê a coluna da nota fiscal, mesmo antes da produção
+    expect(lista).toHaveTextContent('Nota fiscal');
+    expect(lista).toHaveTextContent('Aguardando emissão');
+    expect(screen.getByText('Nota fiscal automática')).toBeInTheDocument();
     expect(tabelasLidas).toContain('billing_charges');
   });
 });

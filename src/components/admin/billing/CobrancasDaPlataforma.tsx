@@ -5,7 +5,10 @@ import { ResponsiveTable } from '@/components/shared/ResponsiveTable';
 import { supabase } from '@/integrations/supabase/client';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { formatCents } from '@/lib/billing/adminBilling';
-import { COBRANCA_COLUMNS, totaisDasCobrancas, type Cobranca } from '@/lib/billing/cobrancas';
+import { COBRANCA_COLUMNS, notaFiscalVisivel, totaisDasCobrancas, type Cobranca } from '@/lib/billing/cobrancas';
+import { useNfseConfig } from '@/hooks/useNfseConfig';
+import { useIsSuperAdmin } from '@/contexts/TenantContext';
+import { NotaFiscalConfig } from '@/components/admin/billing/NotaFiscalConfig';
 import { colunasDeCobranca } from '@/components/billing/colunasDeCobranca';
 
 /** Quantas linhas a aba traz (as mais recentes). */
@@ -19,6 +22,9 @@ const LIMITE = 200;
  * para olhar.
  */
 export function CobrancasDaPlataforma() {
+  const ehSuperadmin = useIsSuperAdmin();
+  const config = useNfseConfig();
+  const notaVisivel = notaFiscalVisivel({ ehSuperadmin, ambienteAtivo: config.data?.ambiente_ativo });
   const consulta = useQuery({
     queryKey: [QUERY_KEYS.BILLING_CHARGES, 'plataforma'],
     queryFn: async (): Promise<Cobranca[]> => {
@@ -36,6 +42,8 @@ export function CobrancasDaPlataforma() {
   const semConta = linhas.filter((c) => !c.tenant_id).length;
 
   return (
+    <div className="space-y-4">
+    <NotaFiscalConfig />
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -62,9 +70,10 @@ export function CobrancasDaPlataforma() {
           loading={consulta.isLoading}
           error={consulta.error ? (consulta.error as Error).message : undefined}
           empty={<p className="py-6 text-center text-sm text-muted-foreground">Nenhuma cobrança registrada ainda.</p>}
-          columns={colunasDeCobranca({ comConta: true })}
+          columns={colunasDeCobranca({ comConta: true, notaVisivel, ehSuperadmin })}
         />
       </CardContent>
     </Card>
+    </div>
   );
 }

@@ -6,24 +6,79 @@
 // O navegador só lê: o Gerente as da própria Conta (Configurações › Assinatura
 // › Cobranças), o superadmin todas (Administração › Faturamento › Cobranças).
 //
-// A COLUNA DA NOTA FISCAL fica escondida atrás de NOTA_FISCAL_VISIVEL, uma
-// chave só para as duas telas. Desligada até a parte 2 (emissão) existir: sem
-// ela, todo cliente veria "aguardando emissão" para sempre.
+// A COLUNA DA NOTA FISCAL aparece para o superadmin sempre e para o resto só
+// quando o ambiente ativo é o de produção (notaFiscalVisivel): em teste, os
+// clientes não veem nada.
 // =============================================================================
 
-/** Liga a coluna "Nota fiscal" nas duas listas. Só depois da parte 2 (emissão). */
-export const NOTA_FISCAL_VISIVEL = false;
-
-export type NotaStatus = 'aguardando_emissao' | 'sem_nota';
+export type NotaStatus =
+  | 'aguardando_emissao'
+  | 'emitindo'
+  | 'emitida'
+  | 'erro'
+  | 'cancelada'
+  | 'cancelar_manual'
+  | 'aguardando_prefeitura'
+  | 'certificado_vencido'
+  | 'sem_nota';
 
 export const NOTA_STATUS_LABEL: Record<NotaStatus, string> = {
   aguardando_emissao: 'Aguardando emissão',
-  sem_nota: 'Sem nota (R$ 0)',
+  emitindo: 'Emitindo',
+  emitida: 'Emitida',
+  erro: 'Erro na emissão',
+  cancelada: 'Cancelada',
+  cancelar_manual: 'Cancelar à mão',
+  aguardando_prefeitura: 'Aguardando a Prefeitura',
+  certificado_vencido: 'Certificado vencido',
+  sem_nota: 'Sem nota',
 };
+
+export type AmbienteNfse = 'restrita' | 'producao';
+
+/** Liga a coluna "Nota fiscal" nas duas listas. */
+export function notaFiscalVisivel({
+  ehSuperadmin,
+  ambienteAtivo,
+}: {
+  ehSuperadmin: boolean;
+  ambienteAtivo: string | null | undefined;
+}): boolean {
+  return ehSuperadmin || ambienteAtivo === 'producao';
+}
+
+export interface NotaDaCobranca {
+  id: string;
+  ambiente: AmbienteNfse;
+  status: string;
+  numero_nfse: string | null;
+  chave_acesso: string | null;
+  emitida_em: string | null;
+  cancelada_em: string | null;
+  ultimo_erro_codigo: string | null;
+  ultimo_erro_mensagem: string | null;
+  tentativas: number;
+  pdf_path: string | null;
+  xml_path: string | null;
+}
+
+/**
+ * A nota que a lista mostra. Superadmin: a de produção, senão a de teste.
+ * Os demais: só a de produção (o RLS já filtra, aqui é cinto e suspensório).
+ */
+export function escolherNota(notas: NotaDaCobranca[] | null | undefined, ehSuperadmin: boolean): NotaDaCobranca | null {
+  const lista = notas ?? [];
+  const producao = lista.find((n) => n.ambiente === 'producao');
+  if (producao) return producao;
+  return ehSuperadmin ? (lista.find((n) => n.ambiente === 'restrita') ?? null) : null;
+}
+
+/** Estados em que "Emitir de novo" faz sentido (superadmin). */
+export const STATUS_REEMITIVEIS: readonly string[] = ['erro', 'aguardando_prefeitura', 'certificado_vencido', 'aguardando_emissao'];
 
 /** As colunas que as duas telas leem. */
 export const COBRANCA_COLUMNS =
-  'id, stripe_invoice_id, tenant_id, amount_paid_cents, currency, paid_at, period_start, period_end, hosted_invoice_url, amount_refunded_cents, refunded_at, nota_status';
+  'id, stripe_invoice_id, tenant_id, amount_paid_cents, currency, paid_at, period_start, period_end, hosted_invoice_url, amount_refunded_cents, refunded_at, nota_status, notas:notas_fiscais(id, ambiente, status, numero_nfse, chave_acesso, emitida_em, cancelada_em, ultimo_erro_codigo, ultimo_erro_mensagem, tentativas, pdf_path, xml_path)';
 
 export interface Cobranca {
   id: string;
@@ -38,6 +93,7 @@ export interface Cobranca {
   amount_refunded_cents: number;
   refunded_at: string | null;
   nota_status: string;
+  notas?: NotaDaCobranca[] | null;
   /** Só na lista do superadmin (embed de tenants). */
   conta?: { name: string | null } | null;
 }
