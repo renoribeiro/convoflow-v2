@@ -350,7 +350,8 @@ const AdminDashboard = () => {
       if (data?.warning) {
         toast.warning('Usuário criado, mas: ' + data.warning);
       } else {
-        toast.success('Usuário criado com sucesso! Um email de redefinição de senha foi enviado.');
+        // O manage-user manda um CONVITE (inviteUserByEmail), não um e-mail de nova senha.
+        toast.success('Usuário criado. Enviamos um convite por e-mail para a pessoa criar a senha.');
       }
 
       setIsCreateUserOpen(false);
@@ -480,7 +481,7 @@ const AdminDashboard = () => {
       ),
       cardCell: (user) => <>{user.first_name} {user.last_name}</>,
     },
-    { key: 'email', header: 'Email', card: 'subtitle', hideBelow: '2xl', cell: (user) => <span className="break-all">{user.email}</span> },
+    { key: 'email', header: 'E-mail', card: 'subtitle', hideBelow: '2xl', cell: (user) => <span className="break-all">{user.email}</span> },
     {
       key: 'funcao',
       header: 'Função',
@@ -886,7 +887,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="create-email">Email</Label>
+              <Label htmlFor="create-email">E-mail</Label>
               <Input
                 id="create-email"
                 type="email"
@@ -1036,7 +1037,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-email">Email</Label>
+              <Label htmlFor="edit-email">E-mail</Label>
               <Input
                 id="edit-email"
                 type="email"
@@ -1131,7 +1132,7 @@ const AdminDashboard = () => {
                   <p className="text-sm text-muted-foreground">{selectedUser.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Email</Label>
+                  <Label className="text-sm font-medium">E-mail</Label>
                   <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 </div>
                 <div>

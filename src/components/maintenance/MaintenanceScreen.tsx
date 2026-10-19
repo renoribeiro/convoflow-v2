@@ -132,7 +132,7 @@ export const MaintenanceScreen = ({ reason, endsAt, onRecheck }: MaintenanceScre
                 className="inline-flex items-center gap-2 text-xs text-brand-primary hover:underline"
               >
                 <Mail className="h-3.5 w-3.5" />
-                Falar com o suporte por email
+                Falar com o suporte por e-mail
               </a>
               <p className="text-xs text-muted-foreground">{SUPORTE_EMAIL}</p>
             </div>

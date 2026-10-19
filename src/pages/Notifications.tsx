@@ -241,7 +241,7 @@ export default function Notifications() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { id: 'email', label: 'Email', desc: 'Receber notificações por email', key: 'emailNotifications' as const },
+                { id: 'email', label: 'E-mail', desc: 'Receber notificações por e-mail', key: 'emailNotifications' as const },
                 { id: 'push', label: 'Push', desc: 'Notificações no navegador', key: 'pushNotifications' as const },
                 { id: 'whatsapp', label: 'WhatsApp', desc: 'Novas mensagens recebidas', key: 'whatsappMessages' as const },
                 { id: 'funnel', label: 'Funil', desc: 'Mudanças no funil de vendas', key: 'funnelUpdates' as const },

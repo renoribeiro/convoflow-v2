@@ -144,8 +144,8 @@ export const ReportSettingsModal = ({ isOpen, onClose }: ReportSettingsModalProp
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label>Habilitar envio por email</Label>
-                  <p className="text-sm text-muted-foreground">Permite enviar relatórios por email automaticamente</p>
+                  <Label>Habilitar envio por e-mail</Label>
+                  <p className="text-sm text-muted-foreground">Permite enviar relatórios por e-mail automaticamente</p>
                 </div>
                 <Switch
                   checked={settings.emailSettings.enabled}

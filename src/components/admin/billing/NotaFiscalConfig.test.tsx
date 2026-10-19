@@ -73,6 +73,23 @@ describe('NotaFiscalConfig', () => {
     await waitFor(() => expect(screen.getByTestId('nfse-historico')).toHaveTextContent('6,00% → 15,50% · Pessoa Inventada'));
   });
 
+  it('mostra a validade do certificado como o banco devolve (timestamptz do PostgREST) e sem aviso quando falta muito', async () => {
+    // Só o relógio é falso (o dia da leitura real, 340 dias antes do vencimento): o teste não envelhece.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-16T22:00:00-03:00'));
+    try {
+      estado.config = { ...estado.config, certificado_valido_ate: '2027-09-21T12:16:42+00:00' };
+      renderizar();
+      const linha = await screen.findByTestId('nfse-certificado');
+      expect(linha).toHaveTextContent('Certificado vale até');
+      expect(linha).toHaveTextContent('21/09/2027');
+      expect(linha).not.toHaveTextContent('Vence em');
+      expect(linha).not.toHaveTextContent('—');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('salva pelo RPC com o número lido e avisa', async () => {
     mockRpc.mockResolvedValue({ data: 15.5, error: null });
     const user = userEvent.setup();

@@ -22,7 +22,7 @@ export default function Reports() {
       <PageHeader
         title="Relatórios"
         helpKey="page:reports"
-        description="Gere relatórios detalhados e configure envios automáticos por email e WhatsApp"
+        description="Gere relatórios detalhados e configure envios automáticos por e-mail e WhatsApp"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Relatórios' }

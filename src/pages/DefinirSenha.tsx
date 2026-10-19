@@ -13,11 +13,12 @@ import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { registrarEnvioBarradoNoNavegador } from '@/lib/signup/authEmailFailure';
 import { lerChegada, mensagemDoErroDoLink, TIPO_DO_CODIGO } from '@/lib/auth/linkDoEmail';
+import { MIN_SENHA, mensagemDoErroDeSenha } from '@/lib/auth/mensagensDeSenha';
 import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 
-/** Mínimo de caracteres da senha. Mesma regra do Supabase Auth por padrão. */
-const MIN_SENHA = 8;
+/** Erro do código que não é "vencido ou inválido": frase fixa, sem o inglês do Supabase. */
+const CODIGO_ERRO_GENERICO = 'Não deu certo agora. Tente de novo em alguns minutos.';
 
 /** Link do e-mail que funcionou no Supabase mas não virou sessão aqui. */
 const LINK_SEM_ACESSO =
@@ -31,7 +32,7 @@ const LINK_SEM_ACESSO =
  *     e a tela só o usa quando a pessoa clica em "Continuar"; o antigo chega
  *     com a sessão pronta no fragmento. Ver src/lib/auth/linkDoEmail.ts.
  *   - "Esqueci minha senha" da tela de login, sem link nenhum: e-mail, código
- *     de 6 dígitos, senha nova.
+ *     de 6 dígitos, nova senha.
  *
  * O alerta vermelho só aparece para quem chegou por um link que falhou. Até
  * 2026-10-11 ele aparecia para toda visita sem sessão, inclusive para quem só
@@ -127,9 +128,10 @@ export const DefinirSenha = () => {
       // Já existe sessão: entra direto, sem obrigar a digitar tudo de novo.
       setTimeout(() => navigate('/dashboard', { replace: true }), 800);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Não foi possível salvar a senha.';
-      logger.warn('[DefinirSenha] updateUser falhou', { message: msg });
-      setErroForm(msg);
+      const e = err as { message?: string; code?: string; status?: number };
+      // O texto do Supabase vai só para o log; a tela mostra a frase fixa.
+      logger.warn('[DefinirSenha] updateUser falhou', { code: e?.code, message: e?.message });
+      setErroForm(mensagemDoErroDeSenha(e));
     } finally {
       setSalvando(false);
     }
@@ -199,7 +201,7 @@ export const DefinirSenha = () => {
       setErroCodigo(
         /expired|invalid|not found/i.test(msg)
           ? 'Código inválido ou vencido. Confira o e-mail digitado ou peça um código novo.'
-          : msg,
+          : CODIGO_ERRO_GENERICO,
       );
     } finally {
       setVerificando(false);
@@ -236,7 +238,8 @@ export const DefinirSenha = () => {
     titulo = ehConvite ? 'Aceite seu convite' : 'Crie sua nova senha';
     descricao = 'Clique em Continuar para criar sua senha.';
   } else if (comSessao) {
-    titulo = 'Defina sua senha';
+    // Mesmo verbo do começo ao fim: "Crie sua nova senha" → "Escolha sua nova senha".
+    titulo = ehConvite ? 'Escolha sua senha' : 'Escolha sua nova senha';
     descricao = 'É com ela que você vai entrar daqui pra frente.';
   } else if (etapa === 'codigo') {
     titulo = 'Digite o código';
@@ -245,7 +248,7 @@ export const DefinirSenha = () => {
       : 'Digite o seu e-mail e o código de 6 dígitos que chegou para você.';
   } else {
     titulo = alertaDoLink ? 'Peça um código novo' : 'Esqueci minha senha';
-    descricao = 'Digite o e-mail da sua conta. Enviamos um código de 6 dígitos para você criar uma senha nova.';
+    descricao = 'Digite o e-mail da sua conta. Enviamos um código de 6 dígitos para você criar uma nova senha.';
   }
 
   return (

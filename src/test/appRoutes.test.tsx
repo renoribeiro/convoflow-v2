@@ -47,7 +47,8 @@ const { padrao, nomeada, estado, ESTADO_INICIAL } = vi.hoisted(() => {
 
 // ------------------------------------------------------------------ telas --
 vi.mock('@/pages/LandingPage', padrao('Landing'));
-vi.mock('@/pages/Login', padrao('Login'));
+// '@/pages/Login' NÃO é falsificado: ele repassa a tela de /auth, e o teste
+// abaixo prova que /login abre a mesma tela ("Auth").
 vi.mock('@/pages/Auth', nomeada('Auth', 'Auth'));
 vi.mock('@/pages/DefinirSenha', nomeada('DefinirSenha', 'DefinirSenha'));
 vi.mock('@/pages/TermsOfService', padrao('Termos'));
@@ -201,7 +202,8 @@ describe('App.tsx — rotas públicas', () => {
   it.each([
     ['/', 'Landing'],
     ['/auth', 'Auth'],
-    ['/login', 'Login'],
+    // Mesma tela de /auth: uma tela de login só, com "Esqueci minha senha".
+    ['/login', 'Auth'],
     ['/definir-senha', 'DefinirSenha'],
     ['/terms-of-service', 'Termos'],
     ['/privacy-policy', 'Privacidade'],

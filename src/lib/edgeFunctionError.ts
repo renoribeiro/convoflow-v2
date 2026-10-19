@@ -17,6 +17,12 @@
 export async function mensagemDaEdgeFunction(
   error: unknown,
   fallback: string,
+  /**
+   * `soDoServidor: true` aceita só a frase que a edge function escreveu (em
+   * pt-BR); sem ela, usa o fallback, nunca a `message` do supabase-js (em
+   * inglês, ex.: "Failed to send a request to the Edge Function").
+   */
+  opcoes: { soDoServidor?: boolean } = {},
 ): Promise<string> {
   const body = await corpoDaEdgeFunction(error);
   // createErrorResponse devolve { error: { message, code } }; algumas
@@ -24,6 +30,8 @@ export async function mensagemDaEdgeFunction(
   const erro = body?.error as { message?: unknown } | string | undefined;
   const mensagem = typeof erro === 'string' ? erro : erro?.message;
   if (typeof mensagem === 'string' && mensagem.trim()) return mensagem;
+
+  if (opcoes.soDoServidor) return fallback;
 
   if (error instanceof Error && error.message) {
     // A frase genérica do supabase-js não ajuda ninguém: prefira o fallback,

@@ -74,10 +74,10 @@ export const NewLeadModal = ({ isOpen, onClose }: NewLeadModalProps) => {
       return;
     }
 
-    // Validação de email
+    // Validação de e-mail
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(leadData.email)) {
-      toast.error('Digite um email válido');
+      toast.error('Digite um e-mail válido');
       return;
     }
 

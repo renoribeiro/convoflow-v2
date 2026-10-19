@@ -33,7 +33,7 @@ interface FollowupSchedulerProps {
 
 const followupTypes = [
   { id: 'call', name: 'Ligação', icon: Phone, description: 'Fazer uma ligação telefônica' },
-  { id: 'email', name: 'Email', icon: Mail, description: 'Enviar um email' },
+  { id: 'email', name: 'E-mail', icon: Mail, description: 'Enviar um e-mail' },
   { id: 'whatsapp', name: 'WhatsApp', icon: MessageSquare, description: 'Enviar mensagem no WhatsApp' },
 ];
 
@@ -45,7 +45,7 @@ const modeOptions: { id: FollowupMode; name: string; icon: typeof Hand; descript
 
 const taskTemplates = [
   'Ligar para apresentar nova proposta',
-  'Enviar material complementar por email',
+  'Enviar material complementar por e-mail',
   'Follow-up sobre proposta enviada',
   'Verificar interesse no produto/serviço',
   'Agendar reunião de apresentação',
