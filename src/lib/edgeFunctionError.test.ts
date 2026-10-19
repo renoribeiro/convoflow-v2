@@ -54,6 +54,20 @@ describe('mensagemDaEdgeFunction', () => {
     expect(await mensagemDaEdgeFunction(erro, 'fallback')).toBe('Failed to fetch');
   });
 
+  it('com soDoServidor, erro de rede do supabase-js cai no fallback (sem inglês)', async () => {
+    const erro = new Error('Failed to send a request to the Edge Function');
+    expect(await mensagemDaEdgeFunction(erro, 'fallback', { soDoServidor: true })).toBe('fallback');
+  });
+
+  it('com soDoServidor, a frase do servidor continua passando', async () => {
+    const erro = Object.assign(new Error('Edge Function returned a non-2xx status code'), {
+      context: new Response(JSON.stringify({ error: { message: 'Limite de envio de e-mail atingido.' } })),
+    });
+    expect(await mensagemDaEdgeFunction(erro, 'fallback', { soDoServidor: true })).toBe(
+      'Limite de envio de e-mail atingido.',
+    );
+  });
+
   it('sem erro reconhecível, usa o fallback', async () => {
     expect(await mensagemDaEdgeFunction(null, 'fallback')).toBe('fallback');
     expect(await mensagemDaEdgeFunction({ context: {} }, 'fallback')).toBe('fallback');

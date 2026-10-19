@@ -49,15 +49,18 @@ export type ChegadaPorLink =
  *
  * O link é de USO ÚNICO. Abrir no celular e depois no computador queima o
  * primeiro acesso e o segundo chega aqui com `otp_expired`.
+ *
+ * A `description` do Supabase (em inglês) não vai para a tela desde
+ * 2026-10-19: código desconhecido ganha a frase fixa abaixo.
  */
-export function mensagemDoErro(code: string | null, description: string | null): string {
+export function mensagemDoErro(code: string | null, _description: string | null): string {
   if (code === 'otp_expired') {
     return 'Este link expirou ou já foi usado. Cada link vale por um acesso só. Peça um código novo abaixo.';
   }
   if (code === 'access_denied') {
     return 'Este link não é mais válido. Peça um código novo abaixo.';
   }
-  return description || 'Não foi possível validar este link. Peça um código novo abaixo.';
+  return 'Não foi possível validar este link. Peça um código novo abaixo.';
 }
 
 /**

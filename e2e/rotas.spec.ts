@@ -181,7 +181,7 @@ test.describe('links que chegam de fora', () => {
       type: 'invite',
     });
     await page.goto(`/definir-senha#${fragmento}`);
-    await expect(page.getByText('Defina sua senha')).toBeVisible();
+    await expect(page.getByText('Escolha sua nova senha')).toBeVisible();
     await expect(page.getByLabel('Nova senha')).toBeVisible();
     // O token não pode ficar exposto na barra de endereço.
     await expect.poll(() => new URL(page.url()).hash).not.toContain('access_token');

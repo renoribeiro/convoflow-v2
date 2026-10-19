@@ -30,7 +30,7 @@ interface FollowupModalProps {
 
 const FOLLOWUP_TYPES = [
   { value: 'call', label: 'Ligação' },
-  { value: 'email', label: 'Email' },
+  { value: 'email', label: 'E-mail' },
   { value: 'meeting', label: 'Reunião' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'visit', label: 'Visita' },

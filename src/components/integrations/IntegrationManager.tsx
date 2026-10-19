@@ -188,7 +188,7 @@ const integrationTemplates: IntegrationTemplate[] = [
         label: 'Double Opt-in',
         type: 'boolean',
         required: false,
-        description: 'Exigir confirmação por email'
+        description: 'Exigir confirmação por e-mail'
       }
     ]
   },

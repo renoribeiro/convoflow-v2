@@ -45,6 +45,12 @@ describe('mensagens', () => {
     expect(mensagemDoErro('otp_expired', null)).toMatch(/Peça um código novo/);
   });
 
+  it('erro desconhecido não repete a descrição em inglês do Supabase', () => {
+    const m = mensagemDoErro('server_error', 'Database error granting user');
+    expect(m).toBe('Não foi possível validar este link. Peça um código novo abaixo.');
+    expect(m).not.toMatch(/Database error/);
+  });
+
   it('erro do clique em "Continuar" com link gasto', () => {
     expect(mensagemDoErroDoLink({ code: 'otp_expired', message: 'Email link is invalid or has expired' }))
       .toMatch(/expirou ou já foi usado/);

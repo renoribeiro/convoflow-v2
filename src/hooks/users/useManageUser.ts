@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { UserRole } from '@/types/userHierarchy';
 import { mensagemDaEdgeFunction } from '@/lib/edgeFunctionError';
+import { logger } from '@/lib/logger';
 
 type Action =
   | 'create'
@@ -38,7 +39,10 @@ interface ManageUserPayload {
   newParentId?: string;
 }
 
-async function invokeManageUser(payload: ManageUserPayload) {
+async function invokeManageUser(
+  payload: ManageUserPayload,
+  opcoes: { soDoServidor?: boolean; fallback?: string } = {},
+) {
   const { data, error } = await supabase.functions.invoke('manage-user', {
     body: payload,
   });
@@ -46,8 +50,13 @@ async function invokeManageUser(payload: ManageUserPayload) {
   // supabase-js -- sem abrir o corpo, todo 4xx/5xx vira "non-2xx status code"
   // e a frase em pt-BR que explica o problema e jogada fora.
   if (error) {
+    if (opcoes.soDoServidor) {
+      logger.warn('[manage-user] chamada falhou', { action: payload.action, message: error.message });
+    }
     throw new Error(
-      await mensagemDaEdgeFunction(error, 'Nao foi possivel concluir a acao.'),
+      await mensagemDaEdgeFunction(error, opcoes.fallback ?? 'Não foi possível concluir a ação.', {
+        soDoServidor: opcoes.soDoServidor,
+      }),
     );
   }
   if (data && typeof data === 'object' && 'error' in data) {
@@ -150,15 +159,20 @@ export function useCancelInvite() {
 export function useResetUserPassword() {
   return useMutation({
     mutationFn: (targetProfileId: string) =>
-      invokeManageUser({
-        targetProfileId,
-        action: 'reset_password',
-        redirectTo: `${window.location.origin}/definir-senha`,
-      }),
+      invokeManageUser(
+        {
+          targetProfileId,
+          action: 'reset_password',
+          redirectTo: `${window.location.origin}/definir-senha`,
+        },
+        // Só a frase do servidor (pt-BR); erro de rede vira a frase fixa.
+        { soDoServidor: true, fallback: 'Tente de novo em alguns minutos.' },
+      ),
     onSuccess: () => {
-      toast.success('Link de redefinição de senha enviado por e-mail.');
+      toast.success('E-mail de nova senha enviado.');
     },
-    onError: (err: Error) => toast.error(`Falha ao gerar reset: ${err.message}`),
+    // A mensagem vem do manage-user, já em português (nunca o texto do Supabase).
+    onError: (err: Error) => toast.error(`Não foi possível enviar o e-mail de nova senha: ${err.message}`),
   });
 }
 

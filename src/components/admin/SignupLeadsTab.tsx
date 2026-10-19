@@ -234,7 +234,7 @@ export function SignupLeadsTab() {
             <div className="text-2xl font-bold">{limite7 + recusa7}</div>
             <p className="text-xs text-muted-foreground">
               {limite7} por limite por hora · {recusa7} por endereço recusado. Todos os e-mails de
-              login contam: convites, redefinição de senha e cadastro.
+              login contam: convites, e-mails de nova senha e cadastro.
             </p>
           </CardContent>
         </Card>

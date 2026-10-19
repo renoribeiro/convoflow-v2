@@ -1029,7 +1029,7 @@ export const CampaignWizard = ({
                   <tr>
                     <th className="text-left p-2">Telefone</th>
                     <th className="text-left p-2">Nome</th>
-                    <th className="text-left p-2">Email</th>
+                    <th className="text-left p-2">E-mail</th>
                   </tr>
                 </thead>
                 <tbody>

@@ -151,7 +151,7 @@ export const IntegrationSettings = () => {
     {
       id: 'mailchimp',
       name: 'Mailchimp',
-      description: 'Sincronização de listas de email marketing',
+      description: 'Sincronização de listas de e-mail marketing',
       icon: Mail,
       category: 'communication',
       status: 'disconnected'

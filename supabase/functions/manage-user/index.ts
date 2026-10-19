@@ -701,7 +701,7 @@ async function actionResetPassword(
     target.user_id,
   );
   if (getErr || !authUser?.user?.email) {
-    throw new SecureError('Não foi possível obter email do usuário', 'NOT_FOUND', 404);
+    throw new SecureError('Não foi possível encontrar o e-mail deste usuário.', 'NOT_FOUND', 404);
   }
 
   // `resetPasswordForEmail`, NÃO `admin.generateLink`.
@@ -740,8 +740,15 @@ async function actionResetPassword(
       );
     }
 
+    // O texto do Supabase (em inglês) fica só no log da função; quem clicou
+    // em "Redefinir senha" lê a frase fixa.
+    console.error('manage-user: resetPasswordForEmail falhou', {
+      target: target.id,
+      code: (resetErr as AuthLikeError).code,
+      message: resetErr.message,
+    });
     throw new SecureError(
-      `Falha ao enviar o e-mail de redefinição: ${resetErr.message}`,
+      'O servidor de e-mail não respondeu. Tente de novo em alguns minutos.',
       'RESET_FAILED',
       500,
     );

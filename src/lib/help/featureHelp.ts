@@ -1171,15 +1171,18 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:settings-security': {
     title: 'Configurações › Segurança',
     whatItDoes:
-      'Troca a senha da sua conta de acesso. Só isso: quem vê o quê é definido pelo cargo, em Equipe.',
+      'Troca a senha que você usa para entrar. Antes de trocar, o sistema confere a sua senha atual. Depois da troca, todos os outros aparelhos e navegadores em que você estava conectado saem da sua conta; este aqui continua conectado. Quem vê o quê não muda: isso é definido pelo cargo, em Equipe.',
     howToConfigure: [
-      'Informe a senha atual.',
-      'Escreva a nova senha duas vezes.',
-      'Salve para aplicar.',
+      'Digite a sua senha atual.',
+      'Digite a nova senha, com pelo menos 8 caracteres.',
+      'Repita a nova senha no último campo.',
+      'Clique em "Salvar nova senha". Uma mensagem acima do botão confirma a troca e avisa que os outros aparelhos saíram.',
     ],
     example:
-      'Você compartilhou a senha para alguém resolver algo no sistema. Troque logo depois, em vez de deixar o acesso circulando.',
+      'Você emprestou a senha para alguém resolver algo no sistema. Troque logo depois: o celular ou o computador dessa pessoa sai da sua conta na hora.',
     tips: [
+      'Esqueceu a senha atual? Saia do sistema e use "Esqueci minha senha" na tela de login.',
+      'Se aparecer "A senha atual não confere", confira se o Caps Lock está ligado.',
       'Senha longa protege mais que senha complicada.',
       'Para remover o acesso de quem saiu do time, vá em Equipe. Trocar a sua senha não afeta o login das outras pessoas.',
     ],
@@ -1505,7 +1508,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Leia a chave no topo. "Desligado" quer dizer que os botões da página de vendas ainda levam ao login e ninguém se cadastra sozinho.',
       'Comece pelo cartão "Para vendas ligar": são os cadastros em que o convite não saiu ou o processamento parou. A pessoa não recebeu nada; ligue ou escreva para ela.',
       'Na coluna Situação, "Convite enviado" é quem recebeu o e-mail e ainda não criou a senha; "Em teste grátis" e "Assinante" já estão usando. Embaixo de "Convite não saiu" aparece o motivo.',
-      'O cartão "E-mails de login barrados" conta os e-mails de login que não saíram nos últimos 7 dias (convites, redefinição de senha e cadastros), por limite por hora ou por endereço recusado. Quando esse número passa de zero com frequência, é hora de trocar o envio de e-mail: o passo-a-passo está em docs/RUNBOOK_trocar_envio_email.md.',
+      'O cartão "E-mails de login barrados" conta os e-mails de login que não saíram nos últimos 7 dias (convites, e-mails de nova senha e cadastros), por limite por hora ou por endereço recusado. Quando esse número passa de zero com frequência, é hora de trocar o envio de e-mail: o passo-a-passo está em docs/RUNBOOK_trocar_envio_email.md.',
       'Clique no e-mail ou no telefone para abrir o contato direto.',
     ],
     example:

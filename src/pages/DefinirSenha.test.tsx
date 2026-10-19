@@ -175,6 +175,17 @@ describe('código de 6 dígitos', () => {
     await screen.findByText(/Código inválido ou vencido/i);
   });
 
+  it('outro erro do código vira frase fixa, sem o inglês do Supabase', async () => {
+    mockVerifyOtp.mockResolvedValue({ error: new Error('Request rate limit reached') });
+    renderTela();
+    await irParaCodigo();
+    fireEvent.change(screen.getByLabelText(/código recebido/i), { target: { value: '123456' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }));
+
+    await screen.findByText('Não deu certo agora. Tente de novo em alguns minutos.');
+    expect(screen.queryByText(/rate limit/i)).not.toBeInTheDocument();
+  });
+
   it('código aceito leva ao formulário de senha', async () => {
     mockVerifyOtp.mockImplementation(async () => {
       session = { user: { id: 'u1' } };
@@ -225,6 +236,8 @@ describe('link NOVO do e-mail (token_hash)', () => {
     );
     expect(await screen.findByLabelText(/nova senha/i)).toBeInTheDocument();
     expect(mockVerifyOtp).toHaveBeenCalledTimes(1);
+    // Convite: a pessoa ainda não tem senha, então não é "nova".
+    expect(screen.getByText('Escolha sua senha')).toBeInTheDocument();
   });
 
   it('quem já está logado com outra conta também precisa clicar', () => {
@@ -259,7 +272,7 @@ describe('link ANTIGO do e-mail (sessão no fragmento)', () => {
   it('com a sessão criada, vai direto para a senha, sem alerta', () => {
     session = { user: { id: 'u1' } };
     renderTela('#access_token=x&refresh_token=y&type=recovery');
-    expect(screen.getByText('Defina sua senha')).toBeInTheDocument();
+    expect(screen.getByText('Escolha sua nova senha')).toBeInTheDocument();
     expect(alerta()).not.toBeInTheDocument();
   });
 
@@ -317,13 +330,30 @@ describe('com sessão: formulário de senha', () => {
     await waitFor(() => expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'senhaboa123' }));
   });
 
-  it('erro do servidor aparece na tela em vez de sumir', async () => {
-    mockUpdateUser.mockResolvedValue({ error: new Error('Senha muito fraca') });
+  it('senha fraca recusada pelo servidor aparece em português, sem o texto cru', async () => {
+    mockUpdateUser.mockResolvedValue({
+      error: Object.assign(
+        new Error('Password is known to be weak and easy to guess, please choose a different one.'),
+        { code: 'weak_password' },
+      ),
+    });
     renderTela();
     fireEvent.change(screen.getByLabelText(/nova senha/i), { target: { value: 'senhaboa123' } });
     fireEvent.change(screen.getByLabelText(/repita a senha/i), { target: { value: 'senhaboa123' } });
     fireEvent.click(screen.getByRole('button', { name: /salvar e entrar/i }));
 
-    await screen.findByText(/Senha muito fraca/i);
+    await screen.findByText(/Essa senha é fraca/i);
+    expect(screen.queryByText(/known to be weak/i)).not.toBeInTheDocument();
+  });
+
+  it('erro qualquer do servidor aparece como frase fixa em vez de sumir', async () => {
+    mockUpdateUser.mockResolvedValue({ error: new Error('Database error updating user') });
+    renderTela();
+    fireEvent.change(screen.getByLabelText(/nova senha/i), { target: { value: 'senhaboa123' } });
+    fireEvent.change(screen.getByLabelText(/repita a senha/i), { target: { value: 'senhaboa123' } });
+    fireEvent.click(screen.getByRole('button', { name: /salvar e entrar/i }));
+
+    await screen.findByText(/Não foi possível salvar a senha agora/i);
+    expect(screen.queryByText(/Database error/i)).not.toBeInTheDocument();
   });
 });
