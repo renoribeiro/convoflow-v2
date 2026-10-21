@@ -436,7 +436,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Você abre o dia em "7 dias": o bot responde em 6 segundos, mas a 1ª resposta de uma pessoa está em 2 horas e há 90 conversas esperando alguém, quase todas sem responsável. Distribuir essas conversas passa a ser a primeira tarefa.',
     tips: [
       'A lista "Primeiros passos" muda com o cargo. Gerente: a Conta inteira (criar a Loja, conectar o WhatsApp e convidar a equipe são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional). Gestor: os mesmos passos, só da sua Loja. Atendente: foto, notificações e a primeira conversa respondida. Superadmin não vê boas vindas nem lista.',
-      'Gerente: WhatsApp, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única; com várias, destaca o seletor do topo para você escolher. O funil da Loja é montado pelo Gestor dela: na lista do Gerente esse passo só tem o tutorial.',
+      'Gerente: WhatsApp, funil, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única; com várias, destaca o seletor do topo para você escolher.',
       'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página.',
       'Em imobiliária, a 1ª resposta de uma pessoa é a métrica que mais move venda: o lead de portal fala com três corretores e fecha com quem responde primeiro. O bot responder rápido não substitui isso.',
       'Os números de atendimento olham conversas iniciadas no período escolhido; só "Esperando uma pessoa agora" é retrato de hoje, seja qual for o período.',
@@ -630,7 +630,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É onde a venda tem etapa e responsável. Cada card é um lead numa etapa, e mover o card é o que registra que a negociação andou. O chatbot e as automações também movem cards sozinhos.',
     howToConfigure: [
-      'Ajuste as etapas para o seu processo real antes de usar. Etapa genérica não informa nada; "Visita agendada" informa.',
+      'Ajuste as etapas para o seu processo real antes de usar: clique em "Configurar Estágios", crie as etapas na ordem em que acontecem e salve. Etapa genérica não informa nada; "Visita agendada" informa.',
+      'As etapas são de cada Loja. Gestor: você monta as da sua Loja. Gerente: escolha a Loja no seletor do topo antes de clicar em "Configurar Estágios" e monte as etapas de qualquer Loja da Conta; com a Conta em foco, as etapas criadas ficam na Conta, não numa Loja.',
       'Arraste o card do lead para a etapa nova conforme a negociação evolui.',
       'Para automatizar, use a ação "Alterar Estágio" nas Automações ou o nó "Mover no Funil" no chatbot.',
     ],
@@ -638,6 +639,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Etapas "Novo lead → Contato feito → Visita agendada → Proposta → Fechado". O chatbot qualifica e já joga o lead em "Contato feito"; o corretor move para "Visita agendada" quando marca a visita.',
     tips: [
       'Menos etapas funciona melhor: etapa que nunca recebe card só atrapalha a leitura.',
+      'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
       'Mudar de etapa pode disparar automação: use o gatilho "Mudança de Estágio" para agendar o follow-up no instante em que o lead avança.',
       'Quem foi vinculado nos dois canais (WhatsApp e Instagram) aparece num card só, o do WhatsApp. Desvinculado, o card do Instagram volta com a etapa que tinha antes.',
       'Se a cobrança da Conta falhar, o sistema continua aberto enquanto o Stripe tenta cobrar de novo. Se todas as tentativas falharem, não é só o Funil que fecha: o sistema inteiro dá lugar à tela "Acesso bloqueado", para todo o time. O que resolve é o pagamento da Conta, em Configurações › Assinatura.',

@@ -347,7 +347,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
     title: 'Montar seu funil de vendas',
     goal:
       'No fim, seu funil terá as etapas do seu processo real e você saberá onde cada lead está parado.',
-    forWhom: 'Quem define o processo comercial da Loja, normalmente o Gestor.',
+    forWhom:
+      'Quem define o processo comercial da Loja: o Gestor, na Loja dele, ou o Gerente, em qualquer Loja da Conta.',
     moduleName: 'funnel',
     steps: [
       {
@@ -359,6 +360,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
         title: 'Abra o Funil de Vendas e clique em "Configurar Estágios"',
         body:
           'A janela mostra duas partes: "Estágios Atuais", com o que já existe, e "Adicionar Novo Estágio", para criar.',
+        note:
+          'Gerente: as etapas são de cada Loja. Escolha a Loja no seletor do topo antes de abrir o Funil; com a Conta em foco, as etapas que você criar ficam na Conta, não na Loja.',
         screen: '/dashboard/funnel',
         helpKey: 'page:funnel',
       },
@@ -366,6 +369,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
         title: 'Ajuste ou remova as etapas que não servem para você',
         body:
           'Em "Estágios Atuais", use o ícone de edição para renomear e o de lixeira para excluir. Faça essa limpeza antes de criar as novas, para não ficar com dois conjuntos de etapas ao mesmo tempo.',
+        note:
+          'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
       },
       {
         title: 'Crie cada etapa em "Adicionar Novo Estágio"',

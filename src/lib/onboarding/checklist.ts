@@ -146,13 +146,16 @@ export const CHECKLISTS: Record<OnboardingRole, ChecklistStepDef[]> = {
       minRole: 'gestor',
     },
     {
-      // Sem "Fazer agora" para o Gerente: as etapas do funil de uma Loja só
-      // são gravadas por quem é da Loja (RLS de funnel_stages); o Gerente vê.
+      // Etapas são de cada Loja: o Gerente grava nas Lojas da Conta dele
+      // desde 20261021000002 (antes só lia), por isso needsLoja.
       id: 'funil',
       title: 'Montar o funil de vendas',
-      description: 'Quem monta o funil da Loja é o Gestor. Combine as etapas com ele.',
+      description: 'As etapas do processo de venda de cada Loja, do primeiro contato até a venda.',
       priority: 'recomendado',
+      screen: '/dashboard/funnel',
+      tourId: 'configurar-funil',
       tutorialId: 'montar-funil',
+      needsLoja: true,
       moduleName: 'funnel',
     },
     respostasRapidas(true),

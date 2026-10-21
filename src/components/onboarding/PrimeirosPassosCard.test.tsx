@@ -87,14 +87,22 @@ describe('lista do Gerente', () => {
     expect(linha('loja').getAttribute('data-feito')).toBe('sim');
   });
 
-  it('passo feito não tem botão; o funil do Gerente só tem o passo a passo', () => {
+  it('passo feito não tem botão; o funil do Gerente tem "Fazer agora" e o passo a passo', () => {
     montar();
     expect(within(linha('loja')).queryByRole('button', { name: 'Fazer agora' })).toBeNull();
-    expect(within(linha('funil')).queryByRole('button', { name: 'Fazer agora' })).toBeNull();
+    expect(within(linha('funil')).getByRole('button', { name: 'Fazer agora' })).toBeInTheDocument();
     expect(within(linha('funil')).getByRole('link', { name: 'Ver passo a passo' })).toHaveAttribute(
       'href',
       '/dashboard/help#tutorial:montar-funil',
     );
+  });
+
+  it('"Fazer agora" no funil, com a Conta em foco e uma Loja só: abre a Loja e o Funil', async () => {
+    montar();
+    await userEvent.click(within(linha('funil')).getByRole('button', { name: 'Fazer agora' }));
+    expect(setActiveTenant).toHaveBeenCalledWith(LOJA_A.id);
+    expect(screen.getByTestId('onde')).toHaveTextContent('/dashboard/funnel');
+    expect(useTourQueue.getState().pending?.tourId).toBe('configurar-funil');
   });
 
   it('"Fazer agora" em Convidar: abre Equipe e pede o tour do botão Convidar', async () => {
