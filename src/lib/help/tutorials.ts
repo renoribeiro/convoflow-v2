@@ -348,8 +348,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
     goal:
       'No fim, seu funil terá as etapas do seu processo real e você saberá onde cada lead está parado.',
     forWhom:
-      'Quem define o processo comercial da Loja: o Gestor, na Loja dele, ou o Gerente, em qualquer Loja da Conta.',
+      'Quem define o processo comercial da Loja: o Gestor, na Loja dele, ou o Gerente, em qualquer Loja da Conta. O Atendente vê as etapas e move os cards, mas não monta o funil.',
     moduleName: 'funnel',
+    minRole: 'gestor',
     steps: [
       {
         title: 'Escreva as etapas do seu processo antes de abrir o sistema',
@@ -389,9 +390,11 @@ export const ALL_TUTORIALS: Tutorial[] = [
         screen: '/dashboard/funnel',
       },
       {
-        title: 'Cadastre um lead pelo botão "Novo Lead" para testar',
+        title: 'Cadastre um lead de teste pelo botão "Novo Lead"',
         body:
-          'Crie um lead de teste e acompanhe ele entrando na primeira etapa. Depois apague. Serve para você ver o fluxo completo antes de colocar o time para usar.',
+          'Preencha o nome e o telefone com DDD, escolha a etapa e clique em "Criar lead". O card aparece na coluna escolhida, e o contato entra em Contatos. Telefone que já é contato da Loja não é duplicado: o card desse contato vai para a etapa. O menu de cada coluna tem "Adicionar Lead", que já abre com aquela etapa escolhida.',
+        note:
+          'Terminado o teste, apague o contato em Contatos: no menu ⋯ da linha dele, clique em "Excluir" e confirme em "Excluir".',
         screen: '/dashboard/funnel',
       },
       {

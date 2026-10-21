@@ -86,26 +86,36 @@ export const DroppableStage = ({
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
+              {/* Cada item só existe se a ação veio: o FunnelBoard não passa as
+                  de etapa para o atendente (20261021000003). */}
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onAddLead?.(stage.id)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Lead
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEditStage?.(stage.id)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar Estágio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onConfigureStage?.(stage.id)}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configurar Estágio
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDeleteStage?.(stage.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir Estágio
-                </DropdownMenuItem>
+                {onAddLead && (
+                  <DropdownMenuItem onClick={() => onAddLead(stage.id)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Lead
+                  </DropdownMenuItem>
+                )}
+                {onEditStage && (
+                  <DropdownMenuItem onClick={() => onEditStage(stage.id)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar Estágio
+                  </DropdownMenuItem>
+                )}
+                {onConfigureStage && (
+                  <DropdownMenuItem onClick={() => onConfigureStage(stage.id)}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Configurar Estágio
+                  </DropdownMenuItem>
+                )}
+                {onDeleteStage && (
+                  <DropdownMenuItem
+                    onClick={() => onDeleteStage(stage.id)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Excluir Estágio
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
