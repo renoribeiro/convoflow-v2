@@ -87,8 +87,12 @@ describe('passos de cada cargo', () => {
     }
   });
 
-  it('o funil do Gerente não tem "Fazer agora" (só o Gestor grava o funil da Loja)', () => {
-    expect(CHECKLISTS.gerente.find((d) => d.id === 'funil')?.screen).toBeUndefined();
+  it('o funil tem "Fazer agora" para Gerente e Gestor; para o Gerente, dentro de uma Loja', () => {
+    // 20261021000002: o Gerente grava etapas nas Lojas da Conta dele.
+    const doGerente = CHECKLISTS.gerente.find((d) => d.id === 'funil');
+    expect(doGerente?.screen).toBe('/dashboard/funnel');
+    expect(doGerente?.tourId).toBe('configurar-funil');
+    expect(doGerente?.needsLoja).toBe(true);
     expect(CHECKLISTS.gestor.find((d) => d.id === 'funil')?.screen).toBe('/dashboard/funnel');
   });
 
@@ -269,7 +273,18 @@ describe('Fazer agora', () => {
   });
 
   it('passo sem tela não faz nada', () => {
+    const assinatura = CHECKLISTS.gerente.find((d) => d.id === 'assinatura')!;
+    expect(planFazerAgora({ role: 'gerente', item: assinatura, emLoja: true, lojas: [] })).toEqual({ tipo: 'nada' });
+  });
+
+  it('funil do Gerente com a Conta em foco e uma Loja só: abre a Loja e vai ao Funil', () => {
     const funil = CHECKLISTS.gerente.find((d) => d.id === 'funil')!;
-    expect(planFazerAgora({ role: 'gerente', item: funil, emLoja: true, lojas: [] })).toEqual({ tipo: 'nada' });
+    expect(planFazerAgora({ role: 'gerente', item: funil, emLoja: false, lojas: [LOJA] })).toEqual({
+      tipo: 'trocar-loja',
+      lojaId: LOJA.id,
+      lojaNome: 'Loja Centro',
+      screen: '/dashboard/funnel',
+      tourId: 'configurar-funil',
+    });
   });
 });
