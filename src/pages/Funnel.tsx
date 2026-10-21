@@ -8,11 +8,16 @@ import { NewLeadModal } from '@/components/funnel/NewLeadModal';
 import { Plus, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useRole } from '@/contexts/TenantContext';
+import { podeConfigurarEtapas } from '@/lib/funnel/permissoes';
 
 export default function Funnel() {
   const [showMetrics, setShowMetrics] = useState(false);
   const [showStageConfig, setShowStageConfig] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
+  // Atendente vê as etapas e move os cards; configurar é do Gestor e do
+  // Gerente (20261021000003). Sem o botão, sem a janela.
+  const podeConfigurar = podeConfigurarEtapas(useRole());
 
   return (
     <div className="space-y-6">
@@ -34,15 +39,17 @@ export default function Funnel() {
               <BarChart3 className="w-4 h-4 mr-2" />
               {showMetrics ? 'Ocultar' : 'Mostrar'} Métricas
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowStageConfig(true)}
-              data-tour="funil-configurar-estagios"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Configurar Estágios
-            </Button>
+            {podeConfigurar && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowStageConfig(true)}
+                data-tour="funil-configurar-estagios"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Configurar Estágios
+              </Button>
+            )}
             <Button size="sm" onClick={() => setShowNewLead(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Lead
@@ -67,10 +74,12 @@ export default function Funnel() {
         </TabsContent>
       </Tabs>
 
-      <StageConfigModal 
-        isOpen={showStageConfig} 
-        onClose={() => setShowStageConfig(false)} 
-      />
+      {podeConfigurar && (
+        <StageConfigModal
+          isOpen={showStageConfig}
+          onClose={() => setShowStageConfig(false)}
+        />
+      )}
       
       <NewLeadModal 
         isOpen={showNewLead} 

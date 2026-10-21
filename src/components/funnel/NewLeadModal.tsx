@@ -1,304 +1,198 @@
-import { useState } from 'react';
-import { CHART_STATUS } from '@/lib/chartColors';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+/**
+ * "Novo Lead" do Funil: nome, telefone e etapa. Grava de verdade, pela regra
+ * de src/lib/funnel/novoLead.ts — telefone que já é contato da Loja não
+ * duplica: o card dele vai para a etapa escolhida.
+ *
+ * Aberto pelo botão "Novo Lead" do topo e por "Adicionar Lead" no menu de cada
+ * coluna (que já chega com a etapa da coluna escolhida). Vale para todo cargo
+ * da Loja, atendente incluído: cadastrar lead e mover card é operação.
+ */
+import { useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { UserPlus } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
-import { User, Phone, Mail, Building, DollarSign, Calendar, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { useTenant } from '@/contexts/TenantContext';
+import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
+import {
+  NovoLeadErro,
+  salvarNovoLead,
+  validarNovoLead,
+  type ErrosNovoLead,
+  type ResultadoNovoLead,
+} from '@/lib/funnel/novoLead';
 
 interface NewLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Etapa já escolhida ("Adicionar Lead" no menu da coluna). */
+  etapaInicialId?: string | null;
 }
 
-interface LeadData {
+interface Etapa {
+  id: string;
   name: string;
-  email: string;
-  phone: string;
-  company: string;
-  position: string;
-  value: string;
-  source: string;
-  stage_id: string;
-  notes: string;
+  order: number | null;
 }
 
-export const NewLeadModal = ({ isOpen, onClose }: NewLeadModalProps) => {
-  const [leadData, setLeadData] = useState<LeadData>({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    position: '',
-    value: '',
-    source: '',
-    stage_id: '',
-    notes: ''
+export const NewLeadModal = ({ isOpen, onClose, etapaInicialId }: NewLeadModalProps) => {
+  const { tenantId } = useTenant();
+  const queryClient = useQueryClient();
+  const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [etapaId, setEtapaId] = useState('');
+  const [erros, setErros] = useState<ErrosNovoLead>({});
+
+  const { data: etapasData = [], isLoading: carregandoEtapas } = useSupabaseQuery({
+    table: 'funnel_stages',
+    select: 'id, name, order',
+    orderBy: [{ column: 'order', ascending: true }],
+    enabled: isOpen,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  // useSupabaseQuery tipa o select de texto livre como GenericStringError[].
+  const etapas = etapasData as unknown as Etapa[];
 
-  // Mock data para estágios do funil
-  const funnelStages = [
-    { id: '1', name: 'Novo Lead', color: CHART_STATUS.info },
-    { id: '2', name: 'Qualificado', color: CHART_STATUS.neutral },
-    { id: '3', name: 'Proposta', color: CHART_STATUS.warning },
-    { id: '4', name: 'Negociação', color: CHART_STATUS.error },
-    { id: '5', name: 'Fechado', color: CHART_STATUS.success }
-  ];
+  // Abriu: etapa da coluna, se veio de uma...
+  useEffect(() => {
+    if (isOpen && etapaInicialId) setEtapaId(etapaInicialId);
+  }, [isOpen, etapaInicialId]);
 
-  const leadSources = [
-    'Website',
-    'Redes Sociais',
-    'Indicação',
-    'Google Ads',
-    'Facebook Ads',
-    'Email Marketing',
-    'Evento',
-    'Cold Call',
-    'WhatsApp',
-    'Outros'
-  ];
+  // ...senão, a primeira do funil (sem atropelar a escolha da pessoa).
+  useEffect(() => {
+    if (isOpen && !etapaId && !etapaInicialId && etapas[0]) setEtapaId(etapas[0].id);
+  }, [isOpen, etapaId, etapaInicialId, etapas]);
 
-  const handleInputChange = (field: keyof LeadData, value: string) => {
-    setLeadData(prev => ({ ...prev, [field]: value }));
+  const limpar = () => {
+    setNome('');
+    setTelefone('');
+    setEtapaId('');
+    setErros({});
   };
 
-  const handleSubmit = async () => {
-    // Validação básica
-    if (!leadData.name || !leadData.email || !leadData.phone || !leadData.stage_id) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-
-    // Validação de e-mail
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(leadData.email)) {
-      toast.error('Digite um e-mail válido');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      // Simular salvamento
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      console.log('Novo lead criado:', leadData);
-      toast.success('Lead criado com sucesso!');
-      
-      // Reset form
-      setLeadData({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        position: '',
-        value: '',
-        source: '',
-        stage_id: '',
-        notes: ''
-      });
-      
+  const salvar = useMutation({
+    mutationFn: () => {
+      if (!tenantId) throw new NovoLeadErro('Conta não carregada. Tente de novo.');
+      return salvarNovoLead(supabase, { tenantId, nome, telefone, etapaId });
+    },
+    onSuccess: (r: ResultadoNovoLead) => {
+      const etapa = etapas.find((e) => e.id === etapaId)?.name ?? 'a etapa escolhida';
+      if (r.tipo === 'criado') {
+        toast.success(`Lead ${r.nome} criado em ${etapa}.`);
+      } else {
+        toast.success(`Esse telefone já é de ${r.nome}. O card foi para ${etapa}, sem duplicar o contato.`);
+      }
+      void queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      limpar();
       onClose();
-    } catch (error) {
-      console.error('Erro ao criar lead:', error);
-      toast.error('Erro ao criar lead. Tente novamente.');
-    } finally {
-      setIsLoading(false);
-    }
+    },
+    onError: (error: unknown) => {
+      logger.warn('[NewLeadModal] lead não gravado', { error });
+      toast.error(error instanceof NovoLeadErro ? error.message : 'Não deu para criar o lead. Tente de novo.');
+    },
+  });
+
+  const enviar = (e: React.FormEvent) => {
+    e.preventDefault();
+    const encontrados = validarNovoLead({ nome, telefone, etapaId });
+    setErros(encontrados);
+    if (Object.keys(encontrados).length > 0) return;
+    salvar.mutate();
   };
 
-  const handleClose = () => {
-    if (!isLoading) {
-      onClose();
-    }
+  const fechar = () => {
+    if (salvar.isPending) return;
+    limpar();
+    onClose();
   };
+
+  const semEtapas = !carregandoEtapas && etapas.length === 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(aberto) => !aberto && fechar()}>
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Novo Lead
-            </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose} disabled={isLoading}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" aria-hidden="true" />
+            Novo Lead
+          </DialogTitle>
+          <DialogDescription>
+            O lead entra nos Contatos e já aparece na etapa escolhida. Telefone que já é contato da Loja não é
+            duplicado: o card dele vai para a etapa.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Informações Pessoais */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-medium flex items-center gap-2">
-                <User className="h-4 w-4" />
-                Informações Pessoais
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="name">Nome Completo *</Label>
-                  <Input
-                    id="name"
-                    value={leadData.name}
-                    onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Digite o nome completo"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={leadData.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="email@exemplo.com"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="phone">Telefone *</Label>
-                  <Input
-                    id="phone"
-                    value={leadData.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="(11) 99999-9999"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="position">Cargo</Label>
-                  <Input
-                    id="position"
-                    value={leadData.position}
-                    onChange={(e) => handleInputChange('position', e.target.value)}
-                    placeholder="Ex: Gerente de Marketing"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {semEtapas ? (
+          <p className="text-sm text-muted-foreground">
+            Este funil ainda não tem etapas. Peça ao Gestor ou ao Gerente para criar em "Configurar Estágios".
+          </p>
+        ) : (
+          <form id="novo-lead" onSubmit={enviar} className="space-y-4" noValidate>
+            <div className="space-y-1.5">
+              <Label htmlFor="novo-lead-nome">Nome *</Label>
+              <Input
+                id="novo-lead-nome"
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                placeholder="Nome do cliente"
+                disabled={salvar.isPending}
+                aria-invalid={!!erros.nome}
+              />
+              {erros.nome && <p className="text-sm text-destructive">{erros.nome}</p>}
+            </div>
 
-          {/* Informações da Empresa */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-medium flex items-center gap-2">
-                <Building className="h-4 w-4" />
-                Informações da Empresa
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="company">Empresa</Label>
-                  <Input
-                    id="company"
-                    value={leadData.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    placeholder="Nome da empresa"
-                    disabled={isLoading}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="value">Valor Estimado (R$)</Label>
-                  <Input
-                    id="value"
-                    type="number"
-                    value={leadData.value}
-                    onChange={(e) => handleInputChange('value', e.target.value)}
-                    placeholder="0,00"
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-1.5">
+              <Label htmlFor="novo-lead-telefone">Telefone *</Label>
+              <Input
+                id="novo-lead-telefone"
+                type="tel"
+                inputMode="tel"
+                value={telefone}
+                onChange={(e) => setTelefone(e.target.value)}
+                placeholder="(11) 99999-9999"
+                disabled={salvar.isPending}
+                aria-invalid={!!erros.telefone}
+              />
+              {erros.telefone && <p className="text-sm text-destructive">{erros.telefone}</p>}
+            </div>
 
-          {/* Configurações do Lead */}
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <h3 className="font-medium flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Configurações
-              </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="stage">Estágio Inicial *</Label>
-                  <Select value={leadData.stage_id} onValueChange={(value) => handleInputChange('stage_id', value)} disabled={isLoading}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um estágio" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {funnelStages.map((stage) => (
-                        <SelectItem key={stage.id} value={stage.id}>
-                          <div className="flex items-center gap-2">
-                            <div 
-                              className="w-3 h-3 rounded-full" 
-                              style={{ backgroundColor: stage.color }}
-                            />
-                            {stage.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="source">Origem do Lead</Label>
-                  <Select value={leadData.source} onValueChange={(value) => handleInputChange('source', value)} disabled={isLoading}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Como chegou até nós?" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {leadSources.map((source) => (
-                        <SelectItem key={source} value={source}>
-                          {source}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="notes">Observações</Label>
-                <Textarea
-                  id="notes"
-                  value={leadData.notes}
-                  onChange={(e) => handleInputChange('notes', e.target.value)}
-                  placeholder="Adicione observações sobre este lead..."
-                  rows={3}
-                  disabled={isLoading}
-                />
-              </div>
-            </CardContent>
-          </Card>
+            <div className="space-y-1.5">
+              <Label htmlFor="novo-lead-etapa">Etapa *</Label>
+              <Select value={etapaId} onValueChange={setEtapaId} disabled={salvar.isPending || carregandoEtapas}>
+                <SelectTrigger id="novo-lead-etapa" aria-invalid={!!erros.etapa}>
+                  <SelectValue placeholder="Escolha a etapa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {etapas.map((etapa) => (
+                    <SelectItem key={etapa.id} value={etapa.id}>
+                      {etapa.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {erros.etapa && <p className="text-sm text-destructive">{erros.etapa}</p>}
+            </div>
+          </form>
+        )}
 
-          {/* Botões de Ação */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={handleClose} disabled={isLoading}>
-              Cancelar
+        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:gap-2">
+          <Button variant="outline" onClick={fechar} disabled={salvar.isPending}>
+            Cancelar
+          </Button>
+          {!semEtapas && (
+            <Button type="submit" form="novo-lead" disabled={salvar.isPending}>
+              {salvar.isPending ? 'Criando...' : 'Criar lead'}
             </Button>
-            <Button onClick={handleSubmit} disabled={isLoading}>
-              {isLoading ? 'Criando...' : 'Criar Lead'}
-            </Button>
-          </div>
-        </div>
+          )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
+
+export default NewLeadModal;

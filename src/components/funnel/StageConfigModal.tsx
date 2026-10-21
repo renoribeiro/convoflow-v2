@@ -137,8 +137,13 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
       toast({ title: 'Sucesso!', description: 'Estágio excluído com sucesso!' });
       refetch();
     },
-    onError: () => {
-      toast({ title: 'Erro', description: 'Erro ao excluir estágio', variant: 'destructive' });
+    onError: (error: { code?: string } | null) => {
+      // 23503: etapa com lead dentro (contacts.current_stage_id) ou usada numa
+      // sequência de follow-up. O banco recusa de propósito.
+      const description = error?.code === '23503'
+        ? 'Esta etapa tem leads ou é usada numa sequência de follow-up. Mova os cards para outra etapa antes de excluir.'
+        : 'Erro ao excluir estágio';
+      toast({ title: 'Erro', description, variant: 'destructive' });
     }
   });
 

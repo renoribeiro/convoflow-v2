@@ -5,6 +5,9 @@ import { DroppableStage } from './DroppableStage';
 import { DragOverlay } from './DragOverlay';
 import { StageConfigModal } from './StageConfigModal';
 import { EditStageModal } from './EditStageModal';
+import { NewLeadModal } from './NewLeadModal';
+import { useRole } from '@/contexts/TenantContext';
+import { podeConfigurarEtapas } from '@/lib/funnel/permissoes';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
@@ -43,6 +46,10 @@ export const FunnelBoard = () => {
   const [showStageConfig, setShowStageConfig] = useState(false);
   const [editingStage, setEditingStage] = useState<{ id: string; name: string; color: string; order: number } | null>(null);
   const { toast } = useToast();
+  // Atendente: o menu da coluna fica só com "Adicionar Lead" (20261021000003).
+  const podeConfigurar = podeConfigurarEtapas(useRole());
+  // Etapa da coluna em que "Adicionar Lead" foi clicado (abre o Novo Lead).
+  const [novoLeadEtapa, setNovoLeadEtapa] = useState<string | null>(null);
 
   // Buscar estágios do funil
   const { data: stagesData = [], isLoading: stagesLoading } = useSupabaseQuery({
@@ -167,11 +174,7 @@ export const FunnelBoard = () => {
   };
 
   const handleAddLead = (stageId: string) => {
-    // TODO: Implementar modal de adicionar lead
-    toast({
-      title: "Em desenvolvimento",
-      description: "Funcionalidade de adicionar lead será implementada em breve.",
-    });
+    setNovoLeadEtapa(stageId);
   };
 
   const handleEditStage = (stageId: string) => {
@@ -186,12 +189,11 @@ export const FunnelBoard = () => {
     }
   };
 
-  const handleDeleteStage = (stageId: string) => {
-    // TODO: Implementar exclusão de estágio
-    toast({
-      title: "Em desenvolvimento",
-      description: "Funcionalidade de excluir estágio será implementada em breve.",
-    });
+  // Excluir mora em "Configurar Estágios" (lixeira de cada etapa, que já
+  // recusa etapa com lead dentro). O item do menu abre essa janela em vez de
+  // um aviso de "em desenvolvimento".
+  const handleDeleteStage = (_stageId: string) => {
+    setShowStageConfig(true);
   };
 
   const sensors = useSensors(
@@ -355,19 +357,27 @@ export const FunnelBoard = () => {
             stage={stage}
             isDragActive={isDragActive}
             isOver={overStageId === stage.id}
-            onConfigureStage={handleConfigureStage}
             onAddLead={handleAddLead}
-            onEditStage={handleEditStage}
-            onDeleteStage={handleDeleteStage}
+            onConfigureStage={podeConfigurar ? handleConfigureStage : undefined}
+            onEditStage={podeConfigurar ? handleEditStage : undefined}
+            onDeleteStage={podeConfigurar ? handleDeleteStage : undefined}
           />
         ))}
       </div>
       
       <DragOverlay draggedLead={draggedLead} />
       
-      <StageConfigModal 
-        isOpen={showStageConfig} 
-        onClose={() => setShowStageConfig(false)} 
+      {podeConfigurar && (
+        <StageConfigModal
+          isOpen={showStageConfig}
+          onClose={() => setShowStageConfig(false)}
+        />
+      )}
+
+      <NewLeadModal
+        isOpen={!!novoLeadEtapa}
+        etapaInicialId={novoLeadEtapa}
+        onClose={() => setNovoLeadEtapa(null)}
       />
       
       <EditStageModal

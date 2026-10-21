@@ -158,6 +158,8 @@ export const TOURS: Tour[] = [
   {
     id: 'configurar-funil',
     route: '/dashboard/funnel',
+    // O botão "Configurar Estágios" não existe para o atendente (20261021000003).
+    minRole: 'gestor',
     moduleName: 'funnel',
     steps: [
       {

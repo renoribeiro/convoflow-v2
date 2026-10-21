@@ -633,6 +633,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Ajuste as etapas para o seu processo real antes de usar: clique em "Configurar Estágios", crie as etapas na ordem em que acontecem e salve. Etapa genérica não informa nada; "Visita agendada" informa.',
       'As etapas são de cada Loja. Gestor: você monta as da sua Loja. Gerente: escolha a Loja no seletor do topo antes de clicar em "Configurar Estágios" e monte as etapas de qualquer Loja da Conta; com a Conta em foco, as etapas criadas ficam na Conta, não numa Loja.',
       'Arraste o card do lead para a etapa nova conforme a negociação evolui.',
+      'Para cadastrar um lead direto no funil, clique em "Novo Lead" (ou em "Adicionar Lead", no menu da coluna): nome, telefone com DDD e etapa, e "Criar lead". Telefone que já é contato da Loja não é duplicado: o card dele vai para a etapa escolhida.',
       'Para automatizar, use a ação "Alterar Estágio" nas Automações ou o nó "Mover no Funil" no chatbot.',
     ],
     example:
@@ -640,6 +641,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Menos etapas funciona melhor: etapa que nunca recebe card só atrapalha a leitura.',
       'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
+      'Atendente: você vê as etapas, move os cards e cadastra lead. Criar, editar, reordenar e excluir etapa é com o Gestor ou o Gerente, por isso "Configurar Estágios" não aparece para você.',
       'Mudar de etapa pode disparar automação: use o gatilho "Mudança de Estágio" para agendar o follow-up no instante em que o lead avança.',
       'Quem foi vinculado nos dois canais (WhatsApp e Instagram) aparece num card só, o do WhatsApp. Desvinculado, o card do Instagram volta com a etapa que tinha antes.',
       'Se a cobrança da Conta falhar, o sistema continua aberto enquanto o Stripe tenta cobrar de novo. Se todas as tentativas falharem, não é só o Funil que fecha: o sistema inteiro dá lugar à tela "Acesso bloqueado", para todo o time. O que resolve é o pagamento da Conta, em Configurações › Assinatura.',

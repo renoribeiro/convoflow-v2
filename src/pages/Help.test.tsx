@@ -477,9 +477,11 @@ describe('Help — visibilidade por cargo', () => {
 
   // ── tutoriais seguem a mesma declaração de acesso ────────────────────────
 
-  it('atendente vê só os tutoriais que consegue seguir (funil e chatbot)', () => {
+  it('atendente vê só os tutoriais que consegue seguir (chatbot e atendimento)', () => {
     // Desde 2026-09-15: conectar-whatsapp, configurar-equipe e primeira-campanha
     // exigem gestor (whatsapp.configure / store.admin / campaigns.dispatch).
+    // Desde 2026-10-21 (20261021000003) montar-funil também: o atendente só
+    // lê as etapas e move os cards.
     currentRole = 'atendente';
     renderHelp();
     expect(topic('Configurar sua equipe')).toBeNull();
@@ -487,8 +489,9 @@ describe('Help — visibilidade por cargo', () => {
     expect(topic('Conectar seu WhatsApp')).toBeNull();
     expect(topic('Conectar seu Instagram')).toBeNull();
     expect(topic('Disparar sua primeira campanha')).toBeNull();
-    expect(topic('Montar seu funil de vendas')).not.toBeNull();
+    expect(topic('Montar seu funil de vendas')).toBeNull();
     expect(topic('Criar seu primeiro chatbot')).not.toBeNull();
+    expect(topic('Atender conversas no dia a dia')).not.toBeNull();
   });
 
   it('gestor vê o tutorial de equipe (a tela Equipe abre para ele desde 2026-08-18)', () => {
