@@ -1,0 +1,95 @@
+/*
+ * Balão do tour (driver.js) com as cores do tema. Carregado junto com a
+ * biblioteca, só quando um tour começa: quem nunca vê um tour não baixa nada.
+ */
+.driver-popover.convoflow-tour {
+  font-family: inherit;
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px -10px rgb(0 0 0 / 0.35);
+  padding: 16px;
+  min-width: 0;
+  max-width: min(340px, calc(100vw - 32px));
+}
+
+.driver-popover.convoflow-tour .driver-popover-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding-right: 24px;
+}
+
+.driver-popover.convoflow-tour .driver-popover-description {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-progress-text {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-footer-btn {
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-shadow: none;
+  border-radius: 0.5rem;
+  padding: 6px 12px;
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-footer-btn:hover,
+.driver-popover.convoflow-tour .driver-popover-footer-btn:focus-visible {
+  background-color: hsl(var(--muted));
+}
+
+.driver-popover.convoflow-tour .driver-popover-next-btn {
+  background-color: hsl(var(--primary));
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-next-btn:hover,
+.driver-popover.convoflow-tour .driver-popover-next-btn:focus-visible {
+  background-color: hsl(var(--primary) / 0.9);
+}
+
+.driver-popover.convoflow-tour .driver-popover-footer-btn:focus-visible,
+.driver-popover.convoflow-tour .driver-popover-close-btn:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+.driver-popover.convoflow-tour .driver-popover-close-btn {
+  color: hsl(var(--muted-foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-close-btn:hover {
+  color: hsl(var(--foreground));
+}
+
+.driver-popover.convoflow-tour .driver-popover-arrow-side-left {
+  border-left-color: hsl(var(--popover));
+}
+.driver-popover.convoflow-tour .driver-popover-arrow-side-right {
+  border-right-color: hsl(var(--popover));
+}
+.driver-popover.convoflow-tour .driver-popover-arrow-side-top {
+  border-top-color: hsl(var(--popover));
+}
+.driver-popover.convoflow-tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: hsl(var(--popover));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .driver-fade .driver-popover,
+  .driver-fade .driver-overlay {
+    animation: none !important;
+  }
+}

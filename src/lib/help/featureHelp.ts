@@ -423,6 +423,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a primeira parada do dia: mostra se o atendimento está saudável e o que precisa de ação agora. Todos os números obedecem ao período escolhido no topo: trocar de 7 para 30 dias muda cartões e gráficos de uma vez.',
     howToConfigure: [
+      'Chegou agora? No primeiro acesso aparece uma janela de boas vindas e, no topo do Dashboard, a lista "Primeiros passos" com o que falta configurar. Em cada passo, "Fazer agora" abre a tela certa e destaca onde clicar; "Ver passo a passo" abre o tutorial completo na Ajuda. Cada passo é marcado sozinho quando você o conclui, e "Esconder" tira a lista da tela.',
       'Escolha o período no topo (Hoje, 7 dias, 30 dias ou uma faixa personalizada). O resto da tela segue essa escolha.',
       'Comece pelo painel "Precisa de Atenção": é onde estão as conversas e os leads parados.',
       'Clique em um cartão de métrica para ir direto à tela correspondente (Conversas, Contatos, Funil).',
@@ -434,6 +435,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Você abre o dia em "7 dias": o bot responde em 6 segundos, mas a 1ª resposta de uma pessoa está em 2 horas e há 90 conversas esperando alguém, quase todas sem responsável. Distribuir essas conversas passa a ser a primeira tarefa.',
     tips: [
+      'A lista "Primeiros passos" muda com o cargo. Gerente: a Conta inteira (criar a Loja, conectar o WhatsApp e convidar a equipe são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional). Gestor: os mesmos passos, só da sua Loja. Atendente: foto, notificações e a primeira conversa respondida. Superadmin não vê boas vindas nem lista.',
+      'Gerente: WhatsApp, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única; com várias, destaca o seletor do topo para você escolher. O funil da Loja é montado pelo Gestor dela: na lista do Gerente esse passo só tem o tutorial.',
+      'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página.',
       'Em imobiliária, a 1ª resposta de uma pessoa é a métrica que mais move venda: o lead de portal fala com três corretores e fecha com quem responde primeiro. O bot responder rápido não substitui isso.',
       'Os números de atendimento olham conversas iniciadas no período escolhido; só "Esperando uma pessoa agora" é retrato de hoje, seja qual for o período.',
       'A tela se atualiza sozinha a cada 30 segundos. Não precisa recarregar.',

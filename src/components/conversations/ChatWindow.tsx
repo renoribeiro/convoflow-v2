@@ -599,8 +599,9 @@ export const ChatWindow = ({
           title="Nenhuma conversa selecionada"
           description="Selecione uma conversa da lista para começar a conversar"
         />
-        {/* Único ponto de entrada do tutorial do dia a dia fora da Ajuda: o
-            cartão do Dashboard só existe enquanto a Loja não tem instância. */}
+        {/* Entrada do tutorial do dia a dia para quem não é novo: a lista
+            "Primeiros passos" do Dashboard só aparece para quem chegou depois
+            de 2026-10-21 (ou pediu "Ver tutorial de novo" na Ajuda). */}
         <Link
           to={`/dashboard/help#${tutorialKey('atender-conversas')}`}
           className="-mt-8 text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"

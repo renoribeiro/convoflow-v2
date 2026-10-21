@@ -85,7 +85,7 @@ export const NotificationSettings = () => {
   }
 
   return (
-    <Card>
+    <Card data-tour="notificacoes">
       <CardHeader>
         <CardTitle>Preferências de Notificação</CardTitle>
       </CardHeader>

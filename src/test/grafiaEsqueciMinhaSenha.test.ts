@@ -40,14 +40,19 @@ const ERRADAS = [
   ['se', 'nah'],
 ].map(([a, b]) => new RegExp(`\\b${a}${b}`, 'i'));
 
+// Lido UMA vez: com cada padrão relendo o src/ inteiro, a suíte completa em
+// paralelo levava um caso desta lista a passar dos 10 s (medido em 2026-10-21).
+const LINHAS = TODOS.map((f) => {
+  const texto = readFileSync(f, 'utf8');
+  return { f, texto, linhas: texto.split(/\r?\n/) };
+});
+
 function ocorrencias(re: RegExp): string[] {
   const achados: string[] = [];
-  for (const f of TODOS) {
-    readFileSync(f, 'utf8')
-      .split(/\r?\n/)
-      .forEach((linha, i) => {
-        if (re.test(linha)) achados.push(`${relative(SRC, f)}:${i + 1}: ${linha.trim().slice(0, 120)}`);
-      });
+  for (const { f, linhas } of LINHAS) {
+    linhas.forEach((linha, i) => {
+      if (re.test(linha)) achados.push(`${relative(SRC, f)}:${i + 1}: ${linha.trim().slice(0, 120)}`);
+    });
   }
   return achados;
 }
@@ -59,8 +64,8 @@ describe('grafia de "Esqueci minha senha"', () => {
 
   it('toda palavra antes de "minha senha" que começa com "es" é "Esqueci"', () => {
     const errados: string[] = [];
-    for (const f of TODOS) {
-      for (const m of readFileSync(f, 'utf8').matchAll(/\b(es\p{L}*)\s+minha\s+senha/giu)) {
+    for (const { f, texto } of LINHAS) {
+      for (const m of texto.matchAll(/\b(es\p{L}*)\s+minha\s+senha/giu)) {
         if ((m[1] ?? '').toLowerCase() !== 'esqueci') errados.push(`${relative(SRC, f)}: ${m[0]}`);
       }
     }
@@ -69,8 +74,8 @@ describe('grafia de "Esqueci minha senha"', () => {
 
   it('"Esqueci minha ..." é sempre seguido de "senha"', () => {
     const errados: string[] = [];
-    for (const f of TODOS) {
-      for (const m of readFileSync(f, 'utf8').matchAll(/\besqueci\s+minha\s+(\p{L}+)/giu)) {
+    for (const { f, texto } of LINHAS) {
+      for (const m of texto.matchAll(/\besqueci\s+minha\s+(\p{L}+)/giu)) {
         if ((m[1] ?? '').toLowerCase() !== 'senha') errados.push(`${relative(SRC, f)}: ${m[0]}`);
       }
     }

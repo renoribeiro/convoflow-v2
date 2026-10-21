@@ -51,6 +51,7 @@ import {
 import {
   connectionSummary,
   instagramAccountHandle,
+  isWhatsAppConnectedStatus,
   splitByChannel,
   totalCardTexts,
 } from '@/lib/whatsapp/connectionSections';
@@ -306,6 +307,7 @@ export default function WhatsAppNumbers() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return 'bg-green-500';
       case 'connecting':
         return 'bg-yellow-500';
@@ -318,6 +320,7 @@ export default function WhatsAppNumbers() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return <Wifi className="h-4 w-4 text-green-600" />;
       case 'connecting':
         return <RefreshCw className="h-4 w-4 text-yellow-600 animate-spin" />;
@@ -330,6 +333,7 @@ export default function WhatsAppNumbers() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return 'Conectado';
       case 'connecting':
         return 'Conectando';
@@ -601,7 +605,7 @@ export default function WhatsAppNumbers() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
             </Button>
-            <Button onClick={() => setShowCreateModal(true)}>
+            <Button onClick={() => setShowCreateModal(true)} data-tour="whatsapp-nova-instancia">
               <Plus className="h-4 w-4 mr-2" />
               Nova Instância
             </Button>
@@ -741,7 +745,7 @@ export default function WhatsAppNumbers() {
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={instance.status === 'open' ? 'default' : 'secondary'}>
+                    <Badge variant={isWhatsAppConnectedStatus(instance.status) ? 'default' : 'secondary'}>
                       {getStatusText(instance.status)}
                     </Badge>
                     

@@ -105,13 +105,13 @@ const ABAS: AbaConfig[] = [
           </h2>
           <VisibilitySettings />
         </section>
-        <section aria-labelledby="escala-sec-2" className="space-y-2">
+        <section aria-labelledby="escala-sec-2" className="space-y-2" data-tour="distribuicao">
           <h2 id="escala-sec-2" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             2. Como a conversa nova chega
           </h2>
           <RotationSettings />
         </section>
-        <section aria-labelledby="escala-sec-3" className="space-y-2">
+        <section aria-labelledby="escala-sec-3" className="space-y-2" data-tour="horario-funcionamento">
           <h2 id="escala-sec-3" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             3. Se ninguém responde
           </h2>

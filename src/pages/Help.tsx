@@ -21,6 +21,7 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { FeatureHelpBody } from '@/components/shared/FeatureHelpBody';
 import { TutorialBody } from '@/components/shared/TutorialBody';
+import { VerTutorialDeNovoButton } from '@/components/onboarding/VerTutorialDeNovoButton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -156,6 +157,9 @@ const Help = () => {
         title="Ajuda"
         description="Referência completa da plataforma: tutoriais passo-a-passo, o que cada tela faz e exemplos de uso."
         breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Ajuda' }]}
+        // Zera a boas-vindas e a lista "Primeiros passos" da pessoa. Não é
+        // texto de ajuda: é o botão do onboarding, e ele decide se aparece.
+        actions={<VerTutorialDeNovoButton />}
       />
 
       {/* Busca fixa no topo: a lista é longa e, no celular, rolar de volta até

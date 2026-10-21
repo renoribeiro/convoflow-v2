@@ -3,6 +3,7 @@ import {
   connectionSummary,
   instagramAccountHandle,
   isConnected,
+  isWhatsAppConnectedStatus,
   onlyWhatsApp,
   splitByChannel,
   totalCardTexts,
@@ -99,5 +100,23 @@ describe('Instagram desligado (fatia 4b)', () => {
 
   it('is_active não muda nada no WhatsApp (o status manda, como sempre)', () => {
     expect(isConnected({ ...waOpen, is_active: false }, NOW)).toBe(true);
+  });
+});
+
+describe('WAHA conta como conectado', () => {
+  // O waha-webhook grava WORKING como 'connected'; até 2026-10-21 a tela só
+  // aceitava 'open' e um número WAHA funcionando aparecia desconectado.
+  it('open (Evolution/Oficial) e connected (WAHA) são conectados; o resto não', () => {
+    expect(isWhatsAppConnectedStatus('open')).toBe(true);
+    expect(isWhatsAppConnectedStatus('connected')).toBe(true);
+    for (const s of ['close', 'disconnected', 'connecting', 'qrcode', '', null, undefined]) {
+      expect(isWhatsAppConnectedStatus(s)).toBe(false);
+    }
+  });
+
+  it('instância WAHA com status connected entra na conta de conectados', () => {
+    const waha = { id: 'wa-9', provider: 'waha', status: 'connected' };
+    expect(isConnected(waha, NOW)).toBe(true);
+    expect(connectionSummary([waha, waClosed], NOW)).toMatchObject({ connected: 1, disconnected: 1 });
   });
 });

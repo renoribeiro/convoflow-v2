@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { onlyWhatsApp } from '@/lib/whatsapp/connectionSections';
+import { isWhatsAppConnectedStatus, onlyWhatsApp } from '@/lib/whatsapp/connectionSections';
 import { useTenantId } from '@/contexts/TenantContext';
 import { useCampaignMutations, type Campaign, type CampaignCreateInput, type MessageType, type AudienceType } from '@/hooks/useCampaigns';
 import { logger } from '@/lib/logger';
@@ -633,16 +633,16 @@ export const CampaignWizard = ({
           </SelectTrigger>
           <SelectContent>
             {instances
-              .filter((i) => i.status === 'open')
+              .filter((i) => isWhatsAppConnectedStatus(i.status))
               .map((i) => (
                 <SelectItem key={i.id} value={i.id}>
                   {i.name}
                 </SelectItem>
               ))}
-            {instances.filter((i) => i.status !== 'open').length > 0 && (
+            {instances.filter((i) => !isWhatsAppConnectedStatus(i.status)).length > 0 && (
               <>
                 {instances
-                  .filter((i) => i.status !== 'open')
+                  .filter((i) => !isWhatsAppConnectedStatus(i.status))
                   .map((i) => (
                     <SelectItem key={i.id} value={i.id} disabled>
                       {i.name} (desconectada)

@@ -143,7 +143,7 @@ export const QuickRepliesSettings = () => {
               atendente insere pelo botão de raio ou digitando &quot;/&quot; no campo vazio.
             </CardDescription>
           </div>
-          <Button onClick={abrirNova}>
+          <Button onClick={abrirNova} data-tour="respostas-rapidas-nova">
             <Plus className="w-4 h-4 mr-2" />
             Nova resposta
           </Button>

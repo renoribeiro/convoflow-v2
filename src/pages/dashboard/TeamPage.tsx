@@ -167,6 +167,7 @@ export default function TeamPage() {
                             variant="outline"
                             disabled={semVaga}
                             onClick={() => setNovaLojaOpen(true)}
+                            data-tour="equipe-nova-loja"
                           >
                             <Store className="h-4 w-4 mr-2" />
                             Nova Loja
@@ -182,7 +183,7 @@ export default function TeamPage() {
                   </TooltipProvider>
                 </>
               )}
-              <Button size="sm" onClick={() => setInviteOpen(true)}>
+              <Button size="sm" onClick={() => setInviteOpen(true)} data-tour="equipe-convidar">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Convidar
               </Button>

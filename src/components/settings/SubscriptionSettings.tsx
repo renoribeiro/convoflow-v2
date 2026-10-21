@@ -352,14 +352,17 @@ export const SubscriptionSettings = () => {
 
   const quadroDadosFiscais =
     contaFiscalId && (isGerente || isSuperAdmin) ? (
-      <DadosFiscaisCard
-        contaId={contaFiscalId}
-        podeEditar={isGerente}
-        // Conta com acesso manual não paga: os dados não são cobrados dela
-        // (o selo some). Se ela decidir assinar, o checkout exige do mesmo jeito.
-        obrigatorio={!temAssinatura && !(conta as { manual_access_granted?: boolean | null }).manual_access_granted}
-        emailPadrao={user?.email ?? ''}
-      />
+      // Embrulho só para o tour "dados-fiscais" dos Primeiros passos achar o quadro.
+      <div data-tour="dados-fiscais">
+        <DadosFiscaisCard
+          contaId={contaFiscalId}
+          podeEditar={isGerente}
+          // Conta com acesso manual não paga: os dados não são cobrados dela
+          // (o selo some). Se ela decidir assinar, o checkout exige do mesmo jeito.
+          obrigatorio={!temAssinatura && !(conta as { manual_access_granted?: boolean | null }).manual_access_granted}
+          emailPadrao={user?.email ?? ''}
+        />
+      </div>
     ) : null;
 
   return (

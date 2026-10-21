@@ -38,6 +38,7 @@ export default function Funnel() {
               variant="outline" 
               size="sm"
               onClick={() => setShowStageConfig(true)}
+              data-tour="funil-configurar-estagios"
             >
               <Settings className="w-4 h-4 mr-2" />
               Configurar Estágios

@@ -29,7 +29,7 @@ describe('memberDisplayName', () => {
 
 describe('memberFirstName', () => {
   it('devolve só a primeira palavra do primeiro nome', () => {
-    expect(memberFirstName({ first_name: 'Ana Paula', last_name: 'Lima' })).toBe('Ana');
+    expect(memberFirstName({ first_name: 'Fulana Exemplo', last_name: 'Teste' })).toBe('Fulana');
     expect(memberFirstName({ first_name: 'João', last_name: null })).toBe('João');
   });
 

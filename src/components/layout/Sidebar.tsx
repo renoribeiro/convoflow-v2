@@ -44,6 +44,8 @@ interface NavItem {
   href: string;
   icon: React.ElementType;
   moduleName: string | null;
+  /** Marca para os tours do onboarding (src/lib/onboarding/tours.ts). */
+  dataTour?: string;
 }
 
 interface NavGroup {
@@ -82,13 +84,23 @@ const configItems: NavItem[] = [
   { name: 'Instâncias e APIs', href: '/dashboard/whatsapp-numbers', icon: Smartphone, moduleName: 'whatsapp-numbers' },
   { name: 'Configurações', href: '/dashboard/settings', icon: Settings, moduleName: null },
   // moduleName null => visível para todo cargo (ver isItemVisible).
-  { name: 'Ajuda', href: '/dashboard/help', icon: HelpCircle, moduleName: null },
+  { name: 'Ajuda', href: '/dashboard/help', icon: HelpCircle, moduleName: null, dataTour: 'menu-ajuda' },
 ];
 
 const teamItems: NavItem[] = [
   { name: 'Equipe', href: '/dashboard/team', icon: UsersRound, moduleName: null },
-  { name: 'Comparar Lojas', href: '/dashboard/store-comparison', icon: BarChart3, moduleName: null },
 ];
+
+/**
+ * Só do Gerente: a rota é `RoleGuard role="gerente"` (App.tsx). Até 2026-10-21
+ * o item aparecia também para o Gestor, que clicava e voltava ao Dashboard.
+ */
+const storeComparisonItem: NavItem = {
+  name: 'Comparar Lojas',
+  href: '/dashboard/store-comparison',
+  icon: BarChart3,
+  moduleName: null,
+};
 
 const adminItems: NavItem[] = [
   { name: 'Administração', href: '/dashboard/admin', icon: Shield, moduleName: null },
@@ -120,6 +132,7 @@ const NavItemLink = ({
       to={item.href}
       end={item.href === '/dashboard'}
       onClick={onNavigate}
+      data-tour={item.dataTour}
       className={cn(
         'relative flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 group',
         isActive
@@ -230,6 +243,7 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
   // administra a equipe da própria Loja. O superadmin não precisa dela — usa a
   // Administração (visão global) + o seletor de Conta.
   const showTeam = role === 'gerente' || role === 'gestor';
+  const visibleTeam = role === 'gerente' ? [...teamItems, storeComparisonItem] : teamItems;
   const showAdmin = isSuperAdmin;
 
   const renderNav = (mode: SidebarMode, onNavigate?: () => void) => (
@@ -267,7 +281,7 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
         <>
           <SectionLabel label="Equipe" mode={mode} />
           <div className="space-y-0.5">
-            {teamItems.map((item) => (
+            {visibleTeam.map((item) => (
               <NavItemLink key={item.href} item={item} mode={mode} onNavigate={onNavigate} />
             ))}
           </div>

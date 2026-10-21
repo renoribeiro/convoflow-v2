@@ -94,7 +94,7 @@ const Chatbots: React.FC = () => {
         description="Crie fluxos visuais de atendimento automático para o WhatsApp"
         breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Chatbots' }]}
         actions={
-          <Button onClick={() => setShowNewModal(true)}>
+          <Button onClick={() => setShowNewModal(true)} data-tour="chatbots-novo">
             <Plus className="h-4 w-4 mr-2" />
             Novo Chatbot
           </Button>
