@@ -1,8 +1,8 @@
 /**
  * Estado vazio da janela de chat (nenhuma conversa selecionada): o único ponto
  * de entrada, fora da página de Ajuda, do tutorial "Atender conversas no dia
- * a dia". O cartão do Dashboard só aparece enquanto a Loja não tem instância,
- * então uma Loja em operação nunca o vê — este link é o que sobra.
+ * a dia". A lista "Primeiros passos" do Dashboard só aparece para quem é
+ * novo, então quem já atende nunca a vê: este link é o que sobra.
  *
  * Mocks copiados de ChatWindow.focus.test.tsx: o ChatWindow decide o estado
  * vazio antes de qualquer hook de dados, mas os hooks são chamados mesmo assim

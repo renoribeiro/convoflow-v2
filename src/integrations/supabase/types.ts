@@ -5159,6 +5159,24 @@ export type Database = {
           },
         ]
       }
+      user_onboarding: {
+        Row: {
+          state: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          state?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          state?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_configuration_attempts: {
         Row: {
           attempt_number: number
@@ -6773,6 +6791,7 @@ export type Database = {
         }[]
       }
       notify_overdue_followups: { Args: never; Returns: undefined }
+      onboarding_checklist: { Args: { p_tenant_id: string }; Returns: Json }
       process_chatbot_variables: {
         Args: {
           p_contact_id: string

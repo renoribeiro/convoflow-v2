@@ -195,6 +195,13 @@ function row(table: string, i: number, role: MockRole): Record<string, unknown> 
     Object.assign(r, { module_name: mod, display_name: mod, route_path: `/dashboard/${mod}`, is_enabled: true, sort_order: i });
   }
   if (table === 'usage_limits') Object.assign(r, { role: (['gerente', 'gestor', 'atendente'] as const)[i % 3] });
+  // Onboarding (20261021000001): por padrão a pessoa já viu a boas-vindas e é
+  // veterana — senão a janela cobriria as telas que os outros specs medem. A
+  // lista "Primeiros passos" também some por padrão (a rpc devolve []).
+  // e2e/onboarding.spec.ts troca as duas coisas por "pessoa nova".
+  if (table === 'user_onboarding') {
+    Object.assign(r, { user_id: IDS.user, state: { v: 1, boas_vindas_em: iso(30), veterano: true } });
+  }
   return r;
 }
 

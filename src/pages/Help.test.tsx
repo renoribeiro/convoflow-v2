@@ -41,6 +41,13 @@ vi.mock('@/hooks/useModules', () => ({
   }),
 }));
 
+// O botão "Ver tutorial de novo" fala com o banco (user_onboarding) e tem o
+// próprio teste (VerTutorialDeNovoButton.test.tsx). Aqui só importa que a
+// página o monte no topo.
+vi.mock('@/components/onboarding/VerTutorialDeNovoButton', () => ({
+  VerTutorialDeNovoButton: () => <button type="button">Ver tutorial de novo</button>,
+}));
+
 // ── helpers ──────────────────────────────────────────────────────────────────
 
 import Help from './Help';
@@ -575,5 +582,16 @@ describe('FeatureHelpBody — mesma saída no painel e na página', () => {
 
     const link = screen.getByRole('link', { name: 'Ver toda a documentação' });
     expect(link.getAttribute('href')).toBe(`/dashboard/help#${KEY}`);
+  });
+});
+
+describe('Ver tutorial de novo', () => {
+  it('a página monta o botão no topo, junto do título', () => {
+    currentRole = 'atendente';
+    renderHelp();
+    const botao = screen.getByRole('button', { name: 'Ver tutorial de novo' });
+    const busca = screen.getByRole('searchbox', { name: 'Buscar na ajuda' });
+    // Antes da busca e da lista: é a primeira ação da página.
+    expect(botao.compareDocumentPosition(busca) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });

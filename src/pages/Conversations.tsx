@@ -494,20 +494,23 @@ export default function Conversations() {
           !isMobile && filters.tagIds.length === 0 && 'pt-4',
         )}
       />
-      <QuickFilterPills
-        value={effectiveQuickFilter}
-        onChange={selectQuickFilter}
-        counts={countsComTotais}
-        slaEnabled={slaEnabled}
-        canSeeIneligible={canSeeIneligible}
-        className={cn(
-          'flex-shrink-0 pb-3',
-          isMobile ? 'px-0' : 'px-4',
-          // Com selos (etiqueta ou responsável) em cima, o respiro já veio deles.
-          !isMobile && !temSelosAcimaDasPilulas && 'pt-4',
-        )}
-      />
-      <div className="min-h-0 flex-1">
+      {/* Embrulho só para o tour "conversas" do onboarding achar as pílulas. */}
+      <div className="flex-shrink-0" data-tour="conversas-filtros-rapidos">
+        <QuickFilterPills
+          value={effectiveQuickFilter}
+          onChange={selectQuickFilter}
+          counts={countsComTotais}
+          slaEnabled={slaEnabled}
+          canSeeIneligible={canSeeIneligible}
+          className={cn(
+            'flex-shrink-0 pb-3',
+            isMobile ? 'px-0' : 'px-4',
+            // Com selos (etiqueta ou responsável) em cima, o respiro já veio deles.
+            !isMobile && !temSelosAcimaDasPilulas && 'pt-4',
+          )}
+        />
+      </div>
+      <div className="min-h-0 flex-1" data-tour="conversas-lista">
         <ConversationsList
           searchQuery={searchQuery}
           selectedId={selectedConversation}
@@ -593,6 +596,7 @@ export default function Conversations() {
                 className="px-2 lg:px-3 flex-shrink-0"
                 onClick={() => setShowFilters(true)}
                 aria-label="Filtros"
+                data-tour="conversas-filtros"
               >
                 <Filter className="w-4 h-4 lg:mr-2" />
                 <span className="hidden lg:inline">Filtros</span>
@@ -651,7 +655,7 @@ export default function Conversations() {
         <div className="flex flex-1 overflow-hidden min-h-0">
           <div className="w-80 flex-shrink-0 h-full border-r border-border">{list}</div>
 
-          <div className="flex-1 h-full overflow-hidden">
+          <div className="flex-1 h-full overflow-hidden" data-tour="conversas-janela">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={selectedConversation ?? 'empty'}

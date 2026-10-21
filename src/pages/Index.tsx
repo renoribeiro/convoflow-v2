@@ -9,7 +9,8 @@ import {
 import { cn } from '@/lib/utils';
 
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { OnboardingTutorialsCard } from '@/components/dashboard/OnboardingTutorialsCard';
+import { PrimeirosPassosCard } from '@/components/onboarding/PrimeirosPassosCard';
+import { WelcomeDialog } from '@/components/onboarding/WelcomeDialog';
 import { EnhancedMetricCard } from '@/components/dashboard/EnhancedMetricCard';
 import { AttentionPanel } from '@/components/dashboard/AttentionPanel';
 import { AttendanceMetrics } from '@/components/dashboard/AttendanceMetrics';
@@ -75,9 +76,11 @@ const Index = () => {
     <div className="space-y-6">
       <DashboardHeader period={period} />
 
-      {/* Seção 1.5 — Convite aos tutoriais, só enquanto a Conta está no zero.
-          Único ponto de descoberta dos tutoriais no produto. */}
-      <OnboardingTutorialsCard />
+      {/* Seção 1.5 — Onboarding: a lista "Primeiros passos" (por cargo, com o
+          feito vindo do dado real) e a boas-vindas, que aparece uma vez. É o
+          ponto de entrada do onboarding: nada abre sozinho em outra tela. */}
+      <PrimeirosPassosCard />
+      <WelcomeDialog />
 
       {/* Seção 2 — KPI cards com sparkline + variação. O "Tempo Médio de
           Resposta" saiu daqui: misturava bot e pessoa. Virou a seção

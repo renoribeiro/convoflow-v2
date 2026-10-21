@@ -28,6 +28,14 @@ vi.mock('@/contexts/TenantContext', () => ({
     updateTenantSettings: vi.fn(),
   }),
   useTenantId: () => 't1',
+  // Onboarding (lista "Primeiros passos" e boas-vindas) lê o cargo.
+  useRole: () => 'gestor',
+}));
+
+// O filtro de acesso do onboarding (useHelpVisibility) lê os módulos; o hook
+// real pede o AuthProvider, que este teste não monta.
+vi.mock('@/hooks/useModules', () => ({
+  useModules: () => ({ isModuleVisible: () => true, isLoading: false, visibleModules: [] }),
 }));
 
 // NOTA: o evolutionStore real é usado de propósito (sem mock) — assim este teste

@@ -202,7 +202,15 @@ const TEMPO_LIMITE = 30_000;
 // 6,2 a 6,7 s sozinha — igual com a ajuda de antes e de depois do item 7 —,
 // e acima de 30 s nas três tentativas com a suíte inteira em paralelo, duas
 // vezes seguidas, no ensaio da cópia pública. Lentidão, não travamento.
-const TEMPO_LIMITE_CLIQUES: Record<string, number> = { Ajuda: 60_000 };
+//
+// Início (Dashboard) é a PRIMEIRA tela da bateria: o teste de renderizar paga
+// a importação de toda a árvore do dashboard, a frio. Medido em 2026-10-21:
+// 3,4 s (renderizar) e 0,7 s (cliques) sozinha; com a suíte inteira em
+// paralelo, 31 s na main ANTES do onboarding (já estourava os 30 s) e 34 s /
+// 30 s depois dele (a lista "Primeiros passos" e a boas-vindas entraram na
+// mesma árvore). Lentidão, não travamento.
+const TEMPO_LIMITE_CLIQUES: Record<string, number> = { Ajuda: 60_000, 'Início': 60_000 };
+const TEMPO_LIMITE_RENDER: Record<string, number> = { 'Início': 60_000 };
 
 // ------------------------------------------------------------------ utilidade
 const Moldura = ({ children }: { children: React.ReactNode }) => {
@@ -392,7 +400,7 @@ describe('telas do dashboard: renderizam e aguentam clique', () => {
         erro = e;
       }
       expect(erro, `${nome} quebrou ao renderizar`).toBeNull();
-    }, TEMPO_LIMITE);
+    }, TEMPO_LIMITE_RENDER[nome] ?? TEMPO_LIMITE);
 
     it(`${nome}: nenhum botão explode ao ser clicado`, async () => {
       const { default: Tela } = await carregar();

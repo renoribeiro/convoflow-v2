@@ -35,7 +35,18 @@ export function onlyWhatsApp<T extends { provider?: string | null }>(rows: reado
 }
 
 /**
- * Conectado = WhatsApp com status 'open' (como sempre) ou Instagram LIGADO
+ * Status de WhatsApp que quer dizer "conectado". 'open' é o da Evolution e da
+ * API Oficial; 'connected' é o do WAHA (o waha-webhook grava WORKING assim).
+ * Até 2026-10-21 as telas só aceitavam 'open' e um número WAHA funcionando
+ * aparecia como "Desconectado". A função onboarding_checklist (SQL) usa a
+ * mesma dupla: mudou aqui, muda lá.
+ */
+export function isWhatsAppConnectedStatus(status: string | null | undefined): boolean {
+  return status === 'open' || status === 'connected';
+}
+
+/**
+ * Conectado = WhatsApp com status de conectado (ver acima) ou Instagram LIGADO
  * (fatia 4b: desligada não recebe nada) com acesso que atende (válido,
  * vencendo, ou sem validade legível).
  */
@@ -44,7 +55,7 @@ export function isConnected(row: ConnectionRow, now: Date): boolean {
     if (row.is_active === false) return false;
     return instagramConnectionIsUsable(instagramConnectionView(row.connection_config, now));
   }
-  return row.status === 'open';
+  return isWhatsAppConnectedStatus(row.status);
 }
 
 export interface ConnectionSummary {

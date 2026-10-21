@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { isWhatsAppConnectedStatus } from '@/lib/whatsapp/connectionSections';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -46,6 +47,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance }: ViewInstance
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return 'bg-green-500';
       case 'connecting':
         return 'bg-yellow-500';
@@ -58,6 +60,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance }: ViewInstance
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return <Wifi className="h-4 w-4 text-green-600" />;
       case 'connecting':
         return <RefreshCw className="h-4 w-4 text-yellow-600 animate-spin" />;
@@ -70,6 +73,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance }: ViewInstance
   const getStatusText = (status: string) => {
     switch (status) {
       case 'open':
+      case 'connected':
         return 'Conectado';
       case 'connecting':
         return 'Conectando';
@@ -105,7 +109,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance }: ViewInstance
                   {instance.name}
                 </span>
                 <div className="flex items-center gap-2">
-                  <Badge variant={instance.status === 'open' ? 'default' : 'secondary'}>
+                  <Badge variant={isWhatsAppConnectedStatus(instance.status) ? 'default' : 'secondary'}>
                     {getStatusText(instance.status)}
                   </Badge>
                   <Badge variant={instance.is_active ? 'default' : 'secondary'}>

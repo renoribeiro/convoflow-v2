@@ -728,7 +728,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
 
 /** Tutorial por id, ou null. */
 /**
- * Os tutoriais que a Ajuda e o cartão do Dashboard mostram.
+ * Os tutoriais que a Ajuda mostra (e que a lista "Primeiros passos" do
+ * Dashboard abre em "Ver passo a passo").
  *
  * O do cadastro pelo site fica de fora enquanto a chave PUBLIC_SIGNUP_ENABLED
  * está desligada: ensinar um caminho que não está no ar é pior que não ensinar.

@@ -156,7 +156,7 @@ export function ProfileSettings() {
               onChange={handleAvatarChange}
               className="hidden"
             />
-            <Button variant="outline" size="sm" onClick={handleAvatarClick}>
+            <Button variant="outline" size="sm" onClick={handleAvatarClick} data-tour="perfil-foto">
               <Camera className="h-4 w-4 mr-2" />
               Alterar Foto
             </Button>

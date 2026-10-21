@@ -9,6 +9,7 @@ import { PaywallScreen } from '@/components/auth/PaywallScreen';
 import { LojaOnlyNotice } from '@/components/auth/LojaOnlyNotice';
 import { useRole } from '@/contexts/TenantContext';
 import { MaintenanceBanner } from '@/components/maintenance/MaintenanceBanner';
+import { TourHost } from '@/components/onboarding/TourHost';
 
 // Telas operacionais (dados de cliente) que o superadmin NÃO acessa — ele só
 // vê estatísticas (Dashboard/Rastreamento/Relatórios) e gerencia (Administração).
@@ -94,6 +95,10 @@ export const DashboardLayout = () => {
           </PageErrorBoundary>
         </main>
       </div>
+
+      {/* Tours do onboarding. Aqui, depois do bloqueio de pagamento: com a
+          Conta bloqueada o return acima já entregou a PaywallScreen. */}
+      <TourHost />
     </div>
   );
 };

@@ -47,7 +47,11 @@ export const StoreSwitcher = () => {
     <Select value={current} onValueChange={handleChange}>
       {/* Encolhe até caber (o nome trunca) em vez de ter largura fixa: é o
           item que cede quando a Navbar fica apertada. */}
-      <SelectTrigger className="min-w-0 flex-1 max-w-[220px] gap-1.5 px-2 sm:gap-2 sm:px-3" aria-label="Selecionar loja">
+      <SelectTrigger
+        className="min-w-0 flex-1 max-w-[220px] gap-1.5 px-2 sm:gap-2 sm:px-3"
+        aria-label="Selecionar loja"
+        data-tour="seletor-loja"
+      >
         <Store className="h-4 w-4 shrink-0 text-muted-foreground" />
         <SelectValue placeholder="Selecionar loja" />
       </SelectTrigger>
