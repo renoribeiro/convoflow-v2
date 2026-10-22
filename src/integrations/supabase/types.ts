@@ -5598,7 +5598,11 @@ export type Database = {
           http_status: number | null
           id: string
           new_hash: string | null
+          new_text: string | null
           old_hash: string | null
+          old_text: string | null
+          page_updated: string | null
+          summary: string | null
         }
         Insert: {
           detected_at?: string
@@ -5607,7 +5611,11 @@ export type Database = {
           http_status?: number | null
           id?: string
           new_hash?: string | null
+          new_text?: string | null
           old_hash?: string | null
+          old_text?: string | null
+          page_updated?: string | null
+          summary?: string | null
         }
         Update: {
           detected_at?: string
@@ -5616,7 +5624,11 @@ export type Database = {
           http_status?: number | null
           id?: string
           new_hash?: string | null
+          new_text?: string | null
           old_hash?: string | null
+          old_text?: string | null
+          page_updated?: string | null
+          summary?: string | null
         }
         Relationships: [
           {
@@ -5630,6 +5642,7 @@ export type Database = {
       }
       whatsapp_policy_documents: {
         Row: {
+          clean_text: string | null
           created_at: string
           is_active: boolean
           key: string
@@ -5639,10 +5652,14 @@ export type Database = {
           last_error: string | null
           last_hash: string | null
           last_status_code: number | null
+          notes: string | null
+          page_updated: string | null
+          resolved_url: string | null
           updated_at: string
           url: string
         }
         Insert: {
+          clean_text?: string | null
           created_at?: string
           is_active?: boolean
           key: string
@@ -5652,10 +5669,14 @@ export type Database = {
           last_error?: string | null
           last_hash?: string | null
           last_status_code?: number | null
+          notes?: string | null
+          page_updated?: string | null
+          resolved_url?: string | null
           updated_at?: string
           url: string
         }
         Update: {
+          clean_text?: string | null
           created_at?: string
           is_active?: boolean
           key?: string
@@ -5665,6 +5686,9 @@ export type Database = {
           last_error?: string | null
           last_hash?: string | null
           last_status_code?: number | null
+          notes?: string | null
+          page_updated?: string | null
+          resolved_url?: string | null
           updated_at?: string
           url?: string
         }

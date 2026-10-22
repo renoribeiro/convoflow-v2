@@ -690,8 +690,12 @@ serve(async (req) => {
         // conversation shows it came from a campaign. Non-fatal: never affect the send result.
         // supabase-js does not throw on DB errors — it returns { error } — so check it explicitly.
         if (exec.contact_id) {
+          // Áudio não leva legenda no WhatsApp (o provider não manda): a
+          // conversa não pode mostrar um texto que o cliente nunca recebeu.
           const msgContent = campaign.message_type === 'text'
             ? finalText
+            : campaign.message_type === 'audio'
+            ? ''
             : (finalText.trim() || finalCaption)
           const { error: mirrorErr } = await supabase.from('messages').insert({
             contact_id: exec.contact_id,

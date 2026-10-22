@@ -225,10 +225,27 @@ export interface SendVideoPayload {
   quoted?: any;
 }
 
+/**
+ * Mensagem de voz: POST /message/sendWhatsAppAudio. Com `encoding` (padrão do
+ * Evolution) ele converte qualquer entrada para OGG/Opus mono com ffmpeg e
+ * manda como ptt. Esta rota NÃO aceita citação (`quoted`): o Evolution ignora.
+ */
 export interface SendAudioPayload {
   number: string;
   audio: string;
   delay?: number;
+  encoding?: boolean;
+}
+
+/** Áudio como ARQUIVO (não voz): POST /message/sendMedia com mediatype 'audio'. */
+export interface SendAudioFilePayload {
+  number: string;
+  mediatype: 'audio';
+  media: string;
+  mimetype?: string;
+  fileName?: string;
+  delay?: number;
+  quoted?: any;
 }
 
 export interface SendDocumentPayload {
@@ -238,6 +255,7 @@ export interface SendDocumentPayload {
   fileName: string;
   caption?: string;
   delay?: number;
+  quoted?: any;
 }
 
 export interface SendStickerPayload {

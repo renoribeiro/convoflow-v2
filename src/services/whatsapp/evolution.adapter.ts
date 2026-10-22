@@ -13,6 +13,15 @@ import {
 } from './types';
 
 /**
+ * Citação no Evolution v2: basta a chave. Ele procura a mensagem no banco dele
+ * pelo `key.id` (whatsapp.baileys.service.ts, `getMessage`). O id é o do
+ * WhatsApp (o que gravamos em `evolution_message_id`), nunca o nosso.
+ */
+function quotedPorId(id: string | undefined): { key: { id: string } } | undefined {
+  return id ? { key: { id } } : undefined;
+}
+
+/**
  * Adapter que envelopa EvolutionApiService na interface comum.
  * Endpoints: ver `.agent/skills/evolution-v2/SKILL.md`.
  */
@@ -70,10 +79,13 @@ export class EvolutionAdapter implements IWhatsAppProvider {
     }
   }
 
-  async sendText(toPhone: string, content: string, _options?: SendTextOptions): Promise<SendResult> {
+  async sendText(toPhone: string, content: string, options?: SendTextOptions): Promise<SendResult> {
     this.requireReady();
     try {
-      const res = await this.service.sendMessage(this.instance.instanceKey, toPhone, content);
+      const res = await this.service.sendMessage(this.instance.instanceKey, toPhone, content, {
+        quoted: quotedPorId(options?.quotedMessageId),
+        linkPreview: options?.linkPreview,
+      });
       const id = (res as any)?.key?.id ?? (res as any)?.messageId;
       return { providerMessageId: id, status: 'sent' };
     } catch (e) {
@@ -87,21 +99,31 @@ export class EvolutionAdapter implements IWhatsAppProvider {
     try {
       let res: any;
       const ik = this.instance.instanceKey;
-      if (payload.mediaType === 'audio') {
-        res = await this.service.sendAudioMessage(ik, toPhone, payload.mediaUrl);
+      const quoted = quotedPorId(payload.quotedMessageId);
+      if (payload.mediaType === 'audio' && payload.ptt) {
+        // Mensagem de voz. O Evolution converte para OGG/Opus mono (encoding)
+        // e manda como ptt. Esta rota não aceita citação nem legenda.
+        res = await this.service.sendAudioMessage(ik, toPhone, payload.mediaUrl, { encoding: true });
+      } else if (payload.mediaType === 'audio') {
+        // Arquivo de áudio anexado: vai como arquivo, sem virar voz.
+        res = await this.service.sendAudioFileMessage(ik, toPhone, payload.mediaUrl, {
+          mimetype: payload.mimeType,
+          fileName: payload.fileName,
+          quoted,
+        });
       } else if (payload.mediaType === 'sticker') {
         res = await this.service.sendStickerMessage(ik, toPhone, payload.mediaUrl);
       } else if (payload.mediaType === 'image') {
-        res = await this.service.sendImageMessage(ik, toPhone, payload.mediaUrl, payload.caption);
+        res = await this.service.sendImageMessage(ik, toPhone, payload.mediaUrl, payload.caption, { quoted });
       } else if (payload.mediaType === 'video') {
-        res = await this.service.sendVideoMessage(ik, toPhone, payload.mediaUrl, payload.caption);
+        res = await this.service.sendVideoMessage(ik, toPhone, payload.mediaUrl, payload.caption, { quoted });
       } else {
         res = await this.service.sendDocumentMessage(
           ik,
           toPhone,
           payload.mediaUrl,
           payload.fileName ?? 'arquivo',
-          { caption: payload.caption } as any,
+          { caption: payload.caption, quoted },
         );
       }
       const id = res?.key?.id ?? res?.messageId;

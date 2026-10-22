@@ -4,6 +4,7 @@ import { createLogger } from '../_shared/logger.ts';
 import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { camposDaFalhaMeta } from '../_shared/meta-error-fields.ts';
+import { montarAudioMeta } from './audio.ts';
 
 /**
  * whatsapp-send-message
@@ -213,12 +214,15 @@ Deno.serve(async (req: Request) => {
       metaBody.video = { link: body.media_url, ...(body.caption ? { caption: body.caption } : {}) };
       break;
 
-    case 'audio':
-      if (!body.media_url) return jsonResponse({ ok: false, error: 'media_url obrigatório' }, 400);
-      // Meta Cloud API trata todo audio como voice note no celular.
+    case 'audio': {
+      // ptt + OGG/Opus → `voice: true` (mensagem de voz). Sem legenda nem
+      // nome de arquivo: o objeto audio da Meta não tem esses campos.
+      const audio = montarAudioMeta(body);
+      if (!audio.ok) return jsonResponse({ ok: false, error: audio.error }, 400);
       metaBody.type = 'audio';
-      metaBody.audio = { link: body.media_url };
+      metaBody.audio = audio.audio;
       break;
+    }
 
     case 'document':
       if (!body.media_url) return jsonResponse({ ok: false, error: 'media_url obrigatório' }, 400);

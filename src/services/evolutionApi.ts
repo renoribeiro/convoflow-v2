@@ -12,6 +12,7 @@ import type {
   SendImagePayload,
   SendVideoPayload,
   SendAudioPayload,
+  SendAudioFilePayload,
   SendDocumentPayload,
   SendStickerPayload,
   SendLocationPayload,
@@ -510,10 +511,38 @@ export class EvolutionApiService {
     const payload: SendAudioPayload = {
       number: remoteJid,
       audio: audioUrl,
-      delay: options?.delay || 0
+      delay: options?.delay || 0,
+      // Evolution converte para OGG/Opus mono (ffmpeg) e manda como voz.
+      encoding: options?.encoding ?? true,
     };
 
     return this.makeRequest(`/message/sendWhatsAppAudio/${instanceName}`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
+  /**
+   * Send an audio as a FILE (not a voice note) via Evolution API V2.
+   * Uses POST /message/sendMedia/{instance} with mediatype: 'audio' (no ffmpeg, no ptt).
+   */
+  async sendAudioFileMessage(
+    instanceName: string,
+    remoteJid: string,
+    audioUrl: string,
+    options?: { mimetype?: string; fileName?: string; delay?: number; quoted?: any },
+  ): Promise<any> {
+    const payload: SendAudioFilePayload = {
+      number: remoteJid,
+      mediatype: 'audio',
+      media: audioUrl,
+      mimetype: options?.mimetype,
+      fileName: options?.fileName,
+      delay: options?.delay || 0,
+      quoted: options?.quoted,
+    };
+
+    return this.makeRequest(`/message/sendMedia/${instanceName}`, {
       method: 'POST',
       body: JSON.stringify(payload),
     });
@@ -536,7 +565,8 @@ export class EvolutionApiService {
       media: documentUrl,
       fileName,
       caption: options?.caption,
-      delay: options?.delay || 0
+      delay: options?.delay || 0,
+      quoted: options?.quoted
     };
 
     return this.makeRequest(`/message/sendMedia/${instanceName}`, {

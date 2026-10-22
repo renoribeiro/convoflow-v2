@@ -1,49 +1,61 @@
 /**
  * policy-watch
  *
- * Vigia das políticas de uso aceitável do WhatsApp/Meta. Baixa as URLs oficiais
- * registradas em `whatsapp_policy_documents`, calcula um hash do conteúdo e,
- * quando algo muda, grava em `whatsapp_policy_change_log` e notifica os
- * super_admins (tabela `notifications`) para revisar
- * `.agent/skills/whatsapp-policies/SKILL.md`.
+ * Vigia das políticas de uso aceitável do WhatsApp/Meta. Toda segunda, 09:00
+ * UTC (cron `whatsapp-policy-watch-weekly` → public.cron_worker_kick), lê o
+ * TEXTO de cada página ativa em `whatsapp_policy_documents` e compara com o
+ * texto guardado da semana anterior:
+ *   • texto igual            → nada acontece;
+ *   • texto mudou            → histórico em `whatsapp_policy_change_log`, aviso
+ *                              no sino dos superadmins com o resumo do que mudou
+ *                              e e-mail para POLICY_WATCH_EMAIL_TO;
+ *   • texto vazio ou encolheu → aviso "Monitor de política com problema" no
+ *                              sino, e o texto guardado NÃO é trocado.
+ * Primeira leitura de uma página (clean_text vazio) só guarda o texto.
  *
- * verify_jwt = false — chamado pelo pg_cron com anon bearer; autentica
- * internamente via SUPABASE_SERVICE_ROLE_KEY (mesmo padrão de
- * process-campaign-dispatch / job-worker). Também aceita invocação manual.
+ * A regra mora em ../_shared/policy-watch-core.ts, testada por
+ * src/lib/compliance/policyWatch.test.ts. Esta função é só a casca.
+ * Runbook: docs/RUNBOOK_vigia_politicas_whatsapp.md.
+ *
+ * Secrets: RESEND_API_KEY e REPORT_FROM_EMAIL (os mesmos dos relatórios) e
+ * POLICY_WATCH_EMAIL_TO (para quem vai o e-mail; vírgula separa vários). Sem
+ * eles o sino continua funcionando e o e-mail fica desligado.
+ *
+ * Corpo {"trigger":"email-test"} manda só um e-mail de teste e não lê página.
+ *
+ * verify_jwt = false — chamado pelo pg_cron; a porta (x-cron-secret ou chave
+ * secreta do projeto) é o guardBackendCaller logo abaixo.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
 import { guardBackendCaller } from '../_shared/backend-gate.ts'
 import { corsHeaders } from '../_shared/validation.ts'
+import { resendTransport } from '../_shared/report-core.ts'
+import {
+  POLICY_WATCH_USER_AGENT,
+  parseRecipients,
+  runPolicyWatch,
+  testEmail,
+  type FetchedPage,
+} from '../_shared/policy-watch-core.ts'
 
-interface PolicyDoc {
-  key: string
-  label: string
-  url: string
-  is_active: boolean
-  last_hash: string | null
+async function fetchPage(url: string): Promise<FetchedPage> {
+  const res = await fetch(url, {
+    redirect: 'follow',
+    // Inglês fixo: sem isto a m.facebook.com escolhe o idioma pela região, e
+    // uma troca de idioma pareceria a política inteira mudando.
+    headers: { 'User-Agent': POLICY_WATCH_USER_AGENT, 'Accept-Language': 'en-US,en;q=0.9' },
+    signal: AbortSignal.timeout(30_000),
+  })
+  return { status: res.status, url: res.url || url, body: await res.text() }
 }
 
-// Normaliza o HTML para reduzir falsos positivos: remove <script>/<style>,
-// tags, e colapsa espaços. Mudança real de texto da política ainda altera o hash.
-function normalize(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&[a-z]+;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-async function sha256(text: string): Promise<string> {
-  const data = new TextEncoder().encode(text)
-  const buf = await crypto.subtle.digest('SHA-256', data)
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
-}
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  })
 
 serve(async (req: Request) => {
   // O logger nasce da requisição. Até 2026-09-29 ele era criado no nível do
@@ -64,90 +76,38 @@ serve(async (req: Request) => {
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   const supabase = createClient(supabaseUrl, serviceKey)
 
-  const { data: docs, error } = await supabase
-    .from('whatsapp_policy_documents')
-    .select('key,label,url,is_active,last_hash')
-    .eq('is_active', true)
-
-  if (error) {
-    logger.error('Falha ao carregar watchlist', { error: error.message })
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+  const resendApiKey = Deno.env.get('RESEND_API_KEY')
+  const fromEmail = Deno.env.get('REPORT_FROM_EMAIL')
+  const emailTo = parseRecipients(Deno.env.get('POLICY_WATCH_EMAIL_TO'))
+  const sendEmail = resendApiKey && fromEmail ? resendTransport(resendApiKey, fromEmail) : null
+  if (!sendEmail || !emailTo.length) {
+    logger.warn('policy-watch: e-mail desligado (falta RESEND_API_KEY, REPORT_FROM_EMAIL ou POLICY_WATCH_EMAIL_TO)')
   }
 
-  const results: Array<{ key: string; status: string }> = []
+  let trigger: unknown = null
+  try {
+    trigger = ((await req.json()) as { trigger?: unknown } | null)?.trigger ?? null
+  } catch {
+    // corpo vazio: invocação manual sem corpo vale como cron
+  }
 
-  for (const doc of (docs ?? []) as PolicyDoc[]) {
-    const checkedAt = new Date().toISOString()
+  if (trigger === 'email-test') {
+    if (!sendEmail || !emailTo.length) return json({ ok: false, error: 'E-mail não configurado' }, 500)
     try {
-      const res = await fetch(doc.url, {
-        redirect: 'follow',
-        headers: { 'User-Agent': 'ConvoFlow-PolicyWatch/1.0 (+compliance)' },
-      })
-      const body = await res.text()
-      const content = normalize(body)
-      const hash = await sha256(content)
-      const changed = doc.last_hash !== null && doc.last_hash !== hash
-
-      await supabase
-        .from('whatsapp_policy_documents')
-        .update({
-          last_hash: hash,
-          last_status_code: res.status,
-          last_checked_at: checkedAt,
-          last_error: null,
-          ...(changed ? { last_changed_at: checkedAt } : {}),
-          updated_at: checkedAt,
-        })
-        .eq('key', doc.key)
-
-      if (changed) {
-        logger.warn('Política mudou', { key: doc.key, url: doc.url })
-        await supabase.from('whatsapp_policy_change_log').insert({
-          document_key: doc.key,
-          old_hash: doc.last_hash,
-          new_hash: hash,
-          http_status: res.status,
-          excerpt: content.slice(0, 500),
-        })
-
-        // Notifica todos os super_admins. notifications.user_id referencia
-        // auth.users(id) == profiles.user_id (NÃO profiles.id).
-        const { data: admins } = await supabase
-          .from('profiles')
-          .select('user_id')
-          .eq('role', 'superadmin')
-
-        for (const admin of admins ?? []) {
-          const uid = (admin as { user_id: string | null }).user_id
-          if (!uid) continue
-          await supabase.from('notifications').insert({
-            user_id: uid,
-            title: 'Política do WhatsApp foi atualizada',
-            message: `O documento "${doc.label}" mudou. Reveja .agent/skills/whatsapp-policies/SKILL.md e verifique conformidade.`,
-            type: 'warning',
-            action_url: doc.url,
-            action_label: 'Ver política',
-            metadata: { source: 'policy-watch', document_key: doc.key },
-          })
-        }
-      }
-
-      results.push({ key: doc.key, status: doc.last_hash === null ? 'baseline' : changed ? 'changed' : 'unchanged' })
+      await sendEmail({ to: emailTo, ...testEmail() })
+      return json({ ok: true, emailed: emailTo.length })
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      logger.error('Falha ao checar política', { key: doc.key, error: msg })
-      await supabase
-        .from('whatsapp_policy_documents')
-        .update({ last_checked_at: checkedAt, last_error: msg, updated_at: checkedAt })
-        .eq('key', doc.key)
-      results.push({ key: doc.key, status: 'error' })
+      logger.error('policy-watch: falha no e-mail de teste', { error: e instanceof Error ? e.message : String(e) })
+      return json({ ok: false, error: 'Falha no envio' }, 502)
     }
   }
 
-  return new Response(JSON.stringify({ ok: true, results }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  })
+  try {
+    const { results } = await runPolicyWatch({ db: supabase, fetchPage, sendEmail, emailTo, logger })
+    return json({ ok: true, results })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    logger.error('policy-watch: falhou', { error: msg })
+    return json({ error: msg }, 500)
+  }
 })

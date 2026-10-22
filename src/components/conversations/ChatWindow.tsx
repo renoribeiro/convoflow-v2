@@ -45,6 +45,7 @@ import {
   X,
   Image as ImageIcon,
   FileText as FileTextIcon,
+  FileAudio as FileAudioIcon,
   MessageCircle,
   Search,
   PanelRightOpen,
@@ -96,6 +97,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { providerLabel, WhatsAppAdapterError } from '@/services/whatsapp';
 import { uploadWhatsAppMedia, detectMediaTypeFromMime } from '@/services/whatsapp/media-upload';
+import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
+import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
 import { logger } from '@/lib/logger';
 import { camposDaFalha } from '@/lib/whatsapp/failureFields';
 import { formatPhoneBR } from '@/lib/utils';
@@ -549,6 +552,7 @@ export const ChatWindow = ({
         campaign_name: m.campaign_id && campaignNames ? (campaignNames[m.campaign_id] ?? null) : null,
         is_from_bot: m.is_from_bot ?? null,
         ad_referral: (m.ad_referral as RenderableMessage['ad_referral']) ?? null,
+        provider_message_id: m.evolution_message_id ?? null,
       };
     });
   }, [messages, campaignNames]);
@@ -703,36 +707,55 @@ export const ChatWindow = ({
     }
   };
 
-  /** Shared media sender used by the attachment flow and the audio recorder. */
-  const sendMediaFile = async (file: File, caption: string) => {
+  /**
+   * Shared media sender used by the attachment flow and the audio recorder.
+   * Devolve false quando uma guarda barrou ANTES do envio (nada subiu, nada foi
+   * gravado): quem chamou mantém o arquivo/a prévia para a pessoa decidir.
+   */
+  const sendMediaFile = async (
+    file: File,
+    caption: string,
+    opcoes: { voz?: boolean } = {},
+  ): Promise<boolean> => {
     // Os controles de mídia nem aparecem numa conversa do Instagram; isto é a
     // rede de baixo.
     if (isInstagram) {
       toast.error('O Instagram só responde texto por aqui.');
-      return;
+      return false;
     }
     if (!contactId || !tenant?.id || !active) {
       toast.error('Nenhuma instância de WhatsApp disponível.');
-      return;
+      return false;
     }
     if (!active.adapter.isReadyToSend()) {
       toast.error(`A instância "${active.row.name}" não está conectada.`);
-      return;
+      return false;
     }
     const phone = phoneOf(contact);
     if (!phone) {
       toast.error(SEM_ENDERECO);
-      return;
+      return false;
+    }
+    // Número oficial fora da janela de 24 h: o servidor recusaria (131047).
+    // Barra aqui, antes de subir o arquivo.
+    if (outsideMetaWindow) {
+      toast.error(MOTIVOS_AUDIO_BLOQUEADO.janelaFechada);
+      return false;
     }
     const uploaded = await uploadWhatsAppMedia(file, tenant.id);
     const mediaType = detectMediaTypeFromMime(uploaded.mimeType);
+    // Áudio não leva legenda no WhatsApp: nenhum provider a entrega. Não vai
+    // e não é gravada (a conversa não pode mostrar texto que o cliente não viu).
+    const legenda = mediaType === 'audio' ? '' : caption;
     const providerResult = await active.adapter.sendMedia(phone, {
       mediaUrl: uploaded.publicUrl,
       mediaType,
       mimeType: uploaded.mimeType,
       fileName: uploaded.fileName,
-      caption: caption || undefined,
-      quotedMessageId: replyTo?.id,
+      caption: legenda || undefined,
+      ptt: mediaType === 'audio' ? Boolean(opcoes.voz) : undefined,
+      // O id do WhatsApp, não o nosso: é ele que faz a citação aparecer.
+      quotedMessageId: replyTo?.provider_message_id ?? undefined,
     });
     const status = providerResult?.status === 'sent' || providerResult?.status === 'pending' ? 'sent' : 'failed';
     if (status === 'failed') {
@@ -741,7 +764,7 @@ export const ChatWindow = ({
     await sendMessageMutation.mutateAsync({
       contact_id: contactId,
       whatsapp_instance_id: active.row.id,
-      content: caption,
+      content: legenda,
       direction: 'outbound',
       message_type: mediaType,
       media_url: uploaded.publicUrl,
@@ -751,12 +774,14 @@ export const ChatWindow = ({
       is_from_bot: false,
       ...(status === 'failed' ? camposDaFalha(providerResult) : {}),
     } as any);
+    return true;
   };
 
-  const handleSendAudio = async (file: File) => {
+  const handleSendAudio = async (file: File, opcoes: { voz: boolean }) => {
     try {
-      await sendMediaFile(file, '');
-      setReplyTo(null);
+      const saiu = await sendMediaFile(file, '', opcoes);
+      if (saiu) setReplyTo(null);
+      return saiu;
     } catch (e) {
       logger.error('[ChatWindow] envio de áudio falhou', {
         error: e instanceof Error ? e.message : String(e),
@@ -850,11 +875,21 @@ export const ChatWindow = ({
 
     setIsSending(true);
     const text = message.trim();
+    // Áudio anexado com texto no campo: o áudio vai sem legenda (o WhatsApp
+    // não aceita) e o texto FICA no campo para a pessoa enviar em seguida.
+    let manterTexto = false;
 
     try {
       if (pendingFile) {
+        const ehAudio = detectMediaTypeFromMime(pendingFile.type) === 'audio';
         try {
-          await sendMediaFile(pendingFile, text);
+          const saiu = await sendMediaFile(pendingFile, ehAudio ? '' : text);
+          // Guarda barrou antes de subir: o arquivo continua anexado.
+          if (!saiu) return;
+          if (ehAudio && text) {
+            manterTexto = true;
+            toast.info('Áudio enviado. O WhatsApp não aceita legenda em áudio: seu texto ficou no campo para você enviar.');
+          }
         } catch (e) {
           const err = e instanceof Error ? e.message : String(e);
           toast.error(`Falha no upload da mídia: ${err}`);
@@ -874,7 +909,9 @@ export const ChatWindow = ({
         } as any);
 
         const providerResult = await active.adapter.sendText(phoneOf(contact), text, {
-          quotedMessageId: replyTo?.id,
+          // O id do WhatsApp (wamid.* na Meta), não o nosso: é ele que faz a
+          // citação aparecer para o cliente. Sem ele, vai sem citação.
+          quotedMessageId: replyTo?.provider_message_id ?? undefined,
           linkPreview: true,
         });
         const status =
@@ -898,8 +935,10 @@ export const ChatWindow = ({
         }
       }
 
-      setMessage('');
-      resetTextareaHeight();
+      if (!manterTexto) {
+        setMessage('');
+        resetTextareaHeight();
+      }
       setPendingFile(null);
       if (pendingFilePreview) URL.revokeObjectURL(pendingFilePreview);
       setPendingFilePreview(null);
@@ -1034,8 +1073,20 @@ export const ChatWindow = ({
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
+    // Libera o campo: escolher o mesmo arquivo de novo precisa disparar outra vez.
+    e.target.value = '';
     if (!file) return;
+    if (ehArquivoDeAudio(file)) {
+      // Só MP3, M4A, AAC e OGG; o tipo é corrigido para o padrão (o navegador
+      // informa coisas como audio/x-m4a, que o bucket recusa).
+      const audio = validarAudioAnexado(file);
+      if (!audio.ok) {
+        toast.error(audio.motivo);
+        return;
+      }
+      file = audio.file;
+    }
     setPendingFile(file);
     if (file.type.startsWith('image/')) {
       setPendingFilePreview(URL.createObjectURL(file));
@@ -1049,6 +1100,15 @@ export const ChatWindow = ({
   const hasText = message.trim().length > 0;
   // Instagram: sem áudio — o botão Enviar fica sempre no lugar.
   const showAudioButton = !isInstagram && !hasText && !pendingFile;
+  // Por que o microfone está travado: avisa ANTES de a pessoa gravar.
+  const audioBlockedReason = motivoAudioBloqueado({
+    temInstancia: !!active,
+    nomeInstancia: active?.row.name,
+    conectada: !!active?.adapter.isReadyToSend(),
+    foraDaJanela24h: outsideMetaWindow,
+    temTelefone: !!phoneOf(contact),
+  });
+  const pendingIsAudio = !!pendingFile && detectMediaTypeFromMime(pendingFile.type) === 'audio';
   const seenLabel = lastSeenLabel((contact as any)?.last_interaction_at);
 
   if (conversationLoading || messagesLoading) {
@@ -1380,8 +1440,8 @@ export const ChatWindow = ({
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {pendingFilePreview ? (
                   <img src={pendingFilePreview} className="w-10 h-10 rounded object-cover" alt="preview" />
-                ) : pendingFile.type.startsWith('audio/') ? (
-                  <ImageIcon className="w-5 h-5" />
+                ) : pendingIsAudio ? (
+                  <FileAudioIcon className="w-5 h-5" aria-label="Arquivo de áudio" />
                 ) : (
                   <FileTextIcon className="w-5 h-5" />
                 )}
@@ -1505,9 +1565,11 @@ export const ChatWindow = ({
                   placeholder={
                     isInstagram
                       ? INSTAGRAM_COMPOSER_TEXT.placeholder
-                      : pendingFile
-                        ? 'Adicionar legenda (opcional)...'
-                        : 'Digite sua mensagem...'
+                      : pendingIsAudio
+                        ? 'Áudio vai sem legenda; o texto fica para depois'
+                        : pendingFile
+                          ? 'Adicionar legenda (opcional)...'
+                          : 'Digite sua mensagem...'
                   }
                   rows={1}
                   className={`flex-1 min-h-[40px] resize-none py-2 ${isSending ? 'opacity-70' : ''}`}
@@ -1546,6 +1608,7 @@ export const ChatWindow = ({
                 onSend={handleSendAudio}
                 onRecordingChange={setIsRecording}
                 disabled={isSending}
+                blockedReason={audioBlockedReason}
               />
             )}
           </form>

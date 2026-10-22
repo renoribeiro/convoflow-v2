@@ -67,6 +67,7 @@ export const useMessages = ({ contactId, pageSize = 50, enabled = true }: UseMes
           contact_id,
           tenant_id,
           whatsapp_instance_id,
+          evolution_message_id,
           is_from_bot,
           source,
           campaign_id,
