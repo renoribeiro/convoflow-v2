@@ -25,8 +25,16 @@ export async function uploadWhatsAppMedia(file: File, tenantId: string): Promise
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${tenantId}/${Date.now()}-${safeName}`;
 
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type || 'application/octet-stream',
+  // Tipo sem parâmetros ("audio/webm;codecs=opus" → "audio/webm"). O
+  // allowed_mime_types do bucket comparava o texto inteiro até a correção do
+  // Storage de 2026-09-15 (supabase/storage#1382), e o supabase-js manda um
+  // File como multipart, onde vale o tipo do próprio arquivo e não o
+  // `contentType` abaixo. Por isso o arquivo é reembalado com o tipo limpo.
+  const contentType = cleanMimeType(file.type);
+  const body = file.type === contentType ? file : new File([file], file.name, { type: contentType });
+
+  const { error } = await supabase.storage.from(BUCKET).upload(path, body, {
+    contentType,
     upsert: false,
   });
   if (error) {
@@ -45,10 +53,16 @@ export async function uploadWhatsAppMedia(file: File, tenantId: string): Promise
   return {
     publicUrl: data.publicUrl,
     path,
-    mimeType: file.type || 'application/octet-stream',
+    mimeType: contentType,
     fileName: file.name,
     size: file.size,
   };
+}
+
+/** "audio/ogg; codecs=opus" → "audio/ogg"; vazio → "application/octet-stream". */
+export function cleanMimeType(mime: string | null | undefined): string {
+  const base = ((mime ?? '').split(';')[0] ?? '').trim().toLowerCase();
+  return base || 'application/octet-stream';
 }
 
 export function detectMediaTypeFromMime(mime: string): 'image' | 'video' | 'audio' | 'document' {

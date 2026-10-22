@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageStatusIcon } from './MessageStatusIcon';
+import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -62,6 +63,12 @@ export type RenderableMessage = {
   is_from_bot?: boolean | null;
   /** CTWA ad referral on the first inbound message from a Click-to-WhatsApp ad. */
   ad_referral?: AdReferral | null;
+  /**
+   * Id da mensagem NO WHATSAPP (`messages.evolution_message_id`: wamid.* na
+   * Meta, key.id no Evolution, id serializado no WAHA). É o que vai na citação
+   * de uma resposta; o `id` acima é o nosso e o WhatsApp não o conhece.
+   */
+  provider_message_id?: string | null;
 };
 
 /** Characters after which a text message gets a "Ver mais"/"Ver menos" toggle. */
@@ -386,7 +393,8 @@ export function MessageBubble({
       return <MediaVideo url={url} caption={caption ?? null} />;
     }
     if (type === 'audio' && url) {
-      const isPtt = Boolean(meta.ptt) || Boolean(meta.is_ptt);
+      // OGG = mensagem de voz, enviada ou recebida (ver ehNotaDeVozPelaUrl).
+      const isPtt = Boolean(meta.ptt) || Boolean(meta.is_ptt) || ehNotaDeVozPelaUrl(url);
       return <MediaAudio url={url} isPtt={isPtt} />;
     }
     if (type === 'document' && url) {

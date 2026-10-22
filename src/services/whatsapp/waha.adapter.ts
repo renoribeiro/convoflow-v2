@@ -140,28 +140,41 @@ export class WahaAdapter implements IWhatsAppProvider {
     if (payload.mediaType === 'sticker' && !this.getCapabilities().stickers) {
       return { status: 'failed', error: 'Stickers só estão disponíveis no WAHA Plus.' };
     }
+    // WAHA não tem rota de "áudio comum" (não existe /api/sendAudio no
+    // OpenAPI dele). Voz vai por /api/sendVoice, que só aceita OGG/Opus:
+    // `convert` pede a conversão no servidor quando o arquivo é de outro
+    // formato (grátis desde a 2026.6.1, que juntou o Plus ao Core). Áudio
+    // anexado vai por /api/sendFile e chega como arquivo.
+    const voz = payload.mediaType === 'audio' && Boolean(payload.ptt);
     const endpoint = payload.mediaType === 'image'
       ? '/api/sendImage'
       : payload.mediaType === 'video'
       ? '/api/sendVideo'
-      : payload.mediaType === 'audio'
-      ? (payload.ptt ? '/api/sendVoice' : '/api/sendAudio')
+      : voz
+      ? '/api/sendVoice'
       : payload.mediaType === 'sticker'
       ? '/api/sendSticker'
       : '/api/sendFile';
+    const jaEhOggOpus = ((payload.mimeType ?? '').split(';')[0] ?? '').trim().toLowerCase() === 'audio/ogg';
 
     try {
       const res = await this.request<{ id?: string }>(endpoint, {
         session: this.session,
         chatId: this.chatIdFromPhone(toPhone),
-        file: {
-          url: payload.mediaUrl,
-          filename: payload.fileName,
-          mimetype: payload.mimeType,
-        },
-        caption: payload.caption,
+        file: voz
+          ? {
+              url: payload.mediaUrl,
+              mimetype: jaEhOggOpus ? 'audio/ogg; codecs=opus' : payload.mimeType || 'audio/ogg; codecs=opus',
+            }
+          : {
+              url: payload.mediaUrl,
+              filename: payload.fileName,
+              mimetype: payload.mimeType,
+            },
+        // Voz não leva legenda no WhatsApp.
+        caption: voz ? undefined : payload.caption,
         reply_to: payload.quotedMessageId,
-        convert: payload.mediaType === 'audio' ? true : undefined,
+        convert: voz ? !jaEhOggOpus : undefined,
       });
       return { providerMessageId: res?.id, status: 'sent' };
     } catch (e) {

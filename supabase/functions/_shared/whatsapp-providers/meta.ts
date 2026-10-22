@@ -71,9 +71,12 @@ export class MetaProvider implements IWhatsAppProvider {
         const { caption, mediaType, fileName } = options;
         const url = `${this.graphRoot}/${this.config.phoneNumberId}/messages`;
 
+        // O objeto `audio` da Meta só aceita `link`/`id` e `voice`: legenda e
+        // nome de arquivo nele fazem a Meta recusar o envio. `filename` só
+        // existe em document.
         const mediaObj: Record<string, string> = { link: mediaUrl };
-        if (caption) mediaObj.caption = caption;
-        if (fileName && (mediaType === 'document' || mediaType === 'audio')) {
+        if (caption && mediaType !== 'audio') mediaObj.caption = caption;
+        if (fileName && mediaType === 'document') {
             mediaObj.filename = fileName;
         }
 
