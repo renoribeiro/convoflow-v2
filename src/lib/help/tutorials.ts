@@ -362,7 +362,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'A janela mostra duas partes: "Estágios Atuais", com o que já existe, e "Adicionar Novo Estágio", para criar.',
         note:
-          'Gerente: as etapas são de cada Loja. Escolha a Loja no seletor do topo antes de abrir o Funil; com a Conta em foco, as etapas que você criar ficam na Conta, não na Loja.',
+          'Gerente: o funil é de cada Loja. Com a Conta em foco no seletor do topo, o Funil pede para escolher a Loja antes; com uma Loja só, "Abrir a Loja" já entra nela.',
         screen: '/dashboard/funnel',
         helpKey: 'page:funnel',
       },
@@ -377,6 +377,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
         title: 'Crie cada etapa em "Adicionar Novo Estágio"',
         body:
           'Digite o nome em "Nome do Estágio" e escolha uma cor. Use as cores como semáforo do processo: frio no começo, quente perto do fechamento. Repita para cada etapa da sua lista.',
+        note:
+          'Funil ainda vazio? "Usar etapas prontas", na própria tela do Funil, cria Novo contato, Em atendimento, Proposta, Fechado e Perdido de uma vez; depois é só ajustar aqui.',
       },
       {
         title: 'Arraste as etapas para a ordem do seu processo',

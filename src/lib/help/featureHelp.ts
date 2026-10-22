@@ -631,7 +631,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É onde a venda tem etapa e responsável. Cada card é um lead numa etapa, e mover o card é o que registra que a negociação andou. O chatbot e as automações também movem cards sozinhos.',
     howToConfigure: [
       'Ajuste as etapas para o seu processo real antes de usar: clique em "Configurar Estágios", crie as etapas na ordem em que acontecem e salve. Etapa genérica não informa nada; "Visita agendada" informa.',
-      'As etapas são de cada Loja. Gestor: você monta as da sua Loja. Gerente: escolha a Loja no seletor do topo antes de clicar em "Configurar Estágios" e monte as etapas de qualquer Loja da Conta; com a Conta em foco, as etapas criadas ficam na Conta, não numa Loja.',
+      'O funil é sempre de uma Loja. Gestor: você monta o da sua Loja. Gerente: você monta o de qualquer Loja da Conta; com a Conta em foco no seletor do topo, o Funil pede para escolher a Loja antes do quadro, do "Novo Lead" e do "Configurar Estágios" (com uma Loja só, "Abrir a Loja" já entra nela e reabre a janela que você tinha aberto).',
+      'Funil sem etapas: o Gestor e o Gerente veem "Criar etapas agora", que abre "Configurar Estágios", e "Usar etapas prontas", que cria de uma vez Novo contato, Em atendimento, Proposta, Fechado e Perdido. Fechado é a etapa que conta como venda no Dashboard. Clicar de novo não duplica nada, e dá para renomear, reordenar e excluir depois. Enquanto não há etapa, "Criar lead" fica desabilitado.',
       'Arraste o card do lead para a etapa nova conforme a negociação evolui.',
       'Para cadastrar um lead direto no funil, clique em "Novo Lead" (ou em "Adicionar Lead", no menu da coluna): nome, telefone com DDD e etapa, e "Criar lead". Telefone que já é contato da Loja não é duplicado: o card dele vai para a etapa escolhida.',
       'Para automatizar, use a ação "Alterar Estágio" nas Automações ou o nó "Mover no Funil" no chatbot.',

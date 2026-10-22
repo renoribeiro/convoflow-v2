@@ -8,6 +8,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+let etapasDaLoja: Array<{ id: string; name: string; order: number }> = [];
 const ETAPAS = [
   { id: 'aaaaaaaa-0000-4000-8000-0000000000e1', name: 'Novo lead', order: 1 },
   { id: 'aaaaaaaa-0000-4000-8000-0000000000e2', name: 'Visita agendada', order: 2 },
@@ -17,14 +18,20 @@ const salvar = vi.fn();
 const ok = vi.fn();
 const erro = vi.fn();
 
+let papel = 'gestor';
+let kind = 'store';
 vi.mock('@/contexts/TenantContext', () => ({
-  useTenant: () => ({ tenantId: 'aaaaaaaa-0000-4000-8000-0000000000b1' }),
+  useTenant: () => ({ tenantId: 'aaaaaaaa-0000-4000-8000-0000000000b1', tenant: { kind }, setActiveTenant: vi.fn() }),
+  useRole: () => papel,
 }));
 vi.mock('@/hooks/useSupabaseQuery', () => ({
-  useSupabaseQuery: () => ({ data: ETAPAS, isLoading: false }),
+  useSupabaseQuery: () => ({ data: etapasDaLoja, isLoading: false }),
 }));
-vi.mock('@/integrations/supabase/client', () => ({ supabase: {} }));
-vi.mock('sonner', () => ({ toast: { success: (m: string) => ok(m), error: (m: string) => erro(m) } }));
+vi.mock('@/hooks/useMyStores', () => ({
+  useMyStores: () => ({ stores: [{ id: 'aaaaaaaa-0000-4000-8000-00000000000a', name: 'Loja Centro' }], isLoading: false }),
+}));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { rpc: vi.fn() } }));
+vi.mock('sonner', () => ({ toast: { success: (m: string) => ok(m), error: (m: string) => erro(m), info: vi.fn() } }));
 vi.mock('@/lib/funnel/novoLead', async (importOriginal) => {
   const real = await importOriginal<typeof import('@/lib/funnel/novoLead')>();
   return { ...real, salvarNovoLead: (...a: unknown[]) => salvar(...a) };
@@ -35,11 +42,13 @@ import { NovoLeadErro } from '@/lib/funnel/novoLead';
 
 const onClose = vi.fn();
 
+const onConfigurarEtapas = vi.fn();
+
 function montar(etapaInicialId?: string) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <NewLeadModal isOpen onClose={onClose} etapaInicialId={etapaInicialId} />
+      <NewLeadModal isOpen onClose={onClose} etapaInicialId={etapaInicialId} onConfigurarEtapas={onConfigurarEtapas} />
     </QueryClientProvider>,
   );
 }
@@ -54,6 +63,10 @@ beforeEach(() => {
   ok.mockReset();
   erro.mockReset();
   onClose.mockReset();
+  onConfigurarEtapas.mockReset();
+  papel = 'gestor';
+  kind = 'store';
+  etapasDaLoja = ETAPAS;
 });
 
 describe('Novo Lead', () => {
@@ -111,5 +124,44 @@ describe('Novo Lead', () => {
     expect(ok).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Nome *')).toHaveValue('Fulana');
+  });
+});
+
+describe('Novo Lead sem etapa, ou na Conta: "Criar lead" desabilitado e o caminho certo', () => {
+  it('Gestor numa Loja sem etapa: "Criar etapas agora" e "Usar etapas prontas"', async () => {
+    etapasDaLoja = [];
+    montar();
+    expect(screen.getByRole('button', { name: 'Criar lead' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Usar etapas prontas' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Criar etapas agora' }));
+    expect(onConfigurarEtapas).toHaveBeenCalled();
+    expect(screen.queryByLabelText('Nome *')).toBeNull();
+  });
+
+  it('Gerente numa Loja sem etapa: o mesmo caminho do Gestor', () => {
+    papel = 'gerente';
+    etapasDaLoja = [];
+    montar();
+    expect(screen.getByRole('button', { name: 'Criar lead' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Criar etapas agora' })).toBeInTheDocument();
+  });
+
+  it('Atendente numa Loja sem etapa: só o aviso, sem botão de etapa', () => {
+    papel = 'atendente';
+    etapasDaLoja = [];
+    montar();
+    expect(screen.getByText(/Peça ao Gestor ou ao Gerente/)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Usar etapas prontas|Criar etapas agora/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Criar lead' })).toBeDisabled();
+  });
+
+  it('Gerente com a Conta em foco: escolher a Loja, mesmo que a Conta tivesse etapa', () => {
+    papel = 'gerente';
+    kind = 'account';
+    montar();
+    expect(screen.getByText(/As etapas do funil ficam em cada Loja/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Abrir a Loja Loja Centro' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Criar lead' })).toBeDisabled();
+    expect(screen.queryByLabelText('Nome *')).toBeNull();
   });
 });

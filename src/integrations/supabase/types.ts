@@ -6790,6 +6790,10 @@ export type Database = {
           utm_source: string
         }[]
       }
+      funnel_criar_etapas_padrao: {
+        Args: { p_tenant_id: string }
+        Returns: number
+      }
       notify_overdue_followups: { Args: never; Returns: undefined }
       onboarding_checklist: { Args: { p_tenant_id: string }; Returns: Json }
       process_chatbot_variables: {

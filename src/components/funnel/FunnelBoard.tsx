@@ -6,8 +6,10 @@ import { DragOverlay } from './DragOverlay';
 import { StageConfigModal } from './StageConfigModal';
 import { EditStageModal } from './EditStageModal';
 import { NewLeadModal } from './NewLeadModal';
-import { useRole } from '@/contexts/TenantContext';
+import { useRole, useTenant } from '@/contexts/TenantContext';
 import { podeConfigurarEtapas } from '@/lib/funnel/permissoes';
+import { situacaoDoFunil } from '@/lib/funnel/estadoVazio';
+import { EstadoVazioFunil } from './EstadoVazioFunil';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
@@ -47,7 +49,9 @@ export const FunnelBoard = () => {
   const [editingStage, setEditingStage] = useState<{ id: string; name: string; color: string; order: number } | null>(null);
   const { toast } = useToast();
   // Atendente: o menu da coluna fica só com "Adicionar Lead" (20261021000003).
-  const podeConfigurar = podeConfigurarEtapas(useRole());
+  const role = useRole();
+  const { tenant } = useTenant();
+  const podeConfigurar = podeConfigurarEtapas(role);
   // Etapa da coluna em que "Adicionar Lead" foi clicado (abre o Novo Lead).
   const [novoLeadEtapa, setNovoLeadEtapa] = useState<string | null>(null);
 
@@ -338,6 +342,28 @@ export const FunnelBoard = () => {
           </div>
         ))}
       </div>
+    );
+  }
+
+  // Funil vazio, ou o Gerente com a Conta em foco: o funil é de cada Loja.
+  const situacao = situacaoDoFunil({
+    role,
+    emConta: (tenant as { kind?: string | null } | null)?.kind === 'account',
+    temEtapas: stagesData.length > 0,
+  });
+  if (situacao !== 'pronto') {
+    return (
+      <>
+        <div className="rounded-lg border border-dashed border-border bg-card p-6" data-testid="funil-vazio">
+          <EstadoVazioFunil
+            situacao={situacao}
+            onConfigurarEtapas={podeConfigurar ? () => setShowStageConfig(true) : undefined}
+          />
+        </div>
+        {podeConfigurar && (
+          <StageConfigModal isOpen={showStageConfig} onClose={() => setShowStageConfig(false)} />
+        )}
+      </>
     );
   }
 
