@@ -6,6 +6,10 @@
  * Aberto pelo botão "Novo Lead" do topo e por "Adicionar Lead" no menu de cada
  * coluna (que já chega com a etapa da coluna escolhida). Vale para todo cargo
  * da Loja, atendente incluído: cadastrar lead e mover card é operação.
+ *
+ * Sem etapa (ou o Gerente com a Conta em foco), a janela mostra o
+ * EstadoVazioFunil do caso, e "Criar lead" fica desabilitado: ninguém
+ * preenche o formulário à toa.
  */
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -16,7 +20,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useTenant } from '@/contexts/TenantContext';
+import { useRole, useTenant } from '@/contexts/TenantContext';
+import { EstadoVazioFunil } from '@/components/funnel/EstadoVazioFunil';
+import { situacaoDoFunil } from '@/lib/funnel/estadoVazio';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
@@ -33,6 +39,8 @@ interface NewLeadModalProps {
   onClose: () => void;
   /** Etapa já escolhida ("Adicionar Lead" no menu da coluna). */
   etapaInicialId?: string | null;
+  /** "Criar etapas agora" no funil vazio: abre "Configurar Estágios". */
+  onConfigurarEtapas?: () => void;
 }
 
 interface Etapa {
@@ -41,8 +49,9 @@ interface Etapa {
   order: number | null;
 }
 
-export const NewLeadModal = ({ isOpen, onClose, etapaInicialId }: NewLeadModalProps) => {
-  const { tenantId } = useTenant();
+export const NewLeadModal = ({ isOpen, onClose, etapaInicialId, onConfigurarEtapas }: NewLeadModalProps) => {
+  const { tenantId, tenant } = useTenant();
+  const role = useRole();
   const queryClient = useQueryClient();
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -111,7 +120,13 @@ export const NewLeadModal = ({ isOpen, onClose, etapaInicialId }: NewLeadModalPr
     onClose();
   };
 
-  const semEtapas = !carregandoEtapas && etapas.length === 0;
+  const situacao = situacaoDoFunil({
+    role,
+    emConta: (tenant as { kind?: string | null } | null)?.kind === 'account',
+    temEtapas: etapas.length > 0,
+  });
+  const pronto = situacao === 'pronto';
+  const aguardando = carregandoEtapas && situacao !== 'conta';
 
   return (
     <Dialog open={isOpen} onOpenChange={(aberto) => !aberto && fechar()}>
@@ -127,10 +142,14 @@ export const NewLeadModal = ({ isOpen, onClose, etapaInicialId }: NewLeadModalPr
           </DialogDescription>
         </DialogHeader>
 
-        {semEtapas ? (
-          <p className="text-sm text-muted-foreground">
-            Este funil ainda não tem etapas. Peça ao Gestor ou ao Gerente para criar em "Configurar Estágios".
-          </p>
+        {aguardando ? (
+          <p className="text-sm text-muted-foreground">Carregando as etapas...</p>
+        ) : !pronto ? (
+          <EstadoVazioFunil
+            situacao={situacao}
+            acaoDepoisDaLoja="novo-lead"
+            onConfigurarEtapas={onConfigurarEtapas}
+          />
         ) : (
           <form id="novo-lead" onSubmit={enviar} className="space-y-4" noValidate>
             <div className="space-y-1.5">
@@ -184,11 +203,9 @@ export const NewLeadModal = ({ isOpen, onClose, etapaInicialId }: NewLeadModalPr
           <Button variant="outline" onClick={fechar} disabled={salvar.isPending}>
             Cancelar
           </Button>
-          {!semEtapas && (
-            <Button type="submit" form="novo-lead" disabled={salvar.isPending}>
-              {salvar.isPending ? 'Criando...' : 'Criar lead'}
-            </Button>
-          )}
+          <Button type="submit" form="novo-lead" disabled={salvar.isPending || !pronto || aguardando}>
+            {salvar.isPending ? 'Criando...' : 'Criar lead'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FunnelBoard } from '@/components/funnel/FunnelBoard';
 import { FunnelMetrics } from '@/components/funnel/FunnelMetrics';
@@ -8,8 +8,11 @@ import { NewLeadModal } from '@/components/funnel/NewLeadModal';
 import { Plus, Settings, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRole } from '@/contexts/TenantContext';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { EstadoVazioFunil } from '@/components/funnel/EstadoVazioFunil';
+import { useRole, useTenant } from '@/contexts/TenantContext';
 import { podeConfigurarEtapas } from '@/lib/funnel/permissoes';
+import { consumirAcaoFunil } from '@/lib/funnel/funilPendente';
 
 export default function Funnel() {
   const [showMetrics, setShowMetrics] = useState(false);
@@ -17,7 +20,27 @@ export default function Funnel() {
   const [showNewLead, setShowNewLead] = useState(false);
   // Atendente vê as etapas e move os cards; configurar é do Gestor e do
   // Gerente (20261021000003). Sem o botão, sem a janela.
-  const podeConfigurar = podeConfigurarEtapas(useRole());
+  const role = useRole();
+  const { tenant } = useTenant();
+  const podeConfigurar = podeConfigurarEtapas(role);
+  // O funil é de cada Loja: com a Conta em foco, o Gerente escolhe a Loja antes
+  // de configurar (src/lib/funnel/estadoVazio.ts).
+  const gerenteNaConta = role === 'gerente' && (tenant as { kind?: string | null } | null)?.kind === 'account';
+  const [showEscolherLoja, setShowEscolherLoja] = useState(false);
+
+  // Voltou da troca de Loja: reabre a janela que estava aberta.
+  useEffect(() => {
+    const acao = consumirAcaoFunil();
+    if (acao === 'novo-lead') setShowNewLead(true);
+    if (acao === 'configurar-etapas' && podeConfigurar) setShowStageConfig(true);
+    // Só ao montar: a troca de Loja remonta a tela inteira.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const configurarEtapas = () => {
+    if (gerenteNaConta) setShowEscolherLoja(true);
+    else setShowStageConfig(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -43,7 +66,7 @@ export default function Funnel() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowStageConfig(true)}
+                onClick={configurarEtapas}
                 data-tour="funil-configurar-estagios"
               >
                 <Settings className="w-4 h-4 mr-2" />
@@ -74,16 +97,32 @@ export default function Funnel() {
         </TabsContent>
       </Tabs>
 
-      {podeConfigurar && (
+      {podeConfigurar && !gerenteNaConta && (
         <StageConfigModal
           isOpen={showStageConfig}
           onClose={() => setShowStageConfig(false)}
         />
       )}
+
+      {gerenteNaConta && (
+        <Dialog open={showEscolherLoja} onOpenChange={setShowEscolherLoja}>
+          <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Configurar Estágios</DialogTitle>
+              <DialogDescription>O funil é de cada Loja.</DialogDescription>
+            </DialogHeader>
+            <EstadoVazioFunil situacao="conta" acaoDepoisDaLoja="configurar-etapas" />
+          </DialogContent>
+        </Dialog>
+      )}
       
-      <NewLeadModal 
-        isOpen={showNewLead} 
-        onClose={() => setShowNewLead(false)} 
+      <NewLeadModal
+        isOpen={showNewLead}
+        onClose={() => setShowNewLead(false)}
+        onConfigurarEtapas={() => {
+          setShowNewLead(false);
+          setShowStageConfig(true);
+        }}
       />
     </div>
   );
