@@ -23,6 +23,7 @@ import { ptBR } from 'date-fns/locale';
 import { MessageStatusIcon } from './MessageStatusIcon';
 import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
 import { classifyMediaUrl, downloadHref } from '@/lib/media/whatsappMedia';
+import { semRotuloDeMidia } from '@/lib/media/legendaDaMidia';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -396,8 +397,17 @@ export function MessageBubble({
     !url && TIPOS_DE_ARQUIVO.has(type) && (message.media_state === 'loading' || message.media_state === 'unavailable')
       ? message.media_state
       : null;
-  const caption = (typeof meta.caption === 'string' ? meta.caption : undefined) ?? message.content ?? undefined;
-  const fileName = (typeof meta.file_name === 'string' ? meta.file_name : undefined) ?? (typeof meta.fileName === 'string' ? meta.fileName : undefined);
+  // Com a mídia na tela, o rótulo do webhook ("[Imagem]", "[Áudio]"...) sai:
+  // fica só a legenda que o cliente escreveu (ver legendaDaMidia.ts). Sem a
+  // mídia, a bolha cai no texto abaixo e o rótulo continua aparecendo.
+  const textoDaMidia = semRotuloDeMidia(
+    (typeof meta.caption === 'string' ? meta.caption : undefined) ?? message.content ?? undefined,
+  );
+  const fileNameDoMeta = (typeof meta.file_name === 'string' ? meta.file_name : undefined) ?? (typeof meta.fileName === 'string' ? meta.fileName : undefined);
+  // Documento: o que vem depois de "[Documento]" é o nome do arquivo (Meta e
+  // Evolution gravam assim), não legenda. Vai no cartão, uma vez só.
+  const fileName = fileNameDoMeta ?? (type === 'document' && textoDaMidia ? textoDaMidia : undefined);
+  const caption: string | null = type === 'document' && !fileNameDoMeta ? null : textoDaMidia || null;
 
   // Só mensagem NOSSA e só texto: guardar a fala do cliente como "resposta
   // rápida" não faz sentido, e o corpo de uma mídia é legenda, não trecho.
