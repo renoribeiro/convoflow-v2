@@ -749,8 +749,10 @@ function extFromMime(mimeType: string | undefined): string {
  * Download an inbound media file from Meta and backfill the message row.
  *
  * Flow (SKILL.md §4.1/§4.2 + §10.6): resolve media_id -> signed URL -> bytes
- * (Bearer required on both calls), upload to the public `whatsapp-media` bucket,
+ * (Bearer required on both calls), upload to the private `whatsapp-media` bucket,
  * then UPDATE the message (matched by wamid) with message_type + media_url. The
+ * media_url is the storage PATH, never a URL: the inbox gets a 1-hour link per
+ * viewer from the media-links function (docs/RUNBOOK_midia_privada.md). The
  * row was already inserted by process_incoming_message as a text placeholder;
  * we mirror the ad_referral follow-up pattern instead of touching the RPC.
  */
@@ -783,7 +785,8 @@ async function persistIncomingMedia(
   // allowed_mime_types check matches the base type exactly, even for service role.
   const effectiveMime = (mimeType || contentType || '').split(';')[0].trim() || 'application/octet-stream';
 
-  // Store under <tenant_id>/inbound/<wamid>.<ext> in the existing public bucket.
+  // Store under <tenant_id>/inbound/<wamid>.<ext>. media-links only signs this
+  // path for the inbound message whose wamid it carries.
   const ext = extFromMime(effectiveMime);
   const path = `${instance.tenant_id}/inbound/${wamid}.${ext}`;
 
@@ -794,15 +797,9 @@ async function persistIncomingMedia(
     throw new Error(`Storage upload failed: ${uploadError.message}`);
   }
 
-  const { data: pub } = supabase.storage.from('whatsapp-media').getPublicUrl(path);
-  const publicUrl = pub?.publicUrl;
-  if (!publicUrl) {
-    throw new Error('Could not resolve public URL for uploaded media');
-  }
-
   const { error: updateError } = await supabase
     .from('messages')
-    .update({ message_type: msg.type, media_url: publicUrl })
+    .update({ message_type: msg.type, media_url: path })
     .eq('evolution_message_id', wamid)
     .eq('direction', 'inbound');
   if (updateError) {

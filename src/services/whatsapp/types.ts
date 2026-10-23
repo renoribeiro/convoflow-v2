@@ -92,7 +92,14 @@ export interface SendTextOptions {
 }
 
 export interface SendMediaPayload {
+  /** Endereço que o provedor baixa. Do anexo do chat, é o link temporário (1 h). */
   mediaUrl: string;
+  /**
+   * Caminho no bucket `whatsapp-media` quando o arquivo é anexo do chat. A Meta
+   * usa este (o servidor assina com o token de quem envia); Evolution e WAHA
+   * usam `mediaUrl`.
+   */
+  mediaPath?: string;
   mediaType: 'image' | 'video' | 'audio' | 'document' | 'sticker';
   mimeType?: string;
   fileName?: string;

@@ -121,6 +121,18 @@ describe('Meta (oficial): o adapter repassa voz, tipo e citação', () => {
     expect(corpo.caption).toBeUndefined();
   });
 
+  it('anexo do chat (bucket privado): manda o caminho, e o servidor assina com o token de quem envia', async () => {
+    await meta().sendMedia(FONE, {
+      mediaUrl: 'https://projeto.supabase.co/storage/v1/object/sign/whatsapp-media/t/1-voz-1.ogg?token=FAKE',
+      mediaPath: 't/1-voz-1.ogg',
+      mediaType: 'audio',
+      mimeType: 'audio/ogg',
+      ptt: true,
+    });
+    const corpo = (invoke.mock.calls[0] as unknown as [string, { body: Record<string, unknown> }])[1].body;
+    expect(corpo.media_path).toBe('t/1-voz-1.ogg');
+  });
+
   it('citação vai com o wamid', async () => {
     await meta().sendText(FONE, 'resposta', { quotedMessageId: 'wamid.FAKE_CLIENTE' });
     const corpo = (invoke.mock.calls[0] as unknown as [string, { body: Record<string, unknown> }])[1].body;

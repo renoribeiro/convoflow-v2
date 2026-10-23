@@ -1,25 +1,29 @@
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import { WHATSAPP_MEDIA_BUCKET as BUCKET } from '@/lib/media/whatsappMedia';
 
-const BUCKET = 'whatsapp-media';
+/** Validade do link do envio: o provedor baixa o arquivo uma vez, na hora. */
+export const UPLOAD_LINK_TTL_S = 60 * 60;
 
 export interface UploadedMedia {
-  publicUrl: string;
+  /** Caminho no bucket. É ISTO que vai para `messages.media_url`. */
   path: string;
+  /**
+   * Link assinado do próprio upload (1 h), para o provedor baixar no envio
+   * (Evolution e WAHA). Nunca é gravado: vence.
+   */
+  signedUrl: string;
   mimeType: string;
   fileName: string;
   size: number;
 }
 
 /**
- * Sobe um arquivo para o Supabase Storage no bucket `whatsapp-media`.
- *
- * Pendência: o bucket precisa existir e ter RLS adequada (read público para
- * URLs assinadas no chat). Caso o bucket não exista, criar via:
- *   ```sql
- *   insert into storage.buckets (id, name, public) values ('whatsapp-media', 'whatsapp-media', true);
- *   ```
- * Ajuste a policy depois para limitar uploads ao tenant.
+ * Sobe o anexo do chat para o bucket privado `whatsapp-media`, na pasta da Loja
+ * (`<tenant_id>/<ms>-<arquivo>`), e assina o próprio upload para o envio. A
+ * regra do Storage deixa a pessoa assinar só o que ela mesma subiu; a bolha da
+ * conversa depois pede o link pela função media-links (ver useMediaLinks).
+ * Runbook: docs/RUNBOOK_midia_privada.md.
  */
 export async function uploadWhatsAppMedia(file: File, tenantId: string): Promise<UploadedMedia> {
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -45,14 +49,15 @@ export async function uploadWhatsAppMedia(file: File, tenantId: string): Promise
     );
   }
 
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-  if (!data?.publicUrl) {
-    throw new Error('Bucket configurado, mas não foi possível obter a URL pública.');
+  const { data, error: signError } = await supabase.storage.from(BUCKET).createSignedUrl(path, UPLOAD_LINK_TTL_S);
+  if (signError || !data?.signedUrl) {
+    logger.error('[uploadWhatsAppMedia] link do envio falhou', { error: signError?.message });
+    throw new Error('O arquivo subiu, mas não foi possível preparar o envio. Tente de novo.');
   }
 
   return {
-    publicUrl: data.publicUrl,
     path,
+    signedUrl: data.signedUrl,
     mimeType: contentType,
     fileName: file.name,
     size: file.size,

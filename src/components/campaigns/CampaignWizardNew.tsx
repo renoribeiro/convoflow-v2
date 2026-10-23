@@ -457,16 +457,17 @@ export const CampaignWizard = ({
     set('csvInvalid', result.invalid);
     set('csvFileName', file.name);
 
-    // Upload to campaign-imports bucket
+    // Upload to campaign-imports bucket. O bucket é PRIVADO: a "URL pública"
+    // dele nunca abriu. Grava-se o caminho no bucket (file_url guarda o caminho).
     const uploaded = await handleMediaUpload(file, 'campaign-imports');
     if (uploaded) {
-      set('csvFileUrl', uploaded.url);
+      set('csvFileUrl', uploaded.path);
       // Insert campaign_imports row asynchronously (table not in generated types yet)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       void (supabase as any).from('campaign_imports').insert({
         tenant_id: tenantId,
         file_name: file.name,
-        file_url: uploaded.url,
+        file_url: uploaded.path,
         total_rows: result.valid.length + result.invalid.length,
         valid_rows: result.valid.length,
         invalid_rows: result.invalid.length,

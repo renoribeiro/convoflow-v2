@@ -18,6 +18,10 @@ export const ERRO_FORMATO_AUDIO_META =
   'Formato de áudio não aceito pelo WhatsApp oficial. Envie OGG (Opus), MP3, M4A, AAC ou AMR.';
 
 export type EntradaAudioMeta = {
+  /**
+   * O link que a Meta baixa. Do anexo do chat (bucket privado) é o link de
+   * 1 h que o index.ts assinou a partir de `media_path`, antes de chegar aqui.
+   */
   media_url?: string;
   mime_type?: string;
   ptt?: boolean;

@@ -144,6 +144,14 @@ export default defineConfig(({ mode }) => {
               handler: 'NetworkOnly',
             },
             {
+              // Link assinado da mídia das Conversas (bucket privado, vale 1 h):
+              // foto, áudio e documento do cliente NUNCA ficam no cache do
+              // navegador, e cada link novo seria uma entrada a mais. Vem ANTES
+              // da regra geral do Storage (a primeira regra que casa é a que vale).
+              urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/sign\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
               // Cache REST API and Storage requests
               urlPattern: /^https:\/\/.*\.supabase\.co\/(rest|storage)\/.*/i,
               handler: 'NetworkFirst',
