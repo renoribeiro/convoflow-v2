@@ -9,14 +9,26 @@
 
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { DEFAULT_CAPABILITIES, type UserRole } from '@/types/userHierarchy';
 
 let cargo: UserRole = 'gerente';
+let apiAtiva = false;
 
 vi.mock('@/contexts/TenantContext', () => ({
   useCapabilities: () => DEFAULT_CAPABILITIES[cargo],
+  useIsGerente: () => cargo === 'gerente',
+  useTenant: () => ({ profile: { tenant_id: 'conta-1' } }),
+}));
+vi.mock('@/integrations/supabase/client', () => ({
+  supabase: {
+    rpc: async () => ({ data: [{ ativo: apiAtiva, motivo: apiAtiva ? 'manual' : 'desligado', ate: null }], error: null }),
+  },
+}));
+vi.mock('@/components/settings/ApiKeysSettings', () => ({
+  ApiKeysSettings: () => <div data-testid="painel-api" />,
 }));
 
 // Os painéis são pesados e irrelevantes aqui: o que importa é a barra de abas.
@@ -32,12 +44,15 @@ vi.mock('@/components/shared/FeatureHelp', () => ({ FeatureHelp: () => null }));
 vi.mock('@/components/shared/PageHeader', () => ({ PageHeader: () => null }));
 
 import Settings from './Settings';
+import { API_ADDON_RELEASED } from '@/lib/api/release';
 
 const abrir = (url = '/dashboard/settings') =>
   render(
-    <MemoryRouter initialEntries={[url]}>
-      <Settings />
-    </MemoryRouter>,
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={[url]}>
+        <Settings />
+      </MemoryRouter>
+    </QueryClientProvider>,
   );
 
 const abaAssinatura = () => screen.queryByRole('tab', { name: /assinatura/i });
@@ -45,6 +60,7 @@ const abaAssinatura = () => screen.queryByRole('tab', { name: /assinatura/i });
 beforeEach(() => {
   vi.clearAllMocks();
   cargo = 'gerente';
+  apiAtiva = false;
 });
 
 describe('aba Assinatura', () => {
@@ -90,4 +106,46 @@ describe('abas que todo cargo mantém', () => {
       }
     },
   );
+});
+
+describe('aba Chaves de API', () => {
+  const abaApi = () => screen.queryByRole('tab', { name: /chaves de api/i });
+
+  it(API_ADDON_RELEASED ? 'com a API liberada: só o Gerente vê, mesmo com a Conta sem a API ligada' : 'some para todos com a API não liberada e a Conta sem a API ligada', async () => {
+    for (const papel of ['gerente', 'gestor', 'atendente', 'superadmin'] as UserRole[]) {
+      cargo = papel;
+      const { unmount } = abrir();
+      await new Promise((r) => setTimeout(r, 20));
+      if (API_ADDON_RELEASED && papel === 'gerente') expect(abaApi()).not.toBeNull();
+      else expect(abaApi()).toBeNull();
+      unmount();
+    }
+  });
+
+  it('aparece para o Gerente da Conta em que a API já está ligada', async () => {
+    apiAtiva = true;
+    abrir('/dashboard/settings?tab=api');
+    await waitFor(() => expect(abaApi()).not.toBeNull());
+    expect(await screen.findByTestId('painel-api')).toBeInTheDocument();
+  });
+
+  it('Gestor e Atendente não veem a aba nem pelo endereço, mesmo com a API ligada', async () => {
+    apiAtiva = true;
+    for (const papel of ['gestor', 'atendente'] as UserRole[]) {
+      cargo = papel;
+      const { unmount } = abrir('/dashboard/settings?tab=api');
+      await new Promise((r) => setTimeout(r, 20));
+      expect(abaApi()).toBeNull();
+      expect(screen.queryByTestId('painel-api')).toBeNull();
+      unmount();
+    }
+  });
+
+  it('?tab=api não abre com a aba escondida', async () => {
+    cargo = API_ADDON_RELEASED ? 'gestor' : cargo; // liberada, a aba só esconde de quem não é Gerente
+    abrir('/dashboard/settings?tab=api');
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByTestId('painel-api')).toBeNull();
+    expect(screen.getByRole('tab', { name: /perfil/i })).toHaveAttribute('data-state', 'active');
+  });
 });

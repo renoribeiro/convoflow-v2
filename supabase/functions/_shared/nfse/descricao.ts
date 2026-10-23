@@ -4,8 +4,9 @@
 // Texto decidido pelo dono, sem hífen nem travessão:
 //   "Licença de uso do software ConvoFlow, assinatura mensal do Plano Gerente
 //    com 5 Lojas incluídas. Período de DD/MM/AAAA a DD/MM/AAAA. Lojas extras: N.
-//    Atendentes extras: N. Inclui ajuste proporcional por mudança no plano."
-// As três últimas frases só entram quando a fatura tem o item.
+//    Atendentes extras: N. API e integrações. Inclui ajuste proporcional por
+//    mudança no plano."
+// As quatro últimas frases só entram quando a fatura tem o item.
 // Sem Deno: o Vitest importa.
 // =============================================================================
 
@@ -13,6 +14,8 @@ export interface ItensDaFatura {
   lojas_extras: number;
   atendentes_extras: number;
   ajuste_proporcional: boolean;
+  /** A fatura cobra o complemento "API e integrações". Ausente = não (resumos antigos). */
+  api?: boolean;
 }
 
 export const ITENS_VAZIOS: ItensDaFatura = { lojas_extras: 0, atendentes_extras: 0, ajuste_proporcional: false };
@@ -44,6 +47,7 @@ export function descricaoDoServico(opts: {
   const itens = opts.itens ?? ITENS_VAZIOS;
   if (itens.lojas_extras > 0) frases.push(`Lojas extras: ${itens.lojas_extras}.`);
   if (itens.atendentes_extras > 0) frases.push(`Atendentes extras: ${itens.atendentes_extras}.`);
+  if (itens.api) frases.push('API e integrações.');
   if (itens.ajuste_proporcional) frases.push('Inclui ajuste proporcional por mudança no plano.');
   return frases.join(' ');
 }
@@ -56,10 +60,10 @@ function idDe(v: unknown): string | null {
   return null;
 }
 
-/** As linhas da fatura (lines.data) → quantas Lojas e atendentes extras e se houve ajuste proporcional. */
+/** As linhas da fatura (lines.data) → Lojas e atendentes extras, API e se houve ajuste proporcional. */
 export function resumoDaFatura(
   invoice: unknown,
-  ids: { precoLojaExtra?: string | null; produtoAtendente?: string | null },
+  ids: { precoLojaExtra?: string | null; produtoAtendente?: string | null; produtoApi?: string | null },
 ): ItensDaFatura {
   const linhas = ((invoice as Obj)?.lines as Obj | undefined)?.data;
   const r: ItensDaFatura = { ...ITENS_VAZIOS };
@@ -80,6 +84,7 @@ export function resumoDaFatura(
     const qtd = Number(l.quantity) || 0;
     if (ids.precoLojaExtra && precoId === ids.precoLojaExtra) r.lojas_extras += qtd;
     else if (ids.produtoAtendente && produto === ids.produtoAtendente) r.atendentes_extras += qtd;
+    else if (ids.produtoApi && produto === ids.produtoApi && qtd > 0) r.api = true;
   }
   return r;
 }

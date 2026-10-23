@@ -40,6 +40,8 @@ import { useDadosFiscais } from '@/hooks/useDadosFiscais';
 import { DadosFiscaisCard } from '@/components/billing/DadosFiscaisCard';
 import { CobrancasDaConta } from '@/components/billing/CobrancasDaConta';
 import { useAuth } from '@/contexts/AuthContext';
+import { ApiAddonCard } from '@/components/settings/ApiAddonCard';
+import { API_ADDON_PRICE_LABEL, API_ADDON_RELEASED } from '@/lib/api/release';
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -425,6 +427,11 @@ export const SubscriptionSettings = () => {
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" /> Loja adicional por {SLOT_PRICE_LABEL}/mês
               </li>
+              {API_ADDON_RELEASED ? (
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" /> API e integrações por {API_ADDON_PRICE_LABEL}/mês
+                </li>
+              ) : null}
             </ul>
           </div>
         </CardContent>
@@ -516,6 +523,15 @@ export const SubscriptionSettings = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {isGerente && API_ADDON_RELEASED ? (
+        <ApiAddonCard
+          contaId={conta.id}
+          status={conta.subscription_status}
+          temAssinatura={temAssinatura}
+          acessoManual={!!(conta as { manual_access_granted?: boolean | null }).manual_access_granted}
+        />
+      ) : null}
 
       {/* Lojas / slots — só para o Gerente */}
       {isGerente && (

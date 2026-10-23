@@ -11,6 +11,7 @@ import {
   CalendarClock,
   Zap,
   Users,
+  KeyRound,
 } from 'lucide-react';
 import { AttendanceSettings } from '@/components/settings/AttendanceSettings';
 import { VisibilitySettings } from '@/components/settings/VisibilitySettings';
@@ -23,8 +24,11 @@ import { NotificationSettings } from '@/components/settings/NotificationSettings
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { IntegrationSettings } from '@/components/settings/IntegrationSettings';
 import { SubscriptionSettings } from '@/components/settings/SubscriptionSettings';
+import { ApiKeysSettings } from '@/components/settings/ApiKeysSettings';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
-import { useCapabilities } from '@/contexts/TenantContext';
+import { useCapabilities, useIsGerente, useTenant } from '@/contexts/TenantContext';
+import { API_ADDON_RELEASED } from '@/lib/api/release';
+import { useApiAddonEstado } from '@/lib/api/addon';
 import { Capability } from '@/types/userHierarchy';
 import { useSearchParams } from 'react-router-dom';
 
@@ -42,7 +46,14 @@ const TAB_HELP_KEYS: Record<string, string> = {
   notifications: 'page:settings-notifications',
   security: 'page:settings-security',
   integrations: 'page:settings-integrations',
+  api: 'page:settings-api',
 };
+
+interface ContextoDasAbas {
+  gerente: boolean;
+  /** A API está ligada na Conta do usuário (api_addon_estado). */
+  apiAtiva: boolean;
+}
 
 interface AbaConfig {
   value: string;
@@ -50,6 +61,8 @@ interface AbaConfig {
   icon: typeof User;
   /** Capacidade exigida para a aba existir. Ausente = todo mundo vê. */
   requer?: Capability;
+  /** Regra extra de visibilidade, além de `requer`. Ausente = sempre visível. */
+  visivel?: (ctx: ContextoDasAbas) => boolean;
   render: () => JSX.Element;
 }
 
@@ -148,13 +161,31 @@ const ABAS: AbaConfig[] = [
   { value: 'notifications', label: 'Notificações', icon: Bell, render: () => <NotificationSettings /> },
   { value: 'security', label: 'Segurança', icon: Shield, render: () => <SecuritySettings /> },
   { value: 'integrations', label: 'Integrações', icon: Database, render: () => <IntegrationSettings /> },
+  // Só o Gerente, e só com a API liberada para o público OU já ligada na Conta
+  // dele (Conta de teste que o superadmin ligou). Gestor e Atendente nunca.
+  {
+    value: 'api',
+    label: 'Chaves de API',
+    icon: KeyRound,
+    visivel: ({ gerente, apiAtiva }) => gerente && (API_ADDON_RELEASED || apiAtiva),
+    render: () => <ApiKeysSettings />,
+  },
 ];
 
 export default function Settings() {
   const [searchParams, setSearchParams] = useSearchParams();
   const capabilities = useCapabilities();
+  const gerente = useIsGerente();
+  const { profile } = useTenant();
+  const contaId = gerente ? ((profile?.tenant_id as string | null | undefined) ?? null) : null;
+  // Com a API liberada ao público a aba não depende do estado; sem isso só
+  // consulta quando é Gerente.
+  const estadoApi = useApiAddonEstado(contaId, gerente && !API_ADDON_RELEASED);
+  const contexto: ContextoDasAbas = { gerente, apiAtiva: estadoApi.data?.ativo === true };
 
-  const abasVisiveis = ABAS.filter((aba) => !aba.requer || capabilities[aba.requer]);
+  const abasVisiveis = ABAS.filter(
+    (aba) => (!aba.requer || capabilities[aba.requer]) && (!aba.visivel || aba.visivel(contexto)),
+  );
 
   /**
    * Aba pedida pela URL, se ela existir PARA ESTE CARGO. Sem esta checagem, um

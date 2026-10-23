@@ -20,6 +20,16 @@ import type { StripeStatus } from '@/lib/billing/adminBilling';
 let status: StripeStatus;
 const getStripeStatus = vi.fn(async () => status);
 const ensureWebhookEvents = vi.fn(async () => ({ url: 'x', added: ['invoice.paid', 'charge.refunded'], alreadyComplete: false }));
+const ensureApiProduct = vi.fn(async () => ({
+  productEnv: 'STRIPE_PRODUCT_API' as const,
+  priceEnv: 'STRIPE_PRICE_API' as const,
+  productId: 'prod_FAKEapi',
+  priceId: 'price_FAKEapi',
+  createdProduct: true,
+  createdPrice: true,
+  productMatchesSecret: false,
+  priceMatchesSecret: false,
+}));
 const chamadas: string[] = [];
 
 vi.mock('@/services/stripeService', () => ({
@@ -32,6 +42,7 @@ vi.mock('@/services/stripeService', () => ({
         chamadas.push(nome);
         if (nome === 'getStripeStatus') return () => getStripeStatus();
         if (nome === 'ensureWebhookEvents') return () => ensureWebhookEvents();
+        if (nome === 'ensureApiProduct') return () => ensureApiProduct();
         return () => {
           throw new Error(`método proibido na aba Conexão: ${nome}`);
         };
@@ -86,6 +97,7 @@ beforeEach(() => {
   status = base();
   getStripeStatus.mockClear();
   ensureWebhookEvents.mockClear();
+  ensureApiProduct.mockClear();
   chamadas.length = 0;
 });
 
@@ -191,6 +203,43 @@ describe('StripeConnectionStatus', () => {
     expect(within(produto).getByText('Problema')).toBeInTheDocument();
     expect(within(produto).getByText(/atendentes extras não são cobrados/)).toBeInTheDocument();
     expect(produto.textContent).toMatch(/não definida/);
+  });
+
+  it('API e integrações: produto e preço encontrados, sem botão de criar', async () => {
+    status = {
+      ...base(),
+      apiProduct: { env: 'STRIPE_PRODUCT_API', configured: true, found: true, id: 'prod_FAKEapi', active: true, name: 'API e integrações', error: null },
+    };
+    status.prices.api = { env: 'STRIPE_PRICE_API', configured: true, found: true, id: 'price_FAKEapi', active: true, unitAmount: 9990, currency: 'brl', interval: 'month', intervalCount: 1, productName: 'API e integrações', error: null };
+    renderTab();
+    const produto = await screen.findByTestId('produto-STRIPE_PRODUCT_API');
+    expect(within(produto).getByText('OK')).toBeInTheDocument();
+    expect(screen.getByTestId('preco-STRIPE_PRICE_API').textContent).toMatch(/R\$\s?99,90 \/ mês/);
+    expect(screen.queryByRole('button', { name: /Criar produto e preço da API/ })).toBeNull();
+  });
+
+  it('API e integrações não configurada: botão cria, mostra os dois ids com copiar e a instrução', async () => {
+    const user = userEvent.setup();
+    status = {
+      ...base(),
+      apiProduct: { env: 'STRIPE_PRODUCT_API', configured: false, found: false, id: null, active: null, name: null, error: 'A secret STRIPE_PRODUCT_API não está definida.' },
+    };
+    status.prices.api = { env: 'STRIPE_PRICE_API', configured: false, found: false, id: null, active: null, unitAmount: null, currency: null, interval: null, intervalCount: null, productName: null, error: 'A secret STRIPE_PRICE_API não está definida.' };
+    renderTab();
+    expect(await screen.findByTestId('produto-STRIPE_PRODUCT_API')).toBeInTheDocument();
+    expect(within(screen.getByTestId('preco-STRIPE_PRICE_API')).getByText('Problema')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Criar produto e preço da API no Stripe' }));
+    await waitFor(() => expect(ensureApiProduct).toHaveBeenCalledTimes(1));
+    const ids = await screen.findByTestId('api-ids');
+    expect(ids).toHaveTextContent('STRIPE_PRODUCT_API');
+    expect(ids).toHaveTextContent('prod_FAKEapi');
+    expect(ids).toHaveTextContent('STRIPE_PRICE_API');
+    expect(ids).toHaveTextContent('price_FAKEapi');
+    expect(within(ids).getByRole('button', { name: 'Copiar STRIPE_PRODUCT_API' })).toBeInTheDocument();
+    expect(within(ids).getByRole('button', { name: 'Copiar STRIPE_PRICE_API' })).toBeInTheDocument();
+    expect(ids).toHaveTextContent(
+      'Cole estes dois valores nos secrets STRIPE_PRODUCT_API e STRIPE_PRICE_API do Supabase (Edge Functions › Secrets) e publique de novo as funções.',
+    );
   });
 
   it('sem conexão: mostra o motivo e ainda o endereço do webhook', async () => {

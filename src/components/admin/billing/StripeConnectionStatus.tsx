@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { AlertTriangle, CheckCircle2, ListChecks, Loader2, RefreshCw, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Copy, ListChecks, Loader2, RefreshCw, XCircle } from 'lucide-react';
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +11,7 @@ import {
   WEBHOOK_EVENTS,
   formatCents,
   stripeWebhookUrl,
+  type EnsureApiProductResult,
   type PriceCheck,
   type ProductCheck,
   type StripeStatus,
@@ -46,6 +48,31 @@ export function StripeConnectionStatus() {
     onError: (e: Error) =>
       toast({ title: 'Não foi possível marcar os eventos', description: e.message, variant: 'destructive' }),
   });
+  // Resultado de "Criar produto e preço da API": fica na tela até sair da aba,
+  // para dar tempo de copiar os dois ids para os secrets.
+  const [apiCriada, setApiCriada] = useState<EnsureApiProductResult | null>(null);
+  const criarApi = useMutation({
+    mutationFn: () => stripeService.ensureApiProduct(),
+    onSuccess: (r) => {
+      setApiCriada(r);
+      toast({
+        title: r.createdProduct || r.createdPrice ? 'Produto e preço da API criados' : 'Produto e preço da API já existiam',
+      });
+      void consulta.refetch();
+    },
+    onError: (e: Error) =>
+      toast({ title: 'Não foi possível criar o produto da API', description: e.message, variant: 'destructive' }),
+  });
+  const copiar = async (texto: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      toast({ title: 'Copiado' });
+    } catch {
+      toast({ title: 'Não foi possível copiar', description: 'Selecione o valor e copie à mão.', variant: 'destructive' });
+    }
+  };
+  const apiConfigurada =
+    !!status?.apiProduct?.found && status.apiProduct.active !== false && !!status.prices.api?.found && status.prices.api.active !== false;
   const podeMarcar =
     !!status?.connected && status.webhook.found && !status.webhook.error && status.webhook.missingEvents.length > 0;
 
@@ -146,6 +173,57 @@ export function StripeConnectionStatus() {
         </Card>
       ) : null}
 
+      {status?.connected ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>API e integrações</CardTitle>
+            <CardDescription>
+              O produto e o preço mensal do complemento da API. Sem eles, o complemento não é cobrado.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-4 md:grid-cols-2">
+              {status.apiProduct ? <Produto check={status.apiProduct} titulo="API e integrações" /> : null}
+              {status.prices.api ? <Preco titulo="API e integrações" check={status.prices.api} /> : null}
+            </div>
+            {!apiConfigurada ? (
+              <Button onClick={() => criarApi.mutate()} disabled={criarApi.isPending} className="gap-2">
+                {criarApi.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Criar produto e preço da API no Stripe
+              </Button>
+            ) : null}
+            {apiCriada ? (
+              <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/20" data-testid="api-ids">
+                {(
+                  [
+                    [apiCriada.productEnv, apiCriada.productId],
+                    [apiCriada.priceEnv, apiCriada.priceId],
+                  ] as const
+                ).map(([nome, valor]) => (
+                  <div key={nome} className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium">{nome}</span>
+                    <code className="break-all rounded bg-background px-1.5 py-0.5 text-xs">{valor}</code>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1"
+                      onClick={() => copiar(valor)}
+                      aria-label={`Copiar ${nome}`}
+                    >
+                      <Copy className="h-3.5 w-3.5" /> Copiar
+                    </Button>
+                  </div>
+                ))}
+                <p>
+                  Cole estes dois valores nos secrets STRIPE_PRODUCT_API e STRIPE_PRICE_API do Supabase (Edge Functions ›
+                  Secrets) e publique de novo as funções.
+                </p>
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Webhook</CardTitle>
@@ -213,11 +291,11 @@ export function StripeConnectionStatus() {
   );
 }
 
-function Produto({ check }: { check: ProductCheck }) {
+function Produto({ check, titulo = 'Atendente extra' }: { check: ProductCheck; titulo?: string }) {
   return (
     <div className="space-y-1 rounded-md border p-3 text-sm" data-testid={`produto-${check.env}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className="font-medium">Atendente extra</span>
+        <span className="font-medium">{titulo}</span>
         {check.found && check.active !== false ? (
           <Badge className="bg-green-100 text-green-800 hover:bg-green-100">OK</Badge>
         ) : (

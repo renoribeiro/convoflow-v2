@@ -55,6 +55,7 @@ vi.mock('@/pages/TermsOfService', padrao('Termos'));
 vi.mock('@/pages/PrivacyPolicy', padrao('Privacidade'));
 vi.mock('@/pages/DataDeletion', padrao('ExclusaoDeDados'));
 vi.mock('@/pages/Cadastro', padrao('Cadastro'));
+vi.mock('@/pages/ApiDocs', padrao('ApiDocs'));
 vi.mock('@/pages/Index', padrao('Index'));
 vi.mock('@/pages/Conversations', padrao('Conversations'));
 vi.mock('@/pages/Contacts', padrao('Contacts'));
@@ -156,6 +157,7 @@ vi.mock('@/hooks/useTenantAccess', () => ({
 }));
 
 import App from '@/App';
+import { API_ADDON_RELEASED } from '@/lib/api/release';
 
 // ----------------------------------------------------------------- apoio --
 function abrir(endereco: string) {
@@ -220,6 +222,22 @@ describe('App.tsx — rotas públicas', () => {
     abrir(caminho);
     expect(await tela('Auth')).toBeInTheDocument();
     await esperarCaminho('/auth');
+  });
+});
+
+describe('App.tsx — documentação da API', () => {
+  // Segue a chave do site (src/lib/api/release.ts): desligada, /api volta à
+  // página inicial; ligada, abre a documentação sem login.
+  it(API_ADDON_RELEASED ? '/api abre a documentação sem login' : '/api leva à página inicial enquanto o complemento está desligado', async () => {
+    estado.sessao = false;
+    abrir('/api');
+    if (API_ADDON_RELEASED) {
+      expect(await tela('ApiDocs')).toBeInTheDocument();
+      expect(window.location.pathname).toBe('/api');
+    } else {
+      expect(await tela('Landing')).toBeInTheDocument();
+      await esperarCaminho('/');
+    }
   });
 });
 

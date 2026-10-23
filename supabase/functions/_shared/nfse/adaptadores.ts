@@ -298,6 +298,7 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
       return resumoDaFatura(await res.json(), {
         precoLojaExtra: Deno.env.get('STRIPE_PRICE_STORE_SLOT') ?? null,
         produtoAtendente: Deno.env.get('STRIPE_PRODUCT_ATTENDANT') ?? null,
+        produtoApi: Deno.env.get('STRIPE_PRODUCT_API') ?? null,
       });
     },
     async codigoIbge(cidade, uf) {

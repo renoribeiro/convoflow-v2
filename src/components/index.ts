@@ -7,16 +7,10 @@ export { AdvancedSettings } from './settings/AdvancedSettings';
 // Monitoring Components
 export { SystemMonitor } from './monitoring/SystemMonitor';
 
-// Integration Components
-export { IntegrationManager } from './integrations/IntegrationManager';
-
 // Reports Components
 export { AdvancedReports } from './reports/AdvancedReports';
 
 // Templates Components
-
-// API Components
-export { ApiSettings } from './api/ApiSettings';
 
 // Backup Components
 export { BackupManager } from './backup/BackupManager';
@@ -110,16 +104,8 @@ export const MonitoringComponents = {
   SystemMonitor
 };
 
-export const IntegrationComponents = {
-  IntegrationManager
-};
-
 export const ReportsComponents = {
   AdvancedReports
-};
-
-export const ApiComponents = {
-  ApiSettings
 };
 
 export const BackupComponents = {
@@ -137,14 +123,8 @@ export const ConvoFlowComponents = {
   // Monitoring
   SystemMonitor,
   
-  // Integrations
-  IntegrationManager,
-  
   // Reports
   AdvancedReports,
-  
-  // API
-  ApiSettings,
   
   // Backup
   BackupManager
@@ -173,23 +153,11 @@ export const ComponentMetadata = {
     category: 'Monitoring',
     features: ['Métricas de sistema', 'Status de serviços', 'Alertas', 'Gráficos de performance']
   },
-  IntegrationManager: {
-    name: 'IntegrationManager',
-    description: 'Gerenciamento de integrações com APIs externas',
-    category: 'Integrations',
-    features: ['Integrações ativas', 'Templates de integração', 'Configuração de APIs', 'Monitoramento']
-  },
   AdvancedReports: {
     name: 'AdvancedReports',
     description: 'Sistema de relatórios avançados e personalizáveis',
     category: 'Reports',
     features: ['Relatórios personalizados', 'Múltiplos tipos de gráfico', 'Filtros avançados', 'Exportação']
-  },
-  ApiSettings: {
-    name: 'ApiSettings',
-    description: 'Configurações e documentação de APIs',
-    category: 'API',
-    features: ['Gerenciamento de endpoints', 'Chaves de API', 'Webhooks', 'Documentação interativa']
   },
   BackupManager: {
     name: 'BackupManager',

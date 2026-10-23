@@ -8,38 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
 import { WEBHOOK_EVENT_TYPES, validateWebhookForm } from '@/lib/webhooks';
-import { 
-  Settings, 
-  Webhook, 
-  Database, 
-  Mail, 
-  ShoppingCart, 
-  BarChart3, 
-  Zap, 
-  CheckCircle, 
-  AlertCircle,
-  ExternalLink,
-  Copy,
-  RefreshCw,
-  CreditCard
-} from 'lucide-react';
-
-interface Integration {
-  id: string;
-  name: string;
-  description: string;
-  icon: any;
-  category: 'crm' | 'ecommerce' | 'analytics' | 'automation' | 'communication' | 'payment';
-  status: 'connected' | 'disconnected' | 'error';
-  config?: Record<string, any>;
-  webhook_url?: string;
-}
+import { Settings, Webhook, Copy } from 'lucide-react';
 
 interface WebhookConfig {
   id: string;
@@ -51,7 +24,6 @@ interface WebhookConfig {
 }
 
 export const IntegrationSettings = () => {
-  const [activeTab, setActiveTab] = useState('integrations');
   const [webhookForm, setWebhookForm] = useState<Partial<WebhookConfig>>({
     name: '',
     url: '',
@@ -63,7 +35,6 @@ export const IntegrationSettings = () => {
   const { toast } = useToast();
 
   // Webhooks de saída configurados pela Conta (tabela `webhooks`, tenant-scoped).
-  // (Os cards de "Integrações" abaixo são um catálogo estático — não há tabela.)
   const { data: webhooksRaw = [] } = useSupabaseQuery({
     table: 'webhooks',
     queryKey: ['webhooks'],
@@ -97,74 +68,6 @@ export const IntegrationSettings = () => {
     invalidateQueries: [['webhooks']],
     successMessage: 'Webhook removido!'
   });
-  
-  // Integrações disponíveis
-  const availableIntegrations: Integration[] = [
-    {
-      id: 'hubspot',
-      name: 'HubSpot',
-      description: 'Sincronize contatos e leads com o HubSpot CRM',
-      icon: Database,
-      category: 'crm',
-      status: 'disconnected'
-    },
-    {
-      id: 'salesforce',
-      name: 'Salesforce',
-      description: 'Integração completa com Salesforce CRM',
-      icon: Database,
-      category: 'crm',
-      status: 'disconnected'
-    },
-    {
-      id: 'shopify',
-      name: 'Shopify',
-      description: 'Conecte sua loja Shopify para automação de vendas',
-      icon: ShoppingCart,
-      category: 'ecommerce',
-      status: 'disconnected'
-    },
-    {
-      id: 'woocommerce',
-      name: 'WooCommerce',
-      description: 'Integração com lojas WooCommerce',
-      icon: ShoppingCart,
-      category: 'ecommerce',
-      status: 'disconnected'
-    },
-    {
-      id: 'google-analytics',
-      name: 'Google Analytics',
-      description: 'Rastreamento avançado de conversões',
-      icon: BarChart3,
-      category: 'analytics',
-      status: 'disconnected'
-    },
-    {
-      id: 'zapier',
-      name: 'Zapier',
-      description: 'Conecte com mais de 5000 aplicações',
-      icon: Zap,
-      category: 'automation',
-      status: 'disconnected'
-    },
-    {
-      id: 'mailchimp',
-      name: 'Mailchimp',
-      description: 'Sincronização de listas de e-mail marketing',
-      icon: Mail,
-      category: 'communication',
-      status: 'disconnected'
-    },
-    {
-      id: 'stripe',
-      name: 'Stripe',
-      description: 'Gateway de pagamento para processar assinaturas e cobranças',
-      icon: CreditCard,
-      category: 'payment',
-      status: 'disconnected'
-    }
-  ];
   
   const eventTypes = WEBHOOK_EVENT_TYPES;
 
@@ -232,42 +135,6 @@ export const IntegrationSettings = () => {
     });
   };
   
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-gray-400" />;
-    }
-  };
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'connected':
-        return <Badge variant="default" className="bg-green-500">Conectado</Badge>;
-      case 'error':
-        return <Badge variant="destructive">Erro</Badge>;
-      default:
-        return <Badge variant="secondary">Desconectado</Badge>;
-    }
-  };
-  
-  const groupedIntegrations = availableIntegrations.reduce((acc, integration) => {
-    (acc[integration.category] ??= []).push(integration);
-    return acc;
-  }, {} as Record<string, Integration[]>);
-  
-  const categoryLabels = {
-    crm: 'CRM',
-    ecommerce: 'E-commerce',
-    analytics: 'Analytics',
-    automation: 'Automação',
-    communication: 'Comunicação',
-    payment: 'Pagamentos'
-  };
-  
   return (
     <Card>
       <CardHeader>
@@ -277,106 +144,7 @@ export const IntegrationSettings = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-2">
-            <TabsTrigger value="integrations">Integrações</TabsTrigger>
-            <TabsTrigger value="webhooks">Webhooks</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="integrations" className="space-y-6">
-            <div className="text-sm text-muted-foreground">
-              Conecte o ConvoFlow com suas ferramentas favoritas para automatizar fluxos de trabalho.
-            </div>
-            
-            {Object.entries(groupedIntegrations).map(([category, integrations]) => (
-              <div key={category}>
-                <h3 className="text-lg font-semibold mb-3">{categoryLabels[category as keyof typeof categoryLabels]}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {integrations.map((integration) => {
-                    const Icon = integration.icon;
-                    return (
-                      <Card key={integration.id} className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-primary/10 rounded-lg">
-                                <Icon className="h-5 w-5 text-primary" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium">{integration.name}</h4>
-                                {getStatusIcon(integration.status)}
-                              </div>
-                            </div>
-                            {getStatusBadge(integration.status)}
-                          </div>
-                          
-                          <p className="text-sm text-muted-foreground mb-4">
-                            {integration.description}
-                          </p>
-                          
-                          <div className="flex gap-2">
-                            <Button 
-                              size="sm" 
-                              variant={integration.status === 'connected' ? 'outline' : 'default'}
-                              className="flex-1"
-                              onClick={() => {
-                                toast({
-                                  title: 'Integração em desenvolvimento',
-                                  description: `A integração com ${integration.name} estará disponível em breve.`
-                                });
-                              }}
-                            >
-                              {integration.status === 'connected' ? 'Configurar' : 'Conectar'}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost" 
-                              onClick={() => {
-                                window.open(`https://www.${integration.id}.com`, '_blank');
-                              }}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-                {category !== 'communication' && <Separator className="my-6" />}
-              </div>
-            ))}
-            
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Precisa de uma integração específica?</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Entre em contato conosco para solicitar novas integrações ou use nossa API para criar integrações personalizadas.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  onClick={() => {
-                    toast({
-                      title: 'Solicitação enviada',
-                      description: 'Entraremos em contato em breve para discutir sua solicitação de integração.'
-                    });
-                  }}
-                >
-                  Solicitar Integração
-                </Button>
-                {/* Apontava para https://docs.convoflow.com/api — dominio que
-                    nao resolve (DNS falha), ou seja, abria uma aba de erro.
-                    Enquanto nao existir site de documentacao, o botao diz que
-                    nao existe em vez de fingir que leva a algum lugar. */}
-                <ComingSoonButton size="sm" variant="outline" motivo="Documentação da API em breve">
-                  Ver Documentação da API
-                </ComingSoonButton>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="webhooks" className="space-y-6">
+        <div className="space-y-6">
             <div className="text-sm text-muted-foreground">
               Configure webhooks para receber notificações em tempo real sobre eventos do sistema.
             </div>
@@ -563,8 +331,7 @@ export const IntegrationSettings = () => {
                 Ver Documentação
               </ComingSoonButton>
             </div>
-          </TabsContent>
-        </Tabs>
+        </div>
       </CardContent>
     </Card>
   );
