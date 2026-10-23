@@ -513,6 +513,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Se o cliente escreveu de novo depois da sua resposta pelo app, ou enquanto você respondia, a mensagem dele continua não lida e a conversa fica em "Aguardando". Resposta pelo app só com foto, áudio ou figurinha não aparece nesta tela e não zera nada; nesse caso, abra a conversa aqui.',
       'O nome e o @ do cliente do Instagram são buscados no próprio Instagram na primeira vez que a conversa aparece para alguém da Loja, e ficam guardados. Até lá, ou se o cliente bloqueou a conta da Loja, a conversa aparece como "Cliente do Instagram". Um nome que você digitou em "Editar Contato" nunca é trocado pelo do Instagram.',
       'No lado do Instagram não existem "Nova Conversa" nem o botão de sincronizar: o Instagram não deixa começar conversa nem puxar histórico. Quem escreve para a conta aparece sozinho na lista, e você responde por aqui.',
+      'Foto, áudio, vídeo e documento da conversa só abrem para quem está logado e vê aquela conversa: outra Loja não abre, e o atendente que não vê a conversa também não. O endereço do arquivo (o de "Baixar" ou o de abrir o documento numa aba) vale por 1 hora: copiado e mandado a alguém, ele para de abrir depois disso, e quem não está logado não abre nunca. Para passar o arquivo a outra pessoa, baixe e mande o arquivo, não o endereço.',
+      'Se no lugar da mídia aparecer "carregando…", ela chega em instantes. "Não foi possível abrir o arquivo agora" quer dizer que o link não veio: recarregue a página. Se continuar, avise o suporte com o horário da mensagem.',
     ],
     category: 'tela',
     area: 'Operação',

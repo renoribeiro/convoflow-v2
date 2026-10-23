@@ -89,7 +89,7 @@ vi.mock('@/integrations/supabase/client', () => {
 });
 
 const uploadWhatsAppMedia = vi.fn(async (file: File) => ({
-  publicUrl: `https://exemplo.com.br/whatsapp-media/${file.name}`,
+  signedUrl: `https://exemplo.com.br/storage/v1/object/sign/whatsapp-media/t/${file.name}?token=FAKE`,
   path: `t/${file.name}`,
   mimeType: file.type,
   fileName: file.name,
@@ -238,6 +238,18 @@ describe('gravação sai como mensagem de voz', () => {
       caption: undefined,
     }));
     expect(ultimaGravacao()).toMatchObject({ message_type: 'audio', content: '', status: 'sent' });
+  });
+
+  it('bucket privado: o provedor recebe o link temporário e o caminho; a mensagem grava só o caminho', async () => {
+    renderChat();
+    await act(async () => {
+      await gravador.props!.onSend(new File(['x'], 'voz-1.ogg', { type: 'audio/ogg' }), { voz: true });
+    });
+    expect(sendMedia).toHaveBeenCalledWith('5511999998888', expect.objectContaining({
+      mediaUrl: 'https://exemplo.com.br/storage/v1/object/sign/whatsapp-media/t/voz-1.ogg?token=FAKE',
+      mediaPath: 't/voz-1.ogg',
+    }));
+    expect(ultimaGravacao()).toMatchObject({ media_url: 't/voz-1.ogg' });
   });
 
   it('fora da janela, um envio que escapou da trava é barrado antes do upload e devolve false', async () => {

@@ -754,8 +754,11 @@ export const ChatWindow = ({
     // Áudio não leva legenda no WhatsApp: nenhum provider a entrega. Não vai
     // e não é gravada (a conversa não pode mostrar texto que o cliente não viu).
     const legenda = mediaType === 'audio' ? '' : caption;
+    // Bucket privado: Evolution e WAHA baixam pelo link temporário do upload;
+    // a Meta recebe o caminho e o servidor assina (whatsapp-send-message).
     const providerResult = await active.adapter.sendMedia(phone, {
-      mediaUrl: uploaded.publicUrl,
+      mediaUrl: uploaded.signedUrl,
+      mediaPath: uploaded.path,
       mediaType,
       mimeType: uploaded.mimeType,
       fileName: uploaded.fileName,
@@ -774,7 +777,8 @@ export const ChatWindow = ({
       content: legenda,
       direction: 'outbound',
       message_type: mediaType,
-      media_url: uploaded.publicUrl,
+      // Só o caminho: o link vence; a bolha pede um novo (useMediaLinks).
+      media_url: uploaded.path,
       status,
       // Guarda o id do provider (wamid) p/ o webhook avançar delivered/read.
       evolution_message_id: providerResult?.providerMessageId ?? null,

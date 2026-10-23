@@ -157,6 +157,9 @@ export class MetaAdapter implements IWhatsAppProvider {
       type: payload.mediaType,
       to: toPhone,
       media_url: payload.mediaUrl,
+      // Com o caminho, o servidor assina de novo com o token de quem envia (a
+      // regra do Storage decide) e ignora media_url.
+      media_path: payload.mediaPath,
       mime_type: payload.mimeType,
       file_name: payload.fileName,
       caption: payload.caption,

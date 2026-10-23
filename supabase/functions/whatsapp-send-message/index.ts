@@ -5,6 +5,7 @@ import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { camposDaFalhaMeta } from '../_shared/meta-error-fields.ts';
 import { montarAudioMeta } from './audio.ts';
+import { caminhoDeEnvioValido, MEDIA_LINK_TTL_S, WHATSAPP_MEDIA_BUCKET } from '../_shared/media-links.ts';
 
 /**
  * whatsapp-send-message
@@ -30,6 +31,12 @@ interface SendRequest {
   preview_url?: boolean;
   // media (image/video/audio/document)
   media_url?: string;
+  /**
+   * Anexo do chat (bucket privado whatsapp-media): o caminho do arquivo. Quando
+   * vem, o link que vai para a Meta é assinado AQUI, com o token de quem envia,
+   * e `media_url` é ignorado.
+   */
+  media_path?: string;
   mime_type?: string;
   file_name?: string;
   caption?: string;
@@ -168,6 +175,28 @@ Deno.serve(async (req: Request) => {
         400,
       );
     }
+  }
+
+  // Anexo do chat: a Meta baixa por `link`, e o bucket é privado. O link de 1 h
+  // sai daqui, assinado COM O TOKEN de quem envia: a regra do Storage decide
+  // (pasta da Loja e arquivo que a própria pessoa subiu). Caminho de outra Loja,
+  // de inbound/ ou torto nem chega a ser assinado. O audio.ts e os casos abaixo
+  // seguem lendo `media_url`, que passa a ser este link.
+  if (body.media_path !== undefined && ['image', 'video', 'audio', 'document'].includes(body.type)) {
+    const caminho = caminhoDeEnvioValido(body.media_path, instance.tenant_id);
+    if (!caminho) return jsonResponse({ ok: false, error: 'Arquivo inválido para este número.' }, 400);
+    const comoUsuario = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false },
+    });
+    const { data: assinado, error: signError } = await comoUsuario.storage
+      .from(WHATSAPP_MEDIA_BUCKET)
+      .createSignedUrl(caminho, MEDIA_LINK_TTL_S);
+    if (signError || !assinado?.signedUrl) {
+      logger.warn('Anexo sem link para envio', { instance_id: instance.id, error: signError?.message });
+      return jsonResponse({ ok: false, error: 'Arquivo não encontrado. Anexe de novo e envie.' }, 403);
+    }
+    body.media_url = assinado.signedUrl;
   }
 
   // Token do Vault
