@@ -57,10 +57,25 @@ export interface StripeStatus {
   mode: StripeMode;
   error: string | null;
   account: { id: string; name: string | null; email: string | null; country: string | null } | null;
-  prices: { gerente: PriceCheck; storeSlot: PriceCheck };
+  /** `api` (STRIPE_PRICE_API) é opcional até o servidor novo estar no ar. */
+  prices: { gerente: PriceCheck; storeSlot: PriceCheck; api?: PriceCheck };
   /** Produto "Atendente extra" (secret STRIPE_PRODUCT_ATTENDANT). */
   attendantProduct?: ProductCheck;
+  /** Produto "API e integrações" (secret STRIPE_PRODUCT_API). */
+  apiProduct?: ProductCheck;
   webhook: WebhookCheck;
+}
+
+/** Resposta de stripe-admin › ensure_api_product. */
+export interface EnsureApiProductResult {
+  productEnv: 'STRIPE_PRODUCT_API';
+  priceEnv: 'STRIPE_PRICE_API';
+  productId: string;
+  priceId: string;
+  createdProduct: boolean;
+  createdPrice: boolean;
+  productMatchesSecret: boolean;
+  priceMatchesSecret: boolean;
 }
 
 export interface ProductCheck {

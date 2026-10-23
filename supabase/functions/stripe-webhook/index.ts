@@ -15,6 +15,8 @@ const cryptoProvider = Stripe.createSubtleCryptoProvider();
 const SLOT_PRICE = Deno.env.get('STRIPE_PRICE_STORE_SLOT') ?? '';
 // Produto 'Atendente extra' (reconhecido pelo PRODUTO, não pelo preço). Vazio = não mexe.
 const ATTENDANT_PRODUCT = Deno.env.get('STRIPE_PRODUCT_ATTENDANT') ?? '';
+// Produto 'API e integrações' (reconhecido pelo PRODUTO). Vazio = não mexe.
+const API_PRODUCT = Deno.env.get('STRIPE_PRODUCT_API') ?? '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -119,6 +121,7 @@ serve(async (req) => {
       },
       slotPriceId: SLOT_PRICE,
       attendantProductId: ATTENDANT_PRODUCT,
+      apiProductId: API_PRODUCT,
       now: () => new Date(),
     });
 

@@ -34,6 +34,7 @@ import {
   syncAttendantItem,
   type AttendantBillingDeps,
 } from './attendant-billing.ts';
+import { API_PRICE_ENV, API_PRODUCT_ENV, ensureApiProduct } from './api-addon.ts';
 
 // ---------------------------------------------------------------------------
 // Contrato
@@ -45,6 +46,8 @@ export type StripeAdminAction =
   | 'set_attendant_price'
   | 'sync_attendant_item'
   | 'ensure_attendant_product'
+  // Complemento "API e integrações" (api-addon.ts): garante produto e preço.
+  | 'ensure_api_product'
   // Marca no endpoint do stripe-webhook os eventos de WEBHOOK_EVENTS que faltam.
   | 'ensure_webhook_events'
   | 'get_status'
@@ -73,6 +76,9 @@ export const BACKEND_ACTIONS: readonly StripeAdminAction[] = [
   'archive_coupon',
   'attendant_status',
   'ensure_attendant_product',
+  // Idempotente e sem dinheiro envolvido, como o do atendente: cria (ou acha)
+  // o produto "API e integrações" e o preço de R$ 99,90/mês.
+  'ensure_api_product',
   'ensure_webhook_events',
 ];
 
@@ -514,9 +520,11 @@ export interface StripeStatus {
   mode: StripeMode;
   error: string | null;
   account: { id: string; name: string | null; email: string | null; country: string | null } | null;
-  prices: { gerente: PriceCheck; storeSlot: PriceCheck };
+  prices: { gerente: PriceCheck; storeSlot: PriceCheck; api: PriceCheck };
   /** Produto "Atendente extra" (secret STRIPE_PRODUCT_ATTENDANT). */
   attendantProduct: ProductCheck;
+  /** Produto "API e integrações" (secret STRIPE_PRODUCT_API). */
+  apiProduct: ProductCheck;
   webhook: WebhookCheck;
 }
 
@@ -534,9 +542,14 @@ function emptyProduct(env: string, id: string | undefined): ProductCheck {
   return { env, configured: !!id, found: false, id: id ?? null, active: null, name: null, error: null };
 }
 
-async function checkProduct(stripe: StripeLike, env: string, id: string | undefined): Promise<ProductCheck> {
+async function checkProduct(
+  stripe: StripeLike,
+  env: string,
+  id: string | undefined,
+  semSecret = 'atendentes extras não são cobrados',
+): Promise<ProductCheck> {
   const vazio = emptyProduct(env, id);
-  if (!id) return { ...vazio, error: `A secret ${env} não está definida: atendentes extras não são cobrados.` };
+  if (!id) return { ...vazio, error: `A secret ${env} não está definida: ${semSecret}.` };
   try {
     const p = await stripe.products.retrieve(id);
     if (p?.deleted) return { ...vazio, error: `O produto de ${env} foi apagado no Stripe.` };
@@ -664,6 +677,8 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
   const gerenteId = deps.getEnv(PRICE_GERENTE_ENV)?.trim() || undefined;
   const slotId = deps.getEnv(PRICE_STORE_SLOT_ENV)?.trim() || undefined;
   const attendantId = deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || undefined;
+  const apiProductId = deps.getEnv(API_PRODUCT_ENV)?.trim() || undefined;
+  const apiPriceId = deps.getEnv(API_PRICE_ENV)?.trim() || undefined;
   const semConexao = (secretConfigured: boolean, mode: StripeMode, error: string): StripeStatus => ({
     secretConfigured,
     connected: false,
@@ -673,8 +688,10 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
     prices: {
       gerente: emptyPrice(PRICE_GERENTE_ENV, gerenteId),
       storeSlot: emptyPrice(PRICE_STORE_SLOT_ENV, slotId),
+      api: emptyPrice(API_PRICE_ENV, apiPriceId),
     },
     attendantProduct: emptyProduct(ATTENDANT_PRODUCT_ENV, attendantId),
+    apiProduct: emptyProduct(API_PRODUCT_ENV, apiProductId),
     webhook: {
       url,
       expectedEvents: [...WEBHOOK_EVENTS],
@@ -699,10 +716,12 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
     return semConexao(true, cliente.mode, `A chave não conectou ao Stripe: ${mensagem(e)}`);
   }
 
-  const [gerente, storeSlot, attendantProduct, webhook] = await Promise.all([
+  const [gerente, storeSlot, attendantProduct, api, apiProduct, webhook] = await Promise.all([
     checkPrice(cliente.stripe, PRICE_GERENTE_ENV, gerenteId),
     checkPrice(cliente.stripe, PRICE_STORE_SLOT_ENV, slotId),
     checkProduct(cliente.stripe, ATTENDANT_PRODUCT_ENV, attendantId),
+    checkPrice(cliente.stripe, API_PRICE_ENV, apiPriceId),
+    checkProduct(cliente.stripe, API_PRODUCT_ENV, apiProductId, 'o complemento de API não é cobrado'),
     checkWebhook(cliente.stripe, url),
   ]);
 
@@ -712,8 +731,9 @@ export async function getStatus(deps: StripeAdminDeps): Promise<StripeStatus> {
     mode: cliente.mode,
     error: null,
     account,
-    prices: { gerente, storeSlot },
+    prices: { gerente, storeSlot, api },
     attendantProduct,
+    apiProduct,
     webhook,
   };
 }
@@ -1298,6 +1318,13 @@ export async function handleStripeAdmin(
         const { stripe } = await getStripeClient(deps);
         const configurado = deps.getEnv(ATTENDANT_PRODUCT_ENV)?.trim() || null;
         return ok({ env: ATTENDANT_PRODUCT_ENV, ...(await ensureAttendantProduct(stripe, configurado)) });
+      }
+
+      case 'ensure_api_product': {
+        const { stripe } = await getStripeClient(deps);
+        const produto = deps.getEnv(API_PRODUCT_ENV)?.trim() || null;
+        const preco = deps.getEnv(API_PRICE_ENV)?.trim() || null;
+        return ok({ productEnv: API_PRODUCT_ENV, priceEnv: API_PRICE_ENV, ...(await ensureApiProduct(stripe, produto, preco)) });
       }
 
       default:

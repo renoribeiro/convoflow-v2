@@ -109,6 +109,12 @@ test.describe('guardas', () => {
     await expect(page).toHaveURL(/\/auth$/);
   });
 
+  test('/api leva à página inicial enquanto o complemento está desligado', async ({ context }) => {
+    const page = await abrirComo(context, 'gerente', { sessao: false });
+    await page.goto('/api');
+    await expect(page).toHaveURL(/\/$/);
+  });
+
   test('/register leva ao login', async ({ context }) => {
     const page = await abrirComo(context, 'gerente', { sessao: false });
     await page.goto('/register');

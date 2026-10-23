@@ -102,7 +102,7 @@ describe('Help — renderização', () => {
     renderHelp();
 
     const items = allItems();
-    expect(items.length).toBe(Object.keys(FEATURE_HELP).length);
+    expect(items.length).toBe(Object.values(FEATURE_HELP).filter((e) => !e.oculta).length);
 
     const missing = items
       .filter((item) => screen.queryAllByText(item.title).length === 0)

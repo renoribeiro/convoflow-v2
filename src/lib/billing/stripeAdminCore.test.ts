@@ -344,6 +344,8 @@ describe('quem pode chamar', () => {
         'archive_coupon', 'billing_overview', 'create_coupon', 'get_status', 'list_coupons',
         // atendentes extras: só ler o estado e garantir o produto (sem dinheiro)
         'attendant_status', 'ensure_attendant_product',
+        // complemento de API: garantir o produto e o preço (sem dinheiro)
+        'ensure_api_product',
         // nota fiscal, parte 1: marcar no endpoint os eventos que faltam
         'ensure_webhook_events',
       ].sort(),

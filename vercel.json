@@ -6,6 +6,16 @@
   },
   "rewrites": [
     {
+      "source": "/mcp",
+      "has": [{ "type": "host", "value": "api.convoflow.com.br" }],
+      "destination": "https://pqjkuwyshybxldzpfbbs.supabase.co/functions/v1/api-mcp"
+    },
+    {
+      "source": "/(.*)",
+      "has": [{ "type": "host", "value": "api.convoflow.com.br" }],
+      "destination": "https://pqjkuwyshybxldzpfbbs.supabase.co/functions/v1/api-v1/$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     },

@@ -51,6 +51,7 @@ import { accountStatePatch, checkboxValueFor, profileStatusOf } from '@/lib/acco
 import { BillingDashboard } from '@/components/admin/billing/BillingDashboard';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ligarApiManual, podeLiberarApiManual } from '@/lib/api/addon';
 import { adminAccessLabel, type AccessLabelTone } from '@/lib/billing/subscriptionView';
 
 interface User {
@@ -189,7 +190,7 @@ const AdminDashboard = () => {
   const { data: tenantsRows = [], refetch: refetchTenants } = useSupabaseQuery({
     table: 'tenants',
     queryKey: ['admin-tenants-access'],
-    select: 'id, name, kind, parent_tenant_id, subscription_status, trial_ends_at, subscription_will_cancel, subscription_cancel_at, manual_access_granted, manual_access_granted_at',
+    select: 'id, name, kind, parent_tenant_id, subscription_status, trial_ends_at, subscription_will_cancel, subscription_cancel_at, manual_access_granted, manual_access_granted_at, api_addon_manual',
     orderBy: [{ column: 'name', ascending: true }],
     enabled: !!user && !authLoading && isSuperAdmin,
   });
@@ -443,6 +444,30 @@ const AdminDashboard = () => {
         </Badge>
       );
 
+    const apiLiberada = !!t?.api_addon_manual;
+    const seloApi = apiLiberada ? (
+      <Badge variant="outline" className="border-purple-300 text-purple-700" title="API liberada pelo superadmin para esta Conta">
+        API liberada
+      </Badge>
+    ) : null;
+    if (seloApi) {
+      return (
+        <div className="flex flex-col items-start gap-1">
+          <div className="flex flex-wrap items-center gap-1">
+            {selo}
+            {seloApi}
+          </div>
+          {herda || acesso.note ? (
+            <span className="text-xs text-muted-foreground">
+              {herda ? `herda da Conta ${t?.name}` : ''}
+              {herda && acesso.note ? ' · ' : ''}
+              {acesso.note ?? ''}
+            </span>
+          ) : null}
+        </div>
+      );
+    }
+
     if (!herda && !acesso.note) return selo;
     if (!herda) {
       return (
@@ -596,6 +621,33 @@ const AdminDashboard = () => {
                   }
                 >
                   {liberado ? 'Revogar Acesso' : 'Liberar Manualmente'}
+                </Button>
+              );
+            })()}
+            {(() => {
+              const alvoApi = contaDeCobranca(user.tenant_id);
+              if (!alvoApi || !podeLiberarApiManual(alvoApi)) return null;
+              const apiLigada = !!alvoApi.api_addon_manual;
+              return (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await ligarApiManual(alvoApi.id, !apiLigada);
+                      toast.success(
+                        apiLigada
+                          ? `API desligada para a Conta ${alvoApi.name}.`
+                          : `API liberada para a Conta ${alvoApi.name}.`,
+                      );
+                      refetchTenants();
+                    } catch (error: any) {
+                      toast.error(error.message || 'Não foi possível alterar a API desta Conta.');
+                    }
+                  }}
+                  title={`${apiLigada ? 'Tirar' : 'Liberar'} a API da Conta ${alvoApi.name}`}
+                >
+                  {apiLigada ? 'Tirar API' : 'Liberar API'}
                 </Button>
               );
             })()}

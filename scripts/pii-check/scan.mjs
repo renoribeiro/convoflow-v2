@@ -247,6 +247,8 @@ const KEY_PATTERNS = [
   { name: 'segredo de webhook Stripe', re: /(?<![\w])whsec_[A-Za-z0-9+/=]{20,}/g },
   { name: 'chave Supabase', re: /(?<![\w])sb_(?:secret|publishable)_[A-Za-z0-9_-]{16,}/g, random: true },
   { name: 'token de acesso Supabase', re: /(?<![\w])sbp_[a-f0-9]{40}/g },
+  // Chave da API pública do ConvoFlow (api_chave_criar: cf_live_ + 32 letras e números).
+  { name: 'chave de API do ConvoFlow', re: /(?<![\w])cf_live_[A-Za-z0-9]{32}(?![A-Za-z0-9])/g, random: true },
   { name: 'JWT', re: /eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}/g },
   { name: 'chave AWS', re: /(?<![A-Z0-9])AKIA[0-9A-Z]{16}(?![A-Z0-9])/g },
   { name: 'token GitHub', re: /(?<![\w])(?:gh[pousr]_[A-Za-z0-9]{36,}|github_pat_[A-Za-z0-9_]{50,})/g },

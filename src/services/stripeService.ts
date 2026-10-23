@@ -4,6 +4,7 @@ import type {
   AttendantStatusInfo,
   AttendantSyncResult,
   BillingOverview,
+  EnsureApiProductResult,
   StripeStatus,
 } from '@/lib/billing/adminBilling';
 
@@ -109,6 +110,18 @@ class StripeService {
     });
     if (error) throw await this.functionError(error);
     return data as { url: string; added: string[]; alreadyComplete: boolean };
+  }
+
+  /**
+   * Admin: acha ou cria o produto e o preço mensal da API no Stripe. Devolve os
+   * dois ids para colar nos secrets STRIPE_PRODUCT_API e STRIPE_PRICE_API.
+   */
+  async ensureApiProduct(): Promise<EnsureApiProductResult> {
+    const { data, error } = await supabase.functions.invoke('stripe-admin', {
+      body: { action: 'ensure_api_product' }
+    });
+    if (error) throw await this.functionError(error);
+    return data as EnsureApiProductResult;
   }
 
   /**

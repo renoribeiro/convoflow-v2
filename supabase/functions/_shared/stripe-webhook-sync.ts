@@ -21,6 +21,7 @@
  */
 import { deriveExtraSlots } from './stripe-slot-sync.ts';
 import { chargedAttendants, type SubscriptionLike as AttendantSubscriptionLike } from './attendant-billing.ts';
+import { apiCharged, type SubscriptionLike as ApiSubscriptionLike } from './api-addon.ts';
 import {
   buildTenantPatch,
   decideSubscriptionWrite,
@@ -45,6 +46,11 @@ export interface StripeSyncDeps {
    * preço de Loja extra.
    */
   attendantProductId?: string;
+  /**
+   * Produto "API e integrações" (secret STRIPE_PRODUCT_API); vazio = não mexe
+   * em api_addon_cobrado. Reconhecido pelo PRODUTO.
+   */
+  apiProductId?: string;
   now: () => Date;
 }
 
@@ -116,6 +122,15 @@ export async function syncSubscriptionFromEvent(
   const atendentes = chargedAttendants(raw as AttendantSubscriptionLike, deps.attendantProductId ?? null);
 
   const patch = buildTenantPatch(state, decisao, extras, deps.now().toISOString(), atendentes);
+
+  // Complemento de API na assinatura (null = produto não configurado, não
+  // mexe). Com o item cobrando, o "até" de um desligamento antigo sai: quem
+  // manda é o item.
+  const api = apiCharged(raw as ApiSubscriptionLike, deps.apiProductId ?? null);
+  if (api !== null) {
+    patch.api_addon_cobrado = api;
+    if (api) patch.api_addon_ate = null;
+  }
   await deps.updateTenant(conta.id, patch);
 
   return {

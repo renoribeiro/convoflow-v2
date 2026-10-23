@@ -50,9 +50,12 @@ const WhatsAppNumbers = React.lazy(() => import("./pages/WhatsAppNumbers"));
 const ChatbotFlowBuilder = React.lazy(() => import("./pages/ChatbotFlowBuilder"));
 // Cadastro pelo site: pública, e só carrega com a chave ligada (release.ts).
 const Cadastro = React.lazy(() => import("./pages/Cadastro"));
+// Documentação pública da API: só existe com a chave API_ADDON_RELEASED ligada.
+const ApiDocs = React.lazy(() => import("./pages/ApiDocs"));
 
 // Use optimized query client configuration
 import { createQueryClient } from '@/lib/queryClient';
+import { API_ADDON_RELEASED, API_DOCS_PATH } from '@/lib/api/release';
 import { LOGIN_PATH, PUBLIC_SIGNUP_ENABLED, signupEntryPath } from '@/lib/signup/release';
 const queryClient = createQueryClient();
 
@@ -112,6 +115,15 @@ const App = () => (
                   )
                 } />
                 <Route path="/register" element={<Navigate to={signupEntryPath()} replace />} />
+                <Route path={API_DOCS_PATH} element={
+                  API_ADDON_RELEASED ? (
+                    <Suspense fallback={<PageLoadingSkeleton />}>
+                      <ApiDocs />
+                    </Suspense>
+                  ) : (
+                    <Navigate to="/" replace />
+                  )
+                } />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 <Route path="/exclusao-de-dados" element={<DataDeletion />} />

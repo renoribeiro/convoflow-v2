@@ -26,6 +26,7 @@ import {
 import { BLOCK_BY_TYPE } from '@/lib/chatbot/flowConstants';
 import { ALL_ENTRIES } from '@/components/automation/automationCatalog';
 import { ROLE_ORDER } from '@/types/userHierarchy';
+import { API_ADDON_RELEASED } from '@/lib/api/release';
 
 // ---------------------------------------------------------------------------
 // Varredura do src/ atrás de chaves de ajuda
@@ -223,7 +224,7 @@ describe('getHelpByCategory', () => {
       (sum, category) => sum + getHelpByCategory(category).flatMap((g) => g.entries).length,
       0,
     );
-    expect(total).toBe(Object.keys(FEATURE_HELP).length);
+    expect(total).toBe(Object.values(FEATURE_HELP).filter((e) => !e.oculta).length);
   });
 
   it('agrupa as telas na ordem do menu lateral', () => {
@@ -368,5 +369,22 @@ describe('getFeatureHelp', () => {
   it('devolve a entrada existente', () => {
     expect(getFeatureHelp('page:conversations')?.title).toBe('Conversas');
     expect(getFeatureHelp('ask_question')?.title).toBe('Fazer Pergunta');
+  });
+});
+
+describe('page:settings-api (segue a chave do site)', () => {
+  it(API_ADDON_RELEASED ? 'com a API liberada, aparece na página de Ajuda' : 'fica fora da página de Ajuda e da lista, mas o painel da aba ainda a encontra', () => {
+    const naPagina = HELP_CATEGORIES.flatMap((c) => getHelpByCategory(c)).flatMap((g) => g.entries);
+    if (API_ADDON_RELEASED) {
+      expect(naPagina.map((e) => e.key)).toContain('page:settings-api');
+    } else {
+      expect(naPagina.map((e) => e.key)).not.toContain('page:settings-api');
+      expect(getHelpEntries().map((e) => e.key)).not.toContain('page:settings-api');
+    }
+    expect(getAllHelpKeys()).toContain('page:settings-api');
+    const entrada = getFeatureHelp('page:settings-api');
+    expect(entrada?.title).toBe('Configurações › Chaves de API');
+    expect(entrada?.minRole).toBe('gerente');
+    expect(entrada?.oculta).toBe(!API_ADDON_RELEASED);
   });
 });

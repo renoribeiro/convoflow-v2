@@ -20,6 +20,7 @@
  */
 import type { UserRole } from '@/types/userHierarchy';
 import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
+import { API_ADDON_PRICE_LABEL, API_ADDON_RELEASED } from '@/lib/api/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS, TRIAL_OFFER_ENABLED } from '@/lib/billing/trialOffer';
 
 /**
@@ -81,6 +82,13 @@ export interface FeatureHelpEntry {
    * Gatilhos/Ações/Condições.
    */
   area?: string;
+  /**
+   * Entrada que ainda não pode aparecer na página de Ajuda (nem na busca): fica
+   * de fora de `getHelpEntries` e `getHelpByCategory`, mas `getFeatureHelp`
+   * continua devolvendo, porque o painel lateral da própria tela precisa dela.
+   * Usada pela API enquanto API_ADDON_RELEASED é false.
+   */
+  oculta?: boolean;
 }
 
 export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
@@ -1202,6 +1210,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Esqueceu a senha atual? Saia do sistema e use "Esqueci minha senha" na tela de login.',
       'Se aparecer "A senha atual não confere", confira se o Caps Lock está ligado.',
+      ...(API_ADDON_RELEASED
+        ? [
+            `Em "API e integrações" você contrata o acesso à API por ${API_ADDON_PRICE_LABEL} por mês: no primeiro mês entra na próxima fatura só o valor proporcional aos dias que faltam. Dá para contratar depois do teste grátis e com o cartão em dia. Ao desligar, o valor sai da fatura seguinte, sem crédito, e as chaves funcionam até o fim do mês já pago. As chaves são criadas na aba "Chaves de API".`,
+          ]
+        : []),
       'Senha longa protege mais que senha complicada.',
       'Para remover o acesso de quem saiu do time, vá em Equipe. Trocar a sua senha não afeta o login das outras pessoas.',
     ],
@@ -1225,6 +1238,35 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'URL que responde erro é tentada de novo por um tempo; URL errada só acumula tentativa.',
       'Isto é saída de dados. Receber mensagem do WhatsApp é a outra ponta, em Instâncias e APIs.',
       'Só o Gestor e o Gerente cadastram, alteram e veem os webhooks e as entregas. Para o Atendente a lista aparece vazia e salvar não funciona: um webhook recebe as mensagens da Loja inteira, inclusive as que o atendente não enxerga.',
+    ],
+    category: 'tela',
+    area: 'Configuração',
+  },
+  'page:settings-api': {
+    minRole: 'gerente',
+    oculta: !API_ADDON_RELEASED,
+    title: 'Configurações › Chaves de API',
+    whatItDoes:
+      'Cria as chaves que deixam outro sistema ler os dados da sua Conta: uma planilha, um painel, o n8n. A chave é a senha desse acesso. Quem tem a chave lê o que você permitiu, e nada além.',
+    howToConfigure: [
+      'Clique em "Nova chave" e dê um nome que diga onde ela vai ser usada, por exemplo Painel de vendas.',
+      'Marque o que a chave pode ler: contatos, conversas, funil, equipe e métricas já vêm marcados. O histórico das conversas (o texto das mensagens) e as fotos, áudios e documentos vêm desmarcados. Marque só se o serviço realmente precisar.',
+      'Fotos, áudios e documentos só funcionam junto com o histórico das conversas. Eles chegam por links que valem 15 minutos.',
+      'Em "Lojas", deixe "Todas as Lojas" (inclui as conversas da própria Conta) ou escolha só as Lojas que essa chave pode ver.',
+      'Escolha a validade: 30 dias, 90 dias ou 1 ano. Quando vence, a chave para de funcionar e você cria outra.',
+      'Leia e marque a confirmação, depois clique em "Criar chave".',
+      'Copie a chave na tela que abre e guarde num lugar seguro. Ela aparece uma única vez: se perder, revogue e crie outra.',
+      'Para cortar um acesso, clique em "Revogar" na linha da chave. Vale na hora e não dá para desfazer.',
+    ],
+    example:
+      'Você cria a chave Painel de vendas só com Contatos, Funil e Métricas, para as Lojas do Centro e da Zona Sul, com validade de 90 dias. O painel passa a mostrar o funil sem ninguém copiar planilha, e não enxerga nenhuma mensagem.',
+    tips: [
+      'Cada chave aceita 60 pedidos por minuto, e a Conta inteira, 5.000 por dia. Passou disso, o serviço recebe um aviso de limite e tenta de novo depois.',
+      'A Conta pode ter até 10 chaves em uso. A lista mostra quantas já foram criadas.',
+      'Em cada linha você vê o prefixo da chave, as permissões, as Lojas, quando expira e o último uso, com o endereço de rede de onde veio. Uso que você não reconhece é motivo para revogar.',
+      'Se a API for desligada na Conta, as chaves ficam suspensas, não apagadas. Ao ligar de novo elas voltam a funcionar.',
+      'A chave dá acesso aos dados dos seus clientes. Não cole em conversa, e-mail ou arquivo que outras pessoas leem.',
+      'Esta aba é só do Gerente.',
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1640,7 +1682,9 @@ export interface FeatureHelpGroup {
 
 /** Todas as entradas, na ordem de declaração, já com a chave embutida. */
 export function getHelpEntries(): FeatureHelpItem[] {
-  return Object.entries(FEATURE_HELP).map(([key, entry]) => ({ key, ...entry }));
+  return Object.entries(FEATURE_HELP)
+    .filter(([, entry]) => !entry.oculta)
+    .map(([key, entry]) => ({ key, ...entry }));
 }
 
 /** Todas as chaves existentes. */
