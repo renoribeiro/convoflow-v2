@@ -107,6 +107,13 @@ export const QUERY_KEYS = {
      * mudam quando alguém vincula ou desvincula, e os hooks invalidam na hora.
      */
     CONTACT_LINKS: 'contact-links',
+    /**
+     * Link temporário (1 h) da mídia das Conversas, um por mensagem (função
+     * media-links). O staleTime de 50 min é do próprio useMediaLinks: troca o
+     * link antes de ele vencer. Não pode conter "messages" no nome, senão cai
+     * na faixa realtime (getCacheConfig compara por substring).
+     */
+    MEDIA_LINKS: 'media-links',
     USAGE_LIMITS: 'usage-limits',
 } as const;
 

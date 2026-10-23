@@ -22,6 +22,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageStatusIcon } from './MessageStatusIcon';
 import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
+import { classifyMediaUrl, downloadHref } from '@/lib/media/whatsappMedia';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -46,7 +47,13 @@ export type RenderableMessage = {
   // (evolution-webhook: processMessageDelete), junto com content='[Mensagem apagada]'.
   status: 'sent' | 'delivered' | 'read' | 'failed' | 'pending' | 'deleted';
   message_type: string; // 'text' | 'image' | 'audio' | 'video' | 'document' | 'sticker' | 'location' | 'reaction' | 'contact' | 'deleted' | ...
+  /**
+   * Endereço PRONTO para o src/href: o link temporário do arquivo (o ChatWindow
+   * já trocou o valor gravado por ele; ver useMediaLinks) ou um link de fora.
+   */
   media_url?: string | null;
+  /** 'loading' enquanto o link não chegou; 'unavailable' quando não veio. */
+  media_state?: 'ready' | 'loading' | 'unavailable';
   // Optional metadata fields some webhooks store inside content as JSON.
   metadata?: Record<string, unknown> | null;
   quoted?: {
@@ -226,6 +233,18 @@ function MediaSticker({ url }: { url: string }) {
   return <img src={url} alt="Sticker" className="w-32 h-32 object-contain" />;
 }
 
+/** Arquivo do chat cujo link ainda não chegou, ou não veio. */
+function MediaPendente({ type, state }: { type: string; state: 'loading' | 'unavailable' }) {
+  const rotulo = pickMessagePreview({ message_type: type } as RenderableMessage);
+  return (
+    <p className="text-sm italic opacity-70" role="status">
+      {state === 'loading' ? `${rotulo} · carregando…` : `${rotulo} · não foi possível abrir o arquivo agora.`}
+    </p>
+  );
+}
+
+const TIPOS_DE_ARQUIVO = new Set(['image', 'video', 'audio', 'document', 'sticker']);
+
 function ReactionPlaceholder({ emoji }: { emoji?: string }) {
   return (
     <p className="text-sm italic opacity-80">
@@ -369,7 +388,14 @@ export function MessageBubble({
   const [expanded, setExpanded] = useState(false);
 
   const type = (message.message_type || 'text').toLowerCase();
-  const url = message.media_url ?? (typeof meta.media_url === 'string' ? meta.media_url : undefined);
+  // Arquivo nosso só abre pelo link temporário que já vem em media_url. O
+  // media_url de dentro do conteúdo (JSON de webhook antigo) só vale se for de fora.
+  const metaUrl = classifyMediaUrl(typeof meta.media_url === 'string' ? meta.media_url : null);
+  const url = message.media_url ?? (metaUrl.kind === 'external' ? metaUrl.url : undefined);
+  const midiaPendente =
+    !url && TIPOS_DE_ARQUIVO.has(type) && (message.media_state === 'loading' || message.media_state === 'unavailable')
+      ? message.media_state
+      : null;
   const caption = (typeof meta.caption === 'string' ? meta.caption : undefined) ?? message.content ?? undefined;
   const fileName = (typeof meta.file_name === 'string' ? meta.file_name : undefined) ?? (typeof meta.fileName === 'string' ? meta.fileName : undefined);
 
@@ -385,6 +411,7 @@ export function MessageBubble({
   const renderBody = () => {
     if (type === 'deleted' || meta.deleted === true) return <DeletedPlaceholder />;
     if (type === 'reaction') return <ReactionPlaceholder emoji={typeof meta.emoji === 'string' ? meta.emoji : message.content ?? undefined} />;
+    if (midiaPendente) return <MediaPendente type={type} state={midiaPendente} />;
 
     if (type === 'image' && url) {
       return <MediaImage url={url} caption={caption ?? null} onOpen={() => setImageOpen(true)} />;
@@ -512,7 +539,7 @@ export function MessageBubble({
             <img src={url} alt={caption ?? 'Imagem'} className="w-full h-auto rounded-lg" />
             {caption && <p className="text-sm whitespace-pre-wrap mt-2">{caption}</p>}
             <Button asChild variant="outline" size="sm" className="mt-2 w-fit">
-              <a href={url} target="_blank" rel="noopener noreferrer" download>
+              <a href={downloadHref(url)} target="_blank" rel="noopener noreferrer" download>
                 <Download className="w-4 h-4 mr-2" /> Baixar
               </a>
             </Button>
