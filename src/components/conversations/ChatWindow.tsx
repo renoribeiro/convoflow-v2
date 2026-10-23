@@ -97,6 +97,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { providerLabel, WhatsAppAdapterError } from '@/services/whatsapp';
 import { uploadWhatsAppMedia, detectMediaTypeFromMime } from '@/services/whatsapp/media-upload';
+import { useMediaLinks } from '@/hooks/useMediaLinks';
 import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
 import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
 import { logger } from '@/lib/logger';
@@ -533,10 +534,15 @@ export const ChatWindow = ({
     staleTime: 5 * 60 * 1000,
   });
 
+  // Mídia: o bucket é privado; a bolha recebe o link temporário (1 h) que a
+  // função media-links entrega a quem vê a mensagem. Ver useMediaLinks.
+  const resolverMidia = useMediaLinks(messages);
+
   // Hook precisa ficar ANTES dos early returns para manter contagem estável.
   const renderable: RenderableMessage[] = useMemo(() => {
     return messages.map((m: any) => {
       const meta = parseContentMeta(m.content ?? null);
+      const midia = resolverMidia(m.id, m.media_url ?? null);
       return {
         id: m.id,
         content: m.content ?? null,
@@ -544,7 +550,8 @@ export const ChatWindow = ({
         direction: m.direction,
         status: m.status,
         message_type: m.message_type ?? 'text',
-        media_url: m.media_url ?? null,
+        media_url: midia.url,
+        media_state: midia.state,
         metadata: Object.keys(meta).length ? meta : null,
         quoted: extractQuoted(meta),
         source: m.source ?? null,
@@ -555,7 +562,7 @@ export const ChatWindow = ({
         provider_message_id: m.evolution_message_id ?? null,
       };
     });
-  }, [messages, campaignNames]);
+  }, [messages, campaignNames, resolverMidia]);
 
   // ---- In-conversation search (client-side over loaded messages) ----
   const matchIds = useMemo(() => {
