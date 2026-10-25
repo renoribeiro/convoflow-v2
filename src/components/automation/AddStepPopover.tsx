@@ -1,7 +1,7 @@
 /**
  * Popover categorizado com busca para inserir uma etapa. Grupos AÇÕES /
- * CONDIÇÕES / TIMING. Itens sem suporte no motor aparecem desabilitados
- * ("Em breve"). Ao escolher, devolve o subtipo (ex.: 'send_message').
+ * CONDIÇÕES / TIMING. Itens sem suporte no motor não aparecem.
+ * Ao escolher, devolve o subtipo (ex.: 'send_message').
  */
 import React, { useState } from 'react';
 import {
@@ -13,7 +13,6 @@ import {
   CommandList,
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { ACTIONS, CONDITIONS, TIMINGS, CATEGORY_STYLES, type CatalogEntry } from './automationCatalog';
 
@@ -23,10 +22,16 @@ interface AddStepPopoverProps {
   align?: 'center' | 'start' | 'end';
 }
 
+// Itens `comingSoon` (sem suporte no motor) NÃO aparecem: até 2026-10-25 eles
+// ficavam na lista, desativados, com o selo "Em breve" (achado 85 do checkup,
+// ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md). Continuam no catálogo para
+// uma etapa antiga, se existir, ainda ter nome na tela.
+const disponivel = (item: CatalogEntry) => !item.comingSoon;
+
 const GROUPS: { heading: string; items: CatalogEntry[] }[] = [
-  { heading: 'Ações', items: ACTIONS },
-  { heading: 'Condições', items: CONDITIONS },
-  { heading: 'Timing', items: TIMINGS },
+  { heading: 'Ações', items: ACTIONS.filter(disponivel) },
+  { heading: 'Condições', items: CONDITIONS.filter(disponivel) },
+  { heading: 'Timing', items: TIMINGS.filter(disponivel) },
 ];
 
 export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, children, align = 'center' }) => {
@@ -49,14 +54,12 @@ export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, childr
               <CommandGroup key={group.heading} heading={group.heading}>
                 {group.items.map((item) => {
                   const s = CATEGORY_STYLES[item.category];
-                  const disabled = !!item.comingSoon;
                   return (
                     <CommandItem
                       key={item.key}
                       value={`${item.label} ${item.description}`}
-                      disabled={disabled}
-                      onSelect={() => !disabled && handlePick(item.key)}
-                      className={cn('flex items-start gap-2.5 py-2', disabled && 'opacity-60')}
+                      onSelect={() => handlePick(item.key)}
+                      className="flex items-start gap-2.5 py-2"
                     >
                       <div className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white', s.iconBg)}>
                         <item.Icon className="h-4 w-4" />
@@ -64,7 +67,6 @@ export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, childr
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <span className="text-sm font-medium">{item.label}</span>
-                          {disabled && <Badge variant="secondary" className="h-4 px-1 text-[9px]">Em breve</Badge>}
                         </div>
                         <p className="truncate text-xs text-muted-foreground">{item.description}</p>
                       </div>

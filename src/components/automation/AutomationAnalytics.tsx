@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { CHART_STATUS } from '@/lib/chartColors';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -33,7 +32,6 @@ import {
   MessageSquare,
   Target,
   Calendar,
-  Download,
   Filter
 } from 'lucide-react';
 
@@ -210,10 +208,6 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
               </Select>
             )}
             
-            <ComingSoonButton variant="outline" size="sm" motivo="Exportação em breve">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </ComingSoonButton>
           </div>
         </CardContent>
       </Card>

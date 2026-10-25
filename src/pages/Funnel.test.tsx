@@ -25,7 +25,6 @@ vi.mock('@/components/shared/PageHeader', () => ({
   ),
 }));
 vi.mock('@/components/funnel/FunnelBoard', () => ({ FunnelBoard: () => <div>quadro</div> }));
-vi.mock('@/components/funnel/FunnelMetrics', () => ({ FunnelMetrics: () => null }));
 vi.mock('@/components/funnel/StageConfigModal', () => ({
   StageConfigModal: ({ isOpen }: { isOpen: boolean }) => (isOpen ? <div>janela de etapas aberta</div> : null),
 }));

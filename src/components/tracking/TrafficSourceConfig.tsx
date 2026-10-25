@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Badge } from '@/components/ui/badge';
 import { DashboardCardSkeleton } from '@/components/shared/Skeleton';
 import {
@@ -11,10 +10,8 @@ import {
   Search,
   Users,
   Link,
-  MoreHorizontal,
   Plus,
   Settings,
-  Copy,
   Eye,
   EyeOff,
   Target
@@ -95,9 +92,21 @@ const getTypeColor = (type: string) => {
   }
 };
 
-export const TrafficSourceConfig = () => {
+interface TrafficSourceConfigProps {
+  /** Muda a cada clique em "Nova Fonte" no topo da tela: abre o formulário. */
+  pedidoNovaFonte?: number;
+}
+
+export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfigProps) => {
   const [showModal, setShowModal] = useState(false);
   const [selectedSource, setSelectedSource] = useState<TrafficSourceRow | null>(null);
+
+  useEffect(() => {
+    if (pedidoNovaFonte > 0) {
+      setSelectedSource(null);
+      setShowModal(true);
+    }
+  }, [pedidoNovaFonte]);
 
   const { data, isLoading } = useTrafficSources();
   const createSource = useCreateTrafficSource();
@@ -275,12 +284,6 @@ export const TrafficSourceConfig = () => {
                       >
                         <Settings className="w-4 h-4" />
                       </Button>
-                      <ComingSoonButton variant="ghost" size="icon" motivo="Duplicar fonte em breve">
-                        <Copy className="w-4 h-4" />
-                      </ComingSoonButton>
-                      <ComingSoonButton variant="ghost" size="icon" motivo="Mais ações em breve">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </ComingSoonButton>
                     </div>
                   </div>
                 </div>

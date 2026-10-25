@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Copy, Code, Webhook, Link } from 'lucide-react';
+import { Copy, Link } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TrafficSource {
@@ -23,8 +22,6 @@ interface TrafficSource {
   utmSource?: string;
   utmMedium?: string;
   utmCampaign?: string;
-  webhookUrl?: string;
-  trackingCode?: string;
 }
 
 interface SourceConfigModalProps {
@@ -34,6 +31,14 @@ interface SourceConfigModalProps {
   onSave: (source: TrafficSource) => void;
 }
 
+/**
+ * Formulário de fonte de tráfego: nome, tipo, ativa e etiquetas UTM, com o link
+ * montado para copiar.
+ *
+ * Até 2026-10-25 tinha também "Código de Rastreamento" (um script apontando
+ * para um endereço que não existe) e "Webhook URL" (que nunca era gravado).
+ * Saíram (achado 64 do checkup).
+ */
 export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: SourceConfigModalProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState<TrafficSource>({
@@ -43,8 +48,6 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
     utmSource: '',
     utmMedium: '',
     utmCampaign: '',
-    webhookUrl: '',
-    trackingCode: ''
   });
 
   useEffect(() => {
@@ -58,8 +61,6 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
         utmSource: '',
         utmMedium: '',
         utmCampaign: '',
-        webhookUrl: '',
-        trackingCode: ''
       });
     }
   }, [source, open]);
@@ -74,30 +75,11 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
     return `${baseUrl}?${utmParams.toString()}`;
   };
 
-  const generateTrackingCode = () => {
-    const code = `
-<!-- ConvoFlow Tracking Code -->
-<script>
-  (function() {
-    var cf = window.cf = window.cf || [];
-    cf.push(['init', '${formData.id || 'NEW_SOURCE_ID'}']);
-    cf.push(['track', 'PageView']);
-    
-    var script = document.createElement('script');
-    script.async = true;
-    script.src = 'https://track.convoflow.com/cf.js';
-    document.head.appendChild(script);
-  })();
-</script>
-    `.trim();
-    return code;
-  };
-
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
       title: "Copiado!",
-      description: "Código copiado para a área de transferência.",
+      description: "Link copiado para a área de transferência.",
     });
   };
 
@@ -111,11 +93,9 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
       return;
     }
 
+    // Sem aviso de sucesso aqui: quem avisa é o hook de gravação, depois que o
+    // banco confirma (antes saía "criada com sucesso" ANTES de gravar).
     onSave(formData);
-    toast({
-      title: "Sucesso!",
-      description: source ? "Fonte atualizada com sucesso." : "Nova fonte criada com sucesso.",
-    });
   };
 
   return (
@@ -214,7 +194,7 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
             </Card>
           </div>
 
-          {/* Códigos e Integrações */}
+          {/* Link com as etiquetas UTM */}
           <div className="space-y-4">
             {/* URL de Rastreamento */}
             <Card>
@@ -241,64 +221,13 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
                       <Copy className="w-4 h-4" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Código de Rastreamento */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Code className="w-4 h-4" />
-                  Código de Rastreamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label>Código HTML</Label>
-                  <div className="relative">
-                    <Textarea
-                      value={generateTrackingCode()}
-                      readOnly
-                      className="bg-muted font-mono text-sm"
-                      rows={8}
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => copyToClipboard(generateTrackingCode())}
-                    >
-                      <Copy className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Webhook */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Webhook className="w-4 h-4" />
-                  Webhook URL
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="webhookUrl">URL do Webhook</Label>
-                  <Input
-                    id="webhookUrl"
-                    value={formData.webhookUrl}
-                    onChange={(e) => setFormData({...formData, webhookUrl: e.target.value})}
-                    placeholder="https://webhook.convoflow.com/leads"
-                  />
                   <p className="text-xs text-muted-foreground">
-                    URL para receber dados de leads automaticamente
+                    O começo do link é um exemplo: troque https://seusite.com.br pelo endereço da sua página antes de usar.
                   </p>
                 </div>
               </CardContent>
             </Card>
+
           </div>
         </div>
 

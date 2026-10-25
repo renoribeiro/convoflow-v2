@@ -63,6 +63,15 @@ const TRIGGER_LABELS: Record<ChatbotTriggerType, string> = {
   funnel_stage: 'Etapa do funil',
 };
 
+/**
+ * "Sem resposta do atendente" fica FORA da tela (achado 80 do checkup,
+ * ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md): o motor nunca dispara esse
+ * gatilho (chatbot-engine.ts: "needs a scheduler"). Em 2026-10-25 nenhum
+ * chatbot o usava. Se aparecer um antigo com ele ligado, a tela ainda o mostra,
+ * com o aviso, para a pessoa poder desligar. Volta quando houver o agendador.
+ */
+const GATILHO_QUE_NAO_DISPARA: ChatbotTriggerType = 'no_agent_reply';
+
 const ALL_TRIGGER_TYPES: ChatbotTriggerType[] = [
   'keyword',
   'first_contact',
@@ -353,7 +362,9 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
             <Label>Gatilhos *</Label>
             {errors.triggers && <p className="text-xs text-destructive">{errors.triggers}</p>}
             <div className="space-y-3 rounded-md border p-3">
-              {ALL_TRIGGER_TYPES.map((type) => {
+              {ALL_TRIGGER_TYPES.filter(
+                (type) => type !== GATILHO_QUE_NAO_DISPARA || triggerConfigs[type].enabled,
+              ).map((type) => {
                 const cfg = triggerConfigs[type];
                 return (
                   <div key={type} className="space-y-2">
@@ -365,6 +376,9 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
                       />
                       <Label htmlFor={`trig-${type}`} className="cursor-pointer font-normal">
                         {TRIGGER_LABELS[type]}
+                        {type === GATILHO_QUE_NAO_DISPARA && (
+                          <span className="ml-1 text-xs text-destructive">(ainda não dispara: desmarque)</span>
+                        )}
                       </Label>
                     </div>
 

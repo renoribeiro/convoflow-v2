@@ -3,7 +3,6 @@ import { PageHeader } from '@/components/shared/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   User,
-  Bell,
   Shield,
   Database,
   CreditCard,
@@ -20,7 +19,6 @@ import { ResponseRuleSettings } from '@/components/settings/ResponseRuleSettings
 import { FollowupSettings } from '@/components/settings/FollowupSettings';
 import { QuickRepliesSettings } from '@/components/settings/QuickRepliesSettings';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
-import { NotificationSettings } from '@/components/settings/NotificationSettings';
 import { SecuritySettings } from '@/components/settings/SecuritySettings';
 import { IntegrationSettings } from '@/components/settings/IntegrationSettings';
 import { SubscriptionSettings } from '@/components/settings/SubscriptionSettings';
@@ -43,7 +41,6 @@ const TAB_HELP_KEYS: Record<string, string> = {
   'quick-replies': 'page:settings-quick-replies',
   followups: 'page:settings-followups',
   subscription: 'page:settings-subscription',
-  notifications: 'page:settings-notifications',
   security: 'page:settings-security',
   integrations: 'page:settings-integrations',
   api: 'page:settings-api',
@@ -158,7 +155,12 @@ const ABAS: AbaConfig[] = [
     requer: 'billing.view',
     render: () => <SubscriptionSettings />,
   },
-  { value: 'notifications', label: 'Notificações', icon: Bell, render: () => <NotificationSettings /> },
+  // A aba "Notificações" saiu em 2026-10-25 (achado 113 do checkup de
+  // usabilidade, ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md): gravava
+  // profiles.notification_prefs e nada no sistema lia essa preferência. A
+  // coluna continua no banco. Para construir de verdade: o sino e as funções
+  // que criam avisos precisam respeitar a escolha; aí a aba, o passo do
+  // onboarding (migração nova em onboarding_checklist) e o tour voltam.
   { value: 'security', label: 'Segurança', icon: Shield, render: () => <SecuritySettings /> },
   { value: 'integrations', label: 'Integrações', icon: Database, render: () => <IntegrationSettings /> },
   // Só o Gerente, e só com a API liberada para o público OU já ligada na Conta

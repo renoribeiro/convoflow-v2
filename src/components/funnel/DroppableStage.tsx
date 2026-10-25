@@ -15,9 +15,7 @@ interface Lead {
   email: string;
   phone: string;
   source: string;
-  value: number;
   lastContact: string;
-  assignedTo: string;
 }
 
 interface FunnelStage {

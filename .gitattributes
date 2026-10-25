@@ -1,2 +1,5 @@
 # O hook roda no sh do git: com CRLF ele quebra no Windows.
 .githooks/* text eol=lf
+# Scripts .mjs com shebang: com CRLF no Windows o vitest não lê o arquivo
+# (src/lib/security/listaPrivada.test.ts falhava com SyntaxError só aqui).
+scripts/**/*.mjs text eol=lf

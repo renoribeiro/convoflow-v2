@@ -443,7 +443,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Você abre o dia em "7 dias": o bot responde em 6 segundos, mas a 1ª resposta de uma pessoa está em 2 horas e há 90 conversas esperando alguém, quase todas sem responsável. Distribuir essas conversas passa a ser a primeira tarefa.',
     tips: [
-      'A lista "Primeiros passos" muda com o cargo. Gerente: a Conta inteira (criar a Loja, conectar o WhatsApp e convidar a equipe são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional). Gestor: os mesmos passos, só da sua Loja. Atendente: foto, notificações e a primeira conversa respondida. Superadmin não vê boas vindas nem lista.',
+      'A lista "Primeiros passos" muda com o cargo. Gerente: a Conta inteira (criar a Loja, conectar o WhatsApp e convidar a equipe são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional). Gestor: os mesmos passos, só da sua Loja. Atendente: foto e a primeira conversa respondida. Superadmin não vê boas vindas nem lista.',
       'Gerente: WhatsApp, funil, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única; com várias, destaca o seletor do topo para você escolher.',
       'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página.',
       'Em imobiliária, a 1ª resposta de uma pessoa é a métrica que mais move venda: o lead de portal fala com três corretores e fecha com quem responde primeiro. O bot responder rápido não substitui isso.',
@@ -677,8 +677,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Responde de onde o lead veio. Quem clica em "Enviar mensagem" num anúncio do Facebook ou do Instagram chega já identificado: a tela mostra qual anúncio trouxe cada pessoa, sem link encurtado e sem você configurar nada.',
     howToConfigure: [
       'Não há o que configurar para anúncios: a origem chega junto com a primeira mensagem e o anúncio vira uma fonte sozinho.',
-      'Abra a aba Dashboard e escolha o período. Os números são só dos leads que chegaram nesse intervalo.',
-      'Use a aba Fontes para ver quantos leads cada anúncio trouxe, e para cadastrar à mão uma origem que você controla por fora (link na bio, portal, indicação).',
+      'Abra a aba Dashboard e escolha o período (o único filtro da aba). Os números são só dos leads que chegaram nesse intervalo.',
+      'Use a aba Fontes para ver quantos leads cada anúncio trouxe, e para cadastrar à mão uma origem que você controla por fora (link na bio, portal, indicação). "Nova Fonte", no topo, abre o mesmo formulário: nome, tipo e as etiquetas UTM, e a tela monta o link para você copiar. Troque o começo do link pelo endereço da sua página.',
       'A aba Análises abre os mesmos leads por dia, por fonte e por etapa do funil.',
     ],
     example:
@@ -701,8 +701,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Escolha o período: o relatório sai da Loja aberta no seletor, no período escolhido. O tipo (Campanhas, Conversas, Funil, Geral) muda só o título do e-mail; o conteúdo é sempre o mesmo.',
       'Na segunda etapa você vê a lista do que vai no relatório. É a lista completa: contatos, conversas, mensagens, leads por estágio do funil e três números de atendimento da Loja inteira: a 1ª resposta de uma pessoa (mediana, isto é, na metade das conversas iniciadas no período alguém do time respondeu em até aquele tempo; não conta bot nem campanha), quantas conversas esperam uma pessoa agora (e quantas delas sem responsável) e quantas conversas do período ficaram sem resposta de pessoa. Não há nada para marcar ou desmarcar.',
-      'Gere uma vez e confira os números na tela.',
-      'Para repassar sozinho toda semana, abra a aba Agendamentos e crie um agendamento: nome, frequência, horário e os e-mails que recebem.',
+      'Na última etapa escolha como os números chegam: só no corpo do email, ou no corpo e numa planilha CSV anexa. Escolha os destinatários e clique em "Enviar agora". O envio é feito uma vez, na hora.',
+      'Mande primeiro para você mesmo e confira os números no email antes de mandar para o dono ou o cliente.',
+      'Para repassar sozinho toda semana, abra a aba Agendamentos e crie um agendamento: nome, frequência, horário e os e-mails que recebem. Email digitado no campo entra na lista mesmo sem clicar no +.',
+      'Vai gerar sempre o mesmo recorte? Na aba Criar, salve um modelo com nome, descrição e tipo. Ele aparece na primeira aba, e "Gerar" abre o envio já preenchido. Para mudar um modelo, exclua e salve outro: não há edição.',
       'Acompanhe a aba Entregas depois do primeiro disparo. É lá que aparece se o envio saiu ou falhou.',
     ],
     example:
@@ -731,6 +733,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Defina o gatilho, que é o que faz o bot entrar na conversa: "Primeiro contato" (a primeira mensagem de quem nunca falou com você), "Palavra-chave" (uma das palavras que você cadastrar), "Fora do horário" (qualquer mensagem fora do horário de funcionamento da Loja) ou "Etapa do funil" (contato que está numa etapa escolhida).',
       'Abra o construtor, monte o fluxo e publique. Bot salvo não é bot publicado.',
       'Se houver mais de um bot no mesmo número, ajuste a prioridade para decidir quem responde primeiro.',
+      'Não existe gatilho para quando o atendente não responde: o bot não entra sozinho numa conversa parada. Para isso, use a regra de tempo sem resposta em Configurações › Escala/Transferência.',
     ],
     example:
       '"Triagem de plantão" atende toda primeira mensagem, pergunta o bairro de interesse e transfere para o corretor de plantão. Fica publicado no número da imobiliária, com prioridade 1.',
@@ -918,7 +921,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Na WAHA você informa o nome, a URL base do servidor WAHA, a API Key se o servidor exigir e o nome da sessão. Aqui o servidor é seu (ou de quem o hospeda para você): endereço e chave são pedidos porque a plataforma não o conhece.',
       'Conecte lendo o QR Code no celular que tem o número, ou use o código de pareamento se preferir não escanear.',
       'Confirme que o status ficou "Conectado" antes de configurar chatbot ou campanha.',
-      'Confira o webhook, que é o que faz as mensagens chegarem em tempo real. Na API Oficial ele é configurado uma única vez para a instalação inteira, não a cada número.',
+      'O webhook é o que faz as mensagens chegarem em tempo real, e você não configura nada: ele é ligado sozinho quando o número é conectado. Num número Evolution conectado, o ícone de webhook ao lado dele só mostra esse endereço, para conferir ou passar ao suporte; a tela não muda nem testa o endereço. Na API Oficial ele é configurado uma única vez para a instalação inteira, não a cada número.',
       'Errou o nome? Use o lápis ao lado da instância para renomear. Muda só o rótulo que aparece nas telas; a conexão, as conversas e o número continuam os mesmos. Gerente e Gestor renomeiam; Atendente não vê o botão.',
       'A lixeira exclui a instância, e só funciona em instância VAZIA. Ao abrir, a janela confere e mostra quantas conversas, mensagens, contatos, chatbots, sessões de chatbot, campanhas e follow-ups dependem dela. Se qualquer número for maior que zero, a exclusão é recusada e não há como forçar: apagar a instância apagaria tudo isso, sem volta. Gerente e Gestor veem a lixeira; Atendente não. O Gerente também exclui nas Lojas da Conta dele.',
       'Quer usar o número de novo ou refazer a conexão? Isso é reconectar, não excluir. Na API Oficial, reconectar é o mesmo botão da primeira vez: "Nova Instância" › "API Oficial do WhatsApp" › "Conectar com a Meta", escolhendo o mesmo número na janela da Meta. O ConvoFlow reconhece o número, atualiza a instância no lugar (mesmo id, mesmas conversas, mensagens, contatos, chatbot e sessões) e avisa "Número reconectado". O nome só muda se você digitar um novo; o registro do número não é refeito, então o aquecimento da primeira semana não recomeça. Excluir e criar de novo é exatamente o caminho que perde o histórico.',
@@ -952,7 +955,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:settings': {
     title: 'Configurações',
     whatItDoes:
-      'Reúne o que vale só para você e o que vale para a Loja inteira. A diferença importa: Perfil, Notificações e Segurança são seus; Atendimento, Escala/Transferência, Respostas rápidas, Follow-ups e Integrações mudam o comportamento para todo o time; Assinatura é da Conta e só o Gerente a vê.',
+      'Reúne o que vale só para você e o que vale para a Loja inteira. A diferença importa: Perfil e Segurança são seus; Atendimento, Escala/Transferência, Respostas rápidas, Follow-ups e Integrações mudam o comportamento para todo o time; Assinatura e Chaves de API são da Conta e só o Gerente as vê.',
     howToConfigure: [
       'Escolha a aba. Cada aba tem o próprio botão de ajuda com o passo-a-passo dela.',
       'Antes de salvar algo em Atendimento, Escala/Transferência, Respostas rápidas, Follow-ups ou Integrações, lembre que a mudança atinge o time todo.',
@@ -1177,24 +1180,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     category: 'tela',
     area: 'Configuração',
   },
-  'page:settings-notifications': {
-    title: 'Configurações › Notificações',
-    whatItDoes:
-      'Escolhe sobre o que o sistema te avisa. É preferência sua, por usuário: desligar aqui não desliga para o resto do time.',
-    howToConfigure: [
-      'Ligue ou desligue por tipo: novas mensagens, follow-ups, campanhas.',
-      'Salve.',
-      'Os avisos passam a aparecer no sino do topo e na tela de Notificações.',
-    ],
-    example:
-      'O corretor desliga aviso de campanha e mantém novas mensagens: assim só é interrompido quando um cliente realmente escreve.',
-    tips: [
-      'É por usuário: cada pessoa do time configura o seu.',
-      'Desligar tudo é tentador e custa venda. Mantenha ao menos o aviso de novas mensagens.',
-    ],
-    category: 'tela',
-    area: 'Configuração',
-  },
+  // 'page:settings-notifications' saiu em 2026-10-25 junto com a aba (achado
+  // 113 do checkup): a preferência era gravada e nada a lia.
   'page:settings-security': {
     title: 'Configurações › Segurança',
     whatItDoes:
@@ -1274,11 +1261,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:notifications': {
     title: 'Notificações',
     whatItDoes:
-      'É a lista completa dos avisos, não só os últimos que aparecem no sino. Serve para recuperar o que passou enquanto você estava em outra coisa.',
+      'São os mesmos avisos do sino do topo, com mais espaço: a tela mostra os 200 mais recentes, e o sino só os 50 últimos. Serve para recuperar o que passou enquanto você estava em outra coisa.',
     howToConfigure: [
-      'Clique no aviso para ir direto ao que o originou.',
-      'Use "Marcar todas como lidas" quando a lista virar ruído.',
-      'Para receber menos, ajuste os tipos em Configurações › Notificações.',
+      'Clique no aviso para ir direto ao que o originou. Ao clicar, ele fica marcado como lido.',
+      'Use o ✓ ao lado de um aviso para marcar só aquele como lido, ou "Marcar todas como lidas" quando a lista virar ruído.',
+      'Ainda não dá para escolher quais avisos receber: todos os avisos do seu cargo chegam no sino e aqui.',
     ],
     example:
       'Você volta do almoço com 12 avisos, marca todos como lidos e vai direto às Conversas, que é onde o cliente está esperando.',
@@ -1436,17 +1423,17 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     minRole: 'superadmin',
     title: 'Limites de uso por nível',
     whatItDoes:
-      'Define o teto de uso de cada nível da hierarquia: quantas instâncias, contatos ou disparos cada cargo pode ter. É prevenção: evita que uma Conta consuma a estrutura das outras.',
+      'Registra o teto de uso planejado para cada nível da hierarquia: quantos números de WhatsApp, contatos ou disparos cada cargo poderá ter. Hoje é só registro: nenhuma parte do sistema confere esses valores, e ninguém é impedido de criar nada por causa deles. A aplicação de verdade vem com o novo desenho dos níveis e acessos.',
     howToConfigure: [
-      'Escolha o nível da hierarquia que quer limitar.',
+      'Escolha o nível da hierarquia.',
       'Preencha o limite. Campo vazio significa sem limite, não zero.',
-      'Salve e confira com uma Conta real antes de considerar a regra aplicada.',
+      'Clique em Salvar na linha. O valor fica gravado para quando os limites passarem a valer.',
     ],
     example:
-      'Gestor limitado a 2 instâncias de WhatsApp e Gerente a 10: a loja não liga números novos sem falar com você, e a agência ainda consegue atender o grupo dela.',
+      'Você registra Gestor com 2 números de WhatsApp e Gerente com 10. Por enquanto ninguém é barrado; o valor serve de referência e já estará pronto quando a regra passar a valer.',
     tips: [
-      'Vazio é ilimitado: apagar o campo libera em vez de bloquear. É o erro mais comum nesta tela.',
-      'Para o usuário, limite atingido aparece como erro na hora de criar. Avise o time antes de reduzir um limite.',
+      'Vazio é ilimitado: apagar o campo libera em vez de bloquear.',
+      'O aviso no topo da tela some quando os limites passarem a ser aplicados. Até lá, não prometa a um cliente que ele será bloqueado ao passar do limite.',
     ],
     category: 'tela',
     area: 'Admin',

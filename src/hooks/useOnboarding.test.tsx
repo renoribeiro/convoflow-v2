@@ -84,7 +84,7 @@ describe('useOnboardingChecklist', () => {
     resposta = st('atendente', {});
     const { result } = renderHook(() => useOnboardingChecklist(), { wrapper });
     await waitFor(() => expect(result.current.summary).not.toBeNull());
-    expect(result.current.summary!.items.map((i) => i.id)).toEqual(['foto', 'notificacoes']);
+    expect(result.current.summary!.items.map((i) => i.id)).toEqual(['foto']);
   });
 
   it('veterano: só com obrigatório pendente', async () => {

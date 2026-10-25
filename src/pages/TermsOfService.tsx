@@ -69,12 +69,13 @@ export default function TermsOfService() {
                     <li>Automação de campanhas de marketing</li>
                     <li>Análise e relatórios de conversas</li>
                     <li>Gestão de contatos e leads</li>
-                    <li>Integração com a WhatsApp Business Platform (Meta Cloud API)</li>
+                    <li>Conexão com o WhatsApp, pela API oficial da Meta ou por conexões não oficiais, à sua escolha</li>
                   </ul>
                   <p className="text-muted-foreground leading-relaxed mt-3">
-                    O envio e o recebimento de mensagens ocorrem <strong>exclusivamente</strong> por meio da
-                    WhatsApp Business Platform oficial da Meta (Cloud API). O ConvoFlow não utiliza, não oferece e
-                    não dá suporte a métodos não oficiais de conexão ao WhatsApp.
+                    Você escolhe como conectar cada número de WhatsApp: pela <strong>API oficial da Meta</strong>
+                    (WhatsApp Business Platform, Cloud API), que é a forma recomendada e mais estável, ou por uma
+                    <strong> conexão não oficial</strong> (Evolution ou WAHA). As conexões não oficiais não são aprovadas
+                    pela Meta e têm riscos próprios, descritos no item 6.6.
                   </p>
                 </section>
 
@@ -291,10 +292,11 @@ export default function TermsOfService() {
                 <section className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border border-green-200 dark:border-green-900">
                   <h2 className="text-xl font-semibold mb-4">6. Uso do WhatsApp Business Platform (Meta)</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
-                    A funcionalidade de envio e recebimento de mensagens do ConvoFlow é prestada por meio da
-                    integração com a <strong>WhatsApp Business Platform</strong>, operada pela Meta Platforms, Inc.
-                    Ao utilizar essa funcionalidade, você reconhece e concorda com as condições adicionais abaixo,
-                    sem prejuízo das obrigações já previstas nestes Termos.
+                    Quando você conecta um número pela API oficial, o envio e o recebimento de mensagens do ConvoFlow
+                    são prestados por meio da integração com a <strong>WhatsApp Business Platform</strong>, operada pela
+                    Meta Platforms, Inc. Ao utilizar essa funcionalidade, você reconhece e concorda com as condições
+                    adicionais abaixo, sem prejuízo das obrigações já previstas nestes Termos. As conexões não oficiais
+                    seguem o item 6.6.
                   </p>
 
                   <div className="space-y-4">
@@ -353,6 +355,29 @@ export default function TermsOfService() {
                         decorrência de violação, por parte do cliente, das políticas da WhatsApp Business Platform
                         ou da legislação aplicável.
                       </p>
+                    </div>
+
+                    <div>
+                      <h3 className="font-medium mb-2">6.6. Conexões não oficiais (Evolution ou WAHA)</h3>
+                      <p className="text-muted-foreground mb-2">
+                        Além da API oficial, o ConvoFlow permite conectar um número por uma conexão não oficial,
+                        Evolution ou WAHA, que funciona como o WhatsApp do celular (leitura de QR Code). Ao escolher
+                        uma conexão não oficial, você reconhece que:
+                      </p>
+                      <ul className="list-disc pl-6 text-muted-foreground">
+                        <li>Essas conexões não são aprovadas pela Meta.</li>
+                        <li>O WhatsApp pode desconectar a sessão ou bloquear o número a qualquer momento, sem aviso.</li>
+                        <li>Esse risco é uma escolha sua, e a responsabilidade pelo uso do número continua sendo sua.</li>
+                        <li>
+                          O ConvoFlow não garante a disponibilidade dessas conexões e não responde por desconexões,
+                          bloqueios ou perda de mensagens causados por elas.
+                        </li>
+                        <li>
+                          Para um número que não pode parar, recomendamos a API oficial da Meta. As regras dos itens 6.1
+                          e 6.2 (políticas do WhatsApp e consentimento dos destinatários) valem também para as conexões
+                          não oficiais.
+                        </li>
+                      </ul>
                     </div>
                   </div>
                 </section>

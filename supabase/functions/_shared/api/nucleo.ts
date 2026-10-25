@@ -430,9 +430,15 @@ export function rotaRest(caminho: string): { rota: string; recurso: Recurso; con
   return r ? { rota: r.caminho, recurso: r.recurso } : null;
 }
 
+/** O endereço público. A regra do Vercel (has: host) acrescenta ?host=<ele> ao repassar. */
+export const HOST_PUBLICO = 'api.convoflow.com.br';
+
 export function parametrosDaQuery(busca: URLSearchParams): Parametros {
   const p: Parametros = {};
   for (const [k, v] of busca.entries()) {
+    // O Vercel repassa o host casado na regra como parâmetro. Só ESSE valor é
+    // ignorado: "host" com outro valor continua sendo parâmetro desconhecido.
+    if (k === 'host' && v === HOST_PUBLICO) continue;
     if (k in p) throw new ErroApi('parametro_invalido', `parâmetro repetido: ${k}.`);
     p[k] = v;
   }

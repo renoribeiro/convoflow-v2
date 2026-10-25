@@ -3,12 +3,11 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Clock, Mail, MessageSquare, FileText, Search, Filter, Download, AlertCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Mail, MessageSquare, FileText, Search, Filter, AlertCircle, RefreshCw } from 'lucide-react';
 import { useReportExecutions } from '@/hooks/useReports';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -285,10 +284,6 @@ export const DeliveryLog = () => {
               </SelectContent>
             </Select>
 
-            <ComingSoonButton variant="outline" size="sm" motivo="Exportação em breve">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar Histórico
-            </ComingSoonButton>
           </div>
         </CardContent>
       </Card>

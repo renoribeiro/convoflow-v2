@@ -7,11 +7,29 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, BarChart3, Users, MessageSquare, Calendar, X, Plus } from 'lucide-react';
+import { FileText, BarChart3, Users, MessageSquare, X, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { REPORT_CONTENTS, REPORT_CONTENT_IDS, REPORT_NOT_INCLUDED } from '@/lib/reports/reportContents';
+
+/**
+ * O envio é feito NA HORA, uma vez. Até 2026-10-25 a janela oferecia
+ * "Frequência" (Diário, Semanal...) que o servidor ignorava, e os formatos PDF,
+ * Excel e HTML, dos quais só o CSV gerava anexo (Excel virava .csv). Ficaram
+ * só as duas opções que existem de verdade, e o botão diz o que faz: "Enviar
+ * agora". O envio recorrente é a aba Agendamentos (achado 71 do checkup,
+ * ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md).
+ */
+export const FORMATOS_DE_ENVIO = [
+  { value: 'html', label: 'Só no corpo do email' },
+  { value: 'csv', label: 'No corpo do email e numa planilha CSV anexa' },
+] as const;
+
+/** Template antigo pode ter 'pdf', 'excel' ou nada: vira um dos dois que existem. */
+export function formatoDeEnvio(formato: string | null | undefined): 'html' | 'csv' {
+  return formato === 'csv' || formato === 'excel' ? 'csv' : 'html';
+}
 
 interface NewReportModalProps {
   isOpen: boolean;
@@ -50,7 +68,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
     description: '',
     type: '',
     frequency: 'manual',
-    format: 'pdf',
+    format: 'html',
     // O conteúdo é fixo (ver REPORT_CONTENTS): a lista vai no corpo só como
     // registro do que foi pedido, não como seleção.
     metrics: [...REPORT_CONTENT_IDS],
@@ -78,6 +96,8 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
       setReportData((prev) => ({
         ...prev,
         ...initialData,
+        frequency: 'manual',
+        format: formatoDeEnvio(initialData.format),
         // Templates antigos guardam ids de métricas que o servidor nunca
         // calculou ('satisfaction', 'revenue'...): o conteúdo real é sempre o mesmo.
         metrics: [...REPORT_CONTENT_IDS],
@@ -94,21 +114,6 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
     { value: 'conversations', label: 'Conversas', icon: Users, description: 'Análise de conversas e atendimentos' },
     { value: 'funnel', label: 'Funil de Vendas', icon: BarChart3, description: 'Progresso e conversões no funil' },
     { value: 'general', label: 'Geral', icon: FileText, description: 'Relatório geral do sistema' }
-  ];
-
-  const frequencies = [
-    { value: 'manual', label: 'Manual' },
-    { value: 'daily', label: 'Diário' },
-    { value: 'weekly', label: 'Semanal' },
-    { value: 'monthly', label: 'Mensal' },
-    { value: 'quarterly', label: 'Trimestral' }
-  ];
-
-  const formats = [
-    { value: 'pdf', label: 'PDF' },
-    { value: 'excel', label: 'Excel' },
-    { value: 'csv', label: 'CSV' },
-    { value: 'html', label: 'HTML' }
   ];
 
   const handleNext = () => {
@@ -129,7 +134,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
       description: '',
       type: '',
       frequency: 'manual',
-      format: 'pdf',
+      format: 'html',
       metrics: [...REPORT_CONTENT_IDS],
       filters: { dateRange: '30days', campaigns: [], contacts: [], status: [] },
       delivery: { email: false, whatsapp: false, recipients: [] }
@@ -315,38 +320,23 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Frequência</Label>
-                  <Select value={reportData.frequency} onValueChange={(value) => setReportData(prev => ({ ...prev, frequency: value }))} disabled={isLoading}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {frequencies.map((freq) => (
-                        <SelectItem key={freq.value} value={freq.value}>
-                          {freq.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div>
-                  <Label>Formato</Label>
-                  <Select value={reportData.format} onValueChange={(value) => setReportData(prev => ({ ...prev, format: value }))} disabled={isLoading}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {formats.map((format) => (
-                        <SelectItem key={format.value} value={format.value}>
-                          {format.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="formato-envio">Como os números chegam</Label>
+                <Select value={formatoDeEnvio(reportData.format)} onValueChange={(value) => setReportData(prev => ({ ...prev, format: value }))} disabled={isLoading}>
+                  <SelectTrigger id="formato-envio">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FORMATOS_DE_ENVIO.map((f) => (
+                      <SelectItem key={f.value} value={f.value}>
+                        {f.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O relatório é enviado uma vez, agora. Para receber toda semana ou todo mês, crie um agendamento na aba Agendamentos.
+                </p>
               </div>
             </div>
           )}
@@ -440,16 +430,10 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
                         {reportTypes.find(t => t.value === reportData.type)?.label}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Frequência:</span>
-                      <span className="font-medium">
-                        {frequencies.find(f => f.value === reportData.frequency)?.label}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-4">
                       <span className="text-muted-foreground">Formato:</span>
-                      <span className="font-medium">
-                        {formats.find(f => f.value === reportData.format)?.label}
+                      <span className="font-medium text-right">
+                        {FORMATOS_DE_ENVIO.find(f => f.value === formatoDeEnvio(reportData.format))?.label}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -488,12 +472,12 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
                   {isLoading ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                      Criando...
+                      Enviando...
                     </>
                   ) : (
                     <>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Criar Relatório
+                      <Send className="w-4 h-4 mr-2" />
+                      Enviar agora
                     </>
                   )}
                 </Button>

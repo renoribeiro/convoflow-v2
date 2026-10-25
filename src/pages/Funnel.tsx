@@ -2,12 +2,10 @@
 import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { FunnelBoard } from '@/components/funnel/FunnelBoard';
-import { FunnelMetrics } from '@/components/funnel/FunnelMetrics';
 import { StageConfigModal } from '@/components/funnel/StageConfigModal';
 import { NewLeadModal } from '@/components/funnel/NewLeadModal';
-import { Plus, Settings, BarChart3 } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EstadoVazioFunil } from '@/components/funnel/EstadoVazioFunil';
 import { useRole, useTenant } from '@/contexts/TenantContext';
@@ -15,7 +13,6 @@ import { podeConfigurarEtapas } from '@/lib/funnel/permissoes';
 import { consumirAcaoFunil } from '@/lib/funnel/funilPendente';
 
 export default function Funnel() {
-  const [showMetrics, setShowMetrics] = useState(false);
   const [showStageConfig, setShowStageConfig] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
   // Atendente vê as etapas e move os cards; configurar é do Gestor e do
@@ -54,14 +51,6 @@ export default function Funnel() {
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowMetrics(!showMetrics)}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              {showMetrics ? 'Ocultar' : 'Mostrar'} Métricas
-            </Button>
             {podeConfigurar && (
               <Button
                 variant="outline"
@@ -81,21 +70,12 @@ export default function Funnel() {
         }
       />
 
-      <Tabs defaultValue="board" className="space-y-6">
-        <TabsList className="h-auto max-w-full flex-wrap">
-          <TabsTrigger value="board">Kanban Board</TabsTrigger>
-          <TabsTrigger value="metrics">Métricas & Relatórios</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="board" className="space-y-6">
-          {showMetrics && <FunnelMetrics />}
-          <FunnelBoard />
-        </TabsContent>
-
-        <TabsContent value="metrics">
-          <FunnelMetrics detailed />
-        </TabsContent>
-      </Tabs>
+      {/* O botão "Mostrar Métricas" e a aba "Métricas & Relatórios" saíram em
+          2026-10-25 (achado 56 do checkup, ops-privado/checkup-ux/
+          RELATORIO_CHECKUP_UX.md): todos os números eram fixos no código
+          (28 leads, 18,5%, vendedores inventados). Números reais do funil
+          estão no Dashboard e no relatório por email. */}
+      <FunnelBoard />
 
       {podeConfigurar && !gerenteNaConta && (
         <StageConfigModal

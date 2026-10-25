@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Settings, Bug, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw } from 'lucide-react';
+import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,8 +36,6 @@ import { RenameInstanceModal } from '@/components/whatsapp/RenameInstanceModal';
 import { QRCodeModal } from '@/components/whatsapp/QRCodeModal';
 import { WebhookConfigModal } from '@/components/whatsapp/WebhookConfigModal';
 import { WebhookDashboard } from '@/components/webhook/WebhookDashboard';
-import { EnvironmentDebug } from '@/components/debug/EnvironmentDebug';
-import { SupabaseDebug } from '@/components/debug/SupabaseDebug';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
 import { useQueryClient } from '@tanstack/react-query';
@@ -614,7 +612,7 @@ export default function WhatsAppNumbers() {
       />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-3">
+        <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-2">
           <TabsTrigger value="instances" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
             Instâncias
@@ -622,10 +620,6 @@ export default function WhatsAppNumbers() {
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             Monitoramento
-          </TabsTrigger>
-          <TabsTrigger value="debug" className="flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            Configurações Técnicas
           </TabsTrigger>
         </TabsList>
         
@@ -781,7 +775,8 @@ export default function WhatsAppNumbers() {
                               variant="ghost"
                               size="icon"
                               onClick={() => handleConfigureWebhook(instance)}
-                              title="Configurar Webhook"
+                              title="Ver endereço de entrega"
+                              aria-label="Ver endereço de entrega"
                             >
                               <Webhook className="h-4 w-4" />
                             </Button>
@@ -1013,22 +1008,8 @@ export default function WhatsAppNumbers() {
           <WebhookDashboard />
         </TabsContent>
         
-        <TabsContent value="debug" className="space-y-6">
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  Configurações Técnicas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* <EnvironmentDebug /> */}
-                {/* <SupabaseDebug /> */}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+        {/* A aba "Configurações Técnicas" saiu em 2026-10-25 (achado 104 do
+            checkup): abria um cartão vazio, com o conteúdo comentado. */}
       </Tabs>
 
       {/* Diálogo de PIN para registro Meta */}

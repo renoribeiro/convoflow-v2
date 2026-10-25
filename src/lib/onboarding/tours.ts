@@ -222,17 +222,6 @@ export const TOURS: Tour[] = [
       },
     ],
   },
-  {
-    id: 'notificacoes',
-    route: '/dashboard/settings?tab=notifications',
-    steps: [
-      {
-        target: 'notificacoes',
-        title: 'Escolha o que quer receber',
-        body: 'Ligue ou desligue cada aviso e clique em Salvar Preferências, no fim do quadro.',
-      },
-    ],
-  },
 ];
 
 export const TOUR_BY_ID: Record<string, Tour> = Object.fromEntries(TOURS.map((t) => [t.id, t]));

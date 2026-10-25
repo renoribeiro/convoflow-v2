@@ -26,9 +26,7 @@ interface Lead {
   /** Linha de identificação do card: telefone (WhatsApp) ou @ (Instagram). */
   phone: string;
   source: string;
-  value: number;
   lastContact: string;
-  assignedTo: string;
 }
 
 interface FunnelStage {
@@ -116,11 +114,12 @@ export const FunnelBoard = () => {
         email: contact.email || '',
         phone: contactIdentifier(identity),
         source: leadSource?.name || 'Desconhecido',
-        value: 0,
+        // Sem valor em R$ nem responsável: os dois eram fixos ("R$ 0" e "Não
+        // atribuído") em todo cartão (achado 57 do checkup). O contato não tem
+        // campo de valor, e o responsável mora na conversa, não no contato.
         lastContact: lastMessageAt
           ? new Date(lastMessageAt).toLocaleDateString('pt-BR')
           : 'Nunca',
-        assignedTo: 'Não atribuído'
       };
     }) || []
   }));

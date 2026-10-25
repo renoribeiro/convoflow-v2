@@ -46,7 +46,7 @@ const LISTA: Record<'gerente' | 'gestor' | 'atendente', unknown> = {
   },
   atendente: {
     papel: 'atendente', escopo: 'pessoal', tenant_id: IDS.tenant,
-    passos: { foto: false, notificacoes: false, primeira_resposta: false },
+    passos: { foto: false, primeira_resposta: false },
   },
 };
 

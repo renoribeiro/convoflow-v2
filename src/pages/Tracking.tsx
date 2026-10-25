@@ -13,15 +13,15 @@ import { AdvancedCharts } from '@/components/analytics/AdvancedCharts';
 import RealTimeStatus from '@/components/analytics/RealTimeStatus';
 import ExportReports from '@/components/analytics/ExportReports';
 import { useRealTimeAnalytics } from '@/hooks/useRealTimeAnalytics';
-import { Settings, Plus, TrendingUp, BarChart3, Target } from 'lucide-react';
-import { toast } from 'sonner';
+import { Plus, TrendingUp, BarChart3, Target } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 
 export default function Tracking() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [selectedSources, setSelectedSources] = useState<string[]>([]);
-  const [selectedStatus, setSelectedStatus] = useState('Todos');
+  // "Nova Fonte" do topo abre o formulário na aba Fontes (antes só trocava de
+  // aba e mostrava um aviso). Cada clique soma 1 e a aba abre o formulário.
+  const [pedidoNovaFonte, setPedidoNovaFonte] = useState(0);
   const [analyticsFilters, setAnalyticsFilters] = useState<AnalyticsFilters>({
     quickDate: '30d',
     sources: [],
@@ -57,13 +57,11 @@ export default function Tracking() {
     enablePolling: true
   });
 
-  const handleOpenSettings = () => {
-    toast.info('Configurações de rastreamento em desenvolvimento');
-  };
-
+  // O botão "Configurações" do topo saiu em 2026-10-25 (achado 62 do checkup):
+  // só mostrava "em desenvolvimento".
   const handleCreateNewSource = () => {
     setActiveTab('sources');
-    toast.success('Redirecionado para configuração de fontes');
+    setPedidoNovaFonte((n) => n + 1);
   };
 
   return (
@@ -78,10 +76,6 @@ export default function Tracking() {
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={handleOpenSettings}>
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
-            </Button>
             <Button size="sm" onClick={handleCreateNewSource}>
               <Plus className="w-4 h-4 mr-2" />
               Nova Fonte
@@ -107,33 +101,25 @@ export default function Tracking() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <TrackingFilters 
+          <TrackingFilters
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            selectedSources={selectedSources}
-            onSourcesChange={setSelectedSources}
-            selectedStatus={selectedStatus}
-            onStatusChange={setSelectedStatus}
           />
-          <TrackingDashboard 
-            dateRange={dateRange}
-            selectedSources={selectedSources}
-            selectedStatus={selectedStatus}
-          />
+          <TrackingDashboard dateRange={dateRange} />
         </TabsContent>
 
         <TabsContent value="sources" className="space-y-6">
-          <TrafficSourceConfig />
+          <TrafficSourceConfig pedidoNovaFonte={pedidoNovaFonte} />
         </TabsContent>
 
         <TabsContent value="analytics" className="space-y-6">
-           <div className="flex items-center justify-between">
+           <div className="flex flex-wrap items-center justify-between gap-4">
              <AdvancedFilters 
                onFiltersChange={(filters) => {
                  setAnalyticsFilters(filters);
                }}
              />
-             <div className="flex items-center gap-4">
+             <div className="flex flex-wrap items-center gap-4">
                <ExportReports 
                  filters={analyticsFilters}
                />

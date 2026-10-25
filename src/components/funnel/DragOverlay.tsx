@@ -3,7 +3,6 @@ import { DragOverlay as DndDragOverlay } from '@dnd-kit/core';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { User } from 'lucide-react';
 
 interface Lead {
   id: string;
@@ -11,9 +10,7 @@ interface Lead {
   email: string;
   phone: string;
   source: string;
-  value: number;
   lastContact: string;
-  assignedTo: string;
 }
 
 interface DragOverlayProps {
@@ -51,14 +48,6 @@ export const DragOverlay = ({ draggedLead }: DragOverlayProps) => {
               <Badge variant="outline" className="text-xs">
                 {draggedLead.source}
               </Badge>
-              <span className="text-sm font-semibold text-green-600">
-                R$ {draggedLead.value.toLocaleString()}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <User className="w-3 h-3" />
-              {draggedLead.assignedTo}
             </div>
           </div>
         </CardContent>

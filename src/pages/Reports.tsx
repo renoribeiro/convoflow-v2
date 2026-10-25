@@ -8,13 +8,11 @@ import { ReportTemplates } from '@/components/reports/ReportTemplates';
 import { ScheduleList } from '@/components/reports/ScheduleList';
 import { DeliveryLog } from '@/components/reports/DeliveryLog';
 import { ReportBuilder } from '@/components/reports/ReportBuilder';
-import { ReportSettingsModal } from '@/components/reports/ReportSettingsModal';
 import { NewReportModal } from '@/components/reports/NewReportModal';
 import { FileText, Calendar, Send, Plus, Settings } from 'lucide-react';
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState('templates');
-  const [showSettings, setShowSettings] = useState(false);
   const [showNewReport, setShowNewReport] = useState(false);
 
   return (
@@ -22,17 +20,18 @@ export default function Reports() {
       <PageHeader
         title="Relatórios"
         helpKey="page:reports"
-        description="Gere relatórios detalhados e configure envios automáticos por e-mail e WhatsApp"
+        description="Envie os números da Loja por email ou WhatsApp agora, ou programe o envio por email"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Relatórios' }
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowSettings(true)}>
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
-            </Button>
+            {/* O botão "Configurações" saiu em 2026-10-25 (achado 69 do checkup,
+                ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md): abria uma janela
+                que não gravava nada e pedia servidor e SENHA de email. O envio
+                usa o remetente do sistema; não há o que configurar aqui.
+                Conferido no banco (somente leitura): nenhuma senha foi gravada. */}
             <Button size="sm" onClick={() => setShowNewReport(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Novo Relatório
@@ -77,11 +76,6 @@ export default function Reports() {
           <DeliveryLog />
         </TabsContent>
       </Tabs>
-      
-      <ReportSettingsModal 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
-      />
       
       <NewReportModal 
         isOpen={showNewReport} 

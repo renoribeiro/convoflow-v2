@@ -149,11 +149,12 @@ describe('lista do Gerente', () => {
 });
 
 describe('outros cargos e estados', () => {
-  it('Atendente: os três passos pessoais', () => {
+  it('Atendente: os dois passos pessoais (o de notificações saiu, achado 113)', () => {
     papel = 'atendente';
     summary = resumo('atendente', { foto: true });
     montar();
-    expect(screen.getByText('1 de 3')).toBeInTheDocument();
+    expect(screen.getByText('1 de 2')).toBeInTheDocument();
+    expect(screen.queryByText('Escolher suas notificações')).not.toBeInTheDocument();
     expect(screen.getByText('Responder sua primeira conversa')).toBeInTheDocument();
   });
 

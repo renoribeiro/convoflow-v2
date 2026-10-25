@@ -66,8 +66,8 @@ describe('passos de cada cargo', () => {
     ]);
   });
 
-  it('Atendente: foto, notificações e a primeira conversa respondida', () => {
-    expect(CHECKLISTS.atendente.map((d) => d.id)).toEqual(['foto', 'notificacoes', 'primeira_resposta']);
+  it('Atendente: foto e a primeira conversa respondida (sem o passo de notificações, achado 113)', () => {
+    expect(CHECKLISTS.atendente.map((d) => d.id)).toEqual(['foto', 'primeira_resposta']);
   });
 
   it('templates ficam fora (moram na Meta, a função não confere)', () => {

@@ -516,6 +516,17 @@ describe('REST: o pedido inteiro', () => {
     expect(f.registros).toHaveLength(1);
   });
 
+  it('o ?host= que o Vercel acrescenta (api.convoflow.com.br) é ignorado; outro host continua erro', async () => {
+    // Achado na ida ao ar (2026-10-25): a regra "has: host" do vercel.json repassa
+    // o host casado como parâmetro, e todo pedido pelo endereço público dava 400.
+    const f = fake();
+    expect((await atenderRest(pedido('/v1/lojas?host=api.convoflow.com.br'), f.deps)).status).toBe(200);
+    expect((await atenderRest(pedido('/v1/contatos?limite=2&host=api.convoflow.com.br'), f.deps)).status).toBe(200);
+    const outro = await atenderRest(pedido('/v1/lojas?host=outro.exemplo.com.br'), f.deps);
+    expect(outro).toMatchObject({ status: 400, corpo: { erro: { codigo: 'parametro_invalido' } } });
+    expect(f.registros.map((r) => r.filtros)).not.toContainEqual(expect.objectContaining({ host: expect.anything() }));
+  });
+
   it('erro inesperado na leitura: 500 sem detalhe interno', async () => {
     const f = fake({ papel: 'postgres' });
     const r = await atenderRest(pedido('/v1/lojas'), f.deps);

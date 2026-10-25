@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -268,8 +267,10 @@ export const IntegrationSettings = () => {
                   {webhooks.map((webhook) => (
                     <Card key={webhook.id}>
                       <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
+                        {/* No celular os botões descem para baixo do endereço: lado a
+                            lado, eles saíam do cartão (achado 121 do checkup). */}
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <h4 className="font-medium">{webhook.name}</h4>
                               {webhook.is_active ? (
@@ -279,7 +280,7 @@ export const IntegrationSettings = () => {
                               )}
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <span>{webhook.url}</span>
+                              <span className="min-w-0 break-all">{webhook.url}</span>
                               <Button 
                                 size="sm" 
                                 variant="ghost" 
@@ -296,7 +297,7 @@ export const IntegrationSettings = () => {
                             </div>
                           </div>
                           
-                          <div className="flex gap-2">
+                          <div className="flex shrink-0 gap-2">
                             <Button 
                               size="sm" 
                               variant="outline"
@@ -323,13 +324,12 @@ export const IntegrationSettings = () => {
             
             <div className="bg-muted/50 p-4 rounded-lg">
               <h4 className="font-medium mb-2">Documentação de Webhooks</h4>
-              <p className="text-sm text-muted-foreground mb-3">
-                Os webhooks enviam dados em formato JSON via POST. Consulte nossa documentação para detalhes sobre o formato dos payloads.
+              {/* O botão "Ver Documentação" ("em breve") saiu em 2026-10-25
+                  (achado 120 do checkup): não existe página com o formato dos
+                  avisos, e o texto mandava a pessoa consultá-la. */}
+              <p className="text-sm text-muted-foreground">
+                Cada aviso é enviado ao endereço cadastrado no formato JSON, pelo método POST. Ainda não há uma página que descreva o conteúdo de cada evento: para montar a integração, cadastre um endereço de teste e veja um aviso de verdade chegar.
               </p>
-              {/* Mesmo caso: docs.convoflow.com nao resolve. */}
-              <ComingSoonButton size="sm" variant="outline" motivo="Documentação de webhooks em breve">
-                Ver Documentação
-              </ComingSoonButton>
             </div>
         </div>
       </CardContent>

@@ -30,7 +30,7 @@ export const TestimonialsSection = () => {
       role: 'CEO, Loja Nova Digital',
       avatar: '👨‍💼',
       rating: 4,
-      text: 'A gente tava se perdendo no WhatsApp com o volume de mensagens. Depois que colocamos o ConvoFlow, a equipe conseguiu organizar melhor e atender bem mais gente. No começo deu um trabalhinho pra configurar os fluxos, mas depois ficou bem mais leve. Conversões subiram bastante, algo em torno de 80-90%.'
+      text: 'A gente tava se perdendo no WhatsApp com o volume de mensagens. Depois que colocamos o ConvoFlow, a equipe conseguiu organizar melhor e atender bem mais gente. No começo deu um trabalhinho pra configurar os fluxos, mas depois ficou bem mais leve.'
     }
   ];
 

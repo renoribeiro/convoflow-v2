@@ -10,7 +10,7 @@
  *   Gerente   → a Conta inteira (Conta + todas as Lojas), qualquer que seja a
  *               Loja escolhida no seletor do topo.
  *   Gestor    → a própria Loja.
- *   Atendente → passos pessoais (foto, notificações, primeira resposta).
+ *   Atendente → passos pessoais (foto e primeira resposta).
  *   Superadmin→ nada.
  *
  * QUEM VÊ A LISTA (ver decideChecklistView):
@@ -198,15 +198,10 @@ export const CHECKLISTS: Record<OnboardingRole, ChecklistStepDef[]> = {
       tourId: 'foto-perfil',
       helpKey: 'page:settings-profile',
     },
-    {
-      id: 'notificacoes',
-      title: 'Escolher suas notificações',
-      description: 'Decida quais avisos você quer receber.',
-      priority: 'recomendado',
-      screen: '/dashboard/settings?tab=notifications',
-      tourId: 'notificacoes',
-      helpKey: 'page:settings-notifications',
-    },
+    // O passo "Escolher suas notificações" saiu em 2026-10-25 (achado 113 do
+    // checkup, ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md): a preferência
+    // era gravada e nada a lia. Volta junto com a preferência de verdade, com
+    // a chave na função onboarding_checklist (migração nova) e o tour.
     {
       id: 'primeira_resposta',
       title: 'Responder sua primeira conversa',

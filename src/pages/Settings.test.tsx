@@ -34,7 +34,6 @@ vi.mock('@/components/settings/ApiKeysSettings', () => ({
 // Os painéis são pesados e irrelevantes aqui: o que importa é a barra de abas.
 vi.mock('@/components/settings/ProfileSettings', () => ({ ProfileSettings: () => <div /> }));
 vi.mock('@/components/settings/AttendanceSettings', () => ({ AttendanceSettings: () => <div /> }));
-vi.mock('@/components/settings/NotificationSettings', () => ({ NotificationSettings: () => <div /> }));
 vi.mock('@/components/settings/SecuritySettings', () => ({ SecuritySettings: () => <div /> }));
 vi.mock('@/components/settings/IntegrationSettings', () => ({ IntegrationSettings: () => <div /> }));
 vi.mock('@/components/settings/SubscriptionSettings', () => ({
@@ -97,13 +96,15 @@ describe('aba Assinatura', () => {
 
 describe('abas que todo cargo mantém', () => {
   it.each(['gerente', 'gestor', 'atendente'] as UserRole[])(
-    '%s continua com Perfil, Atendimento, Notificações, Segurança e Integrações',
+    '%s continua com Perfil, Atendimento, Segurança e Integrações, e sem Notificações',
     (papel) => {
       cargo = papel;
       abrir();
-      for (const nome of [/perfil/i, /atendimento/i, /notificações/i, /segurança/i, /integrações/i]) {
+      for (const nome of [/perfil/i, /atendimento/i, /segurança/i, /integrações/i]) {
         expect(screen.queryByRole('tab', { name: nome })).not.toBeNull();
       }
+      // A aba saiu em 2026-10-25: a preferência não era lida por nada (achado 113).
+      expect(screen.queryByRole('tab', { name: /notificações/i })).toBeNull();
     },
   );
 });

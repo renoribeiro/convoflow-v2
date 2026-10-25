@@ -20,7 +20,7 @@ vi.mock('@/contexts/TenantContext', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 
-import { NewReportModal } from './NewReportModal';
+import { NewReportModal, formatoDeEnvio } from './NewReportModal';
 import { REPORT_CONTENTS, REPORT_CONTENT_IDS } from '@/lib/reports/reportContents';
 
 // Métricas que o modal oferecia e o servidor NUNCA calculou.
@@ -92,12 +92,31 @@ describe('NewReportModal — a Loja do relatório', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Próximo' }));
     fireEvent.click(screen.getByLabelText('Enviar por Email'));
     fireEvent.change(screen.getByLabelText('Destinatários'), { target: { value: 'dono@empresa.example' } });
-    fireEvent.click(screen.getByRole('button', { name: /Criar Relatório/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Enviar agora/ }));
 
     await waitFor(() => expect(invoke).toHaveBeenCalledTimes(1));
     const [fn, opts] = invoke.mock.calls[0] as unknown as [string, { body: Record<string, unknown> }];
     expect(fn).toBe('send-report');
     expect(opts.body.tenant_id).toBe('loja-aberta-no-seletor');
     expect(opts.body.metrics).toEqual([...REPORT_CONTENT_IDS]);
+    // Sem anexo por padrão; nada de frequência inventada (envio é uma vez).
+    expect(opts.body.format).toBe('html');
+    expect(opts.body.frequency).toBe('manual');
+  });
+});
+
+describe('NewReportModal — só o que existe (achado 71 do checkup)', () => {
+  it('não oferece frequência nem PDF', () => {
+    openModal();
+    expect(screen.queryByText('Frequência')).not.toBeInTheDocument();
+    expect(screen.queryByText('PDF')).not.toBeInTheDocument();
+    expect(screen.getByText(/enviado uma vez, agora/)).toBeInTheDocument();
+  });
+
+  it('template antigo em PDF vira só corpo do email; Excel vira CSV', () => {
+    expect(formatoDeEnvio('pdf')).toBe('html');
+    expect(formatoDeEnvio(undefined)).toBe('html');
+    expect(formatoDeEnvio('excel')).toBe('csv');
+    expect(formatoDeEnvio('csv')).toBe('csv');
   });
 });

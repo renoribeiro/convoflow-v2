@@ -1,33 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import { useRealTimeMetrics } from '@/hooks/useRealTimeAnalytics';
-import { useRealTimeDashboard } from '@/hooks/useRealTimeData';
 import { AnalyticsFilters } from './AdvancedFilters';
 import {
   Activity,
-  Users,
   TrendingUp,
-  TrendingDown,
   Target,
   DollarSign,
-  Server,
-  Database,
-  Cpu,
-  HardDrive,
-  Wifi,
-  WifiOff,
   RefreshCw,
-  Play,
-  Pause,
   AlertTriangle,
-  CheckCircle,
-  Clock
 } from 'lucide-react';
-import { formatCurrency, formatNumber } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 
 interface RealTimeMetricsProps {
@@ -37,15 +20,12 @@ interface RealTimeMetricsProps {
 
 export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
   const { metrics, isLoading, error, refresh, lastUpdated } = useRealTimeMetrics(filters);
-  const {
-    realTimeData,
-    systemMetrics,
-    processingStatus,
-    viewStats,
-    actions
-  } = useRealTimeDashboard();
 
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  // Até 2026-10-25 esta área mostrava ao lojista dados internos do servidor
+  // ("Métricas do Sistema" com CPU, memória, Cache Hit Rate e TPS;
+  // "Processamento de Dados" com botões Parar, Iniciar e Forçar; e a lista de
+  // Materialized Views) e um botão "Auto Refresh" que não mudava nada. Saíram
+  // (achado 65 do checkup, ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md).
 
   // Função para formatar tempo
   const formatTime = (date: Date) => {
@@ -54,13 +34,6 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
       minute: '2-digit',
       second: '2-digit'
     }).format(date);
-  };
-
-  // Função para formatar duração
-  const formatDuration = (ms: number) => {
-    if (ms < 1000) return `${ms}ms`;
-    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
-    return `${(ms / 60000).toFixed(1)}min`;
   };
 
   // Função para formatar valores
@@ -118,16 +91,6 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
     }
   ] : [];
 
-  // Calcular taxa de conversão
-  const conversionRate = realTimeData?.leadsToday > 0 
-    ? (realTimeData.conversionsToday / realTimeData.leadsToday) * 100 
-    : 0;
-
-  // Calcular valor médio por conversão
-  const avgOrderValue = realTimeData?.conversionsToday > 0
-    ? realTimeData.revenueToday / realTimeData.conversionsToday
-    : 0;
-
   if (error) {
     return (
       <Card className={className}>
@@ -155,23 +118,11 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => {
-              refresh();
-              actions?.refreshRealTime();
-              actions?.refreshSystemMetrics();
-            }}
+            onClick={() => refresh()}
             disabled={isLoading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Atualizar
-          </Button>
-          <Button
-            variant={autoRefresh ? "default" : "outline"}
-            size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
-            {autoRefresh ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-            Auto Refresh
           </Button>
         </div>
       </div>
@@ -205,197 +156,6 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
         })}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Métricas do Sistema */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Server className="h-5 w-5" />
-              Métricas do Sistema
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <Cpu className="h-4 w-4" />
-                  CPU
-                </span>
-                <span>{systemMetrics.cpuUsage.toFixed(1)}%</span>
-              </div>
-              <Progress value={systemMetrics.cpuUsage} className="h-2" />
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-2">
-                  <HardDrive className="h-4 w-4" />
-                  Memória
-                </span>
-                <span>{systemMetrics.memoryUsage.toFixed(1)} MB</span>
-              </div>
-              <Progress value={(systemMetrics.memoryUsage / 1024) * 100} className="h-2" />
-            </div>
-
-            <Separator />
-
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Conexões Ativas</p>
-                <p className="font-semibold">{formatNumber(systemMetrics?.activeConnections || 0)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Cache Hit Rate</p>
-                <p className="font-semibold">{systemMetrics?.cacheHitRatio?.toFixed(1) || '0.0'}%</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">TPS</p>
-                <p className="font-semibold">{systemMetrics?.transactionsPerSecond?.toFixed(1) || '0.0'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Status</p>
-                <Badge variant="default" className={cn(
-                  systemMetrics ? "bg-status-success/15 text-status-success" : "bg-status-error/15 text-status-error"
-                )}>
-                  {systemMetrics ? (
-                    <Wifi className="h-3 w-3 mr-1" />
-                  ) : (
-                    <WifiOff className="h-3 w-3 mr-1" />
-                  )}
-                  {systemMetrics ? 'Online' : 'Offline'}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Status do Processamento */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Processamento de Dados
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Status do Serviço</span>
-              <Badge
-                variant={processingStatus.isRunning ? "default" : "secondary"}
-                className={processingStatus.isRunning ? "bg-status-success/15 text-status-success" : ""}
-              >
-                {processingStatus.isRunning ? 'Ativo' : 'Inativo'}
-              </Badge>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span>Registros Processados</span>
-                <span className="font-semibold">{formatNumber(processingStatus?.recordsProcessed || 0)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span>Tempo de Processamento</span>
-                <span className="font-semibold">{formatDuration(processingStatus?.processingTime || 0)}</span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span>Erros</span>
-                <span className={`font-semibold ${(processingStatus?.errors || 0) > 0 ? 'text-status-error' : 'text-status-success'}`}>
-                  {formatNumber(processingStatus?.errors || 0)}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between text-sm">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  Última Atualização
-                </span>
-                <span className="font-semibold">{processingStatus?.lastUpdate ? formatTime(processingStatus.lastUpdate) : 'Nunca'}</span>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={processingStatus?.isRunning ? actions?.stopProcessing : actions?.startProcessing}
-                className="flex-1"
-              >
-                {processingStatus?.isRunning ? (
-                  <>
-                    <Pause className="h-4 w-4 mr-2" />
-                    Parar
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-2" />
-                    Iniciar
-                  </>
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={actions?.forceProcess}
-                disabled={!processingStatus?.isRunning}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Forçar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Estatísticas das Materialized Views */}
-      {viewStats && viewStats.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Materialized Views
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={actions?.refreshAllViews}
-                className="ml-auto"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Atualizar Todas
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {viewStats.map((view) => (
-                <div key={view.view_name} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium">{view.view_name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatNumber(view.row_count)} registros • {(view.size_bytes / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={view.is_populated ? "default" : "secondary"}>
-                      {view.is_populated ? 'Populada' : 'Vazia'}
-                    </Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => actions?.refreshView(view.view_name)}
-                    >
-                      <RefreshCw className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

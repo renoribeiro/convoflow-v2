@@ -89,14 +89,10 @@ interface ScheduleModalProps {
   onSave: (schedule: SchedulePayload) => void | Promise<void>;
 }
 
-const reportTemplates = [
-  'Relatório de Performance Geral',
-  'Análise de Fontes de Tráfego',
-  'Relatório Financeiro',
-  'Funil de Conversão',
-  'Relatório Executivo',
-  'Performance de Campanhas'
-];
+// Até 2026-10-25 havia aqui uma lista de 6 "relatórios" ("Relatório
+// Financeiro", "Análise de Fontes de Tráfego"...) e todos mandavam o mesmo
+// conteúdo (reportType 'general'). Virou um nome livre, e a tela diz o que vai
+// no email (achado 73 do checkup).
 
 // O `value` é o número que vai para a expressão cron (0 = domingo), NÃO o
 // rótulo. Guardar "Quarta-feira" gerava `8 18 * * Quarta-feira`, que o leitor de
@@ -216,12 +212,14 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
     switch (formData.frequency) {
       case 'daily':
         return `${minute} ${hour} * * *`;
-      case 'weekly':
+      case 'weekly': {
         const dayOfWeek = formData.dayOfWeek || '1'; // Segunda-feira por padrão
         return `${minute} ${hour} * * ${dayOfWeek}`;
-      case 'monthly':
+      }
+      case 'monthly': {
         const dayOfMonth = formData.dayOfMonth || 1;
         return `${minute} ${hour} ${dayOfMonth} * *`;
+      }
       default:
         return `${minute} ${hour} * * 1`; // Segunda-feira por padrão
     }
@@ -229,13 +227,31 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
 
   const handleSave = async () => {
     // Validação dos campos obrigatórios
-    if (!formData.reportName) {
+    if (!formData.reportName.trim()) {
       toast({
-        title: 'Erro de Validação',
-        description: 'Por favor, selecione um relatório.',
+        title: 'Falta o nome',
+        description: 'Dê um nome ao agendamento, por exemplo "Resumo semanal para a diretoria".',
         variant: 'destructive',
       });
       return;
+    }
+
+    // Email digitado e não confirmado no "+" entra na lista em vez de ser
+    // ignorado em silêncio.
+    let recipients = formData.recipients;
+    const pendente = newRecipient.trim();
+    if (pendente) {
+      if (!EMAIL_RE.test(pendente)) {
+        toast({
+          title: 'Email inválido',
+          description: `"${pendente}" não é um endereço de email. Corrija ou apague o campo antes de salvar.`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (!recipients.includes(pendente)) recipients = [...recipients, pendente];
+      setFormData({ ...formData, recipients });
+      setNewRecipient('');
     }
 
     if (!formData.time) {
@@ -247,7 +263,7 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
       return;
     }
 
-    if (formData.recipients.length === 0) {
+    if (recipients.length === 0) {
       toast({
         title: 'Erro de Validação',
         description: 'Adicione pelo menos um e-mail de destinatário.',
@@ -281,9 +297,9 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
       // o valor fixo que existia ('template_1') fazia o Postgres recusar a
       // linha inteira (22P02) — nenhum agendamento chegava a ser salvo.
       const scheduleData: SchedulePayload = {
-        name: formData.reportName,
+        name: formData.reportName.trim(),
         cron_expression: generateCronExpression(),
-        recipients: formData.recipients,
+        recipients,
         parameters: {
           deliveryMethods: ['email'],
           frequency: formData.frequency,
@@ -323,22 +339,16 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
           {/* Relatório */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="reportName">Relatório</Label>
-              <Select
+              <Label htmlFor="reportName">Nome do agendamento</Label>
+              <Input
+                id="reportName"
                 value={formData.reportName}
-                onValueChange={(value) => setFormData({...formData, reportName: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar relatório" />
-                </SelectTrigger>
-                <SelectContent>
-                  {reportTemplates.map(template => (
-                    <SelectItem key={template} value={template}>
-                      {template}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(e) => setFormData({ ...formData, reportName: e.target.value })}
+                placeholder="Ex: Resumo semanal para a diretoria"
+              />
+              <p className="text-xs text-muted-foreground">
+                Todo agendamento manda o mesmo relatório da Loja: contatos, conversas, mensagens, contatos por etapa do funil e os números de atendimento, no período da frequência escolhida.
+              </p>
             </div>
           </div>
 

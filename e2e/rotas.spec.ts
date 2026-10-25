@@ -1,5 +1,6 @@
 import { test, expect as expectBase, type BrowserContext, type Page, type Route } from '@playwright/test';
 import { installSupabaseMock, sessionFor, type MockRole } from './support/supabaseMock';
+import { API_ADDON_RELEASED } from '../src/lib/api/release';
 
 /**
  * Rotas no navegador de verdade: guardas, 404, links que chegam de fora e
@@ -109,10 +110,14 @@ test.describe('guardas', () => {
     await expect(page).toHaveURL(/\/auth$/);
   });
 
-  test('/api leva à página inicial enquanto o complemento está desligado', async ({ context }) => {
+  // Segue a chave API_ADDON_RELEASED (src/lib/api/release.ts): ligada desde
+  // 2026-10-25, /api é a documentação pública (e2e/apiAddon.spec.ts confere o
+  // conteúdo); desligada, /api volta para a página inicial.
+  test('/api segue a chave do complemento', async ({ context }) => {
     const page = await abrirComo(context, 'gerente', { sessao: false });
     await page.goto('/api');
-    await expect(page).toHaveURL(/\/$/);
+    if (API_ADDON_RELEASED) await expect(page).toHaveURL(/\/api$/);
+    else await expect(page).toHaveURL(/\/$/);
   });
 
   test('/register leva ao login', async ({ context }) => {

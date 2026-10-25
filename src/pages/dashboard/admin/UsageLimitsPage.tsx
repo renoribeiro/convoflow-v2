@@ -10,6 +10,8 @@ import { toast } from 'sonner';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { UserRole, roleLabel } from '@/types/userHierarchy';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 
 interface UsageLimit {
   id: string;
@@ -56,13 +58,27 @@ export default function UsageLimitsPage() {
       <PageHeader
         title="Limites de uso por nível"
         helpKey="page:admin-usage-limits"
-        description="Configure os limites aplicados a cada nível da hierarquia. Deixe vazio para sem limite."
+        description="Registre o limite de cada nível da hierarquia. Deixe vazio para sem limite."
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Administração', href: '/dashboard/admin' },
           { label: 'Limites de Uso' },
         ]}
       />
+
+      {/* Achado 129 do checkup de usabilidade (ops-privado/checkup-ux/
+          RELATORIO_CHECKUP_UX.md): nenhuma função, trigger ou tela lê
+          usage_limits. Decisão do dono (2026-10-25): a tela fica, com este
+          aviso; a aplicação de verdade vem com o redesenho da hierarquia e
+          dos acessos. Quando vier, tire o aviso e ajuste page:admin-usage-limits. */}
+      <Alert data-testid="aviso-limites-nao-aplicados">
+        <Info className="h-4 w-4" />
+        <AlertTitle>Hoje estes valores só ficam registrados</AlertTitle>
+        <AlertDescription>
+          Nenhuma parte do sistema confere estes limites ainda: ninguém é impedido de criar nada por causa deles.
+          Eles passam a valer junto com o novo desenho dos níveis e acessos.
+        </AlertDescription>
+      </Alert>
 
       <Card>
         <CardHeader className="pb-3">

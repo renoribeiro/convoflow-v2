@@ -2,18 +2,16 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { FileText, BarChart3, TrendingUp, DollarSign, Users, Download, Eye, Settings, AlertCircle, MoreVertical, Edit, Trash2 } from 'lucide-react';
+import { FileText, BarChart3, TrendingUp, DollarSign, Users, Eye, AlertCircle, MoreVertical, Trash2 } from 'lucide-react';
 import { useReportTemplates, useDeleteReportTemplate } from '@/hooks/useReports';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { NewReportModal } from './NewReportModal';
 import { ViewTemplateModal } from './ViewTemplateModal';
-import { EditTemplateModal } from './EditTemplateModal';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 // Mapeamento de ícones por tipo de relatório
@@ -63,7 +61,6 @@ export const ReportTemplates = () => {
   const { toast } = useToast();
   const { tenant, loading: tenantLoading } = useTenant();
   const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
   const [generateModalOpen, setGenerateModalOpen] = useState(false);
@@ -105,7 +102,7 @@ export const ReportTemplates = () => {
       name: template.name,
       description: template.description || '',
       type: cfg.reportType || 'general',
-      format: cfg.format || 'pdf',
+      format: cfg.format || 'html',
       metrics: Array.isArray(cfg.metrics) ? cfg.metrics : [],
       filters: { dateRange: cfg.dateRange || '30days', campaigns: [], contacts: [], status: [] },
       frequency: 'manual',
@@ -118,17 +115,9 @@ export const ReportTemplates = () => {
     setViewModalOpen(true);
   };
 
-  const handleEditTemplate = (template: any) => {
-    setSelectedTemplate(template);
-    setEditModalOpen(true);
-  };
-
-  const handleSaveTemplate = (updatedTemplate: any) => {
-    // TODO: Implementar lógica de salvamento real
-    console.log('Template atualizado:', updatedTemplate);
-    // Aqui você faria a chamada para a API para salvar as alterações
-    // e depois atualizaria a lista de templates
-  };
+  // "Editar" saiu em 2026-10-25 (achado 70 do checkup): a janela esperava 1 s
+  // e dizia "Template atualizado com sucesso" sem gravar nada. Para mudar um
+  // modelo, exclua e salve outro na aba Criar.
 
   const handleDeleteTemplate = (template: any) => {
     setSelectedTemplate(template);
@@ -295,9 +284,6 @@ export const ReportTemplates = () => {
                       <Eye className="w-4 h-4 mr-2" />
                       Gerar
                     </Button>
-                    <ComingSoonButton variant="outline" size="sm" motivo="Baixar modelo em breve">
-                      <Download className="w-4 h-4" />
-                    </ComingSoonButton>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button 
@@ -312,10 +298,6 @@ export const ReportTemplates = () => {
                         <DropdownMenuItem onClick={() => handleViewTemplate(template)}>
                           <Eye className="w-4 h-4 mr-2" />
                           Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditTemplate(template)}>
-                          <Edit className="w-4 h-4 mr-2" />
-                          Editar
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleDeleteTemplate(template)}
@@ -365,13 +347,6 @@ export const ReportTemplates = () => {
         isOpen={viewModalOpen}
         onClose={() => setViewModalOpen(false)}
         template={selectedTemplate}
-      />
-      
-      <EditTemplateModal
-        isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        template={selectedTemplate}
-        onSave={handleSaveTemplate}
       />
       
       <DeleteConfirmationModal

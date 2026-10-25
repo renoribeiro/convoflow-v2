@@ -17,7 +17,7 @@ export const FAQSection = () => {
   const faqs = [
     {
       question: 'Como funciona a integração com o WhatsApp Business?',
-      answer: 'O ConvoFlow se conecta à API oficial do WhatsApp Business, da Meta. O número é o mesmo que seus clientes já conhecem. O que muda é onde ele é atendido: as conversas passam para a plataforma e o número deixa de ser usado no aplicativo do WhatsApp no celular.'
+      answer: 'Você escolhe como conectar cada número. O caminho recomendado é a API oficial do WhatsApp Business, da Meta, a forma mais estável: o número é o mesmo que seus clientes já conhecem, as conversas passam para a plataforma e ele deixa de ser usado no aplicativo do WhatsApp no celular. Também dá para conectar por uma conexão não oficial (Evolution ou WAHA), lendo um QR Code como no WhatsApp Web. Essas conexões não são aprovadas pela Meta: o WhatsApp pode desconectar ou bloquear o número a qualquer momento, esse risco é escolha sua e o ConvoFlow não garante que elas fiquem no ar. Os detalhes estão no item 6.6 dos Termos de Uso.'
     },
     {
       question: 'É possível integrar com meu CRM/ERP atual?',

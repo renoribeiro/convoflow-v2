@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -38,8 +37,6 @@ import {
   DollarSign,
   Calendar,
   Filter,
-  Download,
-  Maximize2,
   RefreshCw
 } from 'lucide-react';
 import { AnalyticsFilters } from './AdvancedFilters';
@@ -92,7 +89,6 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
   const [chartType, setChartType] = useState<'line' | 'area' | 'bar'>('line');
   const [selectedMetric, setSelectedMetric] = useState<'leads' | 'conversions' | 'revenue' | 'conversionRate'>('leads');
   const [timeGranularity, setTimeGranularity] = useState<'day' | 'week' | 'month'>('day');
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Usar hook de dados em tempo real
   const { chartData: realTimeChartData, sourceData: realTimeSourceData, funnelData: realTimeFunnelData, isLoading, error, refresh, lastUpdated } = useRealTimeChartData(filters);
@@ -220,17 +216,6 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
               <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
               Atualizar
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-            <ComingSoonButton variant="outline" size="sm" motivo="Exportação em breve">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </ComingSoonButton>
           </div>
         </CardHeader>
       </Card>
@@ -311,12 +296,12 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
         <TabsContent value="trends">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <CardTitle className="flex items-center gap-2">
                   <BarChart3 className="w-5 h-5" />
                   Análise de Tendências
                 </CardTitle>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Select value={selectedMetric} onValueChange={(value: any) => setSelectedMetric(value)}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
@@ -340,10 +325,6 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                     </SelectContent>
                   </Select>
 
-                  <ComingSoonButton variant="outline" size="sm" motivo="Exportação em breve">
-                    <Download className="w-4 h-4 mr-1" />
-                    Exportar
-                  </ComingSoonButton>
                 </div>
               </div>
             </CardHeader>

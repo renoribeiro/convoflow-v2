@@ -388,7 +388,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Feche a configuração e mova um lead de verdade',
         body:
-          'Na aba "Kanban Board", arraste um card de uma coluna para outra. Mover o card é o que registra que a negociação andou. É assim que o time todo passa a ver a mesma situação.',
+          'No quadro do funil, arraste um card de uma coluna para outra. Mover o card é o que registra que a negociação andou. É assim que o time todo passa a ver a mesma situação.',
         screen: '/dashboard/funnel',
       },
       {

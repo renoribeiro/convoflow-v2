@@ -6,8 +6,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Save, X, History, FlaskConical, Pencil, Activity, CheckCircle2, ChevronRight } from 'lucide-react';
+import { Save, X, History, Pencil, Activity, CheckCircle2, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FlowStat } from './useAutomationStats';
 
@@ -89,16 +88,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
             <Button variant="outline" size="sm" onClick={onHistory} title="Histórico de execuções">
               <History className="mr-1.5 h-4 w-4" /> Histórico
             </Button>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0}>
-                  <Button variant="outline" size="sm" disabled className="opacity-60">
-                    <FlaskConical className="mr-1.5 h-4 w-4" /> Testar
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Em breve</TooltipContent>
-            </Tooltip>
+            {/* "Testar" (desativado, "Em breve") saiu em 2026-10-25 (achado 85). */}
             <Button size="sm" onClick={onSave} disabled={saving}>
               <Save className="mr-1.5 h-4 w-4" /> {saving ? 'Salvando...' : 'Salvar'}
             </Button>

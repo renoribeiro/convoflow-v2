@@ -63,11 +63,9 @@ const getSourceColor = (sourceType: string) => {
 
 interface TrackingDashboardProps {
   dateRange?: DateRange;
-  selectedSources?: string[];
-  selectedStatus?: string;
 }
 
-export const TrackingDashboard = ({ dateRange, selectedSources, selectedStatus }: TrackingDashboardProps) => {
+export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
   const defaultDateRange = useMemo(() => {
     if (dateRange && dateRange.from && dateRange.to) {
       return {

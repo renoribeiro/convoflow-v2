@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ComingSoonButton } from '@/components/shared/ComingSoonButton';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,7 +15,7 @@ import {
   useToggleReportSchedule 
 } from '@/hooks/useReports';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Mail, MessageSquare, MoreHorizontal, Plus, Edit, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, Mail, MessageSquare, Plus, Edit, AlertCircle } from 'lucide-react';
 
 // Tipos baseados no schema do banco.
 // Nullable onde a coluna é nullable: a linha que vem do Supabase tem
@@ -126,6 +125,19 @@ export const ScheduleList = () => {
     setShowModal(true);
   };
 
+  // "Novo" sempre começa vazio. Antes, depois de abrir um agendamento em
+  // "Editar" e cancelar, "Novo Agendamento" reabria o antigo e salvar o
+  // sobrescrevia (achado 73 do checkup).
+  const abrirNovo = () => {
+    setSelectedSchedule(null);
+    setShowModal(true);
+  };
+
+  const mudarJanela = (aberta: boolean) => {
+    setShowModal(aberta);
+    if (!aberta) setSelectedSchedule(null);
+  };
+
   const handleSave = async (scheduleData: SchedulePayload) => {
     try {
       // A modal já entrega no formato da tabela (SchedulePayload): repassamos
@@ -185,7 +197,7 @@ export const ScheduleList = () => {
             Configure envios automáticos de relatórios
           </p>
         </div>
-        <Button onClick={() => setShowModal(true)}>
+        <Button onClick={abrirNovo}>
           <Plus className="w-4 h-4 mr-2" />
           Novo Agendamento
         </Button>
@@ -363,9 +375,6 @@ export const ScheduleList = () => {
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <ComingSoonButton variant="ghost" size="icon" motivo="Mais ações em breve">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </ComingSoonButton>
                   </div>
                 </div>
               </CardContent>
@@ -383,7 +392,7 @@ export const ScheduleList = () => {
             <p className="text-muted-foreground mb-4">
               Crie seu primeiro agendamento para automatizar o envio de relatórios.
             </p>
-            <Button onClick={() => setShowModal(true)}>
+            <Button onClick={abrirNovo}>
               <Plus className="w-4 h-4 mr-2" />
               Criar Agendamento
             </Button>
@@ -393,7 +402,7 @@ export const ScheduleList = () => {
 
       <ScheduleModal
         open={showModal}
-        onOpenChange={setShowModal}
+        onOpenChange={mudarJanela}
         schedule={selectedSchedule}
         onSave={handleSave}
       />

@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Edit, MessageCircle, Calendar, User } from 'lucide-react';
+import { MoreHorizontal, Edit, MessageCircle, Calendar } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,9 +25,7 @@ interface Lead {
   email: string;
   phone: string;
   source: string;
-  value: number;
   lastContact: string;
-  assignedTo: string;
 }
 
 interface SortableLeadCardProps {
@@ -139,17 +137,6 @@ export const SortableLeadCard = ({ lead }: SortableLeadCardProps) => {
               <Badge variant="outline" className="text-xs">
                 {lead.source}
               </Badge>
-              <span className={cn(
-                "text-sm font-semibold text-green-600 transition-all duration-200",
-                isDragging && "text-primary font-bold"
-              )}>
-                R$ {lead.value.toLocaleString()}
-              </span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <User className="w-3 h-3" />
-              {lead.assignedTo}
             </div>
 
             <div className="text-xs text-muted-foreground">
