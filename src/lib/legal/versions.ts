@@ -11,8 +11,8 @@
 // e a data na página.
 // =============================================================================
 
-/** TermsOfService.tsx — "Última atualização: 10 de outubro de 2026" (cobrança do atendente adicional: 4.1, 4.3 e 4.7). */
-export const TERMS_VERSION = '2026-10-10';
+/** TermsOfService.tsx — "Última atualização: 25 de outubro de 2026" (complemento API e integrações: 4.1, 4.3, 4.6, 4.7 e 8.3). */
+export const TERMS_VERSION = '2026-10-25';
 
-/** PrivacyPolicy.tsx — "Última atualização: 16 de outubro de 2026" (seção 5: dados enviados para a nota fiscal). */
-export const PRIVACY_VERSION = '2026-10-16';
+/** PrivacyPolicy.tsx — "Última atualização: 25 de outubro de 2026" (API e integrações: seções 5, 6, 7 e 8). */
+export const PRIVACY_VERSION = '2026-10-25';

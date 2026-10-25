@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 16 de outubro de 2026 • Conforme LGPD
+                Última atualização: 25 de outubro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -218,6 +218,10 @@ export default function PrivacyPolicy() {
                       <strong className="text-slate-700 dark:text-slate-300">Nota Fiscal:</strong>
                       <span className="text-muted-foreground"> Para emitir a nota fiscal de serviço, enviamos à Receita Federal e à Prefeitura de Fortaleza, pelo Sistema Nacional da NFS-e, o CPF ou CNPJ, o nome ou razão social, o endereço e o e-mail informados para a nota, junto com o valor e a descrição do serviço. Guardamos a nota e o seu arquivo pelo prazo exigido pela legislação fiscal (5 anos).</span>
                     </div>
+                    <div className="p-3 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-950/20">
+                      <strong className="text-purple-700 dark:text-purple-400">Por instrução da loja cliente:</strong>
+                      <span className="text-muted-foreground"> Quando a loja cliente liga o complemento "API e integrações", cria uma chave de API, cadastra um webhook ou exporta dados, entregamos os dados escolhidos por ela aos destinatários que ela escolheu (por exemplo, ferramentas de automação ou agentes de inteligência artificial). Essa entrega é instrução da loja, controladora dos dados dos clientes dela (seção 2); o tratamento feito por esses destinatários é responsabilidade da loja e deles.</span>
+                    </div>
                     <div className="p-3 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
                       <strong className="text-blue-700 dark:text-blue-400">Transferência de Negócio:</strong>
                       <span className="text-muted-foreground"> Em caso de fusão, aquisição ou venda (com notificação prévia)</span>
@@ -316,6 +320,11 @@ export default function PrivacyPolicy() {
                         em especial pela execução de contrato e pelo consentimento específico do titular ao utilizar o
                         WhatsApp.
                       </p>
+                      <p className="text-muted-foreground mt-2">
+                        Quando a loja cliente envia dados, pela API ou por webhooks, a serviços hospedados fora do
+                        Brasil, a transferência internacional é feita por ela, como controladora, e cabe a ela observar
+                        a regulamentação aplicável.
+                      </p>
                     </div>
                   </div>
                 </section>
@@ -329,6 +338,9 @@ export default function PrivacyPolicy() {
                       mencionam anos decorrem de obrigação legal (fiscal/contratual) e não
                       dependem de rotina nossa; os demais itens não declaram prazo de
                       eliminação automática justamente porque ela não existe.
+                      Exceção desde a API (2026-10): o registro de uso da API
+                      (public.api_registro) é apagado com 6 meses pelo cron
+                      api-limpeza-diaria (migração 20261024000002).
                     */}
                     <div>
                       <h3 className="font-medium mb-2">Período de Retenção:</h3>
@@ -336,6 +348,7 @@ export default function PrivacyPolicy() {
                         <li><strong>Dados de conta:</strong> Durante a vigência do contrato + 5 anos</li>
                         <li><strong>Dados de mensagens e mídias:</strong> Enquanto a Conta estiver ativa; após o encerramento, eliminados mediante solicitação</li>
                         <li><strong>Logs de acesso:</strong> 6 meses para segurança</li>
+                        <li><strong>Registro de uso da API</strong> (quem pediu o quê, quando, de qual endereço IP): 6 meses, apagado automaticamente depois disso</li>
                         <li><strong>Dados financeiros:</strong> Conforme legislação fiscal (5-10 anos)</li>
                       </ul>
                     </div>
@@ -406,8 +419,9 @@ export default function PrivacyPolicy() {
                     <p className="text-sm text-muted-foreground mb-0">
                       <strong>Como exercer seus direitos:</strong> Entre em contato através do e-mail
                       contato@convoflow.com.br. Responderemos em até 15 dias úteis. O atendimento às
-                      solicitações é feito por esse canal; a plataforma não dispõe de área de autoatendimento
-                      para exportação ou exclusão de dados.
+                      solicitações é feito por esse canal. A loja cliente também pode exportar os dados dos
+                      clientes dela pela própria plataforma (exportação de contatos, webhooks e, com o complemento
+                      contratado, a API); a exclusão é feita pelo nosso atendimento.
                     </p>
                     <p className="text-sm text-muted-foreground mb-0">
                       <strong>Se você é cliente final de uma loja:</strong> os direitos acima devem ser exercidos

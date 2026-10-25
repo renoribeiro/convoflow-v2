@@ -28,7 +28,7 @@ export default function TermsOfService() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Termos de Uso</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 10 de outubro de 2026
+                Última atualização: 25 de outubro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -139,10 +139,20 @@ export default function TermsOfService() {
                         ciclo, na fatura seguinte; a redução gera crédito proporcional na fatura seguinte. A
                         alteração do preço por atendente adicional segue a regra de reajuste do parágrafo abaixo.
                       </p>
+                      <p className="text-muted-foreground mb-2">
+                        O complemento <strong>"API e integrações"</strong>, opcional, é contratado por Conta, pelo
+                        usuário com cargo de Gerente, na tela Configurações › Assinatura, por <strong>R$ 99,90
+                        (noventa e nove reais e noventa centavos) por mês</strong>, cobrado de forma cumulativa à
+                        mensalidade do plano. Contratado no meio do ciclo, é cobrado proporcionalmente aos dias
+                        restantes do ciclo, na fatura seguinte. Desligado pelo cliente, deixa de ser cobrado a partir
+                        do ciclo seguinte, sem crédito proporcional, e o acesso pela API permanece até o fim do ciclo
+                        já pago. Se o cliente o religar antes do fim do ciclo já pago, não há nova cobrança nesse
+                        ciclo. O preço do complemento segue a regra de reajuste do parágrafo abaixo.
+                      </p>
                       <p className="text-muted-foreground">
                         Cada loja adicional é contratada por <strong>R$ 99,90 (noventa e nove reais e noventa
-                        centavos) por mês</strong>, cobrada de forma cumulativa à mensalidade do plano. Os preços
-                        podem ser reajustados mediante comunicação prévia de, no mínimo, 30 (trinta) dias,
+                        centavos) por mês</strong>, cobrada de forma cumulativa à mensalidade do plano. Os preços do
+                        plano, das lojas adicionais e do complemento podem ser reajustados mediante comunicação prévia de, no mínimo, 30 (trinta) dias,
                         aplicando-se o novo valor somente aos ciclos posteriores ao aviso. O cliente que não
                         concordar com o reajuste poderá cancelar a assinatura antes de sua vigência, sem ônus.
                       </p>
@@ -182,7 +192,9 @@ export default function TermsOfService() {
                         acrescida das lojas adicionais e dos atendentes adicionais contratados, <strong>é cobrada
                         automaticamente na data de término do teste</strong>, no cartão cadastrado. Lojas e
                         atendentes adicionais contratados durante o teste também não são cobrados antes do término
-                        dele. A partir dessa data, a assinatura segue a renovação mensal da cláusula 4.2.
+                        dele. O complemento "API e integrações" não pode ser contratado durante o teste grátis; ele
+                        fica disponível a partir da primeira mensalidade paga. A partir dessa data, a assinatura
+                        segue a renovação mensal da cláusula 4.2.
                       </p>
                       <p className="text-muted-foreground">
                         O teste grátis é concedido <strong>uma única vez por Conta</strong>: uma Conta que já teve
@@ -232,7 +244,9 @@ export default function TermsOfService() {
                         da Conta são <strong>preservados</strong>, e o cliente pode solicitar cópia deles a qualquer
                         momento para regularizar a situação. Persistindo a inadimplência, o contrato poderá ser
                         rescindido na forma da cláusula 11, e os dados tratados conforme a nossa Política de
-                        Privacidade, ressalvadas as obrigações legais de guarda.
+                        Privacidade, ressalvadas as obrigações legais de guarda. Durante a suspensão, as chaves de API
+                        da Conta deixam de funcionar, mas não são apagadas: voltam a funcionar quando a situação for
+                        regularizada, se não tiverem vencido ou sido revogadas.
                       </p>
                     </div>
 
@@ -242,8 +256,8 @@ export default function TermsOfService() {
                         Os valores anunciados, inclusive o preço por atendente adicional informado ao cliente, são{' '}
                         <strong>finais e já incluem todos os tributos</strong> incidentes sobre a prestação do
                         serviço. Não há taxa de adesão, taxa de instalação ou qualquer cobrança adicional além das
-                        expressamente previstas nesta seção: o plano, as lojas adicionais e os atendentes
-                        adicionais. A nota fiscal correspondente é emitida a cada ciclo de faturamento.
+                        expressamente previstas nesta seção: o plano, as lojas adicionais, os atendentes
+                        adicionais e o complemento "API e integrações". A nota fiscal correspondente é emitida a cada ciclo de faturamento.
                       </p>
                     </div>
                   </div>
@@ -367,6 +381,42 @@ export default function TermsOfService() {
                     <strong> operador</strong>, cabendo a você assegurar a base legal, o consentimento e o
                     atendimento às solicitações dos titulares, conforme detalhado na Política de Privacidade.
                   </p>
+                  <h3 className="font-medium mt-4 mb-2">8.3. API, integrações e agentes de inteligência artificial</h3>
+                  <div className="space-y-2 text-muted-foreground leading-relaxed">
+                    <p>
+                      (a) Com o complemento "API e integrações" ligado, o Gerente da Conta pode criar chaves de acesso
+                      que permitem a sistemas escolhidos por ele (por exemplo, n8n, Make, programas próprios ou agentes
+                      de inteligência artificial) ler, sem alterar, dados da Conta: contatos, conversas, histórico de
+                      mensagens, funil, equipe e indicadores. O Gerente escolhe, em cada chave, o que ela lê, de quais
+                      lojas e por quanto tempo vale.
+                    </p>
+                    <p>
+                      (b) Criar uma chave e ligá-la a um serviço de terceiro é decisão do cliente, controlador dos dados
+                      dos seus clientes. Ao fazê-lo, o cliente instrui o ConvoFlow a entregar esses dados ao serviço
+                      escolhido e responde por ter base legal para isso, por informar os titulares, por escolher
+                      fornecedores adequados e pelos dados sensíveis que houver nas conversas (por exemplo, de saúde).
+                      Quando o serviço escolhido fica fora do Brasil, a transferência internacional é feita pelo
+                      cliente, como controlador. O ConvoFlow não controla nem responde pelo tratamento feito por esses
+                      terceiros.
+                    </p>
+                    <p>
+                      (c) A chave é mostrada uma única vez. O cliente a guarda em sigilo e responde pelo uso feito com
+                      ela até revogá-la, o que pode fazer a qualquer momento na plataforma. Chaves vencem no prazo
+                      escolhido (até 365 dias).
+                    </p>
+                    <p>
+                      (d) O ConvoFlow registra cada uso das chaves (data, chave, o que foi pedido, quantos itens,
+                      resultado e endereço IP) e guarda esse registro por 6 (seis) meses. O uso é limitado a 60
+                      pedidos por minuto por chave e 5.000 pedidos por dia por Conta. O ConvoFlow pode suspender ou
+                      revogar chaves para proteger a plataforma, os titulares ou o próprio cliente, em caso de uso
+                      abusivo, suspeita de vazamento ou descumprimento destes Termos, avisando o cliente.
+                    </p>
+                    <p>
+                      (e) Conteúdo de mensagens lido por agentes de inteligência artificial pode conter instruções
+                      escritas pelos próprios clientes finais. O ConvoFlow entrega os dados como estão; cabe ao
+                      cliente configurar o agente que usa.
+                    </p>
+                  </div>
                 </section>
 
                 <section>

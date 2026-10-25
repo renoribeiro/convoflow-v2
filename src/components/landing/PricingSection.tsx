@@ -14,6 +14,7 @@ export const PricingSection = () => {
 
   const features = [
     '5 lojas incluídas (extra por R$ 99,90/mês)',
+    'API e integrações por R$ 99,90/mês (opcional, por Conta)',
     '1 gestor e 2 atendentes por loja (mais sob consulta)',
     'WhatsApp Business API integrado',
     'Chatbots inteligentes ilimitados',
@@ -87,7 +88,7 @@ export const PricingSection = () => {
                   Plano Gerente com 5 lojas incluídas
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground/80 px-4 sm:px-0 mt-1">
-                  Loja adicional por R$ 99,90/mês
+                  Loja adicional por R$ 99,90/mês · API e integrações por R$ 99,90/mês
                 </div>
               </div>
 
