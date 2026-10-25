@@ -21,7 +21,7 @@
 // ninguém contrata nem usa a API.
 // =============================================================================
 
-export const API_ADDON_RELEASED = false;
+export const API_ADDON_RELEASED = true;
 
 /** Preço do complemento, como a tela e os Termos escrevem. */
 export const API_ADDON_PRICE_LABEL = 'R$ 99,90';

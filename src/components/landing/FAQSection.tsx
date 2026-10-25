@@ -21,7 +21,7 @@ export const FAQSection = () => {
     },
     {
       question: 'É possível integrar com meu CRM/ERP atual?',
-      answer: 'Sim, por webhooks: o ConvoFlow avisa a outra ferramenta no instante em que algo acontece aqui: mensagem recebida, contato criado ou atualizado, campanha iniciada ou concluída, follow-up agendado, chatbot acionado. É assim que ele se liga ao que você já usa, normalmente por uma ferramenta de automação como n8n ou Make, sem ninguém copiar lead na mão.'
+      answer: 'Sim, por webhooks: o ConvoFlow avisa a outra ferramenta no instante em que algo acontece aqui: mensagem recebida, contato criado ou atualizado, campanha iniciada ou concluída, follow-up agendado, chatbot acionado. É assim que ele se liga ao que você já usa, normalmente por uma ferramenta de automação como n8n ou Make, sem ninguém copiar lead na mão. Para o outro sistema LER os dados (contatos, conversas, funil, equipe e indicadores), há o complemento API e integrações, por R$ 99,90 por mês por Conta: o Gerente cria chaves de acesso só de leitura e liga n8n, Make, programas próprios e agentes de IA. Os webhooks continuam incluídos no plano.'
     },
     {
       question: 'Os chatbots funcionam em português?',
