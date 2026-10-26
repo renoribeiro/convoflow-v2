@@ -18,6 +18,7 @@ import { UserStatusBadge } from './UserStatusBadge';
 import { UserRow } from '@/hooks/users/useUsers';
 import { SEM_MENSAGEM_DICA, type UserActivity } from '@/hooks/users/useAdminUsersActivity';
 import { RelativeTime } from '@/components/shared/RelativeTime';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   useCancelInvite,
   useSuspendUser,
@@ -50,6 +51,54 @@ interface UsersTableProps {
  * (`onView?`) que NENHUMA das duas telas passava, entao o item existia no menu,
  * era clicavel, e nao fazia nada -- em Equipe e em Administracao.
  */
+/** O texto de cada confirmação da Equipe: o que acontece, com quem, e se volta. */
+export function textoDaAcao(
+  tipo: 'suspender' | 'excluir' | 'cancelar' | 'senha',
+  u: Pick<UserRow, 'role'>,
+  nome: string,
+) {
+  // Gestor e Gerente têm gente abaixo deles; o servidor suspende junto.
+  const temEquipeAbaixo = u.role === 'gestor' || u.role === 'gerente';
+  const abaixo = temEquipeAbaixo
+    ? ' As pessoas abaixo dela (os Atendentes da Loja, ou os Gestores e Atendentes da Conta) perdem o acesso junto.'
+    : '';
+  switch (tipo) {
+    case 'suspender':
+      return {
+        title: `Suspender ${nome}?`,
+        description: `${nome} perde o acesso agora: não entra mais no sistema, e uma tela que já estiver aberta para de mostrar conversas.${abaixo}`,
+        reversivel: true,
+        comoDesfazer: 'use "Reativar" neste mesmo menu. O Atendente só volta se a Loja tiver vaga.',
+        confirmText: 'Suspender',
+        variant: 'destructive' as const,
+      };
+    case 'excluir':
+      return {
+        title: `Excluir ${nome}?`,
+        description: `${nome} perde o acesso e sai da equipe. As conversas e mensagens dela continuam no sistema.${abaixo} Para a pessoa voltar, só com um convite novo.`,
+        reversivel: false,
+        confirmText: 'Excluir pessoa',
+        variant: 'destructive' as const,
+      };
+    case 'cancelar':
+      return {
+        title: `Cancelar o convite de ${nome}?`,
+        description: 'O link do convite para de funcionar e a vaga fica livre. Para chamar a pessoa de novo, envie outro convite.',
+        reversivel: false,
+        confirmText: 'Cancelar convite',
+        cancelText: 'Voltar',
+        variant: 'destructive' as const,
+      };
+    case 'senha':
+      return {
+        title: 'Mandar email de nova senha?',
+        description: `${nome} recebe um email com um link para criar uma senha nova. A senha atual continua valendo até ela trocar.`,
+        confirmText: 'Enviar email',
+        variant: 'default' as const,
+      };
+  }
+}
+
 export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
   const [detalhe, setDetalhe] = useState<UserRow | null>(null);
   const suspend = useSuspendUser();
@@ -57,6 +106,10 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
   const resetPwd = useResetUserPassword();
   const softDelete = useSoftDeleteUser();
   const cancelInvite = useCancelInvite();
+  // Suspender, excluir, cancelar convite e redefinir senha pedem confirmação
+  // (achado 109 do checkup: suspender cortava o acesso num clique, e os outros
+  // usavam a caixa do navegador com "Descendentes serão suspensos").
+  const [acao, setAcao] = useState<{ tipo: 'suspender' | 'excluir' | 'cancelar' | 'senha'; u: UserRow } | null>(null);
 
   const nomeDe = (u: UserRow) => [u.first_name, u.last_name].filter(Boolean).join(' ') || '—';
   const ultimoAcesso = (u: UserRow) =>
@@ -141,7 +194,7 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
               <DropdownMenuItem onClick={() => setDetalhe(u)}>
                 <Eye className="mr-2 h-4 w-4" /> Ver detalhes
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => resetPwd.mutate(u.id)}>
+              <DropdownMenuItem onClick={() => setAcao({ tipo: 'senha', u })}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Redefinir senha
               </DropdownMenuItem>
               {/*
@@ -153,7 +206,7 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
               */}
               {u.status !== 'deleted' && <DropdownMenuSeparator />}
               {u.status === 'active' && (
-                <DropdownMenuItem onClick={() => suspend.mutate(u.id)}>
+                <DropdownMenuItem onClick={() => setAcao({ tipo: 'suspender', u })}>
                   <Pause className="mr-2 h-4 w-4" /> Suspender
                 </DropdownMenuItem>
               )}
@@ -165,11 +218,7 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
               {u.status === 'pending' && (
                 <DropdownMenuItem
                   className="text-destructive"
-                  onClick={() => {
-                    if (window.confirm('Cancelar este convite? A vaga dele fica livre.')) {
-                      cancelInvite.mutate(u.id);
-                    }
-                  }}
+                  onClick={() => setAcao({ tipo: 'cancelar', u })}
                 >
                   <XCircle className="mr-2 h-4 w-4" /> Cancelar convite
                 </DropdownMenuItem>
@@ -177,15 +226,7 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
               {(u.status === 'active' || u.status === 'suspended') && (
                 <DropdownMenuItem
                   className="text-destructive"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        'Excluir este usuário? Descendentes serão suspensos.',
-                      )
-                    ) {
-                      softDelete.mutate(u.id);
-                    }
-                  }}
+                  onClick={() => setAcao({ tipo: 'excluir', u })}
                 >
                   <Trash2 className="mr-2 h-4 w-4" /> Excluir
                 </DropdownMenuItem>
@@ -194,6 +235,21 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
           </DropdownMenu>
         )}
       />
+
+      {acao && (
+        <ConfirmationDialog
+          isOpen
+          onClose={() => setAcao(null)}
+          {...textoDaAcao(acao.tipo, acao.u, nomeDe(acao.u))}
+          onConfirm={async () => {
+            const id = acao.u.id;
+            if (acao.tipo === 'suspender') await suspend.mutateAsync(id);
+            if (acao.tipo === 'excluir') await softDelete.mutateAsync(id);
+            if (acao.tipo === 'cancelar') await cancelInvite.mutateAsync(id);
+            if (acao.tipo === 'senha') await resetPwd.mutateAsync(id);
+          }}
+        />
+      )}
 
       <UserDetailsDialog
         row={detalhe}

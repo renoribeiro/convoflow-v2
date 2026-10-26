@@ -28,7 +28,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 25 de outubro de 2026 • Conforme LGPD
+                Última atualização: 26 de outubro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -324,6 +324,45 @@ export default function PrivacyPolicy() {
                         Quando a loja cliente envia dados, pela API ou por webhooks, a serviços hospedados fora do
                         Brasil, a transferência internacional é feita por ela, como controladora, e cabe a ela observar
                         a regulamentação aplicável.
+                      </p>
+                    </div>
+
+                    {/*
+                      Conexões não oficiais (26/10/2026). Conferido no código e na
+                      infraestrutura: o Evolution dos clientes é o servidor do secret
+                      EVOLUTION_API_URL das edge functions (evolution-provision cria a
+                      instância lá); o WAHA não tem servidor da plataforma, a loja
+                      informa o endereço do dela (connection_config). O endereço do
+                      servidor não entra aqui: a cópia pública recusa publicá-lo
+                      (CONTEUDO_PROIBIDO em scripts/copia-publica/regras.mjs).
+                    */}
+                    <div>
+                      <h3 className="font-medium mb-2">Conexões não oficiais (Evolution ou WAHA):</h3>
+                      <p className="text-muted-foreground mb-2">
+                        Quando a loja cliente conecta um número por uma conexão não oficial, as mensagens desse número
+                        não passam pela API oficial da Meta. Elas passam pela sessão do WhatsApp Web do número (a mesma
+                        infraestrutura do WhatsApp usada pelo aplicativo do celular) e por um servidor de conexão:
+                      </p>
+                      <ul className="list-disc pl-6 text-muted-foreground">
+                        <li>
+                          <strong>Evolution:</strong> o servidor Evolution que o ConvoFlow disponibiliza aos clientes. É
+                          nele que o ConvoFlow cria a conexão de cada número.
+                        </li>
+                        <li>
+                          <strong>WAHA:</strong> um servidor WAHA indicado pela própria loja cliente, dela ou de quem ela
+                          contratar. O ConvoFlow não opera esse servidor, e o tratamento feito nele é responsabilidade da
+                          loja e de quem o hospeda.
+                        </li>
+                      </ul>
+                      <p className="text-muted-foreground mt-2">
+                        Esses servidores recebem os números de telefone, o conteúdo das mensagens e das mídias e os dados
+                        de entrega e leitura, para levar as mensagens entre o WhatsApp e o ConvoFlow. Quando o número é
+                        excluído no ConvoFlow, a sessão é encerrada e a instância é apagada do servidor de conexão.
+                      </p>
+                      <p className="text-muted-foreground mt-2">
+                        Essas conexões não são aprovadas pela Meta e seguem os riscos descritos no item 6.6 dos{' '}
+                        <Link to="/terms-of-service" className="text-primary underline">Termos de Uso</Link>: o WhatsApp
+                        pode desconectar a sessão ou bloquear o número a qualquer momento.
                       </p>
                     </div>
                   </div>

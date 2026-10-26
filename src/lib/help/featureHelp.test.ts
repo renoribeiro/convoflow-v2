@@ -25,7 +25,8 @@ import {
 } from './featureHelp';
 import { BLOCK_BY_TYPE } from '@/lib/chatbot/flowConstants';
 import { ALL_ENTRIES } from '@/components/automation/automationCatalog';
-import { ROLE_ORDER } from '@/types/userHierarchy';
+import { ALL_CAPABILITIES, ROLE_ORDER } from '@/types/userHierarchy';
+import { TELAS, chaveDeAjudaDaTela } from '@/lib/access/telas';
 import { API_ADDON_RELEASED } from '@/lib/api/release';
 
 // ---------------------------------------------------------------------------
@@ -254,22 +255,35 @@ describe('getHelpByCategory', () => {
 describe('metadados de acesso das telas', () => {
   const entries = getHelpEntries();
 
-  it('todo moduleName declarado existe como ModuleGuard em App.tsx', () => {
-    // Guarda contra deriva: se a rota trocar de módulo e a ajuda não, a tela
+  it('todo moduleName declarado é o módulo de alguma tela do registro (src/lib/access/telas.ts)', () => {
+    // Guarda contra deriva: se a tela trocar de módulo e a ajuda não, ela
     // some (ou aparece) para o cargo errado na página de Ajuda.
-    const appSource = fs.readFileSync(path.join(SRC_DIR, 'App.tsx'), 'utf8');
-    const guarded = new Set(
-      [...appSource.matchAll(/moduleName=["']([^"']+)["']/g)].map((m) => m[1]),
-    );
+    const guarded = new Set(TELAS.map((t) => t.modulo).filter(Boolean));
 
     const unknown = entries
       .filter((entry) => entry.moduleName && !guarded.has(entry.moduleName))
       .map((entry) => `${entry.key} → ${entry.moduleName}`);
 
-    expect(
-      unknown,
-      `Módulos usados em App.tsx: ${[...guarded].sort().join(', ')}`,
-    ).toEqual([]);
+    expect(unknown, `Módulos do registro: ${[...guarded].sort().join(', ')}`).toEqual([]);
+  });
+
+  it('a entrada de cada tela do registro diz o mesmo módulo que o registro', () => {
+    // A Ajuda decide pela linha do registro; o moduleName da entrada é para
+    // quem lê o código. Se os dois discordarem, alguém mudou só um lado.
+    // Sem entrada própria, de propósito: a Ajuda é a documentação (não um
+    // assunto dela) e /dashboard/profile usa a ajuda da aba Perfil.
+    const divergentes = TELAS.filter((t) => t.chave !== 'help' && t.chave !== 'profile')
+      .map((t) => ({ t, entry: entries.find((e) => e.key === chaveDeAjudaDaTela(t)) }))
+      .filter(({ t, entry }) => !entry || (entry.moduleName ?? null) !== t.modulo)
+      .map(({ t, entry }) => `${chaveDeAjudaDaTela(t)}: registro=${t.modulo} ajuda=${entry ? entry.moduleName ?? null : 'SEM ENTRADA'}`);
+    expect(divergentes).toEqual([]);
+  });
+
+  it('toda capacidade declarada existe na matriz', () => {
+    const invalidas = entries
+      .filter((entry) => entry.capacidade && !ALL_CAPABILITIES.includes(entry.capacidade))
+      .map((entry) => `${entry.key} → ${entry.capacidade}`);
+    expect(invalidas).toEqual([]);
   });
 
   it('todo minRole declarado é um cargo válido', () => {

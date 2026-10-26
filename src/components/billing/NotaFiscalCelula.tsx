@@ -16,6 +16,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { chamarNfseAdmin } from '@/lib/billing/nfseAdmin';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   escolherNota,
   NOTA_STATUS_LABEL,
@@ -42,6 +43,8 @@ export function NotaFiscalCelula({ cobranca, ehSuperadmin }: { cobranca: Cobranc
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [confirmando, setConfirmando] = useState(false);
+  // Emitir de novo pede confirmação: é um documento fiscal.
+  const [confirmarReemissao, setConfirmarReemissao] = useState(false);
   const nota = escolherNota(cobranca.notas, ehSuperadmin);
   const status = nota?.status ?? cobranca.nota_status;
 
@@ -129,7 +132,7 @@ export function NotaFiscalCelula({ cobranca, ehSuperadmin }: { cobranca: Cobranc
             </>
           ) : null}
           {podeReemitir ? (
-            <Button type="button" size="sm" variant="outline" className="h-7 px-2" disabled={ocupado} onClick={() => reemitir.mutate()}>
+            <Button type="button" size="sm" variant="outline" className="h-7 px-2" disabled={ocupado} onClick={() => setConfirmarReemissao(true)}>
               {reemitir.isPending ? <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1 h-3.5 w-3.5" />}
               Emitir de novo
             </Button>
@@ -141,6 +144,15 @@ export function NotaFiscalCelula({ cobranca, ehSuperadmin }: { cobranca: Cobranc
           ) : null}
         </span>
       ) : null}
+      <ConfirmationDialog
+        isOpen={confirmarReemissao}
+        onClose={() => setConfirmarReemissao(false)}
+        onConfirm={async () => { await reemitir.mutateAsync(); }}
+        title="Pedir a emissão desta nota de novo?"
+        description="A nota desta cobrança está parada. O ConvoFlow pede de novo a emissão à Prefeitura, com os dados fiscais atuais da Conta. Se der certo, a nota sai e o cliente recebe por email."
+        confirmText="Emitir de novo"
+        isLoading={reemitir.isPending}
+      />
       <AlertDialog open={confirmando} onOpenChange={setConfirmando}>
         <AlertDialogContent>
           <AlertDialogHeader>

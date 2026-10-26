@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { Plus, Trash2, Workflow, MessageSquare, Hand, Loader2, GripVertical } from 'lucide-react';
 import { useFollowupSequences } from '@/hooks/useFollowupSequences';
 import { sequenceFormSchema } from '@/lib/validations/followup';
@@ -257,6 +258,9 @@ function SequenceBuilderModal({ onClose }: { onClose: () => void }) {
 
 export function SequencesManager() {
   const { sequences, loading, deleteSequence, toggleActive } = useFollowupSequences();
+  // Excluir sequência pede a confirmação do sistema e diz o que acontece com
+  // quem está nela (antes, a caixa do navegador só perguntava o nome).
+  const [sequenciaParaExcluir, setSequenciaParaExcluir] = useState<{ id: string; name: string } | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
 
   return (
@@ -325,9 +329,7 @@ export function SequencesManager() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      if (confirm(`Excluir a sequência "${seq.name}"?`)) deleteSequence(seq.id);
-                    }}
+                    onClick={() => setSequenciaParaExcluir({ id: seq.id, name: seq.name })}
                   >
                     <Trash2 className="w-4 h-4 mr-1 text-red-500" /> Excluir
                   </Button>
@@ -339,6 +341,19 @@ export function SequencesManager() {
       )}
 
       {showBuilder && <SequenceBuilderModal onClose={() => setShowBuilder(false)} />}
+
+      <ConfirmationDialog
+        isOpen={!!sequenciaParaExcluir}
+        onClose={() => setSequenciaParaExcluir(null)}
+        onConfirm={async () => {
+          if (sequenciaParaExcluir) await deleteSequence(sequenciaParaExcluir.id);
+        }}
+        title={`Excluir a sequência "${sequenciaParaExcluir?.name ?? ''}"?`}
+        description="A sequência e os passos dela somem. Os contatos que estão nela saem da sequência e não recebem os próximos passos."
+        reversivel={false}
+        confirmText="Excluir sequência"
+        variant="destructive"
+      />
     </div>
   );
 }

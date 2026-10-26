@@ -28,6 +28,8 @@ import {
   PLAN_NAME,
   PLAN_PRICE_LABEL,
   SLOT_PRICE_LABEL,
+  SLOT_PRICE_CENTAVOS,
+  emReais,
 } from '@/lib/billing/checkout';
 import { describeSubscription, type BadgeTone } from '@/lib/billing/subscriptionView';
 import {
@@ -41,6 +43,7 @@ import { DadosFiscaisCard } from '@/components/billing/DadosFiscaisCard';
 import { CobrancasDaConta } from '@/components/billing/CobrancasDaConta';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApiAddonCard } from '@/components/settings/ApiAddonCard';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { API_ADDON_PRICE_LABEL, API_ADDON_RELEASED } from '@/lib/api/release';
 import {
   AlertDialog,
@@ -81,6 +84,10 @@ export const SubscriptionSettings = () => {
   const [previa, setPrevia] = useState<ManageResponse | null>(null);
   const [erroPrevia, setErroPrevia] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState<null | 'cancelar' | 'desfazer' | 'cartao'>(null);
+  // Contratar lojas com assinatura ativa cobra na hora, e desfazer o
+  // cancelamento volta a cobrar: os dois pedem confirmação (achado 115).
+  const [confirmarLojas, setConfirmarLojas] = useState(false);
+  const [confirmarRetomada, setConfirmarRetomada] = useState(false);
   const [aguardandoStripe, setAguardandoStripe] = useState(false);
 
   // A Conta de cobrança. Para o Gerente é SEMPRE a própria Conta
@@ -444,7 +451,7 @@ export const SubscriptionSettings = () => {
           {temAssinatura ? (
             <>
               {acoes.undo ? (
-                <Button onClick={desfazerCancelamento} disabled={ocupado !== null} className="gap-2">
+                <Button onClick={() => setConfirmarRetomada(true)} disabled={ocupado !== null} className="gap-2">
                   {ocupado === 'desfazer' ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                   Desfazer cancelamento
                 </Button>
@@ -575,7 +582,11 @@ export const SubscriptionSettings = () => {
                 className="w-20"
               />
             </div>
-            <Button onClick={handleBuySlots} disabled={buyingSlots || (!temAssinatura && !podeIrAoCheckout)}>
+            {/* Sem assinatura, o checkout do Stripe já é a confirmação. */}
+            <Button
+              onClick={() => (temAssinatura ? setConfirmarLojas(true) : handleBuySlots())}
+              disabled={buyingSlots || (!temAssinatura && !podeIrAoCheckout)}
+            >
               {buyingSlots ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Contratar {extraSlots} loja{extraSlots > 1 ? 's' : ''} por {SLOT_PRICE_LABEL}/mês cada
             </Button>
@@ -585,6 +596,39 @@ export const SubscriptionSettings = () => {
 
       {temAssinatura ? quadroDadosFiscais : null}
       {contaFiscalId && (isGerente || isSuperAdmin) ? <CobrancasDaConta contaId={contaFiscalId} /> : null}
+
+      <ConfirmationDialog
+        isOpen={confirmarLojas}
+        onClose={() => setConfirmarLojas(false)}
+        onConfirm={handleBuySlots}
+        title={`Contratar ${extraSlots} loja${extraSlots > 1 ? 's' : ''} extra${extraSlots > 1 ? 's' : ''}?`}
+        description={
+          <>
+            <p>
+              Sua Conta passa de {totalSlots} para {totalSlots + extraSlots} lojas. Cada loja extra custa {SLOT_PRICE_LABEL} por
+              mês: são {emReais(extraSlots * SLOT_PRICE_CENTAVOS)} a mais por mês, no mesmo cartão da assinatura.
+            </p>
+            <p>A diferença proporcional deste mês entra na próxima fatura.</p>
+            <p>Para reduzir as lojas extras depois, escreva para contato@convoflow.com.br.</p>
+          </>
+        }
+        confirmText={`Contratar ${extraSlots} loja${extraSlots > 1 ? 's' : ''} por ${emReais(extraSlots * SLOT_PRICE_CENTAVOS)}/mês`}
+        isLoading={buyingSlots}
+        icon={<Store className="h-5 w-5" />}
+      />
+
+      <ConfirmationDialog
+        isOpen={confirmarRetomada}
+        onClose={() => setConfirmarRetomada(false)}
+        onConfirm={desfazerCancelamento}
+        title="Retomar a assinatura?"
+        description="A assinatura volta a renovar sozinha, e a próxima mensalidade é cobrada no cartão salvo, na data de renovação."
+        reversivel
+        comoDesfazer='"Cancelar assinatura", nesta mesma tela.'
+        confirmText="Retomar assinatura"
+        isLoading={ocupado === 'desfazer'}
+        icon={<RotateCcw className="h-5 w-5" />}
+      />
     </div>
   );
 };

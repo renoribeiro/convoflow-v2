@@ -162,7 +162,9 @@ const ABAS: AbaConfig[] = [
   // que criam avisos precisam respeitar a escolha; aí a aba, o passo do
   // onboarding (migração nova em onboarding_checklist) e o tour voltam.
   { value: 'security', label: 'Segurança', icon: Shield, render: () => <SecuritySettings /> },
-  { value: 'integrations', label: 'Integrações', icon: Database, render: () => <IntegrationSettings /> },
+  // Só quem tem store.admin: o servidor (RLS dos webhooks) recusa o resto, e o
+  // atendente via um formulário que não salvava (achado 119 do checkup).
+  { value: 'integrations', label: 'Integrações', icon: Database, requer: 'store.admin', render: () => <IntegrationSettings /> },
   // Só o Gerente, e só com a API liberada para o público OU já ligada na Conta
   // dele (Conta de teste que o superadmin ligou). Gestor e Atendente nunca.
   {

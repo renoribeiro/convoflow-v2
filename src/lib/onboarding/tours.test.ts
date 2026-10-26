@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ROLE_ORDER } from '@/types/userHierarchy';
+import { TELAS } from '@/lib/access/telas';
 import { TOURS, getTour, menuCardBody, routeMatches } from './tours';
 import { CHECKLISTS, PRIORITY_LABELS } from './checklist';
 import {
@@ -128,9 +129,8 @@ describe('integridade dos tours', () => {
     expect(quebradas).toEqual([]);
   });
 
-  it('todo moduleName existe como ModuleGuard e todo minRole é cargo válido', () => {
-    const fonte = fs.readFileSync(path.join(SRC_DIR, 'App.tsx'), 'utf8');
-    const guardados = new Set([...fonte.matchAll(/moduleName=["']([^"']+)["']/g)].map((m) => m[1]));
+  it('todo moduleName é módulo do registro de telas e todo minRole é cargo válido', () => {
+    const guardados = new Set(TELAS.map((t) => t.modulo).filter(Boolean));
     for (const def of [...TOURS, ...Object.values(CHECKLISTS).flat()]) {
       if (def.moduleName) expect(guardados.has(def.moduleName), `${def.id} → ${def.moduleName}`).toBe(true);
       if (def.minRole) expect(Object.keys(ROLE_ORDER)).toContain(def.minRole);

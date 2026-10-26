@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { NavLink, useMatch } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useIsSuperAdmin, useRole } from '@/contexts/TenantContext';
-import { useModules } from '@/hooks/useModules';
+import { useAcessoTelas } from '@/hooks/useAcessoTelas';
+import { TELAS, caminhoDaTela, telaNoMenu, type GrupoDoMenu } from '@/lib/access/telas';
 import {
   MessageSquare,
   BarChart3,
@@ -43,7 +43,6 @@ interface NavItem {
   name: string;
   href: string;
   icon: React.ElementType;
-  moduleName: string | null;
   /** Marca para os tours do onboarding (src/lib/onboarding/tours.ts). */
   dataTour?: string;
 }
@@ -61,50 +60,42 @@ interface NavGroup {
  */
 type SidebarMode = 'drawer' | 'expanded' | 'collapsed';
 
-const operationItems: NavItem[] = [
-  { name: 'Dashboard', href: '/dashboard', icon: BarChart3, moduleName: null },
-  { name: 'Conversas', href: '/dashboard/conversations', icon: MessageSquare, moduleName: 'conversations' },
-  { name: 'Contatos', href: '/dashboard/contacts', icon: Users, moduleName: 'contacts' },
-  { name: 'Funil de Vendas', href: '/dashboard/funnel', icon: Target, moduleName: 'funnel' },
-];
-
-const marketingItems: NavItem[] = [
-  { name: 'Rastreamento', href: '/dashboard/tracking', icon: TrendingUp, moduleName: 'tracking' },
-  { name: 'Relatórios', href: '/dashboard/reports', icon: FileText, moduleName: 'reports' },
-  { name: 'Chatbots', href: '/dashboard/chatbots', icon: Bot, moduleName: 'chatbots' },
-  { name: 'Campanhas', href: '/dashboard/campaigns', icon: Megaphone, moduleName: 'campaigns' },
-  // moduleName null => visível para todo cargo (ver isItemVisible). Consulta
-  // somente-leitura dos templates da Meta; o atendente precisa dela.
-  { name: 'Templates', href: '/dashboard/templates', icon: FileText, moduleName: null },
-  { name: 'Follow-ups', href: '/dashboard/followups', icon: UserCheck, moduleName: 'followups' },
-  { name: 'Automação', href: '/dashboard/automation', icon: Workflow, moduleName: 'automation' },
-];
-
-const configItems: NavItem[] = [
-  { name: 'Instâncias e APIs', href: '/dashboard/whatsapp-numbers', icon: Smartphone, moduleName: 'whatsapp-numbers' },
-  { name: 'Configurações', href: '/dashboard/settings', icon: Settings, moduleName: null },
-  // moduleName null => visível para todo cargo (ver isItemVisible).
-  { name: 'Ajuda', href: '/dashboard/help', icon: HelpCircle, moduleName: null, dataTour: 'menu-ajuda' },
-];
-
-const teamItems: NavItem[] = [
-  { name: 'Equipe', href: '/dashboard/team', icon: UsersRound, moduleName: null },
-];
-
 /**
- * Só do Gerente: a rota é `RoleGuard role="gerente"` (App.tsx). Até 2026-10-21
- * o item aparecia também para o Gestor, que clicava e voltava ao Dashboard.
+ * Os itens do menu saem do registro único de telas (src/lib/access/telas.ts):
+ * nome, grupo e quem vê. Aqui ficam só o ícone e a marca de tour de cada um.
+ * Até 2026-10-26 o menu tinha listas próprias e olhava só o módulo; o
+ * atendente via Campanhas, Instâncias e outras telas que não podia usar.
  */
-const storeComparisonItem: NavItem = {
-  name: 'Comparar Lojas',
-  href: '/dashboard/store-comparison',
-  icon: BarChart3,
-  moduleName: null,
+const ICONES: Record<string, React.ElementType> = {
+  '': BarChart3,
+  conversations: MessageSquare,
+  contacts: Users,
+  funnel: Target,
+  tracking: TrendingUp,
+  reports: FileText,
+  chatbots: Bot,
+  campaigns: Megaphone,
+  templates: FileText,
+  followups: UserCheck,
+  automation: Workflow,
+  'whatsapp-numbers': Smartphone,
+  settings: Settings,
+  help: HelpCircle,
+  team: UsersRound,
+  'store-comparison': BarChart3,
+  admin: Shield,
 };
 
-const adminItems: NavItem[] = [
-  { name: 'Administração', href: '/dashboard/admin', icon: Shield, moduleName: null },
-];
+// Escrito como `dataTour: '...'` para a varredura de src/lib/onboarding/tours.test.ts achar a marca.
+const MARCAS_DE_TOUR: Record<string, { dataTour: string }> = { help: { dataTour: 'menu-ajuda' } };
+
+const itensDoGrupo = (grupo: GrupoDoMenu, visivel: (chave: string) => boolean): NavItem[] =>
+  TELAS.filter((t) => t.grupo === grupo && visivel(t.chave)).map((t) => ({
+    name: t.nome,
+    href: caminhoDaTela(t),
+    icon: ICONES[t.chave] ?? FileText,
+    dataTour: MARCAS_DE_TOUR[t.chave]?.dataTour,
+  }));
 
 const NavItemLink = ({
   item,
@@ -212,9 +203,7 @@ const SidebarLogos = ({ mode }: { mode: SidebarMode }) => (
 );
 
 export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: SidebarProps) => {
-  const isSuperAdmin = useIsSuperAdmin();
-  const role = useRole();
-  const { visibleModules, isLoading: modulesLoading } = useModules();
+  const { ctx } = useAcessoTelas();
 
   // Esc fecha o drawer do mobile.
   useEffect(() => {
@@ -226,25 +215,14 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
     return () => window.removeEventListener('keydown', handler);
   }, [mobileOpen, onMobileClose]);
 
-  const isItemVisible = (item: NavItem): boolean => {
-    if (!item.moduleName) return true;
-    if (isSuperAdmin) return true;
-    if (modulesLoading) return true;
-    return visibleModules.some(
-      (m) => m.module_name === item.moduleName && m.is_enabled,
-    );
-  };
-
-  const visibleOperation = operationItems.filter(isItemVisible);
-  const visibleMarketing = marketingItems.filter(isItemVisible);
-  const visibleConfig = configItems.filter(isItemVisible);
-
-  // Equipe é a visão escopada: o Gerente administra as Lojas da Conta, o Gestor
-  // administra a equipe da própria Loja. O superadmin não precisa dela — usa a
-  // Administração (visão global) + o seletor de Conta.
-  const showTeam = role === 'gerente' || role === 'gestor';
-  const visibleTeam = role === 'gerente' ? [...teamItems, storeComparisonItem] : teamItems;
-  const showAdmin = isSuperAdmin;
+  const visivel = (chave: string) => telaNoMenu(TELAS.find((t) => t.chave === chave)!, ctx);
+  const visibleOperation = itensDoGrupo('operacao', visivel);
+  const visibleMarketing = itensDoGrupo('marketing', visivel);
+  const visibleConfig = itensDoGrupo('configuracao', visivel);
+  const visibleTeam = itensDoGrupo('equipe', visivel);
+  const visibleAdmin = itensDoGrupo('admin', visivel);
+  const showTeam = visibleTeam.length > 0;
+  const showAdmin = visibleAdmin.length > 0;
 
   const renderNav = (mode: SidebarMode, onNavigate?: () => void) => (
     <nav className="flex-1 overflow-y-auto py-2 px-2">
@@ -292,7 +270,7 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
         <>
           <SectionLabel label="Admin" mode={mode} />
           <div className="space-y-0.5">
-            {adminItems.map((item) => (
+            {visibleAdmin.map((item) => (
               <NavItemLink key={item.href} item={item} mode={mode} onNavigate={onNavigate} />
             ))}
           </div>

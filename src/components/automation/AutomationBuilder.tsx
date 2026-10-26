@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,6 +24,7 @@ import { StepConfigPanel } from './StepConfigPanel';
 import { BuilderHeader } from './BuilderHeader';
 import { EmptyBuilder } from './EmptyBuilder';
 import { useAutomationStats } from './useAutomationStats';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   getCatalogEntry,
   UNKNOWN_ENTRY,
@@ -98,6 +99,11 @@ function summarize(
   }
 }
 
+/** O fluxo sem o id, para comparar o que está na tela com o que está salvo. */
+function semId(f: AutomationFlow) {
+  return { name: f.name, description: f.description, active: f.active, steps: f.steps, trigger_type: f.trigger_type, trigger_config: f.trigger_config };
+}
+
 export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) => {
   const [flow, setFlow] = useState<AutomationFlow>({
     name: '',
@@ -107,6 +113,12 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
     trigger_type: '',
     trigger_config: {},
   });
+  // O que está salvo (ou o fluxo vazio, ao criar). "Fechar" só pergunta se o
+  // fluxo mudou desde então (achado 86 do checkup: fechava e perdia tudo).
+  const salvo = useRef<string>(JSON.stringify({ name: '', description: '', active: false, steps: [], trigger_type: '', trigger_config: {} }));
+  const [perguntarSaida, setPerguntarSaida] = useState(false);
+  // Excluir etapa pede confirmação, e a lixeira fica sempre visível (achado 89).
+  const [etapaParaExcluir, setEtapaParaExcluir] = useState<string | null>(null);
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [zoom, setZoom] = useState(1);
@@ -152,7 +164,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
       }
       return value as T;
     };
-    setFlow({
+    const carregado = {
       id: row.id,
       name: row.name ?? '',
       description: row.description ?? '',
@@ -160,8 +172,13 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
       trigger_type: row.trigger_type ?? '',
       trigger_config: parseJson<Record<string, any>>(row.trigger_config, {}),
       steps: parseJson<AutomationStep[]>(row.steps, []),
-    });
+    };
+    salvo.current = JSON.stringify(semId(carregado));
+    setFlow(carregado);
   }, [existingFlowData]);
+
+  const alterado = JSON.stringify(semId(flow)) !== salvo.current;
+  const fechar = () => (alterado ? setPerguntarSaida(true) : onClose());
 
   // ---- mutações de estado ----
   const updateStepConfig = (stepId: string, key: string, value: any) => {
@@ -218,6 +235,11 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
       if (!flow.name.trim()) missing.push('dê um nome ao fluxo');
       if (!flow.trigger_type) missing.push('escolha um gatilho');
       if (flow.steps.length === 0) missing.push('adicione pelo menos uma etapa');
+      // Automação ATIVA com etapa "Incompleto" rodaria pela metade (achado 86):
+      // salvar como inativa continua permitido, para terminar depois.
+      if (flow.active && flow.steps.some((s) => !validateStep(s).complete)) {
+        missing.push('complete as etapas marcadas como "Incompleto" ou deixe a automação inativa');
+      }
       if (missing.length > 0) {
         toast({ title: 'Faltou preencher', description: `Para salvar: ${missing.join('; ')}.`, variant: 'destructive' });
         return;
@@ -319,7 +341,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
         stat={stat}
         onSave={handleSave}
         saving={saveFlowMutation.isPending}
-        onClose={onClose}
+        onClose={fechar}
         onHistory={() => (flowId ? setShowHistory(true) : toast({ title: 'Salve o fluxo primeiro', description: 'O histórico aparece depois que o fluxo é salvo.' }))}
       />
 
@@ -360,7 +382,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
                         status={v.complete ? 'complete' : 'incomplete'}
                         selected={selectedStep === step.id}
                         onClick={() => setSelectedStep(step.id)}
-                        onDelete={() => removeStep(step.id)}
+                        onDelete={() => setEtapaParaExcluir(step.id)}
                       />
                     </div>
                   );
@@ -403,6 +425,35 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
           {flowId && <AutomationAnalytics flowId={flowId} />}
         </DialogContent>
       </Dialog>
+
+      <ConfirmationDialog
+        isOpen={perguntarSaida}
+        onClose={() => setPerguntarSaida(false)}
+        onConfirm={onClose}
+        title="Sair sem salvar?"
+        description='As mudanças desta automação desde a última vez que você salvou se perdem. Para guardar, clique em "Salvar" antes de fechar.'
+        confirmText="Sair sem salvar"
+        cancelText="Continuar editando"
+        variant="destructive"
+      />
+
+      <ConfirmationDialog
+        isOpen={!!etapaParaExcluir}
+        onClose={() => setEtapaParaExcluir(null)}
+        onConfirm={() => {
+          if (etapaParaExcluir) removeStep(etapaParaExcluir);
+        }}
+        title={`Excluir a etapa "${(() => {
+          const etapa = flow.steps.find((s) => s.id === etapaParaExcluir);
+          const entrada = etapa ? getCatalogEntry((etapa.config as { type?: string })?.type ?? '') : null;
+          return entrada?.label ?? 'desta automação';
+        })()}"?`}
+        description='A etapa sai do fluxo, com o que estava configurado nela. Nada é gravado até você clicar em "Salvar".'
+        reversivel
+        comoDesfazer="feche sem salvar, e a automação volta como estava salva."
+        confirmText="Excluir etapa"
+        variant="destructive"
+      />
     </div>
   );
 };

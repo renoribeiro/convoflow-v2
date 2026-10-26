@@ -10,11 +10,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCampaignGlobalStats, useCampaignById } from '@/hooks/useCampaigns';
 import type { Campaign } from '@/hooks/useCampaigns';
+import { useCan } from '@/contexts/TenantContext';
 
 export default function Campaigns() {
   const [showWizard, setShowWizard] = useState(false);
   const [editCampaignId, setEditCampaignId] = useState<string | null>(null);
   const [showReports, setShowReports] = useState(false);
+  const podeCriar = useCan('campaigns.dispatch');
 
   const { data: stats, isLoading: statsLoading } = useCampaignGlobalStats();
 
@@ -51,10 +53,14 @@ export default function Campaigns() {
               <BarChart3 className="w-4 h-4 mr-2" />
               Relatórios
             </Button>
-            <Button size="sm" onClick={() => setShowWizard(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Nova Campanha
-            </Button>
+            {/* Criar campanha exige campaigns.dispatch (o servidor recusa o
+                resto). O atendente só acompanha (achado 91 do checkup). */}
+            {podeCriar && (
+              <Button size="sm" onClick={() => setShowWizard(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Nova Campanha
+              </Button>
+            )}
           </div>
         }
       />

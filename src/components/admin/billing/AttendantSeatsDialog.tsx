@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   Dialog,
   DialogContent,
@@ -141,9 +142,17 @@ export function AttendantSeatsDialog({ conta, onOpenChange }: AttendantSeatsDial
       toast.error('Informe o preço por atendente extra entre R$ 1,00 e R$ 1.000,00 por mês.');
       return;
     }
-    if (info?.priceChangeNeedsNotice && !window.confirm(CONFIRMA_30_DIAS)) return;
+    // Conta que já paga extras: a confirmação do sistema lembra dos 30 dias de
+    // aviso (antes, a caixa do navegador).
+    if (info?.priceChangeNeedsNotice) {
+      setConfirmarPreco(centsDigitados);
+      return;
+    }
     gravarPreco.mutate(centsDigitados);
   };
+  const [confirmarPreco, setConfirmarPreco] = useState<number | null>(null);
+  // Mudar as vagas extras muda a cobrança da Conta: pergunta antes.
+  const [vagasAlvo, setVagasAlvo] = useState<{ s: StoreSeats; extra: number } | null>(null);
 
   const valorDe = (s: StoreSeats) => rascunho[s.store_id] ?? String(s.extra);
   const numeroDe = (s: StoreSeats): number | null => {
@@ -153,12 +162,16 @@ export function AttendantSeatsDialog({ conta, onOpenChange }: AttendantSeatsDial
     return n >= 0 && n <= 100 ? n : null;
   };
 
-  const gravar = async (s: StoreSeats) => {
+  const pedirParaGravar = (s: StoreSeats) => {
     const extra = numeroDe(s);
     if (extra === null) {
       toast.error('Informe de 0 a 100 vagas extras.');
       return;
     }
+    setVagasAlvo({ s, extra });
+  };
+
+  const gravar = async (s: StoreSeats, extra: number) => {
     try {
       const r = await salvar.mutateAsync({ storeId: s.store_id, extra, note: nota.trim() || undefined });
       setRascunho((atual) => {
@@ -325,7 +338,7 @@ export function AttendantSeatsDialog({ conta, onOpenChange }: AttendantSeatsDial
                           size="sm"
                           variant={mudou ? 'default' : 'outline'}
                           disabled={!mudou || salvar.isPending}
-                          onClick={() => gravar(s)}
+                          onClick={() => pedirParaGravar(s)}
                         >
                           Salvar
                         </Button>
@@ -337,6 +350,30 @@ export function AttendantSeatsDialog({ conta, onOpenChange }: AttendantSeatsDial
             />
           )}
         </div>
+
+        <ConfirmationDialog
+          isOpen={confirmarPreco !== null}
+          onClose={() => setConfirmarPreco(null)}
+          onConfirm={async () => {
+            if (confirmarPreco !== null) await gravarPreco.mutateAsync(confirmarPreco);
+          }}
+          title="Trocar o preço do atendente extra?"
+          description={CONFIRMA_30_DIAS}
+          confirmText="Trocar preço"
+          isLoading={gravarPreco.isPending}
+        />
+
+        <ConfirmationDialog
+          isOpen={!!vagasAlvo}
+          onClose={() => setVagasAlvo(null)}
+          onConfirm={async () => {
+            if (vagasAlvo) await gravar(vagasAlvo.s, vagasAlvo.extra);
+          }}
+          title={`Mudar as vagas extras de ${vagasAlvo?.s.store_name ?? 'esta Loja'}?`}
+          description={`A Loja passa de ${vagasAlvo?.s.extra ?? 0} para ${vagasAlvo?.extra ?? 0} vaga(s) extra(s) de atendente, e a cobrança da Conta acompanha a mudança no Stripe.`}
+          confirmText="Mudar vagas"
+          isLoading={salvar.isPending}
+        />
       </DialogContent>
     </Dialog>
   );

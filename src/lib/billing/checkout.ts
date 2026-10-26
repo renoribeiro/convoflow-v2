@@ -49,6 +49,12 @@ export const PLAN_NAME = 'Plano Gerente';
 export const PLAN_PRICE_LABEL = 'R$ 499,90';
 export const INCLUDED_SLOTS = 5;
 export const SLOT_PRICE_LABEL = 'R$ 99,90';
+/** O mesmo preço em centavos, para a confirmação somar o total (N lojas x preço). */
+export const SLOT_PRICE_CENTAVOS = 9990;
+
+/** "R$ 199,80": valor em centavos no formato da tela. */
+export const emReais = (centavos: number): string =>
+  (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\u00a0/g, ' ');
 
 /** O que o plano entrega. Usado no paywall do Gerente. */
 export const PLAN_FEATURES = [

@@ -18,6 +18,7 @@ import { isWhatsAppConnectedStatus, onlyWhatsApp } from '@/lib/whatsapp/connecti
 import { useTenantId } from '@/contexts/TenantContext';
 import { useCampaignMutations, type Campaign, type CampaignCreateInput, type MessageType, type AudienceType } from '@/hooks/useCampaigns';
 import { logger } from '@/lib/logger';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -267,6 +268,14 @@ export const CampaignWizard = ({
 
   const [step, setStep] = useState(1);
   const [state, setState] = useState<WizardState>(() => initState(campaign));
+  // O que estava na tela ao abrir: o "X" só pergunta se algo mudou desde então
+  // (achado 95 do checkup: fechar perdia tudo sem avisar).
+  const estadoInicial = useRef(JSON.stringify(initState(campaign)));
+  const alterado = JSON.stringify(state) !== estadoInicial.current;
+  const [perguntarSaida, setPerguntarSaida] = useState(false);
+  // Disparo imediato pede confirmação com a quantidade (achado 90).
+  const [perguntarDisparo, setPerguntarDisparo] = useState(false);
+  const fechar = () => (alterado ? setPerguntarSaida(true) : onClose());
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -1414,7 +1423,7 @@ export const CampaignWizard = ({
             <Send className="h-5 w-5" />
             {isEdit ? 'Editar Campanha' : 'Nova Campanha'}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={fechar} aria-label="Fechar">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -1464,7 +1473,10 @@ export const CampaignWizard = ({
                   {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                   Salvar como Rascunho
                 </Button>
-                <Button onClick={handleConfirm} disabled={saving || !canProceed()}>
+                <Button
+                  onClick={() => (!isInProgress && state.sendMode !== 'scheduled' ? setPerguntarDisparo(true) : handleConfirm())}
+                  disabled={saving || !canProceed()}
+                >
                   {saving ? (
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   ) : (
@@ -1485,6 +1497,41 @@ export const CampaignWizard = ({
           </div>
         </div>
       </CardContent>
+
+      <ConfirmationDialog
+        isOpen={perguntarSaida}
+        onClose={() => setPerguntarSaida(false)}
+        onConfirm={onClose}
+        title="Sair sem salvar?"
+        description={`O que você preencheu ${isEdit ? 'nesta edição' : 'nesta campanha'} se perde. Para guardar e continuar depois, use "Salvar como Rascunho" no último passo.`}
+        confirmText="Sair sem salvar"
+        cancelText="Continuar editando"
+        variant="destructive"
+      />
+
+      <ConfirmationDialog
+        isOpen={perguntarDisparo}
+        onClose={() => setPerguntarDisparo(false)}
+        onConfirm={handleConfirm}
+        title="Disparar a campanha agora?"
+        description={
+          <>
+            <p>
+              A campanha "{state.name.trim()}" começa a enviar agora para{' '}
+              {totalContacts > 0 ? `${totalContacts.toLocaleString('pt-BR')} contato${totalContacts === 1 ? '' : 's'}` : 'os contatos escolhidos'}
+              {selectedInstance ? `, pelo número ${selectedInstance.name}` : ''}.
+            </p>
+            <p>Dá para pausar no meio, mas a mensagem que já saiu chegou ao cliente e não volta.</p>
+          </>
+        }
+        confirmText={
+          totalContacts > 0
+            ? `Disparar para ${totalContacts.toLocaleString('pt-BR')} contato${totalContacts === 1 ? '' : 's'}`
+            : 'Disparar agora'
+        }
+        isLoading={saving}
+        icon={<Send className="h-5 w-5" />}
+      />
     </Card>
   );
 };

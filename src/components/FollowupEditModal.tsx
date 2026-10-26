@@ -21,6 +21,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Calendar, Trash2, Save, X } from 'lucide-react'
 import { toast } from 'sonner'
 import type { IndividualFollowup, UpdateFollowupData } from '@/lib/followups/types'
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog'
 
 interface FollowupEditModalProps {
   followup: IndividualFollowup | null
@@ -68,6 +69,8 @@ export function FollowupEditModal({
   const [formData, setFormData] = useState<UpdateFollowupData>({})
   const [loading, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  // Excluir pede a confirmação do sistema (antes, a caixa do navegador).
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false)
 
   // Initialize form data when followup changes
   useEffect(() => {
@@ -125,10 +128,6 @@ export function FollowupEditModal({
 
   const handleDelete = async () => {
     if (!followup) return
-
-    if (!confirm('Tem certeza que deseja excluir este follow-up?')) {
-      return
-    }
 
     setDeleting(true)
     try {
@@ -331,7 +330,7 @@ export function FollowupEditModal({
         <DialogFooter className="flex justify-between">
           <Button
             variant="destructive"
-            onClick={handleDelete}
+            onClick={() => setConfirmarExclusao(true)}
             disabled={deleting || loading}
             className="flex items-center gap-2"
           >
@@ -360,6 +359,18 @@ export function FollowupEditModal({
           </div>
         </DialogFooter>
       </DialogContent>
+
+      <ConfirmationDialog
+        isOpen={confirmarExclusao}
+        onClose={() => setConfirmarExclusao(false)}
+        onConfirm={handleDelete}
+        title="Excluir este follow up?"
+        description="O lembrete sai da lista e, se ele era um envio agendado, a mensagem não é mais enviada."
+        reversivel={false}
+        confirmText="Excluir follow up"
+        variant="destructive"
+        isLoading={deleting}
+      />
     </Dialog>
   )
 }

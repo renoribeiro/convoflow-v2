@@ -110,6 +110,8 @@ describe('vagas por Loja', () => {
     await user.clear(campo);
     await user.type(campo, '1');
     await user.click(within(linhaDa('Matriz')).getByRole('button', { name: 'Salvar' }));
+    // Mudar vagas muda a cobrança: confirma na janela do sistema.
+    await user.click(within(screen.getByTestId('confirmacao')).getByRole('button', { name: 'Mudar vagas' }));
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ storeId: 'l1', extra: 1, note: 'combinado por e-mail' }));
     expect(toastSuccess).toHaveBeenCalledWith('Matriz agora tem 3 vagas de atendente.');
@@ -125,6 +127,8 @@ describe('vagas por Loja', () => {
     await user.clear(campo);
     await user.type(campo, '1');
     await user.click(within(linhaDa('Matriz')).getByRole('button', { name: 'Salvar' }));
+    // Mudar vagas muda a cobrança: confirma na janela do sistema.
+    await user.click(within(screen.getByTestId('confirmacao')).getByRole('button', { name: 'Mudar vagas' }));
     await waitFor(() => expect(mutateAsync).toHaveBeenCalled());
     expect(syncAttendantItem).not.toHaveBeenCalled();
   });
@@ -150,6 +154,8 @@ describe('vagas por Loja', () => {
     await user.clear(campo);
     await user.type(campo, '0');
     await user.click(within(linhaDa('Matriz')).getByRole('button', { name: 'Salvar' }));
+    // Mudar vagas muda a cobrança: confirma na janela do sistema.
+    await user.click(within(screen.getByTestId('confirmacao')).getByRole('button', { name: 'Mudar vagas' }));
     await waitFor(() => expect(toastError).toHaveBeenCalledWith(recusa));
     expect(syncAttendantItem).not.toHaveBeenCalled();
   });
@@ -177,18 +183,21 @@ describe('cobrança da Conta', () => {
     await user.clear(campo);
     await user.type(campo, '59,90');
     await user.click(screen.getByRole('button', { name: 'Salvar preço' }));
-    expect(window.confirm).toHaveBeenCalledWith(CONFIRMA_30_DIAS);
+    const janela = screen.getByTestId('confirmacao');
+    expect(janela).toHaveTextContent(CONFIRMA_30_DIAS);
+    expect(setAttendantPrice).not.toHaveBeenCalled();
+    await user.click(within(janela).getByRole('button', { name: 'Trocar preço' }));
     await waitFor(() => expect(setAttendantPrice).toHaveBeenCalledWith(CONTA.id, 5990, undefined));
   });
 
   it('sem confirmar o aviso, o preço não é trocado', async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     abrir();
     const campo = await screen.findByLabelText('Preço por atendente extra (R$ por mês)');
     await user.clear(campo);
     await user.type(campo, '59,90');
     await user.click(screen.getByRole('button', { name: 'Salvar preço' }));
+    await user.click(within(screen.getByTestId('confirmacao')).getByRole('button', { name: 'Cancelar' }));
     expect(setAttendantPrice).not.toHaveBeenCalled();
   });
 
@@ -200,7 +209,7 @@ describe('cobrança da Conta', () => {
     expect(screen.queryByTestId('aviso-30-dias')).toBeNull();
     await user.type(campo, '39,90');
     await user.click(screen.getByRole('button', { name: 'Salvar preço' }));
-    expect(window.confirm).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('confirmacao')).toBeNull();
     await waitFor(() => expect(setAttendantPrice).toHaveBeenCalledWith(CONTA.id, 3990, undefined));
   });
 

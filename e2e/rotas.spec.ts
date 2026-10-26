@@ -126,27 +126,31 @@ test.describe('guardas', () => {
     await expect(page).toHaveURL(/\/auth$/);
   });
 
+  // Desde 2026-10-26 (lote 2 do checkup) a guarda é a TelaGuard: quem não
+  // alcança a tela vê "Você não tem acesso a esta tela" no mesmo endereço, em
+  // vez de ser jogado para o Dashboard.
   for (const [papel, caminho] of [
     ['atendente', '/dashboard/admin'],
     ['atendente', '/dashboard/team'],
     ['gestor', '/dashboard/store-comparison'],
   ] as const) {
-    test(`RoleGuard: ${papel} em ${caminho} volta para /dashboard`, async ({ context }) => {
+    test(`TelaGuard: ${papel} em ${caminho} vê o aviso de sem acesso`, async ({ context }) => {
       const page = await abrirComo(context, papel);
       await page.goto(caminho);
-      await expect(page).toHaveURL(/\/dashboard$/);
+      await expect(page.getByTestId('sem-acesso')).toBeVisible();
+      await expect(page).toHaveURL(new RegExp(`${caminho.replace(/\//g, '\\/')}$`));
       await expect(naoEncontrada(page)).toHaveCount(0);
     });
   }
 
-  test('RoleGuard: gerente abre a Comparação de Lojas', async ({ context }) => {
+  test('TelaGuard: gerente abre a Comparação de Lojas', async ({ context }) => {
     const page = await abrirComo(context, 'gerente');
     await page.goto('/dashboard/store-comparison');
     await expect(titulo(page)).toBeVisible();
     await expect(page).toHaveURL(/\/dashboard\/store-comparison$/);
   });
 
-  test('ModuleGuard: módulo desligado manda para a página inicial', async ({ context }) => {
+  test('TelaGuard: módulo desligado mostra o aviso no mesmo endereço', async ({ context }) => {
     const page = await abrirComo(context, 'gerente');
     const modulos = ['conversations', 'contacts', 'funnel', 'tracking', 'reports', 'chatbots', 'followups', 'automation', 'whatsapp-numbers'];
     await context.route(/\/rest\/v1\/module_settings/, (route) =>
@@ -161,7 +165,9 @@ test.describe('guardas', () => {
           ),
     );
     await page.goto('/dashboard/campaigns');
-    await expect(page).toHaveURL(/\/$/);
+    await expect(page.getByTestId('sem-acesso')).toBeVisible();
+    await expect(page.getByText(/não está ligada na sua Conta/)).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboard\/campaigns$/);
     await page.goto('/dashboard/contacts');
     await expect(page).toHaveURL(/\/dashboard\/contacts$/);
     await expect(titulo(page)).toBeVisible();

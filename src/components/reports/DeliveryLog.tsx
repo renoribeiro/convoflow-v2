@@ -12,6 +12,7 @@ import { useReportExecutions } from '@/hooks/useReports';
 import { useToast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 
 const TYPE_LABELS: Record<string, string> = {
   campaigns: 'Campanhas',
@@ -110,6 +111,8 @@ export const DeliveryLog = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [resendingId, setResendingId] = useState<string | null>(null);
+  // Reenviar manda o relatório de novo a TODOS os destinatários: pergunta antes.
+  const [reenvioAlvo, setReenvioAlvo] = useState<any | null>(null);
 
   // Reenvia o relatório usando a config original salva em parameters.
   const handleResend = async (execution: any) => {
@@ -407,7 +410,7 @@ export const DeliveryLog = () => {
                         size="sm"
                         className="gap-1"
                         disabled={isResending}
-                        onClick={() => handleResend(execution)}
+                        onClick={() => setReenvioAlvo(execution)}
                       >
                         <RefreshCw className={`w-3 h-3 ${isResending ? 'animate-spin' : ''}`} />
                         {isResending ? 'Reenviando…' : 'Reenviar'}
@@ -433,6 +436,18 @@ export const DeliveryLog = () => {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmationDialog
+        isOpen={!!reenvioAlvo}
+        onClose={() => setReenvioAlvo(null)}
+        onConfirm={async () => {
+          if (reenvioAlvo) await handleResend(reenvioAlvo);
+        }}
+        title="Reenviar este relatório?"
+        description="O relatório é gerado de novo, com os números de agora, e enviado outra vez para todos os destinatários desta entrega."
+        confirmText="Reenviar relatório"
+        isLoading={!!resendingId}
+      />
     </div>
   );
 };

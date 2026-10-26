@@ -18,7 +18,7 @@
  * A `category` e a `area` de cada entrada existem para que a página de Ajuda
  * possa montar o índice sem interpretar prefixo de chave.
  */
-import type { UserRole } from '@/types/userHierarchy';
+import type { Capability, UserRole } from '@/types/userHierarchy';
 import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
 import { API_ADDON_PRICE_LABEL, API_ADDON_RELEASED } from '@/lib/api/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS, TRIAL_OFFER_ENABLED } from '@/lib/billing/trialOffer';
@@ -49,21 +49,27 @@ export type ScreenArea = (typeof SCREEN_AREAS)[number];
 
 export interface FeatureHelpEntry {
   /**
-   * Módulo que a tela documentada exige — mesmo nome usado pelo `ModuleGuard`
-   * em App.tsx e pelo menu lateral. Só faz sentido em `category: 'tela'`.
+   * Módulo que a tela documentada exige: o mesmo `modulo` do registro de telas
+   * (src/lib/access/telas.ts). Só faz sentido em `category: 'tela'`.
    * Ausente = tela sem módulo (abre para qualquer sessão).
+   *
+   * A entrada de uma tela do registro (`page:<tela>`) segue o registro, não
+   * estes campos (useHelpVisibility); o teste de paridade confere que eles
+   * dizem a mesma coisa. Os campos valem de verdade nas sub-telas (abas,
+   * janelas), que o registro não conhece.
    */
   moduleName?: string;
   /**
-   * Cargo mínimo para alcançar a tela, na mesma escala do `RoleGuard`
-   * (`atendente` < `gestor` < `gerente` < `superadmin`). Ausente = sem
-   * restrição de cargo. Só faz sentido em `category: 'tela'`.
+   * Cargo mínimo para alcançar a tela (`atendente` < `gestor` < `gerente` <
+   * `superadmin`). Ausente = sem restrição de cargo.
    *
-   * Isto NÃO é uma fonte de permissão: quem barra o acesso continua sendo o
-   * guard da rota. Aqui serve para a página de Ajuda não oferecer leitura sobre
-   * tela que o cargo não alcança.
+   * Isto NÃO é uma fonte de permissão: quem barra o acesso é a TelaGuard da
+   * rota. Aqui serve para a página de Ajuda não oferecer leitura sobre tela que
+   * o cargo não alcança.
    */
   minRole?: UserRole;
+  /** Capacidade exigida, da matriz DEFAULT_CAPABILITIES (src/types/userHierarchy.ts). */
+  capacidade?: Capability;
   title: string;
   /** Frase curta: o que a função faz. */
   whatItDoes: string;
@@ -621,6 +627,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Não precisa cadastrar nada para começar: o contato é criado sozinho na primeira mensagem recebida.',
       'Complete nome e e-mail e aplique tags. Tag é o que você vai usar depois para segmentar campanha.',
+      'O selo "Opt-in" na linha quer dizer que a pessoa aceitou receber campanhas em massa; "Opt-out", que ela pediu para não receber. Para mudar, clique no selo: uma janela pergunta antes e explica o efeito. Só marque Opt-in com a autorização da pessoa.',
       'Não existe importação de planilha: base antiga entra sozinha, à medida que essas pessoas escrevem, ou à mão em "Novo Contato". Cadastre antes só quem precisa estar numa campanha segmentada, e já aplique a tag no cadastro.',
       'Em "Novo Contato", digite o telefone com DDI e DDD, como 55 11 99999-9999. Pode colar com espaço, parêntese ou traço: fica gravado só com os dígitos.',
       'Na Loja com Instagram, use o filtro "Todos / WhatsApp / Instagram" acima da lista. Cada contato traz o logo do canal ao lado do nome, e a busca também acha pelo @, com ou sem o "@".',
@@ -659,7 +666,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Etapas "Novo lead → Contato feito → Visita agendada → Proposta → Fechado". O chatbot qualifica e já joga o lead em "Contato feito"; o corretor move para "Visita agendada" quando marca a visita.',
     tips: [
       'Menos etapas funciona melhor: etapa que nunca recebe card só atrapalha a leitura.',
-      'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
+      'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes. Ao clicar na lixeira, o sistema confere quantos contatos estão na etapa: se houver algum, ele diz quantos e não oferece apagar; se não houver, pede para confirmar "Apagar etapa", que não dá para desfazer.',
+      'Arrastar as etapas em "Configurar Estágios" grava a nova ordem na hora, e aparece "Ordem das etapas salva".',
       'Atendente: você vê as etapas, move os cards e cadastra lead. Criar, editar, reordenar e excluir etapa é com o Gestor ou o Gerente, por isso "Configurar Estágios" não aparece para você.',
       'Mudar de etapa pode disparar automação: use o gatilho "Mudança de Estágio" para agendar o follow-up no instante em que o lead avança.',
       'Quem foi vinculado nos dois canais (WhatsApp e Instagram) aparece num card só, o do WhatsApp. Desvinculado, o card do Instagram volta com a etapa que tinha antes.',
@@ -710,6 +718,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Relatório de segunda-feira com leads novos, conversas novas, quanto tempo o cliente esperou por uma pessoa e quantas conversas ainda esperam alguém, para o dono acompanhar a semana sem pedir print para ninguém.',
     tips: [
+      '"Reenviar", na aba Entregas, pede confirmação: o relatório é gerado de novo, com os números de agora, e vai outra vez para todos os destinatários.',
       'O envio agendado é por e-mail. Não há envio recorrente por WhatsApp: no agendamento você informa endereços de e-mail, não telefones.',
       'O horário é o de Brasília e o disparo acontece na janela dos 5 minutos seguintes: marcar 09:00 significa receber entre 09:00 e 09:05.',
       'O período segue a frequência: agendamento diário fala do último dia, semanal dos últimos 7 dias, mensal dos últimos 30.',
@@ -763,6 +772,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Início → Enviar Texto ("Olá! Sou o assistente da imobiliária") → Fazer Pergunta ("Qual bairro você procura?", salvando em {bairro}) → Transferir para Atendente.',
     tips: [
       'Cada bloco tem o próprio botão de ajuda no painel da direita, com o passo-a-passo daquele bloco.',
+      'Com o selo "Não salvo" no topo, a seta de voltar pergunta antes de sair: o que não foi salvo se perde.',
       'Ctrl+Z desfaz e Ctrl+Y refaz. Delete apaga o bloco selecionado.',
       'Para remover uma ligação, use o × sobre a seta ou arraste a ponta dela para um espaço vazio.',
       'Se Publicar recusar por falta de ligação, o aviso lista os blocos com saída solta, um por um, e o "Ver no fluxo" de cada linha leva o desenho até ele. No desenho esses blocos ficam com borda vermelha. Menu de Opções precisa de uma ligação por opção, e Condição precisa das duas saídas, Verdadeiro e Falso.',
@@ -788,7 +798,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Mensagem idêntica para milhares de números é o caminho mais rápido para o WhatsApp bloquear a linha. Personalize e envie em lotes.',
       'Quem nunca falou com você tende a denunciar como spam. Priorize contatos que já conversaram.',
       'Número da API Oficial recém-conectado tem um teto diário de envio na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time. Quem ficar fora do teto naquele dia aparece nos Detalhes da campanha como "skipped" e não é reenviado sozinho. Monte outra campanha para esses contatos no dia seguinte, ou planeje a primeira semana em lotes.',
-      'Como Atendente você acompanha as campanhas e as respostas que elas geram, mas não cria nem dispara: o botão "Nova Campanha" aparece, mas o servidor recusa na hora de salvar. Quem dispara é o Gestor ou o Gerente; os passos acima são deles.',
+      'Como Atendente você acompanha as campanhas e as respostas que elas geram, mas não cria nem dispara: para você não aparecem "Nova Campanha", "Disparar agora", Editar, Duplicar, Pausar, Cancelar nem Excluir. Quem dispara é o Gestor ou o Gerente; os passos acima são deles.',
+      'Antes de agir, o sistema pergunta: "Disparar agora" (e "Confirmar e Disparar" no assistente) mostra para quantos contatos e por qual número a campanha vai sair; "Cancelar" e "Excluir" avisam que não dá para desfazer; e fechar o assistente com algo preenchido pergunta se você quer sair sem salvar.',
       'Campanha é só WhatsApp. Contato do Instagram não aparece na lista de "Contatos" do passo Público e não conta no total das Tags, mesmo com a etiqueta escolhida. Para falar com ele, responda pelo direct em Conversas.',
     ],
     category: 'tela',
@@ -854,6 +865,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Lead visitou o imóvel e sumiu: follow-up em 1 dia ("o que você achou?"), em 3 dias (condições de pagamento) e em 7 dias (um imóvel parecido).',
     tips: [
+      'Excluir um follow up (no botão de excluir da janela de edição) pede confirmação: se ele era um envio agendado, a mensagem não sai mais.',
       'Quando o cliente responde, o sistema já para a sequência e cancela as mensagens agendadas dele. Você não precisa limpar a lista na mão. O que ele cancela é ajustável em Configurações › Follow-ups.',
       'Tarefa manual é a exceção: por padrão ela sobrevive à resposta, porque foi você quem planejou aquele passo.',
       'Follow-up sem mensagem definida é só um lembrete para o corretor; com mensagem, vira envio.',
@@ -878,6 +890,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Sequência "Pós-visita": mensagem em 1 dia ("o que você achou?"), tarefa "Ligar para o cliente" em 3 dias, mensagem em 7 dias com um imóvel parecido. O lead que responde no segundo dia sai da cadência; o que não responde recebe as três etapas.',
     tips: [
+      'Excluir uma sequência pede confirmação: os contatos que estão nela saem e não recebem os próximos passos.',
       'Não dá para editar uma sequência depois de criada. Para mudar um passo, crie outra, inscreva os próximos leads nela e desative a antiga. Quem já estava inscrito termina a versão antiga.',
       '"Excluir" apaga a sequência, os passos e TODAS as inscrições em andamento de uma vez, sem desfazer. As tarefas e mensagens que já tinham sido criadas ficam na lista de Follow-ups, mas soltas, sem a cadência a que pertenciam. Prefira desativar.',
       'A opção "Parar ao receber resposta" é da sequência, não da Loja: a aba Configurações › Follow-ups decide o que a resposta cancela nos follow-ups avulsos, e não manda nesta trava.',
@@ -900,6 +913,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Gatilho "Mudança de Estágio" para "Visita agendada" → ação "Agendar Follow-up" em 24h com "Confirmando sua visita amanhã, {first_name}?" → ação "Adicionar Tag" com "visita-marcada".',
     tips: [
+      'Fechar o construtor com mudanças não salvas pergunta antes ("Sair sem salvar?"). Excluir uma etapa também pede confirmação; a lixeira fica no canto de cada etapa. Uma automação ativa só salva com todas as etapas completas: etapa com o selo "Incompleto" impede, mas dá para salvar a automação inativa e terminar depois.',
       'Condição que não passa PARA o fluxo: ela não desvia para um caminho alternativo. Para ter dois caminhos, use o chatbot.',
       'Cada etapa tem o próprio botão de ajuda no painel de configuração.',
       'Comece com um fluxo curto e confira as execuções antes de montar algo longo: fluxo grande errado erra em silêncio.',
@@ -938,6 +952,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'A imobiliária liga o número do plantão como uma instância e o do comercial como outra. O chatbot de triagem fica publicado só no número do plantão.',
     tips: [
+      'Esta tela é do Gerente e do Gestor. O Atendente não a vê no menu, e quem abrir pelo endereço vê o aviso "Você não tem acesso a esta tela". A situação dos números (conectado ou não) aparece para o Atendente no Dashboard, sem o botão "Gerenciar".',
+      'Desconectar um número conectado por QR Code pede confirmação: a janela diz qual número para de receber e enviar e como conectar de novo (botão de QR Code, com o celular em mãos). Mensagens que chegarem enquanto ele estiver desconectado podem não entrar no sistema.',
       'Instâncias pertencem à Conta e quem as conecta é o Gerente ou o Gestor. Como Superadmin você não abre esta tela de nenhuma Conta: ela mostra "Exclusivo para lojas" mesmo com a Conta escolhida no seletor. Para apoiar um cliente que não consegue conectar: confira na Administração se a Conta tem acesso e se a pessoa tem o cargo certo, e passe a ela os tutoriais "Antes de conectar seu WhatsApp" e "Conectar seu WhatsApp" da Ajuda. O que trava costuma ser um pré-requisito (login da Meta, número ainda no aplicativo, PIN), não a tela.',
       'Linha desconectada é atendimento parado: mensagem que chega com a instância fora pode não entrar no sistema. Reconecte assim que ver "Desconectado".',
       'Número conectado por QR Code (Evolution ou WAHA): usar o mesmo número no WhatsApp do celular e aqui ao mesmo tempo pode derrubar a sessão.',
@@ -1091,6 +1107,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     area: 'Configuração',
   },
   'page:settings-subscription': {
+    capacidade: 'billing.view',
     // Quem responde pela cobranca e a CONTA, e a Conta e do Gerente. A aba
     // exige a capacidade billing.view, verdadeira so para gerente/superadmin
     // (ver src/pages/Settings.tsx). Gestor e Atendente nao a enxergam.
@@ -1105,7 +1122,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Depois de pagar, você volta para cá. Se a Conta estava bloqueada, a tela "Confirmando seu pagamento" abre o sistema sozinha em alguns segundos, sem recarregar.',
       'Para trocar o cartão, clique em "Atualizar cartão". Abre uma página do Stripe só para cadastrar o cartão novo; ao terminar, você volta para cá e as próximas cobranças usam o cartão novo.',
       'Para cancelar, clique em "Cancelar assinatura" e leia o aviso até o fim: ele diz até que dia o sistema continua liberado. No teste grátis, nada é cobrado. Depois da primeira cobrança, você usa até o fim do período já pago, sem nova cobrança e sem reembolso dos dias que faltam.',
-      'Mudou de ideia? Enquanto a data não chega, "Desfazer cancelamento" deixa a assinatura como estava.',
+      'Mudou de ideia? Enquanto a data não chega, "Desfazer cancelamento" deixa a assinatura como estava. Ele pede confirmação, porque a próxima mensalidade volta a ser cobrada no cartão salvo.',
+      'Para ter mais lojas, escolha quantas em "Quantas lojas extras?" e clique em "Contratar". Com a assinatura ativa, uma janela mostra o novo total de lojas e quanto a mais por mês, antes de cobrar; a diferença proporcional do mês entra na próxima fatura. Para reduzir as lojas extras, escreva para contato@convoflow.com.br.',
       'Em "Cobranças", no fim da aba, veja cada pagamento: a data, o valor, a situação ("Paga", "Reembolsada" ou "Reembolso parcial", com o valor e a data da devolução) e o recibo, em "Ver no Stripe". Quando a nota fiscal entrar no ar, a lista ganha a coluna "Nota fiscal", com o número da NFS-e e os botões "PDF" e "XML".',
     ],
     example:
@@ -1209,6 +1227,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     area: 'Configuração',
   },
   'page:settings-integrations': {
+    capacidade: 'store.admin',
     title: 'Configurações › Integrações',
     whatItDoes:
       'Manda os eventos do ConvoFlow para fora: seu ERP, uma planilha, o n8n. Em vez de alguém copiar lead na mão, o sistema avisa o outro sistema no instante em que o evento acontece.',
@@ -1221,10 +1240,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'O evento de novo contato vai para o n8n, que cadastra o lead no sistema da construtora e avisa o corretor de plantão por e-mail.',
     tips: [
+      'Remover um webhook pede confirmação: o endereço para de receber os avisos na hora, e o sistema que dependia deles deixa de ser avisado.',
       'Sem secret, qualquer um que descobrir a URL pode se passar pelo ConvoFlow. Use secret sempre que o destino aceitar.',
       'URL que responde erro é tentada de novo por um tempo; URL errada só acumula tentativa.',
       'Isto é saída de dados. Receber mensagem do WhatsApp é a outra ponta, em Instâncias e APIs.',
-      'Só o Gestor e o Gerente cadastram, alteram e veem os webhooks e as entregas. Para o Atendente a lista aparece vazia e salvar não funciona: um webhook recebe as mensagens da Loja inteira, inclusive as que o atendente não enxerga.',
+      'Só o Gestor e o Gerente cadastram, alteram e veem os webhooks e as entregas. O Atendente não vê esta aba: um webhook recebe as mensagens da Loja inteira, inclusive as que o atendente não enxerga.',
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1315,6 +1335,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Renomear muda só o nome: equipe, números de WhatsApp, conversas, histórico e o plano da Loja continuam como estão. O nome novo aparece na hora para você; quem já está com a tela aberta vê depois de recarregar a página.',
       'Login compartilhado quebra relatório por pessoa e apaga o histórico de quem atendeu o quê.',
       'Suspender corta o acesso na hora: a pessoa não consegue mais entrar (na tela de login ela vê "Acesso suspenso", com o pedido de falar com quem administra a equipe), e uma tela que ela deixou aberta para de mostrar conversas e de enviar mensagens. Quem está abaixo dela (os Atendentes de um Gestor suspenso) é suspenso junto. "Reativar" devolve tudo como era, mas só para a pessoa escolhida: quem foi suspenso junto precisa ser reativado um por um.',
+      'Suspender, Excluir, Cancelar convite e Redefinir senha pedem confirmação antes: a janela diz o que acontece com a pessoa (e com quem está abaixo dela, no caso de um Gestor) e se dá para desfazer. Redefinir senha manda um email com um link para a pessoa criar uma senha nova; a senha atual continua valendo até ela trocar.',
     ],
     category: 'tela',
     area: 'Equipe',
@@ -1449,9 +1470,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Busque pelo nome ou e-mail; a lista filtra enquanto você digita.',
       'Leia a coluna Plano / Acesso antes de qualquer ação. "Pago" é assinatura ativa; "Em teste até" é o teste grátis de 7 dias, já com cartão cadastrado; "Pagamento pendente" é o cartão recusado com o Stripe ainda tentando (o sistema segue aberto); os três liberam a Conta. Um "cancela em" embaixo do selo é cancelamento agendado. "Manual (Liberado)" é liberação sua, com a data ao passar o mouse; "Bloqueado" é sem acesso. Numa Loja o selo é o da Conta acima, e a lista diz de onde ele vem. A Loja não decide nada sozinha.',
-      'Para abrir o sistema sem pagamento, clique em "Liberar Manualmente" na linha da pessoa: a Conta inteira abre, para todo o time, e fica registrado quem liberou e quando. "Revogar Acesso" fecha na hora para todos, inclusive o Gerente.',
+      'Para abrir o sistema sem pagamento, clique em "Liberar Manualmente" na linha da pessoa: a Conta inteira abre, para todo o time, e fica registrado quem liberou e quando. "Revogar Acesso" fecha na hora para todos, inclusive o Gerente. Os dois pedem confirmação, e revogar exige digitar o nome da Conta antes. "Liberar API" e "Tirar API" também perguntam: tirar a API faz as chaves da Conta pararem na hora.',
       'Para criar alguém, use "Novo Usuário": nome, e-mail, cargo e a Loja (Gestor e Atendente) ou o nome da Conta nova (Gerente: a Conta nasce junto). A pessoa recebe o convite por e-mail e define a própria senha.',
-      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo) e a lixeira abre "Excluir Usuário". Excluir tira o login e some com a pessoa das listas; o histórico de atendimento dela fica. Se ela tentar entrar, vê "Acesso suspenso", o mesmo aviso de quem foi suspenso. Não existe botão para desfazer.',
+      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo; o e-mail é o login e não se troca ali) e a lixeira abre "Excluir Usuário". Trocar o cargo ou desmarcar "Usuário ativo" pede confirmação antes de salvar, e a confirmação lembra de conferir a Loja. Excluir tira o login e some com a pessoa das listas; o histórico de atendimento dela fica. Se ela tentar entrar, vê "Acesso suspenso", o mesmo aviso de quem foi suspenso. Não existe botão para desfazer.',
     ],
     example:
       'Chega um "não consigo entrar". Você busca o e-mail e vê "Bloqueado" na Conta: é cobrança, não senha. O contrato já foi assinado, então "Liberar Manualmente" abre na hora, e você revoga se o pagamento não vier.',
@@ -1489,6 +1510,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Segunda de manhã você abre a aba: 12 Contas pagantes, 3 em teste (a primeira termina na quarta), 1 com pagamento pendente. Em "Stripe", a Conta pendente aparece em "Pagamentos que falharam" com "Cartão recusado" e "Não recuperado". Você avisa o Gerente dela antes que o Stripe desista de cobrar.',
     tips: [
+      'Na janela de atendentes de uma Conta, mudar as vagas extras de uma Loja, trocar o preço do atendente extra (quando a Conta já paga extras) e "Emitir de novo" uma nota fiscal parada pedem confirmação antes.',
       'A chave do Stripe não fica nesta tela: é a secret STRIPE_SECRET_KEY do Supabase, a mesma do checkout, do webhook e dos cupons. Trocar de conta do Stripe é trocar as secrets (a chave, o segredo do webhook e os dois preços) de uma vez.',
       '"Em teste" conta só quem está de fato no teste do Stripe. Uma Conta com data de teste antiga e sem assinatura não entra.',
       'A receita mensal conta as assinaturas ativas e as com pagamento pendente; o teste grátis fica de fora até a primeira cobrança. "Recebido no mês" soma as faturas pagas; reembolso não é descontado.',

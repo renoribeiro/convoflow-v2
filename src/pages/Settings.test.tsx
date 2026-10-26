@@ -96,13 +96,16 @@ describe('aba Assinatura', () => {
 
 describe('abas que todo cargo mantém', () => {
   it.each(['gerente', 'gestor', 'atendente'] as UserRole[])(
-    '%s continua com Perfil, Atendimento, Segurança e Integrações, e sem Notificações',
+    '%s continua com Perfil, Atendimento e Segurança, e sem Notificações',
     (papel) => {
       cargo = papel;
       abrir();
-      for (const nome of [/perfil/i, /atendimento/i, /segurança/i, /integrações/i]) {
+      for (const nome of [/perfil/i, /atendimento/i, /segurança/i]) {
         expect(screen.queryByRole('tab', { name: nome })).not.toBeNull();
       }
+      // Integrações exige store.admin (achado 119): o atendente não vê.
+      if (papel === 'atendente') expect(screen.queryByRole('tab', { name: /integrações/i })).toBeNull();
+      else expect(screen.queryByRole('tab', { name: /integrações/i })).not.toBeNull();
       // A aba saiu em 2026-10-25: a preferência não era lida por nada (achado 113).
       expect(screen.queryByRole('tab', { name: /notificações/i })).toBeNull();
     },

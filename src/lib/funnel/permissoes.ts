@@ -5,12 +5,19 @@
  * (a Conta e as Lojas dela) e Superadmin. O Atendente é operacional: vê as
  * etapas e move os cards, mas não muda o funil.
  *
- * Espelho da regra do banco (20261021000003, policies funnel_stages_tenant_*:
- * current_capability_role() IN ('gestor','gerente'); o superadmin pela policy
- * dele). A tela esconde os controles; quem recusa de verdade é o banco.
+ * Desde 2026-10-26 a regra sai da matriz de capacidades (store.admin), a fonte
+ * única de quem pode o quê (src/types/userHierarchy.ts, tabela em
+ * docs/PERMISSOES_POR_CARGO.md). Antes era uma lista de cargos escrita aqui.
+ *
+ * O banco confere pelo CARGO, não pela capacidade (20261021000003, policies
+ * funnel_stages_tenant_*: current_capability_role() IN ('gestor','gerente'); o
+ * superadmin pela policy dele). Hoje dá no mesmo, porque store.admin é
+ * exatamente desses três cargos. A tela esconde os controles; quem recusa de
+ * verdade é o banco.
  */
-import type { UserRole } from '@/types/userHierarchy';
+import { can, type UserRole } from '@/types/userHierarchy';
 
 export function podeConfigurarEtapas(role: UserRole | null | undefined): boolean {
-  return role === 'gestor' || role === 'gerente' || role === 'superadmin';
+  if (!role) return false;
+  return can(role, 'store.admin');
 }

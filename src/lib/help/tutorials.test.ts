@@ -20,6 +20,7 @@ import {
 } from './tutorials';
 import { FEATURE_HELP, getFeatureHelp } from './featureHelp';
 import { ROLE_ORDER } from '@/types/userHierarchy';
+import { TELAS } from '@/lib/access/telas';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SRC_DIR = path.resolve(HERE, '..', '..');
@@ -121,15 +122,12 @@ describe('integridade dos tutoriais', () => {
     expect(invalid).toEqual([]);
   });
 
-  it('todo moduleName declarado existe como ModuleGuard em App.tsx', () => {
-    const source = fs.readFileSync(path.join(SRC_DIR, 'App.tsx'), 'utf8');
-    const guarded = new Set(
-      [...source.matchAll(/moduleName=["']([^"']+)["']/g)].map((m) => m[1]),
-    );
+  it('todo moduleName declarado é o módulo de alguma tela do registro (src/lib/access/telas.ts)', () => {
+    const guarded = new Set(TELAS.map((t) => t.modulo).filter(Boolean));
     const unknown = TUTORIALS.filter((t) => t.moduleName && !guarded.has(t.moduleName)).map(
       (t) => `${t.id} → ${t.moduleName}`,
     );
-    expect(unknown, `Módulos em App.tsx: ${[...guarded].sort().join(', ')}`).toEqual([]);
+    expect(unknown, `Módulos do registro: ${[...guarded].sort().join(', ')}`).toEqual([]);
   });
 
   it('nenhuma entrada de FEATURE_HELP usa a categoria "tutorial"', () => {

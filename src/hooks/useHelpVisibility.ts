@@ -1,21 +1,20 @@
 /**
  * Quais entradas de ajuda e tutoriais o usuário atual deve ver.
  *
- * Não existe fonte de permissão nova aqui: a decisão sai dos MESMOS primitivos
- * que o menu lateral e os guards já usam —
- *  - módulos  → `useModules().isModuleVisible` (o mesmo helper que o ModuleGuard
- *               e o Sidebar consultam);
- *  - cargos   → `useRole()` + `roleAtLeast()` (a mesma escala do RoleGuard).
- *
- * O requisito de cada tela está declarado na própria entrada
- * (`moduleName` / `minRole`), em src/lib/help/featureHelp.ts. Os tutoriais
- * declaram do mesmo jeito, em src/lib/help/tutorials.ts, e passam pela mesma
- * checagem — daí `canAccess` ser genérico.
+ * Não existe fonte de permissão nova aqui.
+ *  - A entrada de uma TELA do painel (`page:<tela>`) segue o registro único de
+ *    telas (src/lib/access/telas.ts), o mesmo do menu, da busca rápida e da
+ *    TelaGuard: quem não alcança a tela não lê a ajuda dela.
+ *  - O resto (abas de Configurações, tutoriais, tours, passos da lista) declara
+ *    o próprio requisito: `moduleName`, `minRole` e, desde 2026-10-26,
+ *    `capacidade` (a matriz DEFAULT_CAPABILITIES).
  */
 import { useCallback } from 'react';
 import { useModules } from '@/hooks/useModules';
-import { useRole } from '@/contexts/TenantContext';
-import { roleAtLeast, type UserRole } from '@/types/userHierarchy';
+import { useCapabilities, useRole } from '@/contexts/TenantContext';
+import { roleAtLeast, type Capability, type UserRole } from '@/types/userHierarchy';
+import { useAcessoTelas } from '@/hooks/useAcessoTelas';
+import { TELAS, acessoATela, chaveDeAjudaDaTela, type Tela } from '@/lib/access/telas';
 import type { FeatureHelpEntry } from '@/lib/help/featureHelp';
 import type { Tutorial } from '@/lib/help/tutorials';
 
@@ -23,11 +22,18 @@ import type { Tutorial } from '@/lib/help/tutorials';
 export interface HelpAccessDeclaration {
   moduleName?: string;
   minRole?: UserRole;
+  /** Capacidade da matriz DEFAULT_CAPABILITIES que o conteúdo exige. */
+  capacidade?: Capability;
 }
+
+
+const TELA_DA_AJUDA: ReadonlyMap<string, Tela> = new Map(TELAS.map((t) => [chaveDeAjudaDaTela(t), t]));
 
 export function useHelpVisibility() {
   const { isModuleVisible, isLoading } = useModules();
   const role = useRole();
+  const capacidades = useCapabilities();
+  const { ctx } = useAcessoTelas();
   const isSuperAdmin = role === 'superadmin';
 
   const canAccess = useCallback(
@@ -39,6 +45,7 @@ export function useHelpVisibility() {
       if (isSuperAdmin) return true;
 
       if (requirement.minRole && !roleAtLeast(role, requirement.minRole)) return false;
+      if (requirement.capacidade && capacidades[requirement.capacidade] !== true) return false;
 
       // Enquanto os módulos carregam, não esconde nada — é a mesma tolerância
       // do menu lateral, que evita a lista "piscar" no primeiro render.
@@ -48,16 +55,21 @@ export function useHelpVisibility() {
 
       return true;
     },
-    [isModuleVisible, isLoading, isSuperAdmin, role],
+    [isModuleVisible, isLoading, isSuperAdmin, role, capacidades],
   );
 
   const canSeeHelpEntry = useCallback(
-    (entry: FeatureHelpEntry): boolean => {
+    (entry: FeatureHelpEntry & { key?: string }): boolean => {
       // Chatbot, automações e conceitos não são presos a tela: valem para todos.
       if (entry.category !== 'tela') return true;
+      // Superadmin lê tudo (mesmo bypass de sempre: ler a documentação não é
+      // acessar dado de cliente).
+      if (isSuperAdmin) return true;
+      const t = entry.key ? TELA_DA_AJUDA.get(entry.key) : undefined;
+      if (t) return acessoATela(t, ctx) === 'liberado';
       return canAccess(entry);
     },
-    [canAccess],
+    [canAccess, ctx, isSuperAdmin],
   );
 
   /** Tutorial atravessa telas, então o requisito dele sempre é avaliado. */

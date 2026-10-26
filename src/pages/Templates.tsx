@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/select';
 
 import { useMetaTemplates, useMetaWabaGroups } from '@/hooks/useMetaTemplates';
+import { useCan } from '@/contexts/TenantContext';
 import {
   buttonTypeLabel,
   filterTemplateGroups,
@@ -183,6 +184,9 @@ export default function Templates() {
 
   const [wabaSelecionado, setWabaSelecionado] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
+  // Quem não configura o WhatsApp (atendente) recebe "peça ao Gestor" em vez
+  // de um caminho que ele não alcança (achado 101 do checkup).
+  const podeConfigurar = useCan('whatsapp.configure');
 
   // Sem seleção explícita, o primeiro grupo. Com uma Loja de um WABA só — o
   // caso comum — isso significa que a tela nunca pede escolha nenhuma.
@@ -227,7 +231,9 @@ export default function Templates() {
           description={
             'Templates existem só na API Oficial (Meta Cloud API). Números conectados por ' +
             'QR Code não têm templates: neles você envia texto livre dentro da janela de 24h. ' +
-            'Para usar templates, conecte um número oficial em Instâncias e APIs.'
+            (podeConfigurar
+              ? 'Para usar templates, conecte um número oficial em Instâncias e APIs.'
+              : 'Para usar templates, peça ao Gestor da sua Loja para conectar um número oficial.')
           }
         />
       );
@@ -244,11 +250,18 @@ export default function Templates() {
             {officialCount === 1
               ? 'Seu número na API Oficial está sem o WABA ID (o identificador da conta do '
               : 'Seus números na API Oficial estão sem o WABA ID (o identificador da conta do '}
-            WhatsApp Business). Sem ele não dá para consultar os templates. Preencha em{' '}
-            <Link to="/dashboard/whatsapp-numbers" className="underline font-medium">
-              Instâncias e APIs
-            </Link>
-            .
+            WhatsApp Business). Sem ele não dá para consultar os templates.{' '}
+            {podeConfigurar ? (
+              <>
+                Preencha em{' '}
+                <Link to="/dashboard/whatsapp-numbers" className="underline font-medium">
+                  Instâncias e APIs
+                </Link>
+                .
+              </>
+            ) : (
+              'Peça ao Gestor da sua Loja para completar a conexão.'
+            )}
           </AlertDescription>
         </Alert>
       );

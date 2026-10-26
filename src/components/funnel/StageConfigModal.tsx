@@ -16,6 +16,9 @@ import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTenant } from '@/contexts/TenantContext';
+import { supabase } from '@/integrations/supabase/client';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface Stage {
   id: string;
@@ -38,7 +41,7 @@ const colorOptions = [
   { name: 'Rosa', class: 'bg-pink-100 text-pink-800', value: 'pink' },
 ];
 
-const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: (stage: Stage) => void; onDelete: (id: string) => void }) => {
+const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: (stage: Stage) => void; onDelete: (stage: Stage) => void }) => {
   const {
     attributes,
     listeners,
@@ -71,7 +74,7 @@ const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: 
               <Button variant="ghost" size="sm" onClick={() => onEdit(stage)}>
                 <Edit className="w-4 h-4" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => onDelete(stage.id)}>
+              <Button variant="ghost" size="sm" onClick={() => onDelete(stage)} aria-label={`Apagar a etapa ${stage.name}`}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -88,6 +91,10 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
   const [newStageColor, setNewStageColor] = useState('blue');
   const { toast } = useToast();
   const { tenantId } = useTenant();
+  const queryClient = useQueryClient();
+  // Apagar etapa pede confirmação e diz para onde vão os contatos (achado 58
+  // do checkup: a lixeira apagava na hora). contatos=null enquanto conta.
+  const [apagarAlvo, setApagarAlvo] = useState<{ stage: Stage; contatos: number | null } | null>(null);
 
   // Buscar estágios do Supabase
   const { data: stagesData = [], isLoading, refetch } = useSupabaseQuery({
@@ -170,17 +177,24 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
       
       const reorderedStages = arrayMove(stages, oldIndex, newIndex);
       
-      // Atualizar a ordem no banco de dados
+      // Atualizar a ordem no banco, UMA etapa por vez, pelo id. Até 2026-10-26
+      // esta chamada passava `id` a um hook que o ignorava: o UPDATE saía sem
+      // filtro e, com o RLS da Loja, gravava a mesma ordem em todas as etapas,
+      // com um aviso de "atualizado" por etapa (achado 59 do checkup).
       try {
         for (let i = 0; i < reorderedStages.length; i++) {
-          await updateStageMutation.mutateAsync({
-            id: reorderedStages[i].id,
-            data: { order: i + 1 }
-          });
+          const { error } = await supabase
+            .from('funnel_stages')
+            .update({ order: i + 1 })
+            .eq('id', reorderedStages[i].id);
+          if (error) throw error;
         }
+        await queryClient.invalidateQueries({ queryKey: ['funnel_stages'] });
         refetch();
+        toast({ title: 'Ordem das etapas salva' });
       } catch (error) {
-        toast({ title: 'Erro', description: 'Erro ao reordenar estágios', variant: 'destructive' });
+        refetch();
+        toast({ title: 'Não foi possível salvar a nova ordem', description: 'Tente arrastar de novo.', variant: 'destructive' });
       }
     }
   };
@@ -215,17 +229,15 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
     });
   };
 
-  const deleteStage = (id: string) => {
-    deleteStageMutation.mutate({
-      data: {},
-      options: {
-        filter: {
-          column: 'id',
-          operator: 'eq',
-          value: id
-        }
-      }
-    });
+  const pedirParaApagar = async (stage: Stage) => {
+    setApagarAlvo({ stage, contatos: null });
+    const { count, error } = await supabase
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('current_stage_id', stage.id);
+    // Sem conseguir contar, trata como "tem contatos": melhor não oferecer
+    // apagar do que deixar o banco recusar no meio.
+    setApagarAlvo({ stage, contatos: error ? -1 : count ?? 0 });
   };
 
   return (
@@ -257,7 +269,7 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
                       key={stage.id}
                       stage={stage}
                       onEdit={setEditingStage}
-                      onDelete={deleteStage}
+                      onDelete={pedirParaApagar}
                     />
                   ))}
                 </SortableContext>
@@ -365,6 +377,42 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
             </Button>
           </div>
         </div>
+
+        <ConfirmationDialog
+          isOpen={!!apagarAlvo}
+          onClose={() => setApagarAlvo(null)}
+          onConfirm={() =>
+            new Promise<void>((resolve, reject) => {
+              if (!apagarAlvo) return resolve();
+              deleteStageMutation.mutate(
+                { data: {}, options: { filter: { column: 'id', operator: 'eq', value: apagarAlvo.stage.id } } },
+                { onSuccess: () => resolve(), onError: (e) => reject(e) },
+              );
+            })
+          }
+          {...(apagarAlvo && apagarAlvo.contatos !== null && apagarAlvo.contatos !== 0
+            ? {
+                title: apagarAlvo.contatos > 0
+                  ? `A etapa "${apagarAlvo.stage.name}" tem ${apagarAlvo.contatos} contato${apagarAlvo.contatos === 1 ? '' : 's'}`
+                  : `Não deu para conferir a etapa "${apagarAlvo.stage.name}"`,
+                description: apagarAlvo.contatos > 0
+                  ? 'Antes de apagar, leve esses contatos para outra etapa: feche esta janela e, no quadro do funil, arraste cada cartão para a coluna certa. O sistema não apaga uma etapa com contatos dentro.'
+                  : 'Não foi possível contar os contatos desta etapa agora. Feche e tente de novo em instantes.',
+                apenasAviso: true,
+                cancelText: 'Entendi',
+              }
+            : {
+                title: `Apagar a etapa "${apagarAlvo?.stage.name ?? ''}"?`,
+                description: apagarAlvo?.contatos === null
+                  ? 'Conferindo se há contatos nesta etapa...'
+                  : 'A etapa sai do funil. Nenhum contato está nela agora. Se ela for usada numa sequência de follow up, o sistema avisa e não apaga.',
+                reversivel: false,
+                comoDesfazer: undefined,
+                confirmText: 'Apagar etapa',
+                variant: 'destructive' as const,
+                isLoading: apagarAlvo?.contatos === null || deleteStageMutation.isPending,
+              })}
+        />
       </DialogContent>
     </Dialog>
   );

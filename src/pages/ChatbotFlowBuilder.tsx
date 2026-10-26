@@ -64,6 +64,7 @@ import { NODE_TYPES } from '@/components/chatbots/flow/nodes/FlowNodes';
 import NodeConfigPanel from '@/components/chatbots/flow/panels/NodeConfigPanel';
 import NewChatbotFlowModal from '@/components/chatbots/NewChatbotFlowModal';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { FlowEdgeContext, EDGE_TYPES } from '@/components/chatbots/flow/edges/DeletableEdge';
 import type { ChatbotNodeType, ChatbotNodeData, ChatbotVariableRow } from '@/types/chatbot-flow.types';
 
@@ -148,6 +149,9 @@ const ChatbotFlowBuilder: React.FC = () => {
   const compact = useIsBelowLg();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  // Voltar com o selo "Não salvo" pergunta antes (achado 76 do checkup).
+  const [perguntarSaida, setPerguntarSaida] = useState(false);
+  const voltar = () => (isDirty ? setPerguntarSaida(true) : navigate('/dashboard/chatbots'));
 
   // Undo/redo history
   const historyRef = useRef<HistoryEntry[]>([]);
@@ -684,7 +688,7 @@ const ChatbotFlowBuilder: React.FC = () => {
           "Publicar" saía da tela. Os rótulos dos botões da direita só aparecem
           em lg+; abaixo disso ficam os ícones com title/aria-label. */}
       <div className="flex flex-wrap items-center gap-2 sm:gap-3 px-4 py-2 border-b bg-card z-10 shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard/chatbots')} aria-label="Voltar para Chatbots">
+        <Button variant="ghost" size="icon" onClick={voltar} aria-label="Voltar para Chatbots">
           <ArrowLeft className="h-4 w-4" />
         </Button>
 
@@ -921,6 +925,17 @@ const ChatbotFlowBuilder: React.FC = () => {
           priority: flowData.chatbot.priority,
           triggers: flowData.triggers,
         }}
+      />
+
+      <ConfirmationDialog
+        isOpen={perguntarSaida}
+        onClose={() => setPerguntarSaida(false)}
+        onConfirm={() => navigate('/dashboard/chatbots')}
+        title="Sair sem salvar?"
+        description='O fluxo tem mudanças que ainda não foram salvas (o selo "Não salvo"). Se sair agora, elas se perdem. Para guardar, clique em salvar antes de voltar.'
+        confirmText="Sair sem salvar"
+        cancelText="Continuar editando"
+        variant="destructive"
       />
     </div>
   );

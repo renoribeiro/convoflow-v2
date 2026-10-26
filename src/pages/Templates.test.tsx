@@ -39,6 +39,11 @@ let estadoWabas: EstadoWabas;
 let estadoTemplates: EstadoTemplates;
 const refetch = vi.fn();
 
+// Cargo: só importa se a pessoa configura o WhatsApp (o texto muda para o
+// atendente, achado 101 do checkup).
+let podeConfigurar = true;
+vi.mock('@/contexts/TenantContext', () => ({ useCan: () => podeConfigurar }));
+
 vi.mock('@/hooks/useMetaTemplates', () => ({
   useMetaWabaGroups: () => estadoWabas,
   useMetaTemplates: () => ({ ...estadoTemplates, refetch }),
@@ -76,6 +81,7 @@ const renderTela = () =>
   );
 
 beforeEach(() => {
+  podeConfigurar = true;
   refetch.mockClear();
   estadoWabas = {
     groups: [grupo('waba-aaa', 'Principal', 'inst-1')],
@@ -105,6 +111,13 @@ describe('sem número na API Oficial', () => {
     expect(screen.getByText('Nenhum número na API Oficial da Meta')).toBeInTheDocument();
     expect(screen.getByText(/Instâncias e APIs/)).toBeInTheDocument();
     expect(screen.getByText(/QR Code/)).toBeInTheDocument();
+  });
+
+  it('para o atendente, manda pedir ao Gestor em vez de apontar uma tela que ele não abre', () => {
+    podeConfigurar = false;
+    renderTela();
+    expect(screen.getByText(/peça ao Gestor da sua Loja/)).toBeInTheDocument();
+    expect(screen.queryByText(/em Instâncias e APIs/)).not.toBeInTheDocument();
   });
 
   it('não oferece busca nem Atualizar quando não há o que buscar', () => {

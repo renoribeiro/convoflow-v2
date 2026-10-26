@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
+import { useCan } from '@/contexts/TenantContext';
 
 const normalize = (status: string): 'connected' | 'connecting' | 'disconnected' => {
   switch (status) {
@@ -28,6 +29,9 @@ const DOT: Record<string, string> = {
 export const WhatsAppStatusCompact = () => {
   const navigate = useNavigate();
   const { instances, isLoading, error } = useWhatsAppInstances();
+  // "Gerenciar" e "Conectar WhatsApp" levam a uma tela que exige
+  // whatsapp.configure (achado 31 do checkup): o atendente só vê a situação.
+  const podeConfigurar = useCan('whatsapp.configure');
 
   return (
     <Card>
@@ -36,15 +40,17 @@ export const WhatsAppStatusCompact = () => {
           <Smartphone className="h-5 w-5 text-muted-foreground" />
           Status WhatsApp
         </CardTitle>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1 text-xs"
-          onClick={() => navigate('/dashboard/whatsapp-numbers')}
-        >
-          <Settings className="h-3.5 w-3.5" />
-          Gerenciar
-        </Button>
+        {podeConfigurar && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 text-xs"
+            onClick={() => navigate('/dashboard/whatsapp-numbers')}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Gerenciar
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-2">
         {isLoading ? (
@@ -57,14 +63,18 @@ export const WhatsAppStatusCompact = () => {
           <div className="flex flex-col items-center gap-1 py-5 text-center">
             <Smartphone className="h-8 w-8 text-muted-foreground/50" />
             <p className="text-xs text-muted-foreground">Nenhuma instância configurada</p>
-            <Button
-              variant="link"
-              size="sm"
-              className="h-auto p-0 text-xs"
-              onClick={() => navigate('/dashboard/whatsapp-numbers')}
-            >
-              Conectar WhatsApp
-            </Button>
+            {podeConfigurar ? (
+              <Button
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={() => navigate('/dashboard/whatsapp-numbers')}
+              >
+                Conectar WhatsApp
+              </Button>
+            ) : (
+              <p className="text-xs text-muted-foreground">Quem conecta o número é o Gestor da sua Loja.</p>
+            )}
           </div>
         ) : (
           instances.map((instance) => {

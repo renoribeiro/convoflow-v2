@@ -9,12 +9,16 @@ import { MemoryRouter } from 'react-router-dom';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
 let papel = 'gestor';
-vi.mock('@/contexts/TenantContext', () => ({
-  useRole: () => papel,
-  useIsSuperAdmin: () => papel === 'superadmin',
-}));
+vi.mock('@/contexts/TenantContext', async () => {
+  const { resolveCapabilities } = await import('@/types/userHierarchy');
+  return {
+    useRole: () => papel,
+    useIsSuperAdmin: () => papel === 'superadmin',
+    useCapabilities: () => resolveCapabilities(papel as never),
+  };
+});
 vi.mock('@/hooks/useModules', () => ({
-  useModules: () => ({ visibleModules: [], isLoading: true }),
+  useModules: () => ({ visibleModules: [], isLoading: true, isModuleVisible: () => true }),
 }));
 
 import { Sidebar } from './Sidebar';

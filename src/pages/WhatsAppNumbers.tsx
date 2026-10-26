@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw } from 'lucide-react';
+import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw, Copy } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,7 @@ import {
 } from '@/services/whatsapp/evolutionInstanceService';
 import { useMetaApi } from '@/hooks/useMetaApi';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { CreateInstanceModal } from '@/components/whatsapp/CreateInstanceModal';
 import { DeleteInstanceModal } from '@/components/whatsapp/DeleteInstanceModal';
 import { RenameInstanceModal } from '@/components/whatsapp/RenameInstanceModal';
@@ -137,6 +138,11 @@ export default function WhatsAppNumbers() {
 
   const [registeringInstance, setRegisteringInstance] = useState<string | null>(null);
   const [pinDialogInstance, setPinDialogInstance] = useState<WhatsAppInstance | null>(null);
+  // Desconectar pede confirmação (achado 103 do checkup: derrubava na hora).
+  const [desconectarAlvo, setDesconectarAlvo] = useState<WhatsAppInstance | null>(null);
+  // O PIN gerado no registro aparece numa janela que só fecha com clique
+  // (achado 108: ia num aviso que sumia sozinho).
+  const [pinGerado, setPinGerado] = useState<{ nome: string; pin: string } | null>(null);
   const [pinValue, setPinValue] = useState('');
   const [pinSubmitting, setPinSubmitting] = useState(false);
 
@@ -447,8 +453,8 @@ export default function WhatsAppNumbers() {
         return;
       }
 
-      const pinInfo = data.pin ? ` PIN de verificação em duas etapas: ${data.pin}. Guarde este PIN.` : '';
-      toast({ title: 'Número registrado!', description: `Registro concluído com sucesso.${pinInfo}` });
+      toast({ title: 'Número registrado!', description: 'Registro concluído com sucesso.' });
+      if (data.pin) setPinGerado({ nome: instance.name, pin: String(data.pin) });
 
       if (data.warning) {
         toast({ title: 'Aviso', description: data.warning, variant: 'destructive' });
@@ -603,10 +609,15 @@ export default function WhatsAppNumbers() {
               <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
             </Button>
-            <Button onClick={() => setShowCreateModal(true)} data-tour="whatsapp-nova-instancia">
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Instância
-            </Button>
+            {/* Conectar número exige whatsapp.configure (achado 102). A tela
+                inteira já exige (registro de telas), mas uma exceção por
+                pessoa pode negar a capacidade a um Gestor. */}
+            {canConfigure && (
+              <Button onClick={() => setShowCreateModal(true)} data-tour="whatsapp-nova-instancia">
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Instância
+              </Button>
+            )}
           </div>
         }
       />
@@ -756,7 +767,7 @@ export default function WhatsAppNumbers() {
                         </Button>
                       )}
 
-                      {(!instance.provider || instance.provider === 'evolution') &&
+                      {canConfigure && (!instance.provider || instance.provider === 'evolution') &&
                         instance.status === 'close' && (
                           <Button
                             variant="ghost"
@@ -768,7 +779,7 @@ export default function WhatsAppNumbers() {
                           </Button>
                         )}
 
-                      {(!instance.provider || instance.provider === 'evolution') &&
+                      {canConfigure && (!instance.provider || instance.provider === 'evolution') &&
                         instance.status === 'open' && (
                           <>
                             <Button
@@ -783,16 +794,17 @@ export default function WhatsAppNumbers() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => handleDisconnect(instance)}
+                              onClick={() => setDesconectarAlvo(instance)}
                               className="text-red-600 hover:text-red-700"
                               title="Desconectar"
+                              aria-label="Desconectar"
                             >
                               <WifiOff className="h-4 w-4" />
                             </Button>
                           </>
                         )}
 
-                      {instance.provider === 'official' && (
+                      {canConfigure && instance.provider === 'official' && (
                         <>
                           <Button
                             variant="ghost"
@@ -1011,6 +1023,71 @@ export default function WhatsAppNumbers() {
         {/* A aba "Configurações Técnicas" saiu em 2026-10-25 (achado 104 do
             checkup): abria um cartão vazio, com o conteúdo comentado. */}
       </Tabs>
+
+      <ConfirmationDialog
+        isOpen={!!desconectarAlvo}
+        onClose={() => setDesconectarAlvo(null)}
+        onConfirm={async () => {
+          if (desconectarAlvo) await handleDisconnect(desconectarAlvo);
+        }}
+        title="Desconectar o número?"
+        description={
+          <>
+            <p>
+              O número "{desconectarAlvo?.name}"{desconectarAlvo?.phone_number ? ` (${desconectarAlvo.phone_number})` : ''} para de
+              receber e enviar mensagens pelo ConvoFlow até ser conectado de novo.
+            </p>
+            <p>Mensagens que chegarem enquanto ele estiver desconectado podem não entrar no sistema.</p>
+          </>
+        }
+        reversivel
+        comoDesfazer="conecte de novo pelo botão de QR Code do número, com o celular em mãos."
+        confirmText="Desconectar número"
+        variant="destructive"
+        icon={<WifiOff className="h-5 w-5 text-red-500" />}
+      />
+
+      {/* PIN gerado no registro: só fecha com clique em "Já guardei o PIN". */}
+      <Dialog open={!!pinGerado} onOpenChange={() => {}}>
+        <DialogContent
+          className="sm:max-w-sm"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          data-testid="pin-gerado"
+        >
+          <DialogHeader>
+            <DialogTitle>Guarde o PIN deste número</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p className="text-muted-foreground">
+              O número "{pinGerado?.nome}" ganhou um PIN de verificação em duas etapas. Ele é pedido se o número precisar
+              ser registrado de novo, e não aparece outra vez.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input value={pinGerado?.pin ?? ''} readOnly className="font-mono text-lg tracking-widest" aria-label="PIN" />
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Copiar PIN"
+                title="Copiar PIN"
+                onClick={() => {
+                  if (pinGerado) {
+                    navigator.clipboard.writeText(pinGerado.pin).then(
+                      () => toast({ title: 'PIN copiado' }),
+                      () => toast({ title: 'Não foi possível copiar', description: 'Anote o PIN à mão.', variant: 'destructive' }),
+                    );
+                  }
+                }}
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setPinGerado(null)}>Já guardei o PIN</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Diálogo de PIN para registro Meta */}
       <Dialog open={!!pinDialogInstance} onOpenChange={(open) => { if (!open) { setPinDialogInstance(null); setPinValue(''); } }}>

@@ -21,11 +21,11 @@ const { suspend, reactivate, softDelete, cancelInvite, resetPwd } = vi.hoisted((
 }));
 
 vi.mock('@/hooks/users/useManageUser', () => ({
-  useSuspendUser: () => ({ mutate: suspend }),
-  useReactivateUser: () => ({ mutate: reactivate }),
-  useSoftDeleteUser: () => ({ mutate: softDelete }),
-  useCancelInvite: () => ({ mutate: cancelInvite }),
-  useResetUserPassword: () => ({ mutate: resetPwd }),
+  useSuspendUser: () => ({ mutate: suspend, mutateAsync: suspend }),
+  useReactivateUser: () => ({ mutate: reactivate, mutateAsync: reactivate }),
+  useSoftDeleteUser: () => ({ mutate: softDelete, mutateAsync: softDelete }),
+  useCancelInvite: () => ({ mutate: cancelInvite, mutateAsync: cancelInvite }),
+  useResetUserPassword: () => ({ mutate: resetPwd, mutateAsync: resetPwd }),
 }));
 vi.mock('./UserDetailsDialog', () => ({ UserDetailsDialog: () => null }));
 
@@ -59,7 +59,40 @@ const itens = () => screen.getAllByRole('menuitem').map((m) => m.textContent?.tr
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
+});
+
+describe('confirmações (achado 109 do checkup)', () => {
+  it('Suspender pergunta antes, e cancelar não suspende', async () => {
+    const user = await abrirMenu('active');
+    await user.click(screen.getByRole('menuitem', { name: 'Suspender' }));
+    expect(screen.getByText('Suspender Ana active?')).toBeInTheDocument();
+    expect(screen.getByText(/perde o acesso agora/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(suspend).not.toHaveBeenCalled();
+  });
+
+  it('Suspender confirmado suspende', async () => {
+    const user = await abrirMenu('active');
+    await user.click(screen.getByRole('menuitem', { name: 'Suspender' }));
+    await user.click(screen.getByRole('button', { name: 'Suspender' }));
+    expect(suspend).toHaveBeenCalledWith('p-active');
+  });
+
+  it('Excluir diz que não dá para desfazer', async () => {
+    const user = await abrirMenu('active');
+    await user.click(screen.getByRole('menuitem', { name: 'Excluir' }));
+    expect(screen.getByText('Isto não pode ser desfeito.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(softDelete).not.toHaveBeenCalled();
+  });
+
+  it('Redefinir senha pergunta antes de mandar o email', async () => {
+    const user = await abrirMenu('active');
+    await user.click(screen.getByRole('menuitem', { name: 'Redefinir senha' }));
+    expect(resetPwd).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Enviar email' }));
+    expect(resetPwd).toHaveBeenCalledWith('p-active');
+  });
 });
 
 describe('menu por status', () => {
@@ -79,7 +112,10 @@ describe('menu por status', () => {
     const user = await abrirMenu('pending');
     expect(itens()).toEqual(['Ver detalhes', 'Redefinir senha', 'Cancelar convite']);
     await user.click(screen.getByRole('menuitem', { name: 'Cancelar convite' }));
-    expect(window.confirm).toHaveBeenCalledWith('Cancelar este convite? A vaga dele fica livre.');
+    // A confirmação do sistema, não a caixa do navegador (achado 109).
+    expect(screen.getByText('Cancelar o convite de Ana pending?')).toBeInTheDocument();
+    expect(cancelInvite).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Cancelar convite' }));
     expect(cancelInvite).toHaveBeenCalledWith('p-pending');
     expect(softDelete).not.toHaveBeenCalled();
   });

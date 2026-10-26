@@ -30,6 +30,13 @@ vi.mock('@/contexts/TenantContext', () => ({
   useTenantId: () => 't1',
   // Onboarding (lista "Primeiros passos" e boas-vindas) lê o cargo.
   useRole: () => 'gestor',
+  useCapabilities: () => ({
+    'conversations.handle': true, 'contacts.manage': true, 'automations.operate': true,
+    'campaigns.view_convos': true, 'campaigns.budget': true, 'campaigns.dispatch': true,
+    'store.admin': true, 'whatsapp.configure': true, 'billing.view': false, 'billing.manage': true,
+    'stores.switch': false, 'stores.compare': false, 'platform.ops': false,
+  }),
+  useCan: () => true,
 }));
 
 // O filtro de acesso do onboarding (useHelpVisibility) lê os módulos; o hook

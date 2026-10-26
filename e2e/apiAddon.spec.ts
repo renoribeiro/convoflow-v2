@@ -137,6 +137,11 @@ test('superadmin: "Liberar API" numa Conta de acesso manual chama api_addon_libe
   const botao = page.getByRole('button', { name: /^Liberar API$/ }).first();
   await expect(botao).toBeVisible();
   await botao.click();
+  // Desde 2026-10-26 (lote 2) liberar a API pede confirmação antes.
+  const janela = page.getByTestId('confirmacao');
+  await expect(janela).toBeVisible();
+  expect(liberacoes).toHaveLength(0);
+  await janela.getByRole('button', { name: 'Liberar API' }).click();
   await expect.poll(() => liberacoes.length).toBeGreaterThan(0);
   expect(liberacoes[0]).toEqual({ p_conta: IDS.tenant, p_ligar: true });
 });

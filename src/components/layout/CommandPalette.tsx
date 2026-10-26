@@ -34,49 +34,70 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import { DialogTitle } from '@/components/ui/dialog';
-import { useModules } from '@/hooks/useModules';
+import { useAcessoTelas } from '@/hooks/useAcessoTelas';
+import { TELAS, acessoATela, caminhoDaTela } from '@/lib/access/telas';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { channelOfProvider } from '@/lib/conversations/channel';
 import { contactIdentifier, contactLabel, contactSearchOrFilter } from '@/lib/contacts/identity';
-import {
-  useHasMinRole,
-  useIsSuperAdmin,
-  useTenant,
-} from '@/contexts/TenantContext';
+import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
-import type { UserRole } from '@/types/userHierarchy';
 
 type PageItem = {
   label: string;
   path: string;
   icon: LucideIcon;
-  /** Nome do módulo em module_settings (omita para páginas sempre visíveis). */
-  moduleName?: string;
-  superAdminOnly?: boolean;
-  minRole?: UserRole;
   keywords?: string[];
 };
 
-const PAGES: PageItem[] = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard, keywords: ['inicio', 'home'] },
-  { label: 'Conversas', path: '/dashboard/conversations', icon: MessageCircle, moduleName: 'conversations', keywords: ['chat', 'mensagens'] },
-  { label: 'Contatos', path: '/dashboard/contacts', icon: Users, moduleName: 'contacts', keywords: ['leads'] },
-  { label: 'Funil', path: '/dashboard/funnel', icon: Filter, moduleName: 'funnel', keywords: ['pipeline', 'kanban'] },
-  { label: 'Tracking', path: '/dashboard/tracking', icon: Activity, moduleName: 'tracking', keywords: ['rastreio', 'analytics'] },
-  { label: 'Relatórios', path: '/dashboard/reports', icon: FileText, moduleName: 'reports', keywords: ['reports', 'analytics'] },
-  { label: 'Chatbots', path: '/dashboard/chatbots', icon: Bot, moduleName: 'chatbots', keywords: ['bot', 'ia'] },
-  { label: 'Campanhas', path: '/dashboard/campaigns', icon: Megaphone, moduleName: 'campaigns', keywords: ['disparo', 'broadcast'] },
-  { label: 'Followups', path: '/dashboard/followups', icon: Send, moduleName: 'followups', keywords: ['lembrete', 'sequencia'] },
-  { label: 'Automação', path: '/dashboard/automation', icon: Workflow, moduleName: 'automation', keywords: ['workflow', 'fluxo'] },
-  { label: 'Números WhatsApp', path: '/dashboard/whatsapp-numbers', icon: Smartphone, moduleName: 'whatsapp-numbers', keywords: ['instancias', 'sessoes', 'conexoes'] },
-  { label: 'Configurações', path: '/dashboard/settings', icon: Settings, keywords: ['preferencias', 'config'] },
-  { label: 'Notificações', path: '/dashboard/notifications', icon: Bell },
-  { label: 'Meu Perfil', path: '/dashboard/profile', icon: UserCog, keywords: ['conta', 'avatar'] },
-  { label: 'Equipe', path: '/dashboard/team', icon: UsersRound, minRole: 'gerente', keywords: ['usuarios', 'time'] },
-  { label: 'Admin', path: '/dashboard/admin', icon: ShieldCheck, superAdminOnly: true },
-  { label: 'Admin · Usuários', path: '/dashboard/admin/users', icon: UsersRound, superAdminOnly: true },
-  { label: 'Admin · Limites de Uso', path: '/dashboard/admin/usage-limits', icon: GaugeCircle, superAdminOnly: true },
-];
+/**
+ * Páginas da busca rápida: as mesmas telas e a mesma regra do menu, lidas do
+ * registro único (src/lib/access/telas.ts). Aqui só o ícone e as palavras que
+ * a pessoa costuma digitar. Até 2026-10-26 a lista tinha regras próprias: o
+ * Gestor não achava "Equipe", e apareciam rótulos como "Tracking" (achado 26).
+ */
+const ICONES: Record<string, LucideIcon> = {
+  '': LayoutDashboard,
+  conversations: MessageCircle,
+  contacts: Users,
+  funnel: Filter,
+  tracking: Activity,
+  reports: FileText,
+  chatbots: Bot,
+  campaigns: Megaphone,
+  templates: FileText,
+  followups: Send,
+  automation: Workflow,
+  'whatsapp-numbers': Smartphone,
+  settings: Settings,
+  help: FileText,
+  team: UsersRound,
+  'store-comparison': GaugeCircle,
+  admin: ShieldCheck,
+  'admin/users': UsersRound,
+  'admin/usage-limits': GaugeCircle,
+  profile: UserCog,
+  notifications: Bell,
+};
+
+const PALAVRAS: Record<string, string[]> = {
+  '': ['inicio', 'home'],
+  conversations: ['chat', 'mensagens'],
+  contacts: ['leads'],
+  funnel: ['pipeline', 'kanban', 'etapas'],
+  tracking: ['rastreio', 'analytics', 'tracking', 'fontes'],
+  reports: ['reports', 'analytics'],
+  chatbots: ['bot', 'ia'],
+  campaigns: ['disparo', 'broadcast'],
+  templates: ['modelos', 'meta'],
+  followups: ['lembrete', 'sequencia', 'followups'],
+  automation: ['workflow', 'fluxo'],
+  'whatsapp-numbers': ['numeros', 'whatsapp', 'instancias', 'sessoes', 'conexoes'],
+  settings: ['preferencias', 'config'],
+  help: ['ajuda', 'tutorial', 'duvida'],
+  team: ['usuarios', 'time', 'convidar'],
+  'store-comparison': ['lojas', 'comparar'],
+  profile: ['conta', 'avatar', 'perfil'],
+};
 
 type ContactRow = {
   id: string;
@@ -96,9 +117,7 @@ interface CommandPaletteProps {
 export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const navigate = useNavigate();
   const { tenantId } = useTenant();
-  const isSuperAdmin = useIsSuperAdmin();
-  const hasGerenteRole = useHasMinRole('gerente');
-  const { visibleModules } = useModules();
+  const { ctx } = useAcessoTelas();
   const { instances } = useWhatsAppInstances();
   // Conta do Instagram não é "sessão WhatsApp": cada canal no seu grupo.
   const whatsappInstances = instances.filter((i) => channelOfProvider(i.provider) === 'whatsapp');
@@ -120,25 +139,16 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
 
   // Acesso por módulo depende apenas do toggle de produto (is_enabled) e do
   // papel do usuário — sem verificação de plano/assinatura.
-  const accessiblePages = useMemo(() => {
-    const enabledModuleNames = new Set(
-      (visibleModules ?? [])
-        .filter((m) => m.is_enabled)
-        .map((m) => m.module_name)
-    );
-
-    return PAGES.filter((page) => {
-      if (page.superAdminOnly) return isSuperAdmin;
-      if (isSuperAdmin) return true;
-
-      if (page.minRole === 'gerente' && !hasGerenteRole) return false;
-
-      if (page.moduleName) {
-        if (!enabledModuleNames.has(page.moduleName)) return false;
-      }
-      return true;
-    });
-  }, [visibleModules, isSuperAdmin, hasGerenteRole]);
+  const accessiblePages: PageItem[] = useMemo(
+    () =>
+      TELAS.filter((t) => acessoATela(t, ctx) === 'liberado').map((t) => ({
+        label: t.nome,
+        path: caminhoDaTela(t),
+        icon: ICONES[t.chave] ?? FileText,
+        keywords: PALAVRAS[t.chave],
+      })),
+    [ctx],
+  );
 
   // Contacts: lightweight server-side query, only runs while palette is open.
   const { data: contacts = [] } = useQuery<ContactRow[]>({

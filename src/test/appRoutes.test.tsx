@@ -118,7 +118,7 @@ vi.mock('@/contexts/AuthContext', () => ({
 
 vi.mock('@/contexts/TenantContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/contexts/TenantContext')>();
-  const { roleAtLeast } = await import('@/types/userHierarchy');
+  const { roleAtLeast, resolveCapabilities, can } = await import('@/types/userHierarchy');
   const papel = () => (estado.sessao ? estado.papel : null);
   return {
     ...actual,
@@ -141,6 +141,9 @@ vi.mock('@/contexts/TenantContext', async (importOriginal) => {
     useRole: papel,
     useIsSuperAdmin: () => papel() === 'superadmin',
     useHasMinRole: (minimo: any) => papel() !== null && roleAtLeast(papel() as any, minimo),
+    // A matriz de verdade (DEFAULT_CAPABILITIES) para o cargo do teste.
+    useCapabilities: () => resolveCapabilities(papel() as any),
+    useCan: (c: any) => can(papel() as any, c),
   };
 });
 
@@ -148,6 +151,7 @@ vi.mock('@/hooks/useModules', () => {
   const useModules = () => ({
     visibleModules: estado.modulos.map((module_name) => ({ module_name, is_enabled: true })),
     isLoading: false,
+    isModuleVisible: (m: string) => estado.papel === 'superadmin' || estado.modulos.includes(m),
   });
   return { useModules, default: useModules };
 });
@@ -302,19 +306,50 @@ describe('App.tsx — cada rota do dashboard abre a sua tela', () => {
   });
 });
 
-describe('App.tsx — RoleGuard', () => {
+describe('App.tsx — TelaGuard: cargo sem a capacidade da tela', () => {
   it.each([
-    ['gerente', '/dashboard/admin'],
-    ['gestor', '/dashboard/admin/users'],
-    ['atendente', '/dashboard/admin/usage-limits'],
-    ['atendente', '/dashboard/team'],
-    ['gestor', '/dashboard/store-comparison'],
-    ['atendente', '/dashboard/store-comparison'],
-  ])('%s em %s volta para /dashboard', async (papel, caminho) => {
+    ['gerente', '/dashboard/admin', 'Admin'],
+    ['gestor', '/dashboard/admin/users', 'AdminUsers'],
+    ['atendente', '/dashboard/admin/usage-limits', 'AdminUsageLimits'],
+    ['atendente', '/dashboard/team', 'Team'],
+    ['gestor', '/dashboard/store-comparison', 'StoreComparison'],
+    ['atendente', '/dashboard/store-comparison', 'StoreComparison'],
+    // Desde 2026-10-26 (achado 24): Instâncias exige whatsapp.configure.
+    ['atendente', '/dashboard/whatsapp-numbers', 'WhatsAppNumbers'],
+  ])('%s em %s vê "Você não tem acesso a esta tela", no mesmo endereço', async (papel, caminho, nome) => {
     estado.papel = papel;
     abrir(caminho);
-    expect(await tela('Index')).toBeInTheDocument();
-    await esperarCaminho('/dashboard');
+    expect(await screen.findByTestId('sem-acesso')).toBeInTheDocument();
+    expect(screen.getByText('Você não tem acesso a esta tela')).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: `Tela ${nome}` })).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe(caminho);
+  });
+
+  it('o aviso diz a quem pedir, pelo cargo', async () => {
+    estado.papel = 'atendente';
+    abrir('/dashboard/team');
+    expect(await screen.findByText(/Gestor da sua Loja/)).toBeInTheDocument();
+    cleanup();
+    estado.papel = 'gestor';
+    abrir('/dashboard/store-comparison');
+    expect(await screen.findByText(/Gerente da sua Conta/)).toBeInTheDocument();
+  });
+
+  it('atendente alcança Campanhas (só ver) e as telas do dia a dia', async () => {
+    estado.papel = 'atendente';
+    for (const [caminho, nome] of [
+      ['/dashboard/campaigns', 'Campaigns'],
+      ['/dashboard/conversations', 'Conversations'],
+      ['/dashboard/contacts', 'Contacts'],
+      ['/dashboard/funnel', 'Funnel'],
+      ['/dashboard/chatbots', 'Chatbots'],
+      ['/dashboard/automation', 'Automation'],
+      ['/dashboard/templates', 'Templates'],
+    ] as const) {
+      abrir(caminho);
+      expect(await tela(nome)).toBeInTheDocument();
+      cleanup();
+    }
   });
 
   it.each([
@@ -329,12 +364,13 @@ describe('App.tsx — RoleGuard', () => {
   });
 });
 
-describe('App.tsx — ModuleGuard', () => {
-  it('módulo desligado manda para a página inicial (/)', async () => {
+describe('App.tsx — TelaGuard: módulo desligado', () => {
+  it('módulo desligado mostra o aviso no mesmo endereço (antes mandava para a página de vendas)', async () => {
     estado.modulos = estado.modulos.filter((m) => m !== 'campaigns');
     abrir('/dashboard/campaigns');
-    expect(await tela('Landing')).toBeInTheDocument();
-    await esperarCaminho('/');
+    expect(await screen.findByTestId('sem-acesso')).toBeInTheDocument();
+    expect(screen.getByText(/não está ligada na sua Conta/)).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/dashboard/campaigns');
   });
 
   it('desligar um módulo não fecha os outros', async () => {
@@ -358,7 +394,7 @@ describe('App.tsx — ModuleGuard', () => {
     }
   });
 
-  it('superadmin passa pelo ModuleGuard, mas tela de Loja mostra o aviso "exclusivo para lojas"', async () => {
+  it('superadmin passa pela TelaGuard, mas tela de Loja mostra o aviso "exclusivo para lojas"', async () => {
     estado.papel = 'superadmin';
     estado.modulos = [];
     abrir('/dashboard/reports');

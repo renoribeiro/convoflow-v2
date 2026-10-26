@@ -229,6 +229,45 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
     errorMessage: 'Erro ao atualizar consentimento.',
   });
 
+  // Mudar o consentimento de campanha pede confirmação (achado 51 do
+  // checkup: um clique trocava quem recebe campanha em massa).
+  const [consentAlvo, setConsentAlvo] = useState<{
+    contactId: string;
+    nome: string;
+    campo: 'opt_in' | 'opt_out';
+    atual: boolean;
+  } | null>(null);
+
+  const textoDoConsentimento = (alvo: NonNullable<typeof consentAlvo>) => {
+    const { nome, campo, atual } = alvo;
+    if (campo === 'opt_in' && !atual) {
+      return {
+        title: `Marcar que ${nome} aceita campanhas?`,
+        description: `${nome} passa a poder receber campanhas em massa. Só marque se a pessoa autorizou, por exemplo num formulário ou pedindo pelo WhatsApp.`,
+        confirmText: 'Marcar que aceita',
+      };
+    }
+    if (campo === 'opt_in') {
+      return {
+        title: `Tirar a autorização de campanhas de ${nome}?`,
+        description: `${nome} deixa de entrar nas campanhas que exigem autorização.`,
+        confirmText: 'Tirar autorização',
+      };
+    }
+    if (!atual) {
+      return {
+        title: `Marcar que ${nome} não quer receber campanhas?`,
+        description: `${nome} fica fora de todas as campanhas em massa, até alguém desmarcar.`,
+        confirmText: 'Marcar que não quer',
+      };
+    }
+    return {
+      title: `Voltar a incluir ${nome} nas campanhas?`,
+      description: `Só faça isso se ${nome} pediu para voltar a receber. Quem pediu para sair e continua recebendo pode denunciar o número.`,
+      confirmText: 'Voltar a incluir',
+    };
+  };
+
   const handleToggleOptIn = async (contactId: string, current: boolean | null | undefined) => {
     try {
       await consentMutation.mutateAsync({
@@ -354,8 +393,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
       ) : contact.opt_in_mass_message ? (
         <button
           type="button"
-          title="Clique para remover opt-in"
-          onClick={() => handleToggleOptIn(contact.id, contact.opt_in_mass_message)}
+          title="Aceita receber campanhas. Clique para tirar a autorização."
+          onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_in', atual: !!contact.opt_in_mass_message })}
           disabled={consentMutation.isPending}
           className="w-fit"
         >
@@ -366,8 +405,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
       ) : contact.opt_out_mass_message ? (
         <button
           type="button"
-          title="Clique para remover opt-out"
-          onClick={() => handleToggleOptOut(contact.id, contact.opt_out_mass_message)}
+          title="Pediu para não receber campanhas. Clique para voltar a incluir."
+          onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_out', atual: !!contact.opt_out_mass_message })}
           disabled={consentMutation.isPending}
           className="w-fit"
         >
@@ -379,8 +418,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         <div className="flex flex-wrap gap-1">
           <button
             type="button"
-            title="Marcar como opt-in"
-            onClick={() => handleToggleOptIn(contact.id, false)}
+            title="Marcar que aceita receber campanhas"
+            onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_in', atual: false })}
             disabled={consentMutation.isPending}
           >
             <Badge variant="outline" className="hover:bg-green-50 cursor-pointer text-xs">
@@ -389,8 +428,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           </button>
           <button
             type="button"
-            title="Marcar como opt-out"
-            onClick={() => handleToggleOptOut(contact.id, false)}
+            title="Marcar que não quer receber campanhas"
+            onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_out', atual: false })}
             disabled={consentMutation.isPending}
           >
             <Badge variant="outline" className="hover:bg-yellow-50 cursor-pointer text-xs">
@@ -635,6 +674,21 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         isLoading={deleteMutation.isPending}
         icon={<Trash2 className="h-5 w-5 text-red-500" />}
       />
+
+      {consentAlvo && (
+        <ConfirmationDialog
+          isOpen
+          onClose={() => setConsentAlvo(null)}
+          onConfirm={async () => {
+            if (consentAlvo.campo === 'opt_in') await handleToggleOptIn(consentAlvo.contactId, consentAlvo.atual);
+            else await handleToggleOptOut(consentAlvo.contactId, consentAlvo.atual);
+          }}
+          {...textoDoConsentimento(consentAlvo)}
+          reversivel
+          comoDesfazer="clique de novo no selo de campanhas deste contato."
+          isLoading={consentMutation.isPending}
+        />
+      )}
 
       <LinkContactDialog
         open={!!linkSource}

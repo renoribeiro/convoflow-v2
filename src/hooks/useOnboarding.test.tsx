@@ -27,10 +27,14 @@ vi.mock('@/lib/onboarding/api', async (importOriginal) => {
     fetchOnboardingState: (u: string) => fetchOnboardingState(u),
   };
 });
-vi.mock('@/contexts/TenantContext', () => ({
-  useTenant: () => ({ tenantId, profile: { user_id: 'aaaaaaaa-0000-4000-8000-000000000099' } }),
-  useRole: () => papel,
-}));
+vi.mock('@/contexts/TenantContext', async () => {
+  const { resolveCapabilities } = await import('@/types/userHierarchy');
+  return {
+    useTenant: () => ({ tenantId, profile: { user_id: 'aaaaaaaa-0000-4000-8000-000000000099' } }),
+    useRole: () => papel,
+    useCapabilities: () => resolveCapabilities(papel as never),
+  };
+});
 vi.mock('@/hooks/useModules', () => ({
   useModules: () => ({ isModuleVisible: (m: string) => modulos.includes(m), isLoading: false }),
 }));

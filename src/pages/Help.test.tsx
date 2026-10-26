@@ -29,9 +29,13 @@ let currentRole: UserRole | null = 'superadmin';
 /** Módulos habilitados; null = todos habilitados. */
 let enabledModules: string[] | null = null;
 
-vi.mock('@/contexts/TenantContext', () => ({
-  useRole: () => currentRole,
-}));
+vi.mock('@/contexts/TenantContext', async () => {
+  const { resolveCapabilities } = await import('@/types/userHierarchy');
+  return {
+    useRole: () => currentRole,
+    useCapabilities: () => resolveCapabilities(currentRole),
+  };
+});
 
 vi.mock('@/hooks/useModules', () => ({
   useModules: () => ({

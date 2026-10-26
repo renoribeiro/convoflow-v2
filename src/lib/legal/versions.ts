@@ -18,5 +18,8 @@
  */
 export const TERMS_VERSION = '2026-10-25';
 
-/** PrivacyPolicy.tsx — "Última atualização: 25 de outubro de 2026" (API e integrações: seções 5, 6, 7 e 8). */
-export const PRIVACY_VERSION = '2026-10-25';
+/**
+ * PrivacyPolicy.tsx — "Última atualização: 26 de outubro de 2026" (seção 6: conexões não oficiais, Evolution
+ * e WAHA; antes, 25/10/2026: API e integrações, seções 5, 6, 7 e 8).
+ */
+export const PRIVACY_VERSION = '2026-10-26';

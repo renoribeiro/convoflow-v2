@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
+import { useCan } from '@/contexts/TenantContext';
 import { CampaignReportsModal } from './CampaignReportsModal';
 import { CampaignDetailsModal } from './CampaignDetailsModal';
 import {
@@ -122,6 +123,14 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
     id: string;
     name: string;
   } | null>(null);
+  // Disparar e cancelar pedem confirmação (achados 90 e 92 do checkup): um
+  // clique mandava a campanha para todos, ou parava de vez, sem perguntar.
+  const [disparoAlvo, setDisparoAlvo] = useState<Campaign | null>(null);
+  const [cancelamentoAlvo, setCancelamentoAlvo] = useState<Campaign | null>(null);
+  // Criar, disparar, pausar, cancelar, duplicar, editar e excluir exigem
+  // campaigns.dispatch, como no servidor (policies campaigns_tenant_*).
+  // O atendente só acompanha (achado 91).
+  const podeAgir = useCan('campaigns.dispatch');
   const [reportCampaignId, setReportCampaignId] = useState<string | null>(null);
   const [detailsCampaignId, setDetailsCampaignId] = useState<string | null>(null);
 
@@ -171,8 +180,9 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
             onEdit={onEdit}
             onViewReport={(id) => setReportCampaignId(id)}
             onViewDetails={(id) => setDetailsCampaignId(id)}
-            onDispatchNow={(id) => scheduleCampaign.mutate(id)}
+            onDispatchNow={() => setDisparoAlvo(campaign)}
             isDispatching={scheduleCampaign.isPending}
+            podeAgir={podeAgir}
             onDelete={(id, name) => setDeleteTarget({ id, name })}
             onPause={(id) =>
               setCampaignStatus.mutate({ campaignId: id, action: 'pause' })
@@ -180,9 +190,7 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
             onResume={(id) =>
               setCampaignStatus.mutate({ campaignId: id, action: 'resume' })
             }
-            onCancel={(id) =>
-              setCampaignStatus.mutate({ campaignId: id, action: 'cancel' })
-            }
+            onCancel={() => setCancelamentoAlvo(campaign)}
             onDuplicate={(c) => duplicateCampaign.mutate(c)}
           />
         ))}
@@ -206,19 +214,54 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
       <ConfirmationDialog
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={() => {
-          if (deleteTarget) {
-            deleteCampaign.mutate(deleteTarget.id);
-            setDeleteTarget(null);
-          }
+        onConfirm={async () => {
+          if (deleteTarget) await deleteCampaign.mutateAsync(deleteTarget.id);
         }}
-        title="Excluir Campanha"
-        description={`Tem certeza que deseja excluir a campanha "${deleteTarget?.name ?? ''}"? Esta ação não pode ser desfeita.`}
-        confirmText="Excluir"
-        cancelText="Cancelar"
+        title="Excluir a campanha?"
+        description={`A campanha "${deleteTarget?.name ?? ''}" some da lista, com os números de envio e leitura dela. As mensagens que já saíram continuam com os clientes.`}
+        reversivel={false}
+        confirmText="Excluir campanha"
         variant="destructive"
         isLoading={deleteCampaign.isPending}
         icon={<Trash2 className="h-5 w-5 text-red-500" />}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!disparoAlvo}
+        onClose={() => setDisparoAlvo(null)}
+        onConfirm={async () => {
+          if (disparoAlvo) await scheduleCampaign.mutateAsync(disparoAlvo.id);
+        }}
+        title="Disparar a campanha agora?"
+        description={
+          <>
+            <p>
+              A campanha "{disparoAlvo?.name}" começa a enviar agora para{' '}
+              {textoDeContatos(disparoAlvo?.total_recipients ?? 0)}
+              {disparoAlvo?.whatsapp_instance ? `, pelo número ${disparoAlvo.whatsapp_instance.name}` : ''}.
+            </p>
+            <p>Dá para pausar no meio, mas a mensagem que já saiu chegou ao cliente e não volta.</p>
+          </>
+        }
+        confirmText={rotuloDeDisparo(disparoAlvo?.total_recipients ?? 0)}
+        isLoading={scheduleCampaign.isPending}
+        icon={<Send className="h-5 w-5" />}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!cancelamentoAlvo}
+        onClose={() => setCancelamentoAlvo(null)}
+        onConfirm={async () => {
+          if (cancelamentoAlvo) await setCampaignStatus.mutateAsync({ campaignId: cancelamentoAlvo.id, action: 'cancel' });
+        }}
+        title="Cancelar a campanha?"
+        description={`A campanha "${cancelamentoAlvo?.name ?? ''}" para de vez: as mensagens que ainda não saíram não serão enviadas. O que já saiu continua com os clientes.`}
+        reversivel={false}
+        confirmText="Cancelar campanha"
+        cancelText="Voltar"
+        variant="destructive"
+        isLoading={setCampaignStatus.isPending}
+        icon={<XCircle className="h-5 w-5 text-red-500" />}
       />
 
       {reportCampaignId && (
@@ -240,8 +283,21 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
 // CampaignCard
 // ─────────────────────────────────────────────
 
+/** "1.240 contatos" / "1 contato" / "os contatos da lista" (sem número ainda). */
+function textoDeContatos(total: number): string {
+  if (total <= 0) return 'os contatos da lista';
+  return total === 1 ? '1 contato' : `${total.toLocaleString('pt-BR')} contatos`;
+}
+
+function rotuloDeDisparo(total: number): string {
+  if (total <= 0) return 'Disparar agora';
+  return total === 1 ? 'Disparar para 1 contato' : `Disparar para ${total.toLocaleString('pt-BR')} contatos`;
+}
+
 interface CampaignCardProps {
   campaign: Campaign;
+  /** campaigns.dispatch: sem ela, o cartão só mostra (ver detalhes e relatório). */
+  podeAgir: boolean;
   onEdit: (c: Campaign) => void;
   onViewReport: (id: string) => void;
   onViewDetails: (id: string) => void;
@@ -257,6 +313,7 @@ interface CampaignCardProps {
 function CampaignCard({
   campaign,
   onEdit,
+  podeAgir,
   onViewReport,
   onViewDetails,
   onDispatchNow,
@@ -279,7 +336,7 @@ function CampaignCard({
   const isScheduled = campaign.status === 'scheduled';
   const isCompleted = campaign.status === 'completed';
   // "Disparar agora" only when nothing was actually sent yet (the backend guard also enforces this).
-  const canDispatch = sent === 0 && (isDraft || isScheduled || isActive);
+  const canDispatch = podeAgir && sent === 0 && (isDraft || isScheduled || isActive);
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -330,7 +387,7 @@ function CampaignCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {(isDraft || isScheduled || isPaused || isActive) && (
+              {podeAgir && (isDraft || isScheduled || isPaused || isActive) && (
                 <DropdownMenuItem onClick={() => onEdit(campaign)}>
                   <Edit className="mr-2 h-4 w-4" />
                   Editar
@@ -344,23 +401,25 @@ function CampaignCard({
                 <BarChart2 className="mr-2 h-4 w-4" />
                 Ver Relatório
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate(campaign)}>
-                <Copy className="mr-2 h-4 w-4" />
-                Duplicar
-              </DropdownMenuItem>
-              {isActive && (
+              {podeAgir && (
+                <DropdownMenuItem onClick={() => onDuplicate(campaign)}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Duplicar
+                </DropdownMenuItem>
+              )}
+              {podeAgir && isActive && (
                 <DropdownMenuItem onClick={() => onPause(campaign.id)}>
                   <Pause className="mr-2 h-4 w-4" />
                   Pausar
                 </DropdownMenuItem>
               )}
-              {isPaused && (
+              {podeAgir && isPaused && (
                 <DropdownMenuItem onClick={() => onResume(campaign.id)}>
                   <Play className="mr-2 h-4 w-4" />
                   Retomar
                 </DropdownMenuItem>
               )}
-              {(isActive || isPaused || isScheduled) && (
+              {podeAgir && (isActive || isPaused || isScheduled) && (
                 <DropdownMenuItem
                   onClick={() => onCancel(campaign.id)}
                   className="text-red-600"
@@ -369,14 +428,18 @@ function CampaignCard({
                   Cancelar
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => onDelete(campaign.id, campaign.name)}
-                className="text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
+              {podeAgir && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => onDelete(campaign.id, campaign.name)}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
           </div>
@@ -419,7 +482,7 @@ function CampaignCard({
             {isCompleted && campaign.completed_at && (
               <span>Concluído {relativeDate(campaign.completed_at)}</span>
             )}
-            {isDraft && (
+            {podeAgir && isDraft && (
               <Button size="sm" variant="outline" onClick={() => onEdit(campaign)}>
                 <Edit className="h-3 w-3 mr-1" />
                 Continuar editando

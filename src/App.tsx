@@ -10,8 +10,7 @@ import { ChatbotProvider } from "@/contexts/ChatbotContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
 import { AuthGuard } from '@/components/auth/AuthGuard';
-import { ModuleGuard } from '@/components/auth/ModuleGuard';
-import { RoleGuard } from '@/components/auth/RoleGuard';
+import { TelaGuard } from '@/components/auth/TelaGuard';
 import { MaintenanceGuard } from '@/components/maintenance/MaintenanceGuard';
 import { DashboardCardSkeleton } from "@/components/shared/Skeleton";
 
@@ -140,159 +139,174 @@ const App = () => (
                     </MaintenanceGuard>
                   </AuthGuard>
                 }>
+                  {/* Toda rota do painel passa pela TelaGuard, que lê o registro
+                      único de telas (src/lib/access/telas.ts): módulo ligado e
+                      capacidade do cargo. Quem não alcança vê "Você não tem
+                      acesso a esta tela", e não é mais jogado para outra página. */}
                   <Route index element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <Index />
-                    </Suspense>
+                    <TelaGuard chave="">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <Index />
+                      </Suspense>
+                    </TelaGuard>
                   } />
                   <Route path="conversations" element={
-                    <ModuleGuard moduleName="conversations">
+                    <TelaGuard chave="conversations">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Conversations />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="contacts" element={
-                    <ModuleGuard moduleName="contacts">
+                    <TelaGuard chave="contacts">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Contacts />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="funnel" element={
-                    <ModuleGuard moduleName="funnel">
+                    <TelaGuard chave="funnel">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Funnel />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="tracking" element={
-                    <ModuleGuard moduleName="tracking">
+                    <TelaGuard chave="tracking">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Tracking />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="reports" element={
-                    <ModuleGuard moduleName="reports">
+                    <TelaGuard chave="reports">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Reports />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="chatbots" element={
-                    <ModuleGuard moduleName="chatbots">
+                    <TelaGuard chave="chatbots">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Chatbots />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="chatbots/:id/builder" element={
-                    <ModuleGuard moduleName="chatbots">
+                    <TelaGuard chave="chatbots">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <ChatbotFlowBuilder />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="campaigns" element={
-                    <ModuleGuard moduleName="campaigns">
+                    <TelaGuard chave="campaigns">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Campaigns />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
-                  {/* Templates: sem ModuleGuard e sem RoleGuard de propósito —
-                      é consulta somente-leitura do que a Meta já aprovou, e o
-                      atendente é justamente quem precisa dela antes de
+                  {/* Templates: sem módulo e sem capacidade no registro, de
+                      propósito: é consulta só de leitura do que a Meta já
+                      aprovou, e o atendente é quem precisa dela antes de
                       responder. A edge function list-whatsapp-templates já
-                      confere a Conta do caller e não exige cargo mínimo. */}
+                      confere a Conta de quem chama e não exige cargo. */}
                   <Route path="templates" element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <Templates />
-                    </Suspense>
+                    <TelaGuard chave="templates">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <Templates />
+                      </Suspense>
+                    </TelaGuard>
                   } />
                   <Route path="followups" element={
-                    <ModuleGuard moduleName="followups">
+                    <TelaGuard chave="followups">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Followups />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="automation" element={
-                    <ModuleGuard moduleName="automation">
+                    <TelaGuard chave="automation">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <Automation />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="whatsapp-numbers" element={
-                    <ModuleGuard moduleName="whatsapp-numbers">
+                    <TelaGuard chave="whatsapp-numbers">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <WhatsAppNumbers />
                       </Suspense>
-                    </ModuleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="settings" element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <Settings />
-                    </Suspense>
+                    <TelaGuard chave="settings">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <Settings />
+                      </Suspense>
+                    </TelaGuard>
                   } />
                   <Route path="admin" element={
-                    <RoleGuard role="superadmin" fallbackPath="/dashboard">
+                    <TelaGuard chave="admin">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <AdminDashboard />
                       </Suspense>
-                    </RoleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="admin/users" element={
-                    <RoleGuard role="superadmin" fallbackPath="/dashboard">
+                    <TelaGuard chave="admin/users">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <UsersPage />
                       </Suspense>
-                    </RoleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="admin/usage-limits" element={
-                    <RoleGuard role="superadmin" fallbackPath="/dashboard">
+                    <TelaGuard chave="admin/usage-limits">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <UsageLimitsPage />
                       </Suspense>
-                    </RoleGuard>
+                    </TelaGuard>
                   } />
-                  {/* minRole="gestor": o Gestor administra a equipe da Loja
-                      dele (convida os atendentes: 2 por Loja, mais com o
-                      ConvoFlow). O backend ja permitia
-                      isso desde sempre -- so a rota estava fechada. */}
+                  {/* Equipe exige store.admin (Gestor, Gerente, Superadmin): o
+                      Gestor administra a equipe da Loja dele (convida os
+                      atendentes: 2 por Loja, mais com o ConvoFlow). */}
                   <Route path="team" element={
-                    <RoleGuard minRole="gestor" fallbackPath="/dashboard">
+                    <TelaGuard chave="team">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <TeamPage />
                       </Suspense>
-                    </RoleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="store-comparison" element={
-                    <RoleGuard role="gerente" fallbackPath="/dashboard">
+                    <TelaGuard chave="store-comparison">
                       <Suspense fallback={<PageLoadingSkeleton />}>
                         <StoreComparison />
                       </Suspense>
-                    </RoleGuard>
+                    </TelaGuard>
                   } />
                   <Route path="profile" element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <ProfileSettings />
-                    </Suspense>
+                    <TelaGuard chave="profile">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <ProfileSettings />
+                      </Suspense>
+                    </TelaGuard>
                   } />
                   <Route path="notifications" element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <Notifications />
-                    </Suspense>
+                    <TelaGuard chave="notifications">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <Notifications />
+                      </Suspense>
+                    </TelaGuard>
                   } />
-                  {/* Ajuda: sem ModuleGuard e sem RoleGuard de propósito — a
+                  {/* Ajuda: sem módulo e sem capacidade de propósito, a
                       documentação abre para qualquer sessão, como settings,
                       profile e notifications. */}
                   <Route path="help" element={
-                    <Suspense fallback={<PageLoadingSkeleton />}>
-                      <Help />
-                    </Suspense>
+                    <TelaGuard chave="help">
+                      <Suspense fallback={<PageLoadingSkeleton />}>
+                        <Help />
+                      </Suspense>
+                    </TelaGuard>
                   } />
 
                 </Route>

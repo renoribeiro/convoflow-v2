@@ -46,7 +46,8 @@ import { useIsSuperAdmin } from '@/contexts/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { STATUS_LABELS, UserRole } from '@/types/userHierarchy';
+import { ROLE_LABELS, STATUS_LABELS, UserRole } from '@/types/userHierarchy';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { accountStatePatch, checkboxValueFor, profileStatusOf } from '@/lib/accountStatus';
 import { BillingDashboard } from '@/components/admin/billing/BillingDashboard';
 import { format } from 'date-fns';
@@ -141,6 +142,21 @@ const AdminDashboard = () => {
   const [isCreateUserOpen, setIsCreateUserOpen] = useState(false);
   const [isEditUserOpen, setIsEditUserOpen] = useState(false);
   const [isDeleteUserOpen, setIsDeleteUserOpen] = useState(false);
+  // Liberar ou revogar o acesso de uma Conta, e ligar ou tirar a API, pedem
+  // confirmação; revogar exige digitar o nome da Conta (achado 130 do
+  // checkup: um clique cortava o acesso da Conta inteira).
+  const [acessoAlvo, setAcessoAlvo] = useState<{
+    contaId: string;
+    nomeConta: string;
+    liberado: boolean;
+    herda: boolean;
+    nomeLoja: string | null;
+    email: string;
+    lojaId: string | null;
+  } | null>(null);
+  const [apiAlvo, setApiAlvo] = useState<{ contaId: string; nomeConta: string; ligada: boolean } | null>(null);
+  // Trocar o cargo ou desativar alguém na edição pede confirmação (achado 131).
+  const [confirmarEdicao, setConfirmarEdicao] = useState(false);
   const [isViewUserOpen, setIsViewUserOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -389,6 +405,66 @@ const AdminDashboard = () => {
     });
   };
 
+  const cargoMudou = !!selectedUser && userForm.role !== selectedUser.role;
+  const desativando = !!selectedUser && selectedUser.status === 'active' && !userForm.isActive;
+  const edicaoPedeConfirmacao = cargoMudou || desativando;
+
+  const alternarAcessoManual = async () => {
+    if (!acessoAlvo) return;
+    const { contaId, nomeConta, liberado, herda, nomeLoja, email, lojaId } = acessoAlvo;
+    try {
+      const newValue = !liberado;
+      const { error } = await supabase
+        .from('tenants')
+        .update({
+          manual_access_granted: newValue,
+          manual_access_granted_by: newValue ? currentUserId : null,
+          manual_access_granted_at: newValue ? new Date().toISOString() : null,
+        })
+        .eq('id', contaId);
+      if (error) throw error;
+
+      // Auditoria: registra em QUAL tenant a marca foi feita, e de onde a ação
+      // partiu — sem a nota, o histórico da Conta não explica por que alguém a
+      // liberou a partir de uma Loja.
+      await supabase
+        .from('tenant_access_events' as never)
+        .insert({
+          tenant_id: contaId,
+          action: newValue ? 'granted' : 'revoked',
+          source: 'manual',
+          actor_user_id: currentUserId,
+          note: herda
+            ? `Ação feita a partir do usuário ${email} (Loja ${nomeLoja ?? lojaId}); aplicada na Conta ${nomeConta}.`
+            : `Ação feita a partir do usuário ${email}.`,
+        } as never);
+
+      toast.success(
+        newValue ? `Acesso liberado para a Conta ${nomeConta}.` : `Acesso manual revogado da Conta ${nomeConta}.`,
+        herda ? { description: 'Vale para todas as Lojas dessa Conta.' } : undefined,
+      );
+      refetchTenants();
+      refetchUsers();
+    } catch (error: any) {
+      toast.error('Erro ao alterar acesso: ' + error.message);
+      throw error;
+    }
+  };
+
+  const alternarApiManual = async () => {
+    if (!apiAlvo) return;
+    try {
+      await ligarApiManual(apiAlvo.contaId, !apiAlvo.ligada);
+      toast.success(
+        apiAlvo.ligada ? `API desligada para a Conta ${apiAlvo.nomeConta}.` : `API liberada para a Conta ${apiAlvo.nomeConta}.`,
+      );
+      refetchTenants();
+    } catch (error: any) {
+      toast.error(error.message || 'Não foi possível alterar a API desta Conta.');
+      throw error;
+    }
+  };
+
   const handleDeleteUser = async () => {
     if (!selectedUser) return;
 
@@ -561,58 +637,24 @@ const AdminDashboard = () => {
                   variant="outline"
                   size="sm"
                   className={liberado ? "text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" : "text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"}
-                  onClick={async () => {
-                    try {
-                      if (!user.tenant_id) {
-                        toast.error('Usuário não possui uma Conta associada.');
-                        return;
-                      }
-                      if (!alvo) {
-                        toast.error('Não foi possível identificar a Conta que responde por este usuário.');
-                        return;
-                      }
-
-                      const newValue = !liberado;
-                      const { error } = await supabase
-                        .from('tenants')
-                        .update({
-                          manual_access_granted: newValue,
-                          manual_access_granted_by: newValue ? currentUserId : null,
-                          manual_access_granted_at: newValue ? new Date().toISOString() : null,
-                        })
-                        .eq('id', alvo.id);
-
-                      if (error) throw error;
-
-                      // Auditoria: registra em QUAL tenant a marca
-                      // foi feita, e de onde a ação partiu — sem a
-                      // nota, o histórico da Conta não explica por
-                      // que alguém a liberou a partir de uma Loja.
-                      await supabase
-                        .from('tenant_access_events' as never)
-                        .insert({
-                          tenant_id: alvo.id,
-                          action: newValue ? 'granted' : 'revoked',
-                          source: 'manual',
-                          actor_user_id: currentUserId,
-                          note: herda
-                            ? `Ação feita a partir do usuário ${user.email} (Loja ${propria?.name ?? user.tenant_id}); aplicada na Conta ${nomeAlvo}.`
-                            : `Ação feita a partir do usuário ${user.email}.`,
-                        } as never);
-
-                      toast.success(
-                        newValue
-                          ? `Acesso liberado para a Conta ${nomeAlvo}.`
-                          : `Acesso manual revogado da Conta ${nomeAlvo}.`,
-                        herda
-                          ? { description: 'Vale para todas as Lojas dessa Conta.' }
-                          : undefined,
-                      );
-                      refetchTenants();
-                      refetchUsers();
-                    } catch (error: any) {
-                      toast.error('Erro ao alterar acesso: ' + error.message);
+                  onClick={() => {
+                    if (!user.tenant_id) {
+                      toast.error('Usuário não possui uma Conta associada.');
+                      return;
                     }
+                    if (!alvo) {
+                      toast.error('Não foi possível identificar a Conta que responde por este usuário.');
+                      return;
+                    }
+                    setAcessoAlvo({
+                      contaId: alvo.id,
+                      nomeConta: nomeAlvo,
+                      liberado,
+                      herda,
+                      nomeLoja: propria?.name ?? null,
+                      email: user.email,
+                      lojaId: user.tenant_id,
+                    });
                   }}
                   title={
                     liberado
@@ -632,19 +674,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    try {
-                      await ligarApiManual(alvoApi.id, !apiLigada);
-                      toast.success(
-                        apiLigada
-                          ? `API desligada para a Conta ${alvoApi.name}.`
-                          : `API liberada para a Conta ${alvoApi.name}.`,
-                      );
-                      refetchTenants();
-                    } catch (error: any) {
-                      toast.error(error.message || 'Não foi possível alterar a API desta Conta.');
-                    }
-                  }}
+                  onClick={() => setApiAlvo({ contaId: alvoApi.id, nomeConta: alvoApi.name, ligada: apiLigada })}
                   title={`${apiLigada ? 'Tirar' : 'Liberar'} a API da Conta ${alvoApi.name}`}
                 >
                   {apiLigada ? 'Tirar API' : 'Liberar API'}
@@ -1090,13 +1120,17 @@ const AdminDashboard = () => {
             </div>
             <div>
               <Label htmlFor="edit-email">E-mail</Label>
+              {/* O email é o login e não é gravado por esta tela (handleEditUser
+                  não o envia): deixar editável fazia a mudança sumir sem aviso
+                  (achado 131 do checkup). */}
               <Input
                 id="edit-email"
                 type="email"
                 value={userForm.email}
-                onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="email@exemplo.com"
+                disabled
+                readOnly
               />
+              <p className="mt-1 text-xs text-muted-foreground">O email é o login da pessoa e não se troca por aqui.</p>
             </div>
             <div>
               <Label htmlFor="edit-phone">Telefone</Label>
@@ -1138,7 +1172,7 @@ const AdminDashboard = () => {
             </Button>
             <Button
               type="button"
-              onClick={handleEditUser}
+              onClick={() => (edicaoPedeConfirmacao ? setConfirmarEdicao(true) : handleEditUser())}
               disabled={updateUserMutation.isPending}
             >
               {updateUserMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
@@ -1146,6 +1180,84 @@ const AdminDashboard = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmationDialog
+        isOpen={confirmarEdicao}
+        onClose={() => setConfirmarEdicao(false)}
+        onConfirm={() => handleEditUser()}
+        title={`Salvar as mudanças de ${selectedUser?.name ?? 'esta pessoa'}?`}
+        description={
+          <>
+            {cargoMudou && (
+              <p>
+                O cargo muda de {selectedUser ? ROLE_LABELS[selectedUser.role] ?? selectedUser.role : ''} para{' '}
+                {ROLE_LABELS[userForm.role] ?? userForm.role}. O que a pessoa vê e pode fazer muda na hora. A Conta ou
+                Loja dela não muda junto: confira o campo Loja antes de salvar.
+              </p>
+            )}
+            {desativando && <p>A pessoa perde o acesso agora e não entra mais no sistema até ser ativada de novo.</p>}
+          </>
+        }
+        reversivel
+        comoDesfazer="edite a pessoa de novo e volte o que mudou."
+        confirmText="Salvar mudanças"
+        variant={desativando ? 'destructive' : 'default'}
+        isLoading={updateUserMutation.isPending}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!acessoAlvo}
+        onClose={() => setAcessoAlvo(null)}
+        onConfirm={alternarAcessoManual}
+        {...(acessoAlvo?.liberado
+          ? {
+              title: `Revogar o acesso da Conta ${acessoAlvo.nomeConta}?`,
+              description: (
+                <>
+                  <p>
+                    A Conta {acessoAlvo.nomeConta} e todas as Lojas dela deixam de ter acesso liberado por você e voltam a
+                    depender do pagamento.
+                  </p>
+                  <p>Se a Conta não tiver assinatura paga, todo mundo dela passa a ver a tela de bloqueio na hora.</p>
+                </>
+              ),
+              textoParaDigitar: acessoAlvo.nomeConta,
+              reversivel: true,
+              comoDesfazer: '"Liberar Manualmente", no mesmo lugar.',
+              confirmText: 'Revogar acesso',
+              variant: 'destructive' as const,
+            }
+          : {
+              title: `Liberar a Conta ${acessoAlvo?.nomeConta ?? ''} sem pagamento?`,
+              description: `Todo mundo da Conta ${acessoAlvo?.nomeConta ?? ''} e das Lojas dela usa o sistema sem assinatura paga, até alguém revogar.`,
+              reversivel: true,
+              comoDesfazer: '"Revogar Acesso", no mesmo lugar.',
+              confirmText: 'Liberar acesso',
+            })}
+      />
+
+      <ConfirmationDialog
+        isOpen={!!apiAlvo}
+        onClose={() => setApiAlvo(null)}
+        onConfirm={alternarApiManual}
+        {...(apiAlvo?.ligada
+          ? {
+              title: `Tirar a API da Conta ${apiAlvo.nomeConta}?`,
+              description:
+                'As chaves de API da Conta param de funcionar na hora: os sistemas ligados a ela passam a receber erro.',
+              reversivel: true,
+              comoDesfazer: '"Liberar API", no mesmo lugar.',
+              confirmText: 'Tirar API',
+              variant: 'destructive' as const,
+            }
+          : {
+              title: `Liberar a API para a Conta ${apiAlvo?.nomeConta ?? ''}?`,
+              description: 'O Gerente da Conta passa a criar chaves de API sem pagar o complemento, até alguém tirar.',
+              reversivel: true,
+              comoDesfazer: '"Tirar API", no mesmo lugar.',
+              confirmText: 'Liberar API',
+            })}
+      />
 
       {/* Modal Excluir Usuário */}
       <AlertDialog open={isDeleteUserOpen} onOpenChange={setIsDeleteUserOpen}>

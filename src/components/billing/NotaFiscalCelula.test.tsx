@@ -82,6 +82,9 @@ describe('NotaFiscalCelula', () => {
     const user = userEvent.setup();
     renderizar(cobranca('aguardando_prefeitura'), true);
     await user.click(screen.getByRole('button', { name: /Emitir de novo/ }));
+    // Documento fiscal: confirma antes de pedir a emissão de novo.
+    expect(mockInvoke).not.toHaveBeenCalled();
+    await user.click(within(screen.getByTestId('confirmacao')).getByRole('button', { name: 'Emitir de novo' }));
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ description: 'Certificado ausente.', variant: 'destructive' })),
     );

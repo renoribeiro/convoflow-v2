@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
@@ -115,15 +116,14 @@ export const IntegrationSettings = () => {
     setIsEditingWebhook(webhook.id);
   };
 
+  // Remover webhook pede confirmação (o sistema de destino para de receber).
+  const [removerAlvo, setRemoverAlvo] = useState<{ id: string; name: string; url: string } | null>(null);
+
   const handleDeleteWebhook = async (id: string) => {
-    try {
-      await deleteWebhookMutation.mutateAsync({
-        data: {},
-        options: { filter: { column: 'id', operator: 'eq', value: id } },
-      });
-    } catch {
-      // O hook já exibe o toast de erro.
-    }
+    await deleteWebhookMutation.mutateAsync({
+      data: {},
+      options: { filter: { column: 'id', operator: 'eq', value: id } },
+    });
   };
   
   const copyToClipboard = (text: string) => {
@@ -308,7 +308,7 @@ export const IntegrationSettings = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleDeleteWebhook(webhook.id)}
+                              onClick={() => setRemoverAlvo({ id: webhook.id, name: webhook.name, url: webhook.url })}
                               disabled={deleteWebhookMutation.isPending}
                             >
                               Remover
@@ -333,6 +333,20 @@ export const IntegrationSettings = () => {
             </div>
         </div>
       </CardContent>
+
+      <ConfirmationDialog
+        isOpen={!!removerAlvo}
+        onClose={() => setRemoverAlvo(null)}
+        onConfirm={async () => {
+          if (removerAlvo) await handleDeleteWebhook(removerAlvo.id);
+        }}
+        title={`Remover o webhook "${removerAlvo?.name ?? ''}"?`}
+        description={`O endereço ${removerAlvo?.url ?? ''} para de receber os avisos do ConvoFlow agora. Se outro sistema depende deles (um CRM, uma automação), ele deixa de ser avisado.`}
+        reversivel={false}
+        confirmText="Remover webhook"
+        variant="destructive"
+        isLoading={deleteWebhookMutation.isPending}
+      />
     </Card>
   );
 };

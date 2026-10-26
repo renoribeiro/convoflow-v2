@@ -174,7 +174,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Se o número já tinha verificação em duas etapas, digite o PIN',
         body:
-          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar número na Cloud API" na linha da instância. Abre a caixa "PIN necessário": digite o PIN de 6 dígitos que você já usava e clique em "Confirmar". O aviso "Número registrado!" fecha o assunto.',
+          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar número na Cloud API" na linha da instância. Abre a caixa "PIN necessário": digite o PIN de 6 dígitos que você já usava e clique em "Confirmar". O aviso "Número registrado!" fecha o assunto. Se o registro criar um PIN novo, ele aparece numa janela "Guarde o PIN deste número", com botão de copiar: anote antes de clicar em "Já guardei o PIN", porque ele não aparece outra vez.',
       },
       {
         title: 'Faça um teste real',
@@ -369,7 +369,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Ajuste ou remova as etapas que não servem para você',
         body:
-          'Em "Estágios Atuais", use o ícone de edição para renomear e o de lixeira para excluir. Faça essa limpeza antes de criar as novas, para não ficar com dois conjuntos de etapas ao mesmo tempo.',
+          'Em "Estágios Atuais", use o ícone de edição para renomear e o de lixeira para excluir. A lixeira pede confirmação em "Apagar etapa". Faça essa limpeza antes de criar as novas, para não ficar com dois conjuntos de etapas ao mesmo tempo.',
         note:
           'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
       },
@@ -383,7 +383,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Arraste as etapas para a ordem do seu processo',
         body:
-          'Em "Estágios Atuais", arraste cada etapa para a posição certa. A ordem aqui é a ordem das colunas no quadro, e é ela que faz a leitura do funil ter sentido.',
+          'Em "Estágios Atuais", arraste cada etapa para a posição certa. A ordem aqui é a ordem das colunas no quadro, e é ela que faz a leitura do funil ter sentido. Cada vez que você solta uma etapa, aparece "Ordem das etapas salva".',
       },
       {
         title: 'Feche a configuração e mova um lead de verdade',

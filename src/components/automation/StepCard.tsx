@@ -107,7 +107,7 @@ const StepCardBase: React.FC<StepCardProps> = ({
               e.stopPropagation();
               onDelete();
             }}
-            className="absolute right-2 top-2 hidden h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive group-hover:flex focus-visible:flex"
+            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash2 className="h-3.5 w-3.5" />
           </button>
