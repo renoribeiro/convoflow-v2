@@ -22,7 +22,13 @@
     "nome@empresa.com.br",
     "exemplo@email.com"
   ],
-  "allowedIps": [],
+  "allowedIps": [
+    "1.1.1.1",
+    "172.32.0.1",
+    "192.169.0.1",
+    "2606:4700:4700::1111",
+    "8.8.8.8"
+  ],
   "allowedPhones": [],
   "ignoredPaths": [
     "package-lock.json",

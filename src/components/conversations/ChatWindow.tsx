@@ -735,7 +735,7 @@ export const ChatWindow = ({
       return false;
     }
     if (!active.adapter.isReadyToSend()) {
-      toast.error(`A instância "${active.row.name}" não está conectada.`);
+      toast.error(active.adapter.notReadyReason ?? `A instância "${active.row.name}" não está conectada.`);
       return false;
     }
     const phone = phoneOf(contact);
@@ -869,7 +869,7 @@ export const ChatWindow = ({
       return;
     }
     if (!active.adapter.isReadyToSend()) {
-      toast.error(`A instância "${active.row.name}" não está conectada.`);
+      toast.error(active.adapter.notReadyReason ?? `A instância "${active.row.name}" não está conectada.`);
       return;
     }
     // Contato sem telefone: até a fatia 1 do Instagram isso era impossível
@@ -1354,7 +1354,7 @@ export const ChatWindow = ({
             <AlertDescription>
               {isInstagram
                 ? `A conexão do Instagram "${active.row.name}" não está ativa. Nada é enviado até ela voltar.`
-                : `Instância "${active.row.name}" está ${active.row.status}. Reconecte antes de enviar.`}
+                : active.adapter.notReadyReason ?? `Instância "${active.row.name}" está ${active.row.status}. Reconecte antes de enviar.`}
             </AlertDescription>
           </Alert>
         )}

@@ -1,4 +1,5 @@
 import { IWhatsAppProvider, ProviderConfig, SendMessageOptions } from './base.ts';
+import { safeFetch } from '../safe-outbound-url.ts';
 
 /**
  * Provider server-side da WAHA API.
@@ -11,6 +12,9 @@ import { IWhatsAppProvider, ProviderConfig, SendMessageOptions } from './base.ts
  *    família de endpoints "/api/sendXxx".
  *  - O destinatário é sempre `chatId` no formato `<numero>@c.us`.
  *  - Header de auth: `X-Api-Key: {API_KEY}`.
+ *  - O servidor é do cliente: toda chamada passa por `safeFetch`, que recusa
+ *    endereço de rede interna e não segue redirecionamento
+ *    (`../safe-outbound-url.ts`).
  */
 export class WahaProvider implements IWhatsAppProvider {
     private config: ProviderConfig;
@@ -42,7 +46,7 @@ export class WahaProvider implements IWhatsAppProvider {
         init: { method?: string; body?: unknown } = {},
     ): Promise<T> {
         const url = `${this.baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
-        const response = await fetch(url, {
+        const response = await safeFetch(url, {
             method: init.method || 'POST',
             headers: this.buildHeaders(),
             body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
@@ -135,7 +139,7 @@ export class WahaProvider implements IWhatsAppProvider {
         const session = encodeURIComponent(this.config.instanceName);
         const url = `${this.baseUrl}/api/${session}/chats?limit=${limit}&sortBy=conversationTimestamp&sortOrder=desc`;
         try {
-            const response = await fetch(url, {
+            const response = await safeFetch(url, {
                 method: 'GET',
                 headers: this.buildHeaders(),
             });

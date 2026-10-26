@@ -22,6 +22,7 @@ vi.mock('@/contexts/TenantContext', () => ({
 }));
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: state.instances }),
+  useWhatsAppInstancesSafe: () => ({ instances: state.instances }),
 }));
 vi.mock('@/hooks/use-mobile', () => ({ useIsBelowLg: () => false }));
 vi.mock('@/components/shared/PageHeader', () => ({

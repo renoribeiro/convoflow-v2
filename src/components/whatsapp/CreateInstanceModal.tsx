@@ -57,6 +57,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
 
   const [showQRModal, setShowQRModal] = useState(false);
   const [createdInstanceEvolution, setCreatedInstanceEvolution] = useState<{
+    instanceId: string;
     instanceName: string;
   } | null>(null);
 
@@ -129,11 +130,12 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
       if (parsed.data.provider === 'evolution') {
         setEvolutionWebhookStatus(parsed.data.enableWebhookAutomation ? 'configuring' : 'idle');
         setEvolutionWebhookError(null);
+        let created: { instance_id?: string } | undefined;
 
         try {
           // A URL do webhook é montada pela edge function, com o SUPABASE_URL
           // do próprio servidor — o navegador não precisa (nem deve) opinar.
-          await createEvolution(parsed.data.instance_key, undefined, {
+          created = await createEvolution(parsed.data.instance_key, undefined, {
             enableWebhookAutomation: parsed.data.enableWebhookAutomation,
             retryAttempts: parsed.data.retryAttempts,
             retryDelay: parsed.data.retryDelay,
@@ -149,10 +151,12 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
           throw err;
         }
 
-        // Sem credenciais aqui: o QRCodeModal lê a chave DA INSTÂNCIA do
-        // connection_config que a edge function acabou de gravar.
-        setCreatedInstanceEvolution({ instanceName: parsed.data.instance_key });
-        setShowQRModal(true);
+        // Sem credenciais aqui: o QRCodeModal pede o QR ao servidor, que usa a
+        // chave da instância guardada no cofre pela edge function.
+        if (created?.instance_id) {
+          setCreatedInstanceEvolution({ instanceId: created.instance_id, instanceName: parsed.data.name });
+          setShowQRModal(true);
+        }
       } else if (parsed.data.provider === 'waha') {
         await createWaha(parsed.data);
       } else if (parsed.data.provider === 'official') {
@@ -275,6 +279,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
             setShowQRModal(next);
             if (!next) setCreatedInstanceEvolution(null);
           }}
+          instanceId={createdInstanceEvolution.instanceId}
           instanceName={createdInstanceEvolution.instanceName}
           onSuccess={onSuccess}
         />

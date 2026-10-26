@@ -65,6 +65,25 @@ describe('planProviderCleanup', () => {
   });
 });
 
+describe('planProviderCleanup com o cofre (desde 2026-10-26)', () => {
+  it('waha: endereço e chave do cofre vencem o connection_config', () => {
+    const plan = planProviderCleanup(
+      'waha',
+      'vendas',
+      { sessionName: 'vendas' },
+      {},
+      { baseUrl: 'https://waha.exemplo.com.br/', apiKey: 'chave-do-cofre-FAKE' },
+    );
+    if (plan.kind !== 'requests') throw new Error('esperava pedidos');
+    expect(plan.requests[0]!.url).toBe('https://waha.exemplo.com.br/api/sessions/vendas');
+    expect(plan.requests[0]!.headers).toEqual({ 'X-Api-Key': 'chave-do-cofre-FAKE' });
+  });
+
+  it('waha sem cofre e sem connection_config: pula', () => {
+    expect(planProviderCleanup('waha', 'vendas', { sessionName: 'vendas' }, {}, null).kind).toBe('skipped');
+  });
+});
+
 describe('cleanupOutcomeFromStatus', () => {
   it('404 = já não existia; 2xx = removida; resto = falhou', () => {
     expect(cleanupOutcomeFromStatus(404)).toBe('not_found');

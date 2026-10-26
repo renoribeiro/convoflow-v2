@@ -39,8 +39,21 @@ describe('admin-create-user DELETE', () => {
 
 describe('waha-webhook', () => {
   const src = fn('waha-webhook');
-  it('segredo comparado em tempo constante', () => {
-    expect(src).toContain('matchVerifyToken(providedSecret, [wahaSecret]) < 0');
+  // Desde 2026-10-26 a senha é por número (cofre), conferida pela assinatura
+  // HMAC; a comparação em tempo constante mora em _shared/waha-webhook-auth.ts
+  // (testada em src/lib/whatsapp/instanceCredentials.test.ts).
+  it('confere a assinatura com a senha do número antes de processar o evento', () => {
+    const cofre = src.indexOf("rpc('get_instance_provider_credentials'");
+    const confere = src.indexOf('await authenticateWahaWebhook({');
+    const recusa = src.indexOf('return unauthorized();', confere);
+    const processa = src.indexOf("logger.info('Waha webhook received'");
+    expect(cofre).toBeGreaterThan(0);
+    expect(confere).toBeGreaterThan(cofre);
+    expect(recusa).toBeGreaterThan(confere);
+    expect(processa).toBeGreaterThan(recusa);
+  });
+  it('não aceita mais a senha única de todos os servidores', () => {
+    expect(src).not.toContain("Deno.env.get('WAHA_WEBHOOK_SECRET')");
     expect(src).not.toMatch(/providedSecret\s*!==\s*wahaSecret/);
   });
 });

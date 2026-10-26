@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
+import { credentialsForVault } from '../_shared/instance-credentials.ts';
 
 /**
  * Cria uma instância no servidor Evolution da plataforma.
@@ -15,10 +16,13 @@ import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared
  * devolve 1 e responde 401 em qualquer outra. O ConvoFlow é multi-cliente, então
  * a chave global não pode chegar ao navegador de ninguém.
  *
- * O desenho, então: a chave global vive aqui, como secret. O navegador do
- * cliente só recebe a chave DA INSTÂNCIA DELE, gravada em
- * `whatsapp_instances.connection_config` — que é de onde o EvolutionAdapter já
- * lê para enviar mensagem e de onde o QRCodeModal lê para parear.
+ * O desenho, então: a chave global vive aqui, como secret. A chave DA
+ * INSTÂNCIA (que só abre aquela instância) vai para o cofre, por
+ * set_instance_provider_credentials (migração 20261026000001), e não para a
+ * linha de whatsapp_instances: a linha é lida por todo membro da Loja, o
+ * atendente incluído. Até 2026-10-26 ela ia para `connection_config`.
+ * Quem usa a chave é o servidor: whatsapp-instance-action (estado, QR,
+ * desconectar), o webhook e os envios. Plano: docs/RUNBOOK_segredos_das_instancias.md.
  *
  * Endpoints conforme `.agent/skills/evolution-v2/SKILL.md` §2.5, §2.1, §2.8 e §7.1.
  */
@@ -245,7 +249,7 @@ Deno.serve(async (req: Request) => {
   // O `hash` do /instance/create já mudou de forma entre versões da v2 (string
   // solta, ou objeto com apikey). Em vez de apostar numa, confirmamos pelo
   // fetchInstances, que devolve `token` — o campo que a SKILL.md chama de
-  // INST_KEY. Sem essa chave a instância nasce inútil: o navegador não teria
+  // INST_KEY. Sem essa chave a instância nasce inútil: o servidor não teria
   // como parear nem enviar.
   let instanceToken = '';
   const hash = (createPayload as Record<string, unknown>)?.hash;
@@ -329,27 +333,47 @@ Deno.serve(async (req: Request) => {
   }
 
   // -------------------------------------------------------------- gravar
-  const { error: insertError } = await supabaseAdmin.from('whatsapp_instances').insert({
-    instance_key: instanceKey,
-    name: displayName,
-    tenant_id: callerProfile.tenant_id,
-    provider: 'evolution',
-    // Só a chave DESTA instância. A global nunca sai daqui.
-    connection_config: { baseUrl: evolutionBaseUrl, apiKey: instanceToken },
-    status: 'disconnected',
-    webhook_url: enableWebhookAutomation ? webhookUrl : null,
-    webhook_configured: webhookConfigured,
-    webhook_events: enableWebhookAutomation ? WEBHOOK_EVENTS : null,
-  });
+  // A linha nasce SEM servidor e sem chave; os dois vão para o cofre logo em
+  // seguida. Se o cofre recusar, a linha e a instância na Evolution saem.
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from('whatsapp_instances')
+    .insert({
+      instance_key: instanceKey,
+      name: displayName,
+      tenant_id: callerProfile.tenant_id,
+      provider: 'evolution',
+      connection_config: {},
+      status: 'disconnected',
+      webhook_url: enableWebhookAutomation ? webhookUrl : null,
+      webhook_configured: webhookConfigured,
+      webhook_events: enableWebhookAutomation ? WEBHOOK_EVENTS : null,
+    })
+    .select('id')
+    .single();
 
-  if (insertError) {
+  if (insertError || !inserted) {
     logger.error('Falha ao gravar whatsapp_instances', {
       instanceKey,
-      error: insertError.message,
+      error: insertError?.message,
     });
     await rollback('insert falhou');
     return jsonResponse(
-      { ok: false, error: `Não foi possível salvar a instância: ${insertError.message}` },
+      { ok: false, error: `Não foi possível salvar a instância: ${insertError?.message ?? 'sem resposta do banco'}` },
+      500,
+    );
+  }
+
+  // Só a chave DESTA instância. A global nunca sai daqui.
+  const { error: vaultError } = await supabaseAdmin.rpc('set_instance_provider_credentials', {
+    p_instance_id: inserted.id,
+    p_credentials: credentialsForVault({ baseUrl: evolutionBaseUrl, apiKey: instanceToken }),
+  });
+  if (vaultError) {
+    logger.error('Falha ao guardar a chave da instância no cofre', { instanceKey, error: vaultError.message });
+    await supabaseAdmin.from('whatsapp_instances').delete().eq('id', inserted.id);
+    await rollback('cofre recusou');
+    return jsonResponse(
+      { ok: false, error: 'Não foi possível guardar a chave da instância. Nada foi criado. Tente de novo.' },
       500,
     );
   }
@@ -363,6 +387,7 @@ Deno.serve(async (req: Request) => {
   return jsonResponse(
     {
       ok: true,
+      instance_id: inserted.id,
       instance_key: instanceKey,
       name: displayName,
       webhook_configured: webhookConfigured,

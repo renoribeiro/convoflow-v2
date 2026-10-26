@@ -21,7 +21,9 @@
 //
 //   waha       .agent/skills/waha/SKILL.md §2.7
 //              DELETE {BASE}/api/sessions/{SESSION}       X-Api-Key: API_KEY
-//              O servidor é do cliente: URL e chave vêm de connection_config.
+//              O servidor é do cliente: URL e chave vêm do cofre (lidas ANTES
+//              da RPC, que apaga o cofre junto), ou de connection_config num
+//              número antigo. Quem executa o plano chama por safeFetch.
 //
 //   official   NADA é chamado na Meta. O número continua registrado na Meta
 //              e o app continua inscrito na WABA; o que some é o vínculo
@@ -55,6 +57,8 @@ export function planProviderCleanup(
   instanceKey: string,
   connectionConfig: Record<string, unknown> | null | undefined,
   env: CleanupEnv,
+  /** Endereço e chave do WAHA lidos do cofre; vencem o connection_config. */
+  stored?: { baseUrl?: string | null; apiKey?: string | null } | null,
 ): CleanupPlan {
   const p = provider || 'evolution';
 
@@ -83,11 +87,11 @@ export function planProviderCleanup(
   }
 
   if (p === 'waha') {
-    const base = String(connectionConfig?.baseUrl || '').trim();
-    const apiKey = String(connectionConfig?.apiKey || '').trim();
+    const base = String(stored?.baseUrl || connectionConfig?.baseUrl || '').trim();
+    const apiKey = String(stored?.baseUrl ? stored?.apiKey || '' : connectionConfig?.apiKey || '').trim();
     const session = String(connectionConfig?.sessionName || instanceKey).trim();
     if (!base || !session) {
-      return { kind: 'skipped', provider: 'waha', why: 'connection_config sem baseUrl/sessionName.' };
+      return { kind: 'skipped', provider: 'waha', why: 'sem endereço do servidor WAHA (cofre e connection_config vazios).' };
     }
     return {
       kind: 'requests',

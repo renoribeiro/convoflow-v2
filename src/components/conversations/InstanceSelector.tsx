@@ -9,13 +9,24 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { providerLabel, type ProviderType } from '@/services/whatsapp';
-import type { ActiveInstanceWithAdapter } from '@/hooks/useWhatsAppApi';
 
 /** Valor da opção "todas". Quem usa o seletor traduz para `null` (sem filtro). */
 export const ALL_INSTANCES_VALUE = '__all__';
 
+/** O que o seletor mostra de cada instância. Serve a lista segura e a com adapter. */
+export interface InstanceSelectorItem {
+  row: {
+    id: string;
+    name: string;
+    provider?: string | null;
+    status?: string | null;
+    profile_picture_url?: string | null;
+  };
+  providerLabel: string;
+}
+
 interface InstanceSelectorProps {
-  instances: ActiveInstanceWithAdapter[];
+  instances: InstanceSelectorItem[];
   selectedId: string | null;
   /** Recebe o id da instância, ou ALL_INSTANCES_VALUE para "todas". */
   onChange: (id: string) => void;
@@ -23,7 +34,7 @@ interface InstanceSelectorProps {
   allLabel?: string;
 }
 
-function statusBadge(status: string | null) {
+function statusBadge(status: string | null | undefined) {
   const s = (status ?? '').toLowerCase();
   if (s === 'connected' || s === 'open' || s === 'working') {
     return <Badge variant="default" className="bg-success/15 text-success border-success/30">Conectada</Badge>;

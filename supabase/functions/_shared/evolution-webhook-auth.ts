@@ -10,16 +10,18 @@
  * 1. `apikey` do CORPO = token da própria instância. É o que a Evolution v2
  *    manda sozinha: `sendDataWebhook` põe `apikey: this.token` no corpo, mas
  *    SÓ quando o servidor tem `AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true`
- *    (com `false` o campo vem `null` e o evento é recusado). O token fica em
- *    `connection_config.apiKey` — gravado pelo `evolution-provision` — ou na
- *    coluna legada `evolution_api_key`, a mesma ordem do `provider-factory`.
+ *    (com `false` o campo vem `null` e o evento é recusado). Desde 2026-10-26
+ *    o token mora no cofre (get_instance_provider_credentials, gravado pelo
+ *    `evolution-provision`) e chega aqui como `storedToken`. Número antigo
+ *    ainda vale pela linha: `connection_config.apiKey` ou a coluna legada
+ *    `evolution_api_key`, a mesma ordem de `instance-credentials.ts`.
  *
  * 2. Cabeçalho `x-webhook-secret` = secret `EVOLUTION_WEBHOOK_SECRET`. Serve
  *    para um canal que o cliente NÃO lê (um proxy na frente da Evolution, por
  *    exemplo). Não ponha esse valor no `webhook.headers` de uma instância: a
  *    Evolution devolve os headers em `GET /webhook/find/{instância}`, que
  *    aceita o token da própria instância (`auth.guard.ts`) — e o token está no
- *    `connection_config`, que o navegador da Conta lê. Um cliente leria o
+ *    `connection_config`, que o navegador da Conta lia. Um cliente leria o
  *    secret e forjaria eventos para as instâncias de todo mundo.
  *
  * As duas não se cruzam: o secret no corpo, ou o token no cabeçalho, não
@@ -42,8 +44,14 @@ export type EvolutionWebhookAuth =
   | { ok: true; via: 'instance_token' | 'webhook_secret' }
   | { ok: false; reason: 'missing_credentials' | 'invalid_credentials' };
 
-/** O token desta instância, ou null se não houver um utilizável. */
-export function evolutionInstanceToken(instance: EvolutionWebhookInstance): string | null {
+/**
+ * O token desta instância, ou null se não houver um utilizável. `storedToken`
+ * é o do cofre e vem primeiro; a linha só serve para número antigo.
+ */
+export function evolutionInstanceToken(
+  instance: EvolutionWebhookInstance,
+  storedToken?: string | null,
+): string | null {
   const cfg = instance.connection_config;
   const fromConfig =
     cfg && typeof cfg === 'object' && !Array.isArray(cfg)
@@ -51,6 +59,7 @@ export function evolutionInstanceToken(instance: EvolutionWebhookInstance): stri
       : undefined;
 
   const token =
+    (typeof storedToken === 'string' && storedToken) ||
     (typeof fromConfig === 'string' && fromConfig) ||
     (typeof instance.evolution_api_key === 'string' && instance.evolution_api_key) ||
     '';
@@ -75,6 +84,8 @@ const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.length 
 
 export async function authenticateEvolutionWebhook(input: {
   instance: EvolutionWebhookInstance;
+  /** A chave da instância lida do cofre (`apiKey` de get_instance_provider_credentials). */
+  storedToken?: string | null;
   /** `apikey` do corpo do evento. */
   payloadApiKey: unknown;
   /** Valor do cabeçalho `x-webhook-secret`. */
@@ -82,13 +93,13 @@ export async function authenticateEvolutionWebhook(input: {
   /** `Deno.env.get('EVOLUTION_WEBHOOK_SECRET')`. */
   webhookSecret: string | undefined;
 }): Promise<EvolutionWebhookAuth> {
-  const { instance, payloadApiKey, headerSecret, webhookSecret } = input;
+  const { instance, storedToken, payloadApiKey, headerSecret, webhookSecret } = input;
 
   const hasPayloadKey = nonEmpty(payloadApiKey);
   const hasHeader = nonEmpty(headerSecret);
   if (!hasPayloadKey && !hasHeader) return { ok: false, reason: 'missing_credentials' };
 
-  const token = evolutionInstanceToken(instance);
+  const token = evolutionInstanceToken(instance, storedToken);
   if (hasPayloadKey && token && (await sameSecret(payloadApiKey, token))) {
     return { ok: true, via: 'instance_token' };
   }

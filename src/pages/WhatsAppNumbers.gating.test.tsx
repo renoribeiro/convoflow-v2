@@ -58,9 +58,10 @@ vi.mock('@/hooks/useMetaApi', () => ({
   useMetaApi: () => ({ verifyConnection: vi.fn(), registerNumber: vi.fn() }),
 }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }), toast: vi.fn() }));
-vi.mock('@/services/whatsapp/evolutionInstanceService', () => ({
-  evolutionCredentialsFrom: () => null,
-  evolutionServiceForRow: () => ({ getInstanceStatus: vi.fn() }),
+vi.mock('@/services/whatsapp/instanceActions', () => ({
+  instanceAction: vi.fn(async () => ({ ok: true, status: 'open', changed: false })),
+  hasServerActions: (p: string | null | undefined) => !p || p === 'evolution' || p === 'waha',
+  isConnectedState: (s: string | null | undefined) => s === 'open' || s === 'connected',
 }));
 vi.mock('@/components/webhook/WebhookDashboard', () => ({ WebhookDashboard: () => null }));
 vi.mock('@/components/debug/EnvironmentDebug', () => ({ EnvironmentDebug: () => null }));

@@ -2,7 +2,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ServerCog, Info } from 'lucide-react';
-import { env } from '@/lib/env';
 
 export interface WahaFormValues {
   name: string;
@@ -25,18 +24,16 @@ interface Props {
 }
 
 export const WahaApiForm = ({ values, onChange, loading }: Props) => {
-  const webhookUrl = `${env.get('SUPABASE_URL').replace(/\/+$/, '')}/functions/v1/waha-webhook`;
-
   return (
     <div className="space-y-4">
       <Alert className="border-sky-200 bg-sky-50/60">
         <ServerCog className="h-4 w-4 text-sky-700" />
         <AlertTitle>WAHA (servidor self-hosted)</AlertTitle>
         <AlertDescription className="text-xs">
-          Ao salvar, o ConvoFlow cria/atualiza a sessão diretamente no servidor WAHA via{' '}
-          <code className="px-1">POST /api/sessions</code>, registrando o webhook do Supabase
-          automaticamente. Depois é só parear pelo Swagger <code className="px-1">/docs</code> do
-          servidor WAHA.
+          Ao salvar, o servidor do ConvoFlow confere o endereço, cria (ou atualiza) a sessão no seu
+          servidor WAHA e registra lá o endereço de entrega, com uma senha só deste número. O
+          endereço e a API Key ficam guardados no cofre do ConvoFlow e não aparecem mais em nenhuma
+          tela. Depois é só clicar no QR Code do número na lista e ler com o celular.
         </AlertDescription>
       </Alert>
 
@@ -61,8 +58,8 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
           disabled={loading}
         />
         <p className="text-xs text-muted-foreground">
-          Use HTTPS sem porta (Traefik finaliza TLS). Swagger disponível em{' '}
-          <code className="px-1">/docs</code>.
+          O endereço público do servidor, de preferência com HTTPS. Endereço de rede interna
+          (localhost, 192.168..., 10...) é recusado.
         </p>
       </div>
 
@@ -96,15 +93,16 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle className="text-sm">Webhook que será registrado</AlertTitle>
+        <AlertTitle className="text-sm">Endereço de entrega que será registrado</AlertTitle>
         <AlertDescription className="text-xs space-y-1">
           <p>
             Eventos: <code className="px-1">message</code>,{' '}
             <code className="px-1">message.ack</code>,{' '}
             <code className="px-1">session.status</code>.
           </p>
-          <p className="break-all">
-            URL: <code className="bg-background border px-1.5 py-0.5 rounded text-[11px]">{webhookUrl}</code>
+          <p>
+            O endereço é o do ConvoFlow, próprio deste número, e cada evento vai assinado com a senha
+            dele. Evento sem a assinatura certa é recusado.
           </p>
         </AlertDescription>
       </Alert>

@@ -3,7 +3,12 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
 import { corsHeaders, DataSanitizer } from '../_shared/validation.ts'
-import { matchVerifyToken } from '../_shared/cryptoSignature.ts'
+import {
+  authenticateWahaWebhook,
+  WAHA_HMAC_ALGORITHM_HEADER,
+  WAHA_HMAC_HEADER,
+} from '../_shared/waha-webhook-auth.ts'
+import { mapWahaStatus } from '../_shared/instance-control.ts'
 import {
   checkRateLimitDb,
   getRateLimitIdentifier,
@@ -54,63 +59,79 @@ serve(async (req) => {
       return new Response('Method not allowed', { status: 405 })
     }
 
-    // Origin authentication: WAHA does not send a JWT, so the gateway is
-    // configured with verify_jwt=false. Use a shared secret instead, sent
-    // by WAHA via the Authorization: Bearer <secret> header (configured on
-    // the WAHA side via WHATSAPP_HOOK_HEADERS).
-    const wahaSecret = Deno.env.get('WAHA_WEBHOOK_SECRET');
-    if (!wahaSecret) {
-      logger.error('WAHA_WEBHOOK_SECRET is not configured; refusing webhook to avoid forged events');
-      return new Response(JSON.stringify({ error: 'Webhook authentication not configured' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
-      });
-    }
-    const authHeader = req.headers.get('authorization') ?? req.headers.get('Authorization') ?? '';
-    const providedSecret = authHeader.replace(/^Bearer\s+/i, '').trim();
-    // Comparação em tempo constante (item 14 lote 6): `!==` para no primeiro
-    // caractere diferente e o tempo de resposta vaza o prefixo certo.
-    if (matchVerifyToken(providedSecret, [wahaSecret]) < 0) {
-      logger.warn('WAHA webhook rejected: invalid or missing shared secret');
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    // Quem entrega (desde 2026-10-26): cada número WAHA tem a própria senha
+    // de entrega, no cofre, e o servidor do cliente assina o corpo com ela
+    // (X-Webhook-Hmac, HMAC-SHA512). A senha única WAHA_WEBHOOK_SECRET saiu:
+    // o cliente precisaria conhecê-la e forjaria eventos para todas as Lojas.
+    // Regra e por quê: _shared/waha-webhook-auth.ts. O número vem no
+    // endereço (?instance=<id>, gravado pelo waha-provision); sem ele, pelo
+    // nome da sessão (cadastro antigo).
+    const unauthorized = () =>
+      new Response(JSON.stringify({ error: 'Unauthorized' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 401,
       });
-    }
 
-    const payload = await req.json();
+    const rawBody = await req.text();
+    let payload: any;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      return new Response('Invalid JSON', { status: 400 });
+    }
     const sessionName = payload.session || payload.sessionId;
 
     if (!sessionName) {
       return new Response('Missing session', { status: 400 });
     }
 
-    // Identify Instance
-    const { data: instance } = await supabase
-      .from('whatsapp_instances')
-      .select('id, tenant_id')
-      .eq('instance_key', sessionName)
-      .single();
+    const instanceParam = new URL(req.url).searchParams.get('instance') ?? '';
+    const byId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(instanceParam);
+    const { data: instance } = byId
+      ? await supabase
+          .from('whatsapp_instances')
+          .select('id, tenant_id, provider, instance_key, connection_config')
+          .eq('id', instanceParam)
+          .maybeSingle()
+      : await supabase
+          .from('whatsapp_instances')
+          .select('id, tenant_id, provider, instance_key, connection_config')
+          .eq('instance_key', sessionName)
+          .maybeSingle();
 
-    if (!instance) {
-      logger.error(`Instance not found: ${sessionName}`);
-      return new Response('Instance not found', { status: 404 });
+    // Número desconhecido responde igual a assinatura errada: não revela quais existem.
+    if (!instance || instance.provider !== 'waha') {
+      logger.warn('WAHA webhook rejected: unknown instance', { session: sessionName, byId });
+      return unauthorized();
+    }
+    const expectedSession = (instance.connection_config as Record<string, unknown> | null)?.sessionName || instance.instance_key;
+    if (expectedSession !== sessionName) {
+      logger.warn('WAHA webhook rejected: session does not match the instance', { instanceId: instance.id });
+      return unauthorized();
+    }
+
+    const { data: stored, error: vaultError } = await supabase.rpc('get_instance_provider_credentials', {
+      p_instance_id: instance.id,
+    });
+    if (vaultError) logger.warn('Cofre indisponível ao conferir o webhook WAHA', { instanceId: instance.id });
+    const secret = stored && typeof stored === 'object' ? (stored as Record<string, unknown>).webhookSecret : null;
+
+    const auth = await authenticateWahaWebhook({
+      rawBody,
+      signatureHeader: req.headers.get(WAHA_HMAC_HEADER),
+      algorithmHeader: req.headers.get(WAHA_HMAC_ALGORITHM_HEADER),
+      secret: typeof secret === 'string' ? secret : null,
+    });
+    if (!auth.ok) {
+      logger.warn('WAHA webhook rejected', { instanceId: instance.id, reason: auth.reason });
+      return unauthorized();
     }
 
     logger.info('Waha webhook received', { event: payload.event, session: sessionName });
 
-    // Map WAHA session status → our `whatsapp_instances.status` vocabulary.
+    // Map WAHA session status → our `whatsapp_instances.status` vocabulary
+    // (o mesmo mapa da ação de estado: _shared/instance-control.ts).
     // Ref: .agent/skills/waha/SKILL.md §2.1
-    const mapWahaStatus = (raw?: string): string | null => {
-      if (!raw) return null;
-      const s = raw.toUpperCase();
-      if (s === 'WORKING') return 'connected';
-      if (s === 'SCAN_QR_CODE') return 'qrcode';
-      if (s === 'STARTING') return 'connecting';
-      if (s === 'STOPPED' || s === 'FAILED') return 'disconnected';
-      return null;
-    };
-
     if (payload.event === 'session.status' || payload.event === 'status') {
       const mapped = mapWahaStatus(
         payload.payload?.status || payload.status || payload.payload?.state,

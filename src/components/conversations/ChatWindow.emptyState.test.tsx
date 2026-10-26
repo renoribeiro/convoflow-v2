@@ -46,6 +46,7 @@ vi.mock('@/hooks/useChatHistorySync', () => ({
 }));
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: [] }),
+  useWhatsAppInstancesSafe: () => ({ instances: [] }),
   pickActiveInstance: () => ({ row: { id: 'inst-1', name: 'Principal', provider: 'evolution' }, adapter }),
 }));
 vi.mock('@/hooks/useSupabaseQuery', () => ({ useSupabaseQuery: () => ({ data: [] }) }));

@@ -114,6 +114,7 @@ vi.mock('@/hooks/useChatHistorySync', () => ({
 vi.mock('@/hooks/useWhatsAppApi', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/hooks/useWhatsAppApi')>()),
   useWhatsAppInstancesWithAdapter: () => ({ instances: state.instances }),
+  useWhatsAppInstancesSafe: () => ({ instances: state.instances }),
 }));
 vi.mock('@/hooks/useInstagramReplyWindow', () => ({
   useInstagramReplyWindow: () => state.window,

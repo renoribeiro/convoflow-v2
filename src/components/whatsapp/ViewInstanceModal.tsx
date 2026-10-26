@@ -1,268 +1,207 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { isWhatsAppConnectedStatus } from '@/lib/whatsapp/connectionSections';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { 
-  Smartphone, 
-  Wifi, 
-  WifiOff, 
-  RefreshCw, 
-  Key, 
-  Globe, 
-  Webhook, 
-  Calendar,
-  User,
-  Phone
-} from 'lucide-react';
+import { Smartphone, KeyRound, Calendar, Phone, User, Loader2, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { instanceAction } from '@/services/whatsapp/instanceActions';
+import { useToast } from '@/hooks/use-toast';
 
-interface WhatsAppInstance {
+interface ViewInstance {
   id: string;
   name: string;
   instance_key: string;
-  phone_number?: string;
-  profile_name?: string;
-  profile_picture_url?: string;
-  status: 'close' | 'open' | 'connecting';
-  is_active: boolean;
-  qr_code?: string;
-  last_connected_at?: string;
+  provider?: string | null;
+  phone_number?: string | null;
+  profile_name?: string | null;
+  status?: string | null;
+  last_connected_at?: string | null;
   created_at: string;
-  updated_at: string;
-  evolution_api_url?: string;
-  evolution_api_key?: string;
-  webhook_url?: string;
 }
 
 interface ViewInstanceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  instance: WhatsAppInstance;
+  instance: ViewInstance;
+  /** Depois de trocar a chave com sucesso. */
+  onKeyReplaced?: () => void;
 }
 
-export const ViewInstanceModal = ({ open, onOpenChange, instance }: ViewInstanceModalProps) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'open':
-      case 'connected':
-        return 'bg-green-500';
-      case 'connecting':
-        return 'bg-yellow-500';
-      case 'close':
-      default:
-        return 'bg-red-500';
+/**
+ * Detalhes de um número Evolution ou WAHA.
+ *
+ * Mostra se há chave salva ("Chave configurada: sim ou não") e deixa trocá-la.
+ * Nunca mostra a chave nem o endereço do servidor, nem mascarados: os dois
+ * moram no cofre e só o servidor os lê (whatsapp-instance-action, ações
+ * `credential` e `replace_key`). A troca só vale se a chave nova abrir ESTE
+ * número no servidor; senão nada muda.
+ */
+export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced }: ViewInstanceModalProps) => {
+  const { toast } = useToast();
+  const [configured, setConfigured] = useState<boolean | null>(null);
+  const [checkError, setCheckError] = useState<string | null>(null);
+  const [replacing, setReplacing] = useState(false);
+  const [newKey, setNewKey] = useState('');
+  const [saving, setSaving] = useState(false);
+  const isWaha = instance.provider === 'waha';
+
+  useEffect(() => {
+    if (!open) return;
+    let vivo = true;
+    setConfigured(null);
+    setCheckError(null);
+    setReplacing(false);
+    setNewKey('');
+    void instanceAction(instance.id, 'credential').then((r) => {
+      if (!vivo) return;
+      if (r.ok) setConfigured(r.credential_configured === true);
+      else setCheckError(r.error || 'Não foi possível conferir a chave.');
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [open, instance.id]);
+
+  const salvar = async () => {
+    setSaving(true);
+    const r = await instanceAction(instance.id, 'replace_key', { api_key: newKey.trim() });
+    setSaving(false);
+    if (!r.ok) {
+      toast({ title: 'A chave não foi trocada', description: r.error, variant: 'destructive' });
+      return;
     }
+    setNewKey('');
+    setReplacing(false);
+    setConfigured(true);
+    toast({ title: 'Chave trocada', description: 'O ConvoFlow conferiu a chave nova neste número e guardou no cofre.' });
+    onKeyReplaced?.();
   };
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'open':
-      case 'connected':
-        return <Wifi className="h-4 w-4 text-green-600" />;
-      case 'connecting':
-        return <RefreshCw className="h-4 w-4 text-yellow-600 animate-spin" />;
-      case 'close':
-      default:
-        return <WifiOff className="h-4 w-4 text-red-600" />;
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'open':
-      case 'connected':
-        return 'Conectado';
-      case 'connecting':
-        return 'Conectando';
-      case 'close':
-      default:
-        return 'Desconectado';
-    }
-  };
-
-  const maskApiKey = (key?: string) => {
-    if (!key) return 'Não configurado';
-    if (key.length <= 8) return key;
-    return key.substring(0, 4) + '*'.repeat(key.length - 8) + key.substring(key.length - 4);
-  };
+  const conectado = isWhatsAppConnectedStatus(instance.status);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Smartphone className="h-5 w-5" />
-            Detalhes da Instância WhatsApp
+            {instance.name}
           </DialogTitle>
+          <DialogDescription>
+            {isWaha ? 'Número WAHA (servidor seu)' : 'Número Evolution (servidor da plataforma)'}
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Status e Informações Básicas */}
+        <div className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span className="flex items-center gap-2">
-                  {getStatusIcon(instance.status)}
-                  {instance.name}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Badge variant={isWhatsAppConnectedStatus(instance.status) ? 'default' : 'secondary'}>
-                    {getStatusText(instance.status)}
-                  </Badge>
-                  <Badge variant={instance.is_active ? 'default' : 'secondary'}>
-                    {instance.is_active ? 'Ativo' : 'Inativo'}
-                  </Badge>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 pt-6 text-sm">
               <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${getStatusColor(instance.status)}`} />
-                <span className="text-sm font-medium">
-                  Status: {getStatusText(instance.status)}
-                </span>
+                <Badge variant={conectado ? 'default' : 'secondary'}>{conectado ? 'Conectado' : 'Desconectado'}</Badge>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Key className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Chave:</span>
-                    <code className="bg-muted px-2 py-1 rounded text-xs">
-                      {instance.instance_key}
-                    </code>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">Criado em:</span>
-                    <span>{format(new Date(instance.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-                  </div>
-                </div>
-              </div>
+              <p>
+                <span className="font-medium">Chave da instância:</span>{' '}
+                <code className="bg-muted px-2 py-0.5 rounded text-xs">{instance.instance_key}</code>
+              </p>
+              {instance.profile_name && (
+                <p className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                  {instance.profile_name}
+                </p>
+              )}
+              {instance.phone_number && (
+                <p className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  {instance.phone_number}
+                </p>
+              )}
+              <p className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                Criado em {format(new Date(instance.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+              </p>
+              {instance.last_connected_at && (
+                <p className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  Última conexão em {format(new Date(instance.last_connected_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                </p>
+              )}
             </CardContent>
           </Card>
 
-          {/* Perfil WhatsApp */}
-          {(instance.phone_number || instance.profile_name) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Perfil WhatsApp
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={instance.profile_picture_url} />
-                    <AvatarFallback>
-                      {instance.profile_name ? instance.profile_name.charAt(0).toUpperCase() : 'WA'}
-                    </AvatarFallback>
-                  </Avatar>
-                  
-                  <div className="space-y-2">
-                    {instance.profile_name && (
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Nome:</span>
-                        <span>{instance.profile_name}</span>
-                      </div>
-                    )}
-                    
-                    {instance.phone_number && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Número:</span>
-                        <span>{instance.phone_number}</span>
-                      </div>
-                    )}
-                    
-                    {instance.last_connected_at && (
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">Última conexão:</span>
-                        <span>{format(new Date(instance.last_connected_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Configurações da Evolution API */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" />
-                Configurações da Evolution API
+              <CardTitle className="flex items-center gap-2 text-base">
+                <KeyRound className="h-4 w-4" />
+                Chave de acesso ao servidor
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">URL da API</label>
-                  <div className="mt-1">
-                    <code className="bg-muted px-3 py-2 rounded text-sm block break-all">
-                      {instance.evolution_api_url || 'Não configurado'}
-                    </code>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Chave da API</label>
-                  <div className="mt-1">
-                    <code className="bg-muted px-3 py-2 rounded text-sm block">
-                      {maskApiKey(instance.evolution_api_key)}
-                    </code>
-                  </div>
-                </div>
-
-                {instance.webhook_url && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-                      <Webhook className="h-4 w-4" />
-                      URL do Webhook
-                    </label>
-                    <div className="mt-1">
-                      <code className="bg-muted px-3 py-2 rounded text-sm block break-all">
-                        {instance.webhook_url}
-                      </code>
-                    </div>
-                  </div>
+            <CardContent className="space-y-3 text-sm">
+              <p data-testid="chave-configurada" className="flex items-center gap-2">
+                {configured === null && !checkError && (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Conferindo...
+                  </>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+                {configured === true && (
+                  <>
+                    <ShieldCheck className="h-4 w-4 text-green-600" /> Chave configurada: sim
+                  </>
+                )}
+                {configured === false && (
+                  <>
+                    <ShieldAlert className="h-4 w-4 text-red-600" /> Chave configurada: não
+                  </>
+                )}
+                {checkError && <span className="text-red-600">{checkError}</span>}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                A chave fica guardada no cofre do ConvoFlow e nenhuma tela a mostra, nem em parte.
+                {isWaha
+                  ? ' É a API Key (X-Api-Key) do seu servidor WAHA.'
+                  : ' É a chave da instância no servidor Evolution, não a chave do servidor inteiro.'}
+              </p>
 
-          {/* Informações do Sistema */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações do Sistema</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-muted-foreground">ID da Instância:</span>
-                  <div className="mt-1">
-                    <code className="bg-muted px-2 py-1 rounded text-xs">
-                      {instance.id}
-                    </code>
+              {!replacing ? (
+                <Button variant="outline" size="sm" onClick={() => setReplacing(true)} disabled={configured === null && !checkError}>
+                  Substituir chave
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="nova-chave">Chave nova</Label>
+                  <Input
+                    id="nova-chave"
+                    type="password"
+                    autoComplete="off"
+                    value={newKey}
+                    onChange={(e) => setNewKey(e.target.value)}
+                    disabled={saving}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O ConvoFlow testa a chave neste número antes de guardar. Se o servidor recusar, nada muda.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={salvar} disabled={saving || newKey.trim().length < 8}>
+                      {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Testar e guardar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setReplacing(false);
+                        setNewKey('');
+                      }}
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </Button>
                   </div>
                 </div>
-
-                <div>
-                  <span className="font-medium text-muted-foreground">Última Atualização:</span>
-                  <div className="mt-1">
-                    {format(new Date(instance.updated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
-                  </div>
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>

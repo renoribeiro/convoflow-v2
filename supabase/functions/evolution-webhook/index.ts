@@ -109,8 +109,24 @@ serve(async (req) => {
     // body `apikey`, or EVOLUTION_WEBHOOK_SECRET in the x-webhook-secret header.
     // The instance name is NOT a credential — it used to be, and anyone who
     // knew it could forge events. Rules and why: _shared/evolution-webhook-auth.ts
+    // A chave da instância mora no cofre desde 2026-10-26; a linha só vale
+    // para número antigo (_shared/instance-credentials.ts). Erro do cofre não
+    // abre a porta: sem chave, o evento cai em 401.
+    const { data: storedCreds, error: vaultError } = await supabase.rpc(
+      'get_instance_provider_credentials',
+      { p_instance_id: instance.id },
+    )
+    if (vaultError) {
+      logger.warn('Cofre indisponível ao conferir o webhook', { instance: instanceName })
+    }
+    const storedToken =
+      storedCreds && typeof storedCreds === 'object' && typeof (storedCreds as Record<string, unknown>).apiKey === 'string'
+        ? ((storedCreds as Record<string, unknown>).apiKey as string)
+        : null
+
     const auth = await authenticateEvolutionWebhook({
       instance,
+      storedToken,
       payloadApiKey: webhookApiKey,
       headerSecret: req.headers.get(EVOLUTION_WEBHOOK_SECRET_HEADER),
       webhookSecret: Deno.env.get('EVOLUTION_WEBHOOK_SECRET'),
@@ -755,9 +771,13 @@ async function processQRCodeUpdate(supabase: SupabaseClient, instanceName: strin
   // V2 sends QR code in different formats
   const qrCode = qrData?.qrcode?.base64 || qrData?.qrcode?.code || qrData?.qr || null;
 
+  // O QR NÃO vai para a linha: whatsapp_instances é lida por todo membro da
+  // Loja, e quem lê o QR enquanto o número espera pareamento liga o próprio
+  // celular a ele. A tela pede o QR ao servidor (whatsapp-instance-action,
+  // ação connect), só para quem configura o WhatsApp. Aqui fica só o estado.
   await supabase
     .from('whatsapp_instances')
-    .update({ qr_code: qrCode, status: 'qrcode', updated_at: new Date().toISOString() })
+    .update({ qr_code: null, status: 'qrcode', updated_at: new Date().toISOString() })
     .eq('instance_key', instanceName)
 
   logger.info('QR Code updated', { instanceName, hasQr: !!qrCode });

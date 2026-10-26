@@ -3,6 +3,7 @@ import { IWhatsAppProvider, ProviderConfig } from './whatsapp-providers/base.ts'
 import { EvolutionProvider } from './whatsapp-providers/evolution.ts';
 import { WahaProvider } from './whatsapp-providers/waha.ts';
 import { MetaProvider } from './whatsapp-providers/meta.ts';
+import { loadProviderCredentials, resolveProviderCredentials } from './instance-credentials.ts';
 
 interface InstanceData {
     id?: string;
@@ -28,37 +29,40 @@ export class ProviderFactory {
         const providerType = instance.provider || 'evolution';
         const cfg = instance.connection_config || {};
 
-        if (providerType === 'evolution') {
-            const baseUrl = cfg.baseUrl || instance.evolution_api_url || '';
-            const apiKey = cfg.apiKey || instance.evolution_api_key || '';
+        if (providerType === 'evolution' || providerType === 'waha') {
+            // Endereço e chave vêm do cofre (desde 2026-10-26); a linha só
+            // vale para número antigo, e o endereço do Evolution nunca sai
+            // dela. Regra: _shared/instance-credentials.ts.
+            // globalThis: este arquivo também entra no tsc do app (via chatbot-engine).
+            const denoEnv = (globalThis as { Deno?: { env: { get(k: string): string | undefined } } }).Deno?.env;
+            const env = { evolutionBaseUrl: denoEnv?.get('EVOLUTION_API_URL') };
+            const resolved = supabase
+                ? await loadProviderCredentials(supabase as never, instance, env)
+                : resolveProviderCredentials(instance, null, env);
+            const creds = resolved.credentials;
 
-            if (!baseUrl || !apiKey) {
-                throw new Error(
-                    `Missing configuration for Evolution provider (instance: ${instance.instance_key})`,
-                );
+            if (providerType === 'evolution') {
+                if (!creds) {
+                    throw new Error(
+                        `Missing configuration for Evolution provider (instance: ${instance.instance_key})`,
+                    );
+                }
+                const config: ProviderConfig = {
+                    baseUrl: creds.baseUrl,
+                    apiKey: creds.apiKey,
+                    instanceName: instance.instance_key,
+                };
+                return new EvolutionProvider(config);
             }
 
-            const config: ProviderConfig = {
-                baseUrl,
-                apiKey,
-                instanceName: instance.instance_key,
-            };
-            return new EvolutionProvider(config);
-        }
-
-        if (providerType === 'waha') {
-            const baseUrl = cfg.baseUrl || '';
-            const apiKey = cfg.apiKey || '';
-
-            if (!baseUrl) {
+            if (!creds) {
                 throw new Error(
                     `Missing baseUrl for Waha provider (instance: ${instance.instance_key})`,
                 );
             }
-
             const config: ProviderConfig = {
-                baseUrl,
-                apiKey,
+                baseUrl: creds.baseUrl,
+                apiKey: creds.apiKey,
                 instanceName: cfg.sessionName || instance.instance_key,
             };
             return new WahaProvider(config);

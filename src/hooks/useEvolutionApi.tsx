@@ -134,22 +134,24 @@ export const useEvolutionApi = (): UseEvolutionApiReturn => {
         return;
       }
 
+      // Sem servidor, chave nem QR: este hook roda na tela de Conversas de
+      // todo cargo (via useChatHistorySync) e nada aqui usa esses campos.
+      // Quem fala com o Evolution é o servidor (docs/RUNBOOK_segredos_das_instancias.md).
       const { data: dbInstances, error } = await supabase
         .from('whatsapp_instances')
-        .select('*')
+        .select('instance_key, status, webhook_url, profile_picture_url, profile_name, created_at, last_connected_at')
         .eq('tenant_id', profile.tenant_id);
 
       if (error) throw error;
 
       // Map DB instances to EvolutionInstance type
       const mappedInstances: EvolutionInstance[] = (dbInstances || []).map(inst => {
-        const config = inst.connection_config as any || {};
         return {
           instanceName: inst.instance_key,
           status: (inst.status as 'open' | 'close' | 'connecting' | 'qrcode') || 'close',
-          serverUrl: config.baseUrl || inst.evolution_api_url || '',
-          apiKey: config.apiKey || inst.evolution_api_key || '',
-          qrcode: inst.qr_code || undefined,
+          serverUrl: '',
+          apiKey: '',
+          qrcode: undefined,
           webhookUrl: inst.webhook_url || undefined,
           profilePicUrl: inst.profile_picture_url || undefined,
           profileName: inst.profile_name || undefined,

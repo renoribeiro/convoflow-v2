@@ -26,6 +26,13 @@ export interface IWhatsAppProvider {
   /** Status considerado "online" pelo provider para envio de mensagens. */
   isReadyToSend(): boolean;
 
+  /**
+   * Por que não está pronto, quando não é "desconectado" (ex.: número cuja
+   * chave mora só no servidor, ver serverKeyPending.adapter.ts). A tela usa
+   * este texto no lugar do aviso de reconectar.
+   */
+  readonly notReadyReason?: string;
+
   /* ------------------------------- Envio --------------------------------- */
   sendText(toPhone: string, content: string, options?: SendTextOptions): Promise<SendResult>;
   sendMedia(toPhone: string, payload: SendMediaPayload): Promise<SendResult>;

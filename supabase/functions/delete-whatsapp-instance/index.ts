@@ -7,6 +7,8 @@ import {
   cleanupOutcomeFromStatus,
   type CleanupOutcome,
 } from '../_shared/instance-delete-cleanup.ts';
+import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
+import { safeFetch } from '../_shared/safe-outbound-url.ts';
 
 /**
  * Exclui uma instância de WhatsApp.
@@ -91,6 +93,19 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: false, error: 'instance_id inválido.' }, 400);
   }
 
+  // ------------------------------------------------ o cofre, antes da RPC
+  // A RPC apaga o segredo do cofre junto com a linha. O endereço e a chave do
+  // WAHA (servidor do cliente) são lidos ANTES, só para encerrar a sessão lá
+  // depois, e só se a RPC aceitar. Nada disto volta ao navegador.
+  const { data: preRow } = await admin
+    .from('whatsapp_instances')
+    .select('id, provider')
+    .eq('id', instanceId)
+    .maybeSingle();
+  const preCreds = preRow?.provider === 'waha'
+    ? (await loadProviderCredentials(admin, { id: preRow.id, provider: 'waha' }, {})).credentials
+    : null;
+
   // ------------------------------------------------------------- a RPC
   // Como o usuário: é o JWT dele que vira auth.uid() dentro da função.
   const asUser = createClient(supabaseUrl, anonKey, {
@@ -143,7 +158,7 @@ Deno.serve(async (req: Request) => {
   const plan = planProviderCleanup(provider, String(instance.instance_key || ''), connectionConfig, {
     evolutionBaseUrl: Deno.env.get('EVOLUTION_API_URL'),
     evolutionGlobalKey: Deno.env.get('EVOLUTION_GLOBAL_KEY'),
-  });
+  }, preCreds);
 
   let providerCleanup: CleanupOutcome = 'skipped';
   let providerDetail: string | null = null;
@@ -157,7 +172,10 @@ Deno.serve(async (req: Request) => {
   } else {
     for (const step of plan.requests) {
       try {
-        const res = await fetch(step.url, { method: step.method, headers: step.headers });
+        // WAHA é servidor do cliente: endereço interno é recusado antes da chamada.
+        const res = plan.provider === 'waha'
+          ? await safeFetch(step.url, { method: step.method, headers: step.headers })
+          : await fetch(step.url, { method: step.method, headers: step.headers });
         if (step.optional) continue;
         providerCleanup = cleanupOutcomeFromStatus(res.status);
         if (providerCleanup === 'failed') {

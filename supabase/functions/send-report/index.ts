@@ -28,6 +28,8 @@ import {
   sendViaResend,
 } from '../_shared/report-core.ts';
 import { checkReportLimits } from '../_shared/report-limits.ts';
+import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
+import { safeFetch } from '../_shared/safe-outbound-url.ts';
 
 const ALLOWED_ORIGINS = [
   'https://convoflow.com.br',
@@ -202,9 +204,16 @@ async function sendWhatsApp(admin: SupabaseClient, instance: any, to: string, te
     return;
   }
 
+  // Evolution e WAHA: endereço e chave do cofre (a linha só para número
+  // antigo). Regra: _shared/instance-credentials.ts.
+  const { credentials } =
+    provider === 'evolution' || provider === 'waha'
+      ? await loadProviderCredentials(admin, instance, { evolutionBaseUrl: Deno.env.get('EVOLUTION_API_URL') })
+      : { credentials: null };
+
   if (provider === 'evolution') {
-    const baseUrl = cfg.baseUrl || instance.evolution_api_url;
-    const apiKey = cfg.apiKey || instance.evolution_api_key;
+    const baseUrl = credentials?.baseUrl;
+    const apiKey = credentials?.apiKey;
     if (!baseUrl || !apiKey) throw new Error('Configuração Evolution ausente na instância do sistema.');
     const resp = await fetch(`${baseUrl}/message/sendText/${instance.instance_key}`, {
       method: 'POST',
@@ -216,10 +225,11 @@ async function sendWhatsApp(admin: SupabaseClient, instance: any, to: string, te
   }
 
   if (provider === 'waha') {
-    const baseUrl = cfg.baseUrl;
-    const apiKey = cfg.apiKey;
+    const baseUrl = credentials?.baseUrl;
+    const apiKey = credentials?.apiKey;
     if (!baseUrl) throw new Error('Configuração WAHA ausente na instância do sistema.');
-    const resp = await fetch(`${baseUrl}/api/sendText`, {
+    // Servidor do cliente: recusa endereço interno (_shared/safe-outbound-url.ts).
+    const resp = await safeFetch(`${baseUrl}/api/sendText`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...(apiKey ? { 'X-Api-Key': apiKey } : {}) },
       body: JSON.stringify({ session: cfg.sessionName || instance.instance_key, chatId: `${number}@c.us`, text, linkPreview: false }),

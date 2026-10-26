@@ -8,9 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Loader2, RefreshCw, QrCode, Smartphone, Copy, CheckCircle2 } from 'lucide-react';
-import type { EvolutionApiService } from '@/services/evolutionApi';
-import { evolutionServiceForInstanceKey } from '@/services/whatsapp/evolutionInstanceService';
-import { supabase } from '@/integrations/supabase/client';
+import { instanceAction, isConnectedState } from '@/services/whatsapp/instanceActions';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
@@ -18,85 +16,118 @@ import { logger } from '@/lib/logger';
 interface QRCodeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** `instance_key` da instância na Evolution. */
+  /** id da instância (Evolution ou WAHA). */
+  instanceId: string;
+  /** Nome que aparece na janela. */
   instanceName: string;
   onSuccess?: () => void;
 }
 
+/** Quantas vezes pedir o QR de novo enquanto o servidor ainda o prepara (3 s cada). */
+const MAX_TENTATIVAS_QR = 10;
+
+/**
+ * Conectar um número Evolution ou WAHA por QR Code ou código de pareamento.
+ *
+ * Tudo pelo SERVIDOR (whatsapp-instance-action): ele pede o QR ao provedor
+ * com a chave do cofre e devolve só a imagem; o acompanhamento ("conectou?")
+ * também é dele, e é ele que grava o estado no banco. A tela nunca recebe a
+ * chave nem o endereço do servidor do número.
+ */
 export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   open,
   onOpenChange,
+  instanceId,
   instanceName,
   onSuccess,
 }) => {
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
+  const [preparing, setPreparing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const serviceRef = useRef<EvolutionApiService | null>(null);
+  const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tentativasRef = useRef(0);
   const queryClient = useQueryClient();
 
-  const getService = useCallback(async (): Promise<EvolutionApiService> => {
-    if (serviceRef.current) return serviceRef.current;
-    serviceRef.current = await evolutionServiceForInstanceKey(instanceName);
-    return serviceRef.current;
-  }, [instanceName]);
+  const clearRetry = () => {
+    if (retryRef.current) {
+      clearTimeout(retryRef.current);
+      retryRef.current = null;
+    }
+  };
+
+  const markConnected = useCallback(() => {
+    setConnected(true);
+    queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
+    onSuccess?.();
+    toast({ title: 'Conectado!', description: `${instanceName} pareado com sucesso.` });
+  }, [instanceName, onSuccess, queryClient]);
 
   const fetchConnectionData = useCallback(async () => {
-    if (!instanceName) return;
+    if (!instanceId) return;
+    clearRetry();
+    setLoading(true);
+    setError(null);
+    const r = await instanceAction(instanceId, 'connect');
+    setLoading(false);
 
-    try {
-      setLoading(true);
-      setError(null);
-
-      const service = await getService();
-      const connectionData = await service.connectInstance(instanceName);
-
-      // A Evolution v2 devolve `base64` (data URL pronta para <img>) e `code`
-      // (o payload cru do QR, que NÃO é imagem). Usar `code` como src pintava
-      // um ícone de imagem quebrada; sem base64, o pareamento por código é o
-      // caminho que resta.
-      setQrCode(connectionData?.base64 || null);
-      setPairingCode(connectionData?.pairingCode || null);
-
-      if (!connectionData?.base64 && !connectionData?.pairingCode) {
-        setError('O servidor não devolveu QR Code nem código de pareamento. A instância pode já estar conectada.');
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao conectar instância';
-      logger.error('Falha ao obter QR Code da instância', { instanceName, error: errorMessage });
-      setError(errorMessage);
-      toast({ title: 'Erro', description: errorMessage, variant: 'destructive' });
-    } finally {
-      setLoading(false);
+    if (!r.ok) {
+      // Recusa do servidor (sem chave, provedor fora) é resposta esperada e
+      // aparece na janela: aviso, não erro do sistema.
+      logger.warn('Servidor não devolveu o QR Code', { instanceId, reason: r.reason });
+      setError(r.error || 'Não foi possível conectar o número.');
+      return;
     }
-  }, [getService, instanceName]);
+    if (isConnectedState(r.state)) {
+      markConnected();
+      return;
+    }
+    setQrCode(r.qr ?? null);
+    setPairingCode(r.pairing_code ?? null);
+    if (!r.qr && !r.pairing_code) {
+      // O servidor ainda prepara a sessão (WAHA iniciando): pede de novo.
+      if (tentativasRef.current < MAX_TENTATIVAS_QR) {
+        tentativasRef.current += 1;
+        setPreparing(true);
+        retryRef.current = setTimeout(() => void fetchConnectionData(), 3000);
+      } else {
+        setPreparing(false);
+        setError('O servidor não devolveu QR Code nem código de pareamento. Tente de novo em instantes.');
+      }
+      return;
+    }
+    setPreparing(false);
+  }, [instanceId, markConnected]);
 
   const handleClose = useCallback(() => {
     if (pollRef.current) {
       clearInterval(pollRef.current);
       pollRef.current = null;
     }
+    clearRetry();
+    tentativasRef.current = 0;
     setQrCode(null);
     setPairingCode(null);
+    setPreparing(false);
     setError(null);
     setConnected(false);
-    serviceRef.current = null;
     onOpenChange(false);
   }, [onOpenChange]);
 
   useEffect(() => {
-    if (open && instanceName) {
-      serviceRef.current = null;
-      fetchConnectionData();
+    if (open && instanceId) {
+      tentativasRef.current = 0;
+      void fetchConnectionData();
     }
-  }, [open, instanceName, fetchConnectionData]);
+    return clearRetry;
+  }, [open, instanceId, fetchConnectionData]);
 
-  // Polling do status: quando state vira "open", mostra sucesso e fecha o modal.
+  // Acompanhamento pelo servidor: quando o número conecta, mostra sucesso e fecha.
   useEffect(() => {
-    if (!open || !instanceName || connected) return;
+    if (!open || !instanceId || connected) return;
 
     const stopPolling = () => {
       if (pollRef.current) {
@@ -106,35 +137,27 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
     };
 
     pollRef.current = setInterval(async () => {
-      try {
-        const service = await getService();
-        const { instance } = await service.getInstanceStatus(instanceName);
-        if (instance?.state === 'open') {
-          stopPolling();
-          setConnected(true);
-          await supabase
-            .from('whatsapp_instances')
-            .update({ status: 'open', last_connected_at: new Date().toISOString() })
-            .eq('instance_key', instanceName);
-          queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
-          onSuccess?.();
-          toast({
-            title: 'Conectado!',
-            description: `Instância ${instanceName} pareada com sucesso.`,
-          });
-          setTimeout(() => handleClose(), 1500);
-        }
-      } catch (err) {
-        // Erros transientes durante polling não devem encerrar — só logar.
-        logger.warn('Falha ao checar status da instância', {
-          instanceName,
-          error: err instanceof Error ? err.message : err,
-        });
+      const r = await instanceAction(instanceId, 'status');
+      if (!r.ok) {
+        // Erro transitório durante o acompanhamento não encerra: só registra.
+        logger.warn('Falha ao checar status da instância', { instanceId, reason: r.reason });
+        return;
+      }
+      if (isConnectedState(r.status)) {
+        stopPolling();
+        markConnected();
       }
     }, 3000);
 
     return stopPolling;
-  }, [open, instanceName, connected, getService, handleClose, onSuccess, queryClient]);
+  }, [open, instanceId, connected, markConnected]);
+
+  // Conectou (pelo acompanhamento ou porque já estava): fecha sozinho.
+  useEffect(() => {
+    if (!connected) return;
+    const t = setTimeout(() => handleClose(), 1500);
+    return () => clearTimeout(t);
+  }, [connected, handleClose]);
 
   const copyPairingCode = () => {
     if (pairingCode) {
@@ -155,7 +178,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
             Conectar WhatsApp
           </DialogTitle>
           <DialogDescription>
-            Conecte sua instância <strong>{instanceName}</strong> escaneando o QR Code ou usando o código de pareamento
+            Conecte o número <strong>{instanceName}</strong> escaneando o QR Code ou usando o código de pareamento
           </DialogDescription>
         </DialogHeader>
 
@@ -168,10 +191,12 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
             </div>
           )}
 
-          {loading && !connected && (
+          {(loading || preparing) && !connected && !qrCode && !pairingCode && !error && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-600">Conectando instância...</p>
+              <p className="text-sm text-gray-600">
+                {preparing ? 'Preparando o QR Code...' : 'Conectando instância...'}
+              </p>
             </div>
           )}
 

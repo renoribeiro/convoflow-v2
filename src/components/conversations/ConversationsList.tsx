@@ -14,7 +14,7 @@ import { ConversationViewToggle } from './ConversationViewToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRealtimeConversations } from '@/hooks/useRealtimeMessages';
 import { useChatHistorySync } from '@/hooks/useChatHistorySync';
-import { useWhatsAppInstancesWithAdapter } from '@/hooks/useWhatsAppApi';
+import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
 import { ALL_INSTANCES_VALUE, InstanceSelector } from './InstanceSelector';
 import { contactDisplayName } from '@/lib/instagram/contactProfile';
 import { useInstagramContactProfiles } from '@/hooks/useInstagramContactProfiles';
@@ -168,7 +168,7 @@ export const ConversationsList = ({
   channel,
   onChannelsChange,
 }: ConversationsListProps) => {
-  const { instances } = useWhatsAppInstancesWithAdapter();
+  const { instances } = useWhatsAppInstancesSafe();
   // O seletor mostra só as instâncias do canal aberto.
   const channelInstances = useMemo(
     () => (channel ? instancesOfChannel(instances, channel) : instances),

@@ -53,15 +53,16 @@ vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeConversations: () => 
 vi.mock('@/hooks/useChatHistorySync', () => ({
   useChatHistorySync: () => ({ isSyncing: false, syncAllChats: vi.fn() }),
 }));
-vi.mock('@/hooks/useWhatsAppApi', () => ({
-  useWhatsAppInstancesWithAdapter: () => ({
+vi.mock('@/hooks/useWhatsAppApi', () => {
+  const lista = () => ({
     instances: [
       { row: { id: 'wa-1', name: 'Plantão', provider: 'official' }, providerLabel: 'Oficial' },
       { row: { id: 'wa-2', name: 'Comercial', provider: 'evolution' }, providerLabel: 'Evolution' },
       { row: { id: 'ig-1', name: 'Instagram Loja', provider: 'instagram' }, providerLabel: 'Instagram' },
     ],
-  }),
-}));
+  });
+  return { useWhatsAppInstancesWithAdapter: lista, useWhatsAppInstancesSafe: lista };
+});
 vi.mock('./InstanceSelector', () => ({
   ALL_INSTANCES_VALUE: '__all__',
   InstanceSelector: (props: Record<string, unknown>) => {

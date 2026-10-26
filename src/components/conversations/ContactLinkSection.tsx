@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useCan, useTenant } from '@/contexts/TenantContext';
 import { useContactHasConversation } from '@/hooks/useContactHasConversation';
 import { useUnlinkContact } from '@/hooks/useContactLinks';
-import { useWhatsAppInstancesWithAdapter } from '@/hooks/useWhatsAppApi';
+import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
 import { CHANNEL_LABEL, asChannel, hasInstagramInstance, otherChannel } from '@/lib/conversations/channel';
 import { contactIdentifier } from '@/lib/contacts/identity';
 import { linkedCounterpartId, type ContactLink } from '@/lib/contacts/links';
@@ -35,7 +35,7 @@ export function ContactLinkSection({ contact, link, onOpenConversation }: Contac
   const [linkOpen, setLinkOpen] = useState(false);
   const [confirmUnlink, setConfirmUnlink] = useState(false);
   const unlinkMutation = useUnlinkContact();
-  const { instances } = useWhatsAppInstancesWithAdapter();
+  const { instances } = useWhatsAppInstancesSafe();
 
   const channel = asChannel(contact.channel);
   const other = otherChannel(channel);

@@ -11,8 +11,6 @@ export interface WhatsAppInstance {
   provider: 'evolution' | 'waha' | 'official' | null;
   lastSeen: string;
   messagesCount: number;
-  evolutionApiUrl?: string;
-  evolutionApiKey?: string;
 }
 
 export const useWhatsAppInstances = () => {
@@ -23,10 +21,12 @@ export const useWhatsAppInstances = () => {
     queryFn: async () => {
       if (!tenant?.id) return [];
 
-      // Fetch instances with safe column selection (no last_seen — may not exist in all schemas)
+      // Só o que o cartão mostra. Servidor e chave do Evolution/WAHA não vêm:
+      // este cartão aparece para todo cargo, o atendente incluído
+      // (docs/RUNBOOK_segredos_das_instancias.md).
       const { data: rawInstances, error: instancesError } = await supabase
         .from('whatsapp_instances')
-        .select('id, name, instance_key, phone_number, status, provider, created_at, updated_at, evolution_api_url, evolution_api_key')
+        .select('id, name, instance_key, phone_number, status, provider, created_at, updated_at')
         .eq('tenant_id', tenant.id);
 
       if (instancesError) {
@@ -80,8 +80,6 @@ export const useWhatsAppInstances = () => {
             })
           : 'Nunca',
         messagesCount: messageCounts[instance.id] || 0,
-        evolutionApiUrl: instance.evolution_api_url,
-        evolutionApiKey: instance.evolution_api_key,
       }));
     },
     enabled: !!tenant?.id,

@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw, Copy } from 'lucide-react';
+import { Plus, Smartphone, Wifi, WifiOff, QrCode, Trash2, RefreshCw, Webhook, Activity, AlertCircle, KeyRound, Loader2, Pencil, Instagram, Power, RotateCw, Copy, Info } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,13 +21,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
-import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useTenant, useCan } from '@/contexts/TenantContext';
 import { useToast } from '@/hooks/use-toast';
-import {
-  evolutionCredentialsFrom,
-  evolutionServiceForRow,
-} from '@/services/whatsapp/evolutionInstanceService';
+import { instanceAction, hasServerActions } from '@/services/whatsapp/instanceActions';
+import { SAFE_INSTANCE_SELECT, rebuildSafeInstanceRow } from '@/lib/whatsapp/safeInstanceColumns';
 import { useMetaApi } from '@/hooks/useMetaApi';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
@@ -36,6 +33,7 @@ import { DeleteInstanceModal } from '@/components/whatsapp/DeleteInstanceModal';
 import { RenameInstanceModal } from '@/components/whatsapp/RenameInstanceModal';
 import { QRCodeModal } from '@/components/whatsapp/QRCodeModal';
 import { WebhookConfigModal } from '@/components/whatsapp/WebhookConfigModal';
+import { ViewInstanceModal } from '@/components/whatsapp/ViewInstanceModal';
 import { WebhookDashboard } from '@/components/webhook/WebhookDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
@@ -84,8 +82,6 @@ interface WhatsAppInstance {
   last_connected_at?: string;
   created_at: string;
   updated_at: string;
-  evolution_api_url?: string;
-  evolution_api_key?: string;
   webhook_url?: string;
   provider?: ProviderType;
   connection_config?: Record<string, any>;
@@ -133,6 +129,7 @@ export default function WhatsAppNumbers() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [showWebhookModal, setShowWebhookModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [refreshingInstance, setRefreshingInstance] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('instances');
 
@@ -167,85 +164,49 @@ export default function WhatsAppNumbers() {
   const [igToggling, setIgToggling] = useState(false);
   const igCallbackHandled = useRef<string | null>(null);
 
-  // Query para buscar instâncias do WhatsApp
-  const { 
-    data: instances = [], 
-    isLoading, 
+  // Instâncias da Loja, só com as colunas sem segredo. Servidor e chave do
+  // Evolution/WAHA moram no cofre e só o servidor os usa
+  // (docs/RUNBOOK_segredos_das_instancias.md).
+  const {
+    data: rawInstances = [],
+    isLoading,
     error,
-    refetch 
+    refetch
   } = useSupabaseQuery({
     table: 'whatsapp_instances',
     queryKey: ['whatsapp-instances'],
-    select: '*',
+    select: SAFE_INSTANCE_SELECT,
     filters: [
       { column: 'tenant_id', operator: 'eq', value: tenant?.id }
     ],
     orderBy: [{ column: 'created_at', ascending: false }],
-    enabled: !!tenant?.id
+    enabled: !!tenant?.id,
+    // O estado chega pelo evento do provedor (webhook), que grava no banco;
+    // esta releitura do banco é o que faz a tela ver a mudança sem F5.
+    refetchInterval: 30000,
   });
+  const instances = useMemo(
+    () => ((rawInstances ?? []) as unknown as Record<string, unknown>[]).map(rebuildSafeInstanceRow) as unknown as WhatsAppInstance[],
+    [rawInstances],
+  );
 
-  // Mutation para atualizar status da instância
-  const updateInstanceMutation = useSupabaseMutation({
-    table: 'whatsapp_instances',
-    operation: 'update',
-    invalidateQueries: [['whatsapp-instances']]
-  });
-
-  // Verificação automática de status a cada 30 segundos
+  // Uma conferência de estado pelo SERVIDOR quando a tela abre, para cada
+  // número Evolution/WAHA. Antes o navegador perguntava ao Evolution a cada
+  // 30 segundos com a chave do número, e marcava "Desconectado" em qualquer
+  // erro. Agora a mudança chega sozinha pelo evento CONNECTION_UPDATE (Evolution)
+  // ou session.status (WAHA); esta conferência só acerta o que mudou com a tela
+  // fechada. Número sem chave salva é pulado em silêncio.
+  const conferidos = useRef<string | null>(null);
   useEffect(() => {
-    const checkConnectionStatus = async () => {
-      if (instances.length === 0) return;
-
-      // `useSupabaseQuery` devolve um union mal tipado (GenericStringError), o
-      // que faz cada acesso a campo virar erro de tsc. Um cast só, aqui, em vez
-      // de espalhar `any` por dez linhas.
-      for (const instance of instances as WhatsAppInstance[]) {
-        // Polling de status Evolution não se aplica a Meta/WAHA
-        if (instance.provider && instance.provider !== 'evolution') continue;
-        try {
-          // Instância sem credencial salva não tem o que consultar — pular é
-          // melhor que estourar no catch e marcá-la como 'close' por engano.
-          if (!evolutionCredentialsFrom(instance)) continue;
-          const service = evolutionServiceForRow(instance);
-          const { instance: estado } = await service.getInstanceStatus(instance.instance_key);
-          const status = estado?.state;
-          if (status && status !== instance.status) {
-            await updateInstanceMutation.mutateAsync({
-              data: { 
-                status,
-                last_connected_at: status === 'open' ? new Date().toISOString() : instance.last_connected_at
-              },
-              options: { filter: { column: 'id', operator: 'eq', value: instance.id } }
-            });
-          }
-        } catch (error) {
-          console.error(`Erro ao verificar status da instância ${instance.instance_key}:`, error);
-          // If the API returns an error, the instance likely no longer exists on the API side.
-          // Mark it as 'close' so the UI reflects reality.
-          if (instance.status === 'open' || instance.status === 'connecting') {
-            try {
-              await updateInstanceMutation.mutateAsync({
-                data: { status: 'close' },
-                options: { filter: { column: 'id', operator: 'eq', value: instance.id } }
-              });
-            } catch (updateErr) {
-              console.warn('Failed to update instance status to close:', updateErr);
-            }
-          }
-        }
-      }
-    };
-
-    const interval = setInterval(checkConnectionStatus, 30000); // 30 segundos
-    
-    // Verificação inicial após 5 segundos
-    const timeout = setTimeout(checkConnectionStatus, 5000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [instances, updateInstanceMutation]);
+    if (!tenant?.id || isLoading) return;
+    const alvos = instances.filter((i) => hasServerActions(i.provider) && i.is_active !== false);
+    const assinatura = `${tenant.id}:${alvos.map((i) => i.id).join(',')}`;
+    if (!alvos.length || conferidos.current === assinatura) return;
+    conferidos.current = assinatura;
+    void Promise.all(alvos.map((i) => instanceAction(i.id, 'status'))).then((rs) => {
+      if (rs.some((r) => r.ok && r.changed)) refetch();
+    });
+  }, [tenant?.id, isLoading, instances, refetch]);
 
   // Volta do Instagram: a edge function devolve o navegador para cá com
   // ?ig_state&ig_code (ou &ig_error). Tira os parâmetros da barra na hora
@@ -348,27 +309,13 @@ export default function WhatsAppNumbers() {
   };
 
   const handleDisconnect = async (instance: WhatsAppInstance) => {
-    try {
-      // Credencial da própria instância, não o serviço global (que é nulo).
-      const service = evolutionServiceForRow(instance);
-      await service.disconnectInstance(instance.instance_key);
-      await updateInstanceMutation.mutateAsync({
-        data: { status: 'close' },
-        options: { filter: { column: 'id', operator: 'eq', value: instance.id } }
-      });
-      toast({
-        title: "Sucesso",
-        description: "Instância desconectada com sucesso"
-      });
+    // Pelo servidor, com a chave do cofre. Ele mesmo grava o estado novo.
+    const r = await instanceAction(instance.id, 'disconnect');
+    if (r.ok) {
+      toast({ title: "Sucesso", description: "Instância desconectada com sucesso" });
       refetch();
-    } catch (error) {
-      // A mensagem real, não "Erro ao desconectar instância": era ela que
-      // escondia o motivo verdadeiro.
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : 'Erro ao desconectar instância',
-        variant: "destructive"
-      });
+    } else {
+      toast({ title: "Erro", description: r.error || 'Erro ao desconectar instância', variant: "destructive" });
     }
   };
 
@@ -390,34 +337,23 @@ export default function WhatsAppNumbers() {
   const handleRefreshStatus = async (instance: WhatsAppInstance) => {
     setRefreshingInstance(instance.id);
     try {
-      // `refreshInstanceStatus` do hook devolvia null sem serviço global, e o
-      // `if (status)` engolia isso: clicar não atualizava nada e não avisava
-      // nada. Agora a consulta usa a credencial da instância e o erro aparece.
-      const service = evolutionServiceForRow(instance);
-      const { instance: estado } = await service.getInstanceStatus(instance.instance_key);
-      const status = estado?.state;
-      if (!status) throw new Error('O servidor não informou o estado da instância.');
-
-      await updateInstanceMutation.mutateAsync({
-        data: { status },
-        options: { filter: { column: 'id', operator: 'eq', value: instance.id } }
-      });
-      toast({
-        title: "Sucesso",
-        description: "Status atualizado com sucesso"
-      });
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : 'Erro ao atualizar status',
-        variant: "destructive"
-      });
+      // O servidor pergunta ao Evolution/WAHA com a chave do cofre e grava.
+      const r = await instanceAction(instance.id, 'status');
+      if (r.ok) {
+        toast({ title: "Sucesso", description: "Status atualizado com sucesso" });
+        refetch();
+      } else {
+        toast({ title: "Erro", description: r.error || 'Erro ao atualizar status', variant: "destructive" });
+      }
     } finally {
       setRefreshingInstance(null);
     }
   };
 
-
+  const handleDetails = (instance: WhatsAppInstance) => {
+    setSelectedInstance(instance);
+    setShowDetailsModal(true);
+  };
 
   const handleRename = (instance: WhatsAppInstance) => {
     setSelectedInstance(instance);
@@ -496,12 +432,13 @@ export default function WhatsAppNumbers() {
     setShowQRModal(false);
     setShowWebhookModal(false);
     setShowRenameModal(false);
+    setShowDetailsModal(false);
   };
 
   const now = new Date();
   // Duas seções: instâncias de WhatsApp e contas do Instagram. Os contadores do
   // topo somam as duas; sem Instagram, a tela é a de sempre.
-  const typedInstances = instances as unknown as WhatsAppInstance[];
+  const typedInstances = instances;
   const sections = splitByChannel(typedInstances);
   const summary = connectionSummary(typedInstances, now);
   const totalCard = totalCardTexts(summary);
@@ -755,54 +692,72 @@ export default function WhatsAppNumbers() {
                     </Badge>
                     
                     <div className="flex flex-wrap items-center gap-1">
-                      {(!instance.provider || instance.provider === 'evolution') && (
+                      {/* Evolution e WAHA: estado, QR e desconectar pedidos ao
+                          servidor, que usa a chave do cofre (whatsapp-instance-action). */}
+                      {canConfigure && hasServerActions(instance.provider) && (
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRefreshStatus(instance)}
                           disabled={refreshingInstance === instance.id}
                           title="Atualizar status"
+                          aria-label="Atualizar status"
                         >
                           <RefreshCw className={`h-4 w-4 ${refreshingInstance === instance.id ? 'animate-spin' : ''}`} />
                         </Button>
                       )}
 
-                      {canConfigure && (!instance.provider || instance.provider === 'evolution') &&
-                        instance.status === 'close' && (
+                      {canConfigure && hasServerActions(instance.provider) &&
+                        !isWhatsAppConnectedStatus(instance.status) && (
                           <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => handleShowQR(instance)}
                             title="Conectar via QR Code"
+                            aria-label="Conectar via QR Code"
                           >
                             <QrCode className="h-4 w-4" />
                           </Button>
                         )}
 
                       {canConfigure && (!instance.provider || instance.provider === 'evolution') &&
-                        instance.status === 'open' && (
-                          <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleConfigureWebhook(instance)}
-                              title="Ver endereço de entrega"
-                              aria-label="Ver endereço de entrega"
-                            >
-                              <Webhook className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDesconectarAlvo(instance)}
-                              className="text-red-600 hover:text-red-700"
-                              title="Desconectar"
-                              aria-label="Desconectar"
-                            >
-                              <WifiOff className="h-4 w-4" />
-                            </Button>
-                          </>
+                        isWhatsAppConnectedStatus(instance.status) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleConfigureWebhook(instance)}
+                            title="Ver endereço de entrega"
+                            aria-label="Ver endereço de entrega"
+                          >
+                            <Webhook className="h-4 w-4" />
+                          </Button>
                         )}
+
+                      {canConfigure && hasServerActions(instance.provider) &&
+                        isWhatsAppConnectedStatus(instance.status) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDesconectarAlvo(instance)}
+                            className="text-red-600 hover:text-red-700"
+                            title="Desconectar"
+                            aria-label="Desconectar"
+                          >
+                            <WifiOff className="h-4 w-4" />
+                          </Button>
+                        )}
+
+                      {canConfigure && hasServerActions(instance.provider) && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDetails(instance)}
+                          title="Detalhes e chave"
+                          aria-label="Detalhes e chave"
+                        >
+                          <Info className="h-4 w-4" />
+                        </Button>
+                      )}
 
                       {canConfigure && instance.provider === 'official' && (
                         <>
@@ -1181,7 +1136,7 @@ export default function WhatsAppNumbers() {
             open={showRenameModal}
             onOpenChange={setShowRenameModal}
             instance={selectedInstance}
-            siblingNames={(instances as unknown as WhatsAppInstance[])
+            siblingNames={instances
               .filter((i) => i.id !== selectedInstance.id)
               .map((i) => i.name)}
             onSuccess={() => {
@@ -1193,11 +1148,19 @@ export default function WhatsAppNumbers() {
           <QRCodeModal
             open={showQRModal}
             onOpenChange={setShowQRModal}
-            instanceName={selectedInstance.instance_key}
+            instanceId={selectedInstance.id}
+            instanceName={selectedInstance.name}
             onSuccess={() => {
               resetModals();
               refetch();
             }}
+          />
+
+          <ViewInstanceModal
+            open={showDetailsModal}
+            onOpenChange={setShowDetailsModal}
+            instance={selectedInstance}
+            onKeyReplaced={() => refetch()}
           />
 
           <WebhookConfigModal

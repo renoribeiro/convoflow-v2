@@ -13,7 +13,7 @@ import { useIsBelowLg } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
-import { useWhatsAppInstancesWithAdapter } from '@/hooks/useWhatsAppApi';
+import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
 import { ContactChannelFilter } from '@/components/contacts/ContactChannelFilter';
 import { buildContactsCsv, linkedContactLabel, type ContactExportRow } from '@/lib/contacts/exportCsv';
 import { useContactLinks } from '@/hooks/useContactLinks';
@@ -37,7 +37,7 @@ export default function Contacts() {
     tags: []
   });
   const { tenant } = useTenant();
-  const { instances } = useWhatsAppInstancesWithAdapter();
+  const { instances } = useWhatsAppInstancesSafe();
   const { data: contactLinks = [] } = useContactLinks();
 
   // Canal. O filtro só aparece na Loja que tem conta de Instagram; sem ela o

@@ -47,6 +47,7 @@ function instancias() {
 }
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: instancias(), isLoading: false, error: null }),
+  useWhatsAppInstancesSafe: () => ({ instances: instancias(), isLoading: false, error: null }),
 }));
 
 // --------------------------------------------------------------- templates ---

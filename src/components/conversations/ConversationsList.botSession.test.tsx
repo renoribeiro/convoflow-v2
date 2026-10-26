@@ -79,6 +79,7 @@ vi.mock('@/hooks/useChatHistorySync', () => ({
 }));
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: [] }),
+  useWhatsAppInstancesSafe: () => ({ instances: [] }),
 }));
 vi.mock('./InstanceSelector', () => ({ InstanceSelector: () => null }));
 vi.mock('./NewConversationModal', () => ({ NewConversationModal: () => null }));
