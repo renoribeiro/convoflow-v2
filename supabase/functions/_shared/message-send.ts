@@ -162,6 +162,9 @@ export const SEND_MESSAGES = {
   mediaNotFound: 'Arquivo não encontrado. Anexe de novo e envie.',
   mediaTooLarge: (limiteMb: number) =>
     `Arquivo grande demais para enviar por este número. O limite é ${limiteMb} MB.`,
+  /** A mesma frase que a tela mostra antes de subir (src/lib/whatsapp/limiteDocumento.ts). */
+  documentTooLarge:
+    'Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.',
   invalidLocation: 'Localização inválida. Escolha o ponto no mapa de novo.',
   invalidReaction: 'Não foi possível achar a mensagem para reagir.',
 } as const;
@@ -510,7 +513,9 @@ async function prepare(
     const limit = MEDIA_LIMIT_BYTES[type];
     const file = await deps.readMedia(path, limit);
     if (file === 'too_large') {
-      return fail(400, 'media_too_large', SEND_MESSAGES.mediaTooLarge(Math.round(limit / (1024 * 1024))));
+      return fail(400, 'media_too_large', type === 'document'
+        ? SEND_MESSAGES.documentTooLarge
+        : SEND_MESSAGES.mediaTooLarge(Math.round(limit / (1024 * 1024))));
     }
     if (!file) return fail(403, 'media_not_found', SEND_MESSAGES.mediaNotFound);
     const mimeType = baseMime(body.mime_type) || baseMime(file.contentType) || 'application/octet-stream';

@@ -39,7 +39,6 @@ import {
   AlertCircle,
   Edit,
   Tag,
-  RefreshCw,
   Archive,
   EyeOff,
   X,
@@ -81,7 +80,6 @@ import { contactDisplayName, instagramHandle } from '@/lib/instagram/contactProf
 import { useInstagramContactProfiles } from '@/hooks/useInstagramContactProfiles';
 import { useConversationBotSession } from '@/hooks/useChatbotSessions';
 import { useRealtimeMessages } from '@/hooks/useRealtimeMessages';
-import { useChatHistorySync } from '@/hooks/useChatHistorySync';
 import { useWhatsAppInstancesWithAdapter, pickActiveInstance } from '@/hooks/useWhatsAppApi';
 import { resolveConversationInstance } from '@/lib/conversations/instanceForConversation';
 import { useInstagramReplyWindow } from '@/hooks/useInstagramReplyWindow';
@@ -97,6 +95,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { providerLabel, WhatsAppAdapterError } from '@/services/whatsapp';
 import { uploadWhatsAppMedia, detectMediaTypeFromMime } from '@/services/whatsapp/media-upload';
+import { motivoDocumentoGrande } from '@/lib/whatsapp/limiteDocumento';
 import { useMediaLinks } from '@/hooks/useMediaLinks';
 import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
 import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
@@ -357,25 +356,18 @@ export const ChatWindow = ({
     enabled: !!contactId,
   });
 
-  const { syncConversation } = useChatHistorySync();
   const syncedContactRef = useRef<string | null>(null);
 
-  // Auto-sync de histórico — só faz sentido para providers que SUPORTAM fetchHistory.
+  // Foto de perfil ao abrir a conversa, uma vez por contato (pelo servidor no
+  // Evolution e no WAHA). O histórico antigo não é puxado: as mensagens chegam
+  // pelo webhook do provedor (desde 2026-10-26 nada fala com o Evolution pelo
+  // navegador, ver docs/RUNBOOK_segredos_das_instancias.md).
   useEffect(() => {
-    // Instagram: nada de histórico nem foto de perfil (o adapter também não faz nada).
+    // Instagram: nada de foto de perfil (o adapter também não faz nada).
     if (!contactId || !contact?.phone || !active || isInstagram) return;
     if (syncedContactRef.current === contactId) return;
     syncedContactRef.current = contactId;
 
-    if (capabilities?.fetchHistory) {
-      syncConversation(contact.phone, contactId).catch((err) => {
-        logger.warn('[ChatWindow] auto-sync falhou', {
-          error: err instanceof Error ? err.message : String(err),
-        });
-      });
-    }
-
-    // Foto de perfil — best-effort em qualquer provider que retorne algo
     if (!(contact as any)?.avatar_url) {
       active.adapter
         .getProfilePicture(contact.phone)
@@ -387,7 +379,7 @@ export const ChatWindow = ({
         })
         .catch(() => {});
     }
-  }, [contactId, contact?.phone, (contact as any)?.avatar_url, active, isInstagram, capabilities?.fetchHistory, syncConversation, conversationId, tenant?.id, queryClient]);
+  }, [contactId, contact?.phone, (contact as any)?.avatar_url, active, isInstagram, conversationId, tenant?.id, queryClient]);
 
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0,
@@ -749,6 +741,12 @@ export const ChatWindow = ({
       toast.error(MOTIVOS_AUDIO_BLOQUEADO.janelaFechada);
       return false;
     }
+    // A rede de baixo do limite de documento: nada sobe se passar de 30 MB.
+    const grande = motivoDocumentoGrande(active.row.provider, file);
+    if (grande) {
+      toast.error(grande);
+      return false;
+    }
     const uploaded = await uploadWhatsAppMedia(file, tenant.id);
     const mediaType = detectMediaTypeFromMime(uploaded.mimeType);
     // Áudio não leva legenda no WhatsApp: nenhum provider a entrega. Não vai
@@ -1100,6 +1098,12 @@ export const ChatWindow = ({
       }
       file = audio.file;
     }
+    // Número Evolution/WAHA: documento acima de 30 MB nem fica anexado.
+    const grande = motivoDocumentoGrande(active?.row.provider, file);
+    if (grande) {
+      toast.error(grande);
+      return;
+    }
     setPendingFile(file);
     if (file.type.startsWith('image/')) {
       setPendingFilePreview(URL.createObjectURL(file));
@@ -1268,29 +1272,6 @@ export const ChatWindow = ({
                   <DropdownMenuItem onClick={handleArchive}>
                     <Archive className="w-4 h-4 mr-2" />
                     {(conversation as any)?.is_archived ? 'Desarquivar' : 'Arquivar conversa'}
-                  </DropdownMenuItem>
-                )}
-                {capabilities?.fetchHistory && (
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (contact?.phone && contactId) {
-                        toast.info('Buscando histórico...');
-                        syncConversation(contact.phone, contactId)
-                          .then((res: any) => {
-                            if (res.newMessages > 0) {
-                              toast.success(`Baixou ${res.newMessages} novas mensagens.`);
-                            } else if (res.error) {
-                              toast.error(`Vazio: ${res.error}`, { duration: 8000 });
-                            } else {
-                              toast.info('A conversa já está atualizada.');
-                            }
-                          })
-                          .catch(() => toast.error('Falha ao sincronizar histórico.'));
-                      }
-                    }}
-                  >
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Puxar Histórico
                   </DropdownMenuItem>
                 )}
                 {active?.adapter.type === 'official' && (

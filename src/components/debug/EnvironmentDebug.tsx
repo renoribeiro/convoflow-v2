@@ -32,36 +32,6 @@ export const EnvironmentDebug = () => {
           </div>
           
           <div>
-            <h3 className="font-semibold mb-2">Evolution API Configuration</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>EVOLUTION_API_URL:</span>
-                <Badge variant={config.EVOLUTION_API_URL ? 'default' : 'destructive'}>
-                  {config.EVOLUTION_API_URL || 'Missing'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>EVOLUTION_API_KEY:</span>
-                <Badge variant={config.EVOLUTION_API_KEY ? 'default' : 'destructive'}>
-                  {config.EVOLUTION_API_KEY ? 'Set' : 'Missing'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>EVOLUTION_WEBHOOK_SECRET:</span>
-                <Badge variant={config.EVOLUTION_WEBHOOK_SECRET ? 'default' : 'destructive'}>
-                  {config.EVOLUTION_WEBHOOK_SECRET ? 'Set' : 'Missing'}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>EVOLUTION_X_API_KEY:</span>
-                <Badge variant={config.EVOLUTION_X_API_KEY ? 'default' : 'destructive'}>
-                  {config.EVOLUTION_X_API_KEY ? 'Set' : 'Missing'}
-                </Badge>
-              </div>
-            </div>
-          </div>
-          
-          <div>
             <h3 className="font-semibold mb-2">App Configuration</h3>
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -84,8 +54,6 @@ export const EnvironmentDebug = () => {
           <div>
             <h3 className="font-semibold mb-2">Raw Environment Values</h3>
             <div className="space-y-1 text-sm">
-              <div>VITE_EVOLUTION_API_URL: {import.meta.env.VITE_EVOLUTION_API_URL || 'undefined'}</div>
-              <div>VITE_EVOLUTION_API_KEY: {import.meta.env.VITE_EVOLUTION_API_KEY ? '***' : 'undefined'}</div>
               <div>VITE_ENVIRONMENT: {import.meta.env.VITE_ENVIRONMENT || 'undefined'}</div>
               <div>DEV: {import.meta.env.DEV ? 'true' : 'false'}</div>
               <div>MODE: {import.meta.env.MODE}</div>

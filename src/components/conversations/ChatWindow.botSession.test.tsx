@@ -104,9 +104,6 @@ vi.mock('@/hooks/useMessages', () => ({
 }));
 
 vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeMessages: () => {} }));
-vi.mock('@/hooks/useChatHistorySync', () => ({
-  useChatHistorySync: () => ({ syncConversation: vi.fn(async () => {}) }),
-}));
 
 const adapter = {
   isReadyToSend: () => true,

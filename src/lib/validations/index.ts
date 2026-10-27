@@ -7,5 +7,4 @@ export * from './contact';
 export * from './message';
 export * from './campaign';
 export * from './chatbot';
-export * from './instance';
 export * from './common';

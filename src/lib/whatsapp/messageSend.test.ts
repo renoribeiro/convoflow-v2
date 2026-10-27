@@ -174,7 +174,7 @@ describe('Evolution: cada tipo', () => {
   const call = async (body: ProviderSendBody, over: Partial<SendDeps> = {}, responses?: ProviderResponse[]) => {
     const d = deps({ ...over, responses });
     const r = await runProviderSend({ to: FONE, ...body }, d);
-    return { r, req: d.calls[0], d };
+    return { r, req: d.calls[0]!, d };
   };
   const headers = { 'Content-Type': 'application/json', apikey: CHAVE };
 
@@ -317,7 +317,7 @@ describe('WAHA: cada tipo', () => {
   const call = async (body: ProviderSendBody, responses?: ProviderResponse[]) => {
     const d = deps({ instance: waha, responses: responses ?? [{ status: 201, json: { id: 'true_5585999990201@c.us_FAKE' } }] });
     const r = await runProviderSend({ to: FONE, ...body }, d);
-    return { r, req: d.calls[0], d };
+    return { r, req: d.calls[0]!, d };
   };
   const chatId = `${FONE}@c.us`;
 
@@ -428,6 +428,13 @@ describe('mídia do bucket privado', () => {
     expect(r.status).toBe(400);
     expect(r.body.error).toBe(SEND_MESSAGES.mediaTooLarge(16));
     expect(d.callProvider).not.toHaveBeenCalled();
+  });
+
+  it('documento grande demais: a frase de documento, com o limite de 30 MB', async () => {
+    const d = deps({ readMedia: vi.fn(async () => 'too_large' as const) });
+    const r = await runProviderSend({ type: 'document', to: FONE, media_path: ANEXO }, d);
+    expect(d.readMedia).toHaveBeenCalledWith(ANEXO, 30 * 1024 * 1024);
+    expect(r.body.error).toBe('Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.');
   });
 
   it('arquivo sumiu do bucket: pede para anexar de novo', async () => {

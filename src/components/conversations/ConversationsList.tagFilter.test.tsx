@@ -73,9 +73,6 @@ vi.mock('@/hooks/useSlaConfig', () => ({
 }));
 vi.mock('@/hooks/useSlaMute', () => ({ useSlaMutedConversations: () => ({ data: {} }) }));
 vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeConversations: () => {} }));
-vi.mock('@/hooks/useChatHistorySync', () => ({
-  useChatHistorySync: () => ({ isSyncing: false, syncAllChats: vi.fn() }),
-}));
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: [] }),
   useWhatsAppInstancesSafe: () => ({ instances: [] }),

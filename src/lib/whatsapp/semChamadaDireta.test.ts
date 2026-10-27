@@ -39,3 +39,35 @@ describe('envio das Conversas: nada direto ao Evolution ou ao WAHA', () => {
     }
   });
 });
+
+/**
+ * Sessão 3 (2026-10-26): o cliente do Evolution no navegador, o histórico pelo
+ * navegador e o store do Evolution saíram. Nenhum código do site pode voltar
+ * a ler a chave do Evolution ou do WAHA de variável VITE_* (que vai para o
+ * JavaScript do site) ou de tenants.settings.
+ */
+function todoCodigo(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
+    const p = join(dir, d.name);
+    if (d.isDirectory()) return todoCodigo(p);
+    return /\.(ts|tsx)$/.test(d.name) && !/\.(test|spec)\./.test(d.name) ? [p] : [];
+  });
+}
+
+describe('site inteiro: nenhuma chave de Evolution ou WAHA no navegador', () => {
+  const codigos = todoCodigo(raiz)
+    .filter((f) => !f.includes(join('integrations', 'supabase')))
+    .map((f) => ({
+      rel: f.slice(raiz.length + 1),
+      codigo: readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1'),
+    }));
+
+  it.each([
+    [/VITE_(EVOLUTION|WAHA)_/, 'variável VITE_ de Evolution ou WAHA'],
+    [/settings\??\.evolutionApi|['"]evolutionApi['"]/, 'chave do Evolution em tenants.settings'],
+    [/services\/evolutionApi|EvolutionApiService|chatHistorySyncService|useChatHistorySync|evolutionStore/, 'cliente antigo do Evolution'],
+  ])('%s', (padrao, oque) => {
+    const achados = codigos.filter(({ codigo }) => (padrao as RegExp).test(codigo)).map(({ rel }) => rel);
+    expect(achados, `usa ${oque}`).toEqual([]);
+  });
+});

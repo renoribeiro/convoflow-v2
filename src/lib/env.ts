@@ -3,13 +3,13 @@
  * Provides type-safe access to environment variables
  */
 
+// Sem nada de Evolution ou WAHA aqui (desde 2026-10-26): servidor e chave de
+// cada número moram no cofre, e o servidor da plataforma é secret das edge
+// functions (EVOLUTION_API_URL, EVOLUTION_GLOBAL_KEY). O que é lido daqui vai
+// para o JavaScript do site, que qualquer pessoa baixa.
 interface EnvConfig {
   SUPABASE_URL: string;
   SUPABASE_ANON_KEY: string;
-  EVOLUTION_API_URL?: string;
-  EVOLUTION_API_KEY?: string;
-  EVOLUTION_WEBHOOK_SECRET?: string;
-  EVOLUTION_X_API_KEY?: string;
   FACEBOOK_APP_ID?: string;
   META_CONFIG_ID?: string;
   REWARDFUL_API_KEY?: string;
@@ -59,10 +59,6 @@ export class EnvironmentManager {
     return {
       SUPABASE_URL: supabaseUrl,
       SUPABASE_ANON_KEY: supabaseAnonKey,
-      EVOLUTION_API_URL: import.meta.env.VITE_EVOLUTION_API_URL,
-      EVOLUTION_API_KEY: import.meta.env.VITE_EVOLUTION_API_KEY,
-      EVOLUTION_WEBHOOK_SECRET: import.meta.env.VITE_EVOLUTION_WEBHOOK_SECRET,
-      EVOLUTION_X_API_KEY: import.meta.env.VITE_EVOLUTION_X_API_KEY,
       FACEBOOK_APP_ID: import.meta.env.VITE_FACEBOOK_APP_ID,
       META_CONFIG_ID: import.meta.env.VITE_META_CONFIG_ID,
       REWARDFUL_API_KEY: import.meta.env.VITE_REWARDFUL_API_KEY,
@@ -91,14 +87,6 @@ export class EnvironmentManager {
       new URL(this.config.SUPABASE_URL);
     } catch {
       throw new Error('Invalid SUPABASE_URL format');
-    }
-
-    if (this.config.EVOLUTION_API_URL) {
-      try {
-        new URL(this.config.EVOLUTION_API_URL);
-      } catch {
-        throw new Error('Invalid EVOLUTION_API_URL format');
-      }
     }
   }
 

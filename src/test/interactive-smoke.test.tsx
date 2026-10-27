@@ -96,23 +96,6 @@ vi.mock('@/contexts/AuthContext', () => ({
   AuthProvider: ({ children }: any) => <>{children}</>,
 }));
 
-/**
- * Sem este mock o teste sai para a internet de verdade: a tela de Conversas
- * chama /instance/connectionState na Evolution API e o erro 404 volta depois,
- * já dentro de outro teste. Teste de unidade não faz requisição de rede.
- */
-vi.mock('@/services/evolutionApi', () => {
-  const semResposta = async () => ({ instance: { state: 'close' } });
-  const servico = new Proxy(
-    {},
-    { get: () => vi.fn(semResposta) },
-  );
-  return {
-    EvolutionApiService: vi.fn(() => servico),
-    createEvolutionApiService: vi.fn(() => servico),
-  };
-});
-
 vi.mock('@/integrations/supabase/client', () => {
   const linha = () => ({
     id: 'id1',

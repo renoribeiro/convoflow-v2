@@ -22,12 +22,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockFrom, mockGetUser, mockInvoke, mockToast, mockCreateService } = vi.hoisted(() => ({
+const { mockFrom, mockGetUser, mockInvoke, mockToast } = vi.hoisted(() => ({
   mockFrom: vi.fn(),
   mockGetUser: vi.fn(),
   mockInvoke: vi.fn(),
   mockToast: vi.fn(),
-  mockCreateService: vi.fn(),
 }));
 
 vi.mock('@/integrations/supabase/client', () => ({
@@ -41,15 +40,6 @@ vi.mock('@/integrations/supabase/client', () => ({
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({ toast: mockToast }),
   toast: mockToast,
-}));
-
-vi.mock('@/services/evolutionApi', () => ({
-  createEvolutionApiService: mockCreateService,
-  EvolutionApiService: class {},
-}));
-
-vi.mock('@/lib/env', () => ({
-  env: { get: () => undefined, isDevelopment: () => false },
 }));
 
 import { useEvolutionApi } from './useEvolutionApi';
@@ -113,9 +103,11 @@ describe('useEvolutionApi.createInstance', () => {
     });
 
     expect(mockInvoke).toHaveBeenCalledWith('evolution-provision', expect.anything());
-    // A garantia central: nenhum EvolutionApiService é construído aqui, então
-    // nenhuma chave de servidor precisa existir no navegador para criar.
-    expect(mockCreateService).not.toHaveBeenCalled();
+    // A garantia central: só a função do servidor é chamada. O hook não lê
+    // tabela nenhuma (o antigo lia tenants.settings atrás da chave global) e
+    // não fala com o Evolution.
+    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockGetUser).not.toHaveBeenCalled();
   });
 
   it('não manda credencial nenhuma no corpo da chamada', async () => {

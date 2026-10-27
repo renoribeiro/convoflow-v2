@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { colunasPadrao } from '@/lib/db/colunasFechadas';
 
 interface UseSupabaseMutationOptions {
   table: string;
@@ -54,7 +55,9 @@ export function useSupabaseMutation(options: UseSupabaseMutationOptions) {
           query = supabase.from(table).insert(insertData);
           break;
         case 'update':
-          query = supabase.from(table).update(data).select();
+          // Filtros primeiro, colunas no fim: whatsapp_instances não aceita `*`
+          // do navegador (src/lib/db/colunasFechadas.ts).
+          query = supabase.from(table).update(data);
           if (mutationOptions?.filter) {
             const { column, operator, value } = mutationOptions.filter;
             switch (operator) {
@@ -90,6 +93,7 @@ export function useSupabaseMutation(options: UseSupabaseMutationOptions) {
                 break;
             }
           }
+          query = query.select(colunasPadrao(table));
           break;
         case 'delete':
           query = supabase.from(table).delete();

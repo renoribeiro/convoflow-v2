@@ -106,9 +106,6 @@ vi.mock('@/hooks/useEndChatbotSession', () => ({
   useEndChatbotSession: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeMessages: () => {} }));
-vi.mock('@/hooks/useChatHistorySync', () => ({
-  useChatHistorySync: () => ({ syncConversation: vi.fn(async () => {}) }),
-}));
 // A lista vem do teste; o escolhedor do WhatsApp é o DE VERDADE — é ele que
 // caía no WhatsApp da Conta antes da fatia 3.
 vi.mock('@/hooks/useWhatsAppApi', async (importOriginal) => ({

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTenant } from '@/contexts/TenantContext';
-import { useEvolutionStore } from '@/stores/evolutionStore';
 
 interface RealTimeUpdateOptions {
   enabled?: boolean;
@@ -21,9 +20,6 @@ export const useRealTimeUpdates = (options: RealTimeUpdateOptions = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Usar Evolution Store para monitorar mudanças
-  const { instances, messages, contacts, chats } = useEvolutionStore();
-  const [lastUpdateTime, setLastUpdateTime] = useState(Date.now());
 
   // Função para invalidar queries relacionadas ao dashboard
   const invalidateDashboardQueries = () => {
@@ -48,32 +44,12 @@ export const useRealTimeUpdates = (options: RealTimeUpdateOptions = {}) => {
     queryClient.invalidateQueries({ queryKey: ['count'] });
   };
 
-  // Monitorar mudanças no Evolution Store
-  useEffect(() => {
-    const currentTime = Date.now();
-    if (currentTime - lastUpdateTime > 1000) {
-      // Throttle para evitar muitas atualizações
-      invalidateDashboardQueries();
-      setLastUpdateTime(currentTime);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [instances, messages, contacts, chats]);
-
-  // Fallback para polling se WebSocket não estiver disponível
+  // Releitura periódica do Dashboard. (Até 2026-10-26 havia também um store
+  // do Evolution alimentado pelo navegador; ele nunca era preenchido e saiu
+  // na sessão 3 do docs/RUNBOOK_segredos_das_instancias.md.)
   useEffect(() => {
     if (!enabled || !tenant) return;
 
-    // Se há dados no Evolution Store, considerar conectado via realtime
-    if (instances.length > 0) {
-      setIsConnected(true);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      return;
-    }
-
-    // Usar polling como fallback
     intervalRef.current = setInterval(() => {
       invalidateDashboardQueries();
     }, interval);
@@ -87,7 +63,7 @@ export const useRealTimeUpdates = (options: RealTimeUpdateOptions = {}) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, tenant, instances.length, interval]);
+  }, [enabled, tenant, interval]);
 
   // Função manual para forçar atualização
   const forceUpdate = () => {
@@ -104,7 +80,7 @@ export const useRealTimeUpdates = (options: RealTimeUpdateOptions = {}) => {
   };
 
   const resume = () => {
-    if (!enabled || !tenant || instances.length > 0) return;
+    if (!enabled || !tenant) return;
 
     intervalRef.current = setInterval(() => {
       invalidateDashboardQueries();
@@ -113,9 +89,9 @@ export const useRealTimeUpdates = (options: RealTimeUpdateOptions = {}) => {
   };
 
   return {
-    isConnected: instances.length > 0 || isConnected,
-    isWebSocketConnected: instances.length > 0,
-    isPolling: instances.length === 0 && isConnected,
+    isConnected,
+    isWebSocketConnected: false,
+    isPolling: isConnected,
     forceUpdate,
     pause,
     resume,

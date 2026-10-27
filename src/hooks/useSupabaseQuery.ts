@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { colunasPadrao } from '@/lib/db/colunasFechadas';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
@@ -51,7 +52,7 @@ export function useSupabaseQuery(options: UseSupabaseQueryOptions) {
   const {
     table,
     queryKey,
-    select = '*',
+    select: selectInformado,
     filter = [],
     filters = [],
     order,
@@ -62,6 +63,9 @@ export function useSupabaseQuery(options: UseSupabaseQueryOptions) {
     staleTime,
     silent = false,
   } = options;
+  // Sem select informado: as colunas permitidas da tabela (whatsapp_instances
+  // não aceita `*` do navegador; ver src/lib/db/colunasFechadas.ts).
+  const select = selectInformado ?? colunasPadrao(table);
 
   const { tenant } = useTenant();
   const { toast } = useToast();
@@ -196,7 +200,7 @@ export function useSupabaseQuerySingle(options: UseSupabaseQueryOptions) {
   return useQuery({
     queryKey: [options.table, 'single', options.filters, tenant?.id],
     queryFn: async () => {
-      let query = supabase.from(options.table).select(options.select || '*');
+      let query = supabase.from(options.table).select(options.select || colunasPadrao(options.table));
 
       if (!isTenantAgnostic) {
         if (!tenant?.id) {

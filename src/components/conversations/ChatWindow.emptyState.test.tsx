@@ -41,9 +41,6 @@ vi.mock('@/hooks/useEndChatbotSession', () => ({
   useEndChatbotSession: () => ({ mutate: vi.fn(), isPending: false }),
 }));
 vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeMessages: () => {} }));
-vi.mock('@/hooks/useChatHistorySync', () => ({
-  useChatHistorySync: () => ({ syncConversation: vi.fn(async () => {}) }),
-}));
 vi.mock('@/hooks/useWhatsAppApi', () => ({
   useWhatsAppInstancesWithAdapter: () => ({ instances: [] }),
   useWhatsAppInstancesSafe: () => ({ instances: [] }),

@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient, UseMutationOptions } from '@tanstack/react-query';
+import { colunasPadrao } from '@/lib/db/colunasFechadas';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -10,6 +11,7 @@ import { z } from 'zod';
 // (TS2589). Aqui o tipo da tabela não ajuda em nada.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const deTabela = (table: string) => (supabase as any).from(table);
+// Sem `*` em tabela de colunas fechadas (src/lib/db/colunasFechadas.ts).
 
 interface UseEnhancedSupabaseMutationOptions {
   table: string;
@@ -224,12 +226,12 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
                 ? data.map(item => ({ ...item, tenant_id: tenant.id }))
                 : { ...data, tenant_id: tenant.id };
             }
-            query = deTabela(table).insert(insertData).select();
+            query = deTabela(table).insert(insertData).select(colunasPadrao(table));
             break;
           }
 
           case 'update':
-            query = deTabela(table).update(data).select();
+            query = deTabela(table).update(data).select(colunasPadrao(table));
             if (mutationOptions?.filter) {
               const { column, operator, value } = mutationOptions.filter;
               query = query[operator](column, value);
@@ -237,7 +239,7 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
             break;
 
           case 'delete':
-            query = deTabela(table).delete().select();
+            query = deTabela(table).delete().select(colunasPadrao(table));
             if (mutationOptions?.filter) {
               const { column, operator, value } = mutationOptions.filter;
               query = query[operator](column, value);
@@ -252,7 +254,7 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
                 ? data.map(item => ({ ...item, tenant_id: tenant.id }))
                 : { ...data, tenant_id: tenant.id };
             }
-            query = deTabela(table).upsert(upsertData).select();
+            query = deTabela(table).upsert(upsertData).select(colunasPadrao(table));
             break;
           }
 

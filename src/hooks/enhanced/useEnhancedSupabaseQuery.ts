@@ -1,4 +1,5 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { colunasPadrao } from '@/lib/db/colunasFechadas';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -110,7 +111,7 @@ export function useEnhancedSupabaseQuery(options: UseEnhancedSupabaseQueryOption
   const {
     table,
     queryKey,
-    select = '*',
+    select: selectInformado,
     filter = [],
     filters = [],
     order,
@@ -128,6 +129,7 @@ export function useEnhancedSupabaseQuery(options: UseEnhancedSupabaseQueryOption
     enableLogging = true,
     logLevel = 'error'
   } = options;
+  const select = selectInformado ?? colunasPadrao(table);
 
   const { tenant } = useTenant();
   const { toast } = useToast();
@@ -325,7 +327,7 @@ export function useEnhancedSupabaseQuerySingle(
     queryKey: [options.table, 'single', options.filters, tenant?.id],
     queryFn: async () => {
       try {
-        let query = deTabela(options.table).select(options.select || '*');
+        let query = deTabela(options.table).select(options.select || colunasPadrao(options.table));
         
         // Filtrar por tenant automaticamente
         if (tenant?.id && options.table !== 'profiles' && options.table !== 'tenants' && options.table !== 'affiliates') {

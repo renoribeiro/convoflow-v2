@@ -50,9 +50,6 @@ vi.mock('@/hooks/useSlaConfig', () => ({
 }));
 vi.mock('@/hooks/useSlaMute', () => ({ useSlaMutedConversations: () => ({ data: {} }) }));
 vi.mock('@/hooks/useRealtimeMessages', () => ({ useRealtimeConversations: () => {} }));
-vi.mock('@/hooks/useChatHistorySync', () => ({
-  useChatHistorySync: () => ({ isSyncing: false, syncAllChats: vi.fn() }),
-}));
 vi.mock('@/hooks/useWhatsAppApi', () => {
   const lista = () => ({
     instances: [
@@ -95,7 +92,9 @@ const renderList = (props: Record<string, unknown>) =>
     </TooltipProvider>,
   );
 
-const SYNC = 'Sincronizar conversas recentes (Evolution/WAHA)';
+// O botão de sincronizar saiu em 2026-10-26 (só funcionava com a chave global
+// do Evolution no navegador). Nenhum dos lados o mostra.
+const SYNC = /Sincronizar conversas/i;
 
 beforeEach(() => {
   spies.useConversations.mockClear();
@@ -125,14 +124,14 @@ describe('ConversationsList — lado do Instagram', () => {
 });
 
 describe('ConversationsList — lado do WhatsApp (a tela de antes)', () => {
-  it('seletor só com as instâncias do WhatsApp; sincronizar e nova conversa continuam', () => {
+  it('seletor só com as instâncias do WhatsApp; nova conversa continua, sem sincronizar', () => {
     spies.rows = [linha('1', 'whatsapp', null)];
     renderList({ channel: 'whatsapp' });
     expect(spies.useConversations.mock.calls.at(-1)?.[0]).toMatchObject({ channel: 'whatsapp' });
     const sel = spies.selector.mock.calls.at(-1)?.[0] as { instances: Array<{ row: { id: string } }>; allLabel: string };
     expect(sel.instances.map((i) => i.row.id)).toEqual(['wa-1', 'wa-2']);
     expect(sel.allLabel).toBe('Todas as instâncias');
-    expect(screen.getByLabelText(SYNC)).toBeInTheDocument();
+    expect(screen.queryByLabelText(SYNC)).toBeNull();
     expect(screen.getByTestId('nova-conversa')).toBeInTheDocument();
   });
 

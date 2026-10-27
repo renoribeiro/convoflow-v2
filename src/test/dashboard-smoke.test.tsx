@@ -45,9 +45,8 @@ vi.mock('@/hooks/useModules', () => ({
   useModules: () => ({ isModuleVisible: () => true, isLoading: false, visibleModules: [] }),
 }));
 
-// NOTA: o evolutionStore real é usado de propósito (sem mock) — assim este teste
-// pega regressões na CRIAÇÃO da store zustand (ex.: o bug `create()()` que fazia
-// useRealTimeUpdates lançar "api.getState is not a function").
+// NOTA: useRealTimeUpdates roda de verdade (sem mock). O store do Evolution que
+// ele lia saiu em 2026-10-26; o hook agora só relê o Dashboard de tempos em tempos.
 
 // --- Mock Supabase client: builder encadeável que resolve vazio ---
 vi.mock('@/integrations/supabase/client', () => {

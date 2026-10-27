@@ -6,14 +6,13 @@ import { format, isToday, isYesterday, differenceInMinutes, differenceInHours } 
 import { ptBR } from 'date-fns/locale';
 import { useConversations, getAllConversations } from '@/hooks/useConversations';
 import { useInView } from 'react-intersection-observer';
-import { AlertCircle, ChevronDown, ChevronRight, RefreshCw, Users } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { NewConversationModal } from './NewConversationModal';
 import { ConversationViewToggle } from './ConversationViewToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRealtimeConversations } from '@/hooks/useRealtimeMessages';
-import { useChatHistorySync } from '@/hooks/useChatHistorySync';
 import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
 import { ALL_INSTANCES_VALUE, InstanceSelector } from './InstanceSelector';
 import { contactDisplayName } from '@/lib/instagram/contactProfile';
@@ -107,9 +106,6 @@ interface ConversationsListProps {
 
 /** "Online" se houve interação nos últimos 5 minutos. */
 const PRESENCE_THRESHOLD_MIN = 5;
-
-/** Serve de tooltip e de nome acessível do botão de sincronizar. */
-const SYNC_LABEL = 'Sincronizar conversas recentes (Evolution/WAHA)';
 
 /** Preferências de visualização da lista (por usuário, por navegador). */
 const GROUP_BY_ATTENDANCE_KEY = 'convoflow:conversations-group-by-attendance';
@@ -251,7 +247,6 @@ export const ConversationsList = ({
     },
   });
 
-  const { isSyncing, syncAllChats } = useChatHistorySync();
 
   useRealtimeConversations();
 
@@ -575,31 +570,12 @@ export const ConversationsList = ({
     // para cima ela faz parte da superfície contínua e quem separa é a divisória.
     <div className="bg-card border border-border rounded-lg md:border-0 md:rounded-none h-full flex flex-col">
       <div className="p-4 border-b border-border flex-shrink-0 space-y-3">
-        {/* Título + sincronizar numa linha; "Nova Conversa" ganha a linha de
-            baixo. Na coluna de 320px eles não cabiam lado a lado e o botão era
-            cortado. O seletor de exibição desceu para a linha da contagem. */}
+        {/* Título numa linha; "Nova Conversa" ganha a linha de baixo. O botão
+            de sincronizar saiu em 2026-10-26: ele só funcionava com a chave
+            global do Evolution no navegador, que não existe mais
+            (docs/RUNBOOK_segredos_das_instancias.md, sessão 3). */}
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold text-foreground truncate">Conversas Ativas</h3>
-          {/* Sincronizar e "Nova Conversa" são do WhatsApp: o Instagram não tem
-              histórico para puxar e não deixa começar conversa — só responder
-              quem escreveu nas últimas 24 horas. */}
-          {!isInstagramSide && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="flex-shrink-0"
-                  aria-label={SYNC_LABEL}
-                  onClick={() => syncAllChats(whatsappInstanceId ?? null)}
-                  disabled={isSyncing}
-                >
-                  <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">{SYNC_LABEL}</TooltipContent>
-            </Tooltip>
-          )}
         </div>
 
         {!isInstagramSide && (
