@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Download, MessageSquare } from 'lucide-react';
+import { Download, MessageSquare } from 'lucide-react';
+import { VoltarParaOndeEstava } from '@/components/shared/VoltarParaOndeEstava';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -215,10 +215,7 @@ export default function ApiDocs() {
     <div className="min-h-screen bg-background px-4 py-6">
       <div className="mx-auto max-w-4xl space-y-10">
         <header className="space-y-4">
-          <Link to="/" className="inline-flex items-center text-sm text-primary transition-colors hover:underline">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Link>
+          <VoltarParaOndeEstava />
           <div className="flex items-center gap-3">
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold text-foreground">ConvoFlow</span>
@@ -272,13 +269,14 @@ export default function ApiDocs() {
         <Secao id="limites" titulo="Limites">
           <ul className="list-disc space-y-1 pl-6 text-muted-foreground">
             <li>60 pedidos por minuto, por chave.</li>
-            <li>5.000 pedidos por dia, por Conta.</li>
+            <li>5.000 pedidos por dia, por Conta. O dia vira à meia noite UTC, 21h de Brasília.</li>
             <li>
               Toda resposta traz <code>X-Limite-Restante-Minuto</code> e <code>X-Limite-Restante-Dia</code>, para você
               saber quanto ainda cabe.
             </li>
             <li>
-              Passou do limite? A resposta é 429 com o cabeçalho <code>Retry-After</code> (segundos). Espere esse tempo.
+              Passou do limite? A resposta é 429 com o cabeçalho <code>Retry-After</code> (segundos). No limite por minuto,
+              espere esse tempo. No limite do dia, os pedidos voltam a passar quando o dia vira.
             </li>
             <li>Toda resposta vem com <code>Cache-Control: no-store</code>: nada fica guardado em cache.</li>
           </ul>

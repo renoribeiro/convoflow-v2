@@ -142,7 +142,7 @@ export const ReportBuilder = () => {
         <CardHeader>
           <CardTitle>O que vai no relatório</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Todo relatório traz estes números da Loja inteira, no período escolhido na hora de gerar.
+            Todo relatório traz estes números da Loja inteira. O envio na hora traz os últimos 30 dias; o agendado, o período da frequência.
           </p>
         </CardHeader>
         <CardContent>

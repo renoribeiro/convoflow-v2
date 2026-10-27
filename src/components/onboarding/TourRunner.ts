@@ -44,7 +44,9 @@ export async function resolveTourSteps(
     if (opts.mobile && step.menuItem) {
       return { title: step.title, body: `${menuCardBody(step.menuItem)} ${step.body}`, selector: null, element: null };
     }
-    if (!step.target) return { title: step.title, body: step.body, selector: null, element: null };
+    if (!step.target || (opts.mobile && step.soNoComputador)) {
+      return { title: step.title, body: step.body, selector: null, element: null };
+    }
     const selector = tourSelector(step.target);
     const element = await wait(selector, { timeout: prazo });
     return { title: step.title, body: step.body, selector: element ? selector : null, element };

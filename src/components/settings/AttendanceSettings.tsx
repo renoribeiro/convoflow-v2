@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -222,10 +223,15 @@ export const AttendanceSettings = () => {
 
               {THRESHOLD_FIELDS.map(({ key, label, dotClass }) => (
                 <div key={key} className="space-y-1.5">
-                  <Label htmlFor={`sla-${key}`} className="flex items-center gap-2">
-                    <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
-                    {label}
-                  </Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor={`sla-${key}`} className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${dotClass}`} aria-hidden />
+                      {label}
+                    </Label>
+                    {key === 'atencao' && (
+                      <DicaDoCampo rotulo="Faixas de atraso" texto="Horas corridas desde que o cliente espera resposta, também de madrugada. Só colore a lista de Conversas, não move a conversa." />
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <Input
                       id={`sla-${key}`}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -367,7 +368,10 @@ export const NewConversationModal = ({ onConversationCreated }: NewConversationM
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="instance">Número da Loja</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="instance">Número da Loja</Label>
+              <DicaDoCampo rotulo="Número da Loja" texto="Só aparecem números conectados. Na API Oficial, se o cliente não escreveu nas últimas 24 horas, a primeira mensagem precisa ser um template aprovado." />
+            </div>
             <Select value={selectedInstance} onValueChange={handleSelectInstance} disabled={instancesLoading}>
               <SelectTrigger id="instance">
                 <SelectValue placeholder={instancesLoading ? 'Carregando os números...' : 'Escolha o número que vai enviar'} />

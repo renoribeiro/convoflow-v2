@@ -150,7 +150,7 @@ describe('Campanha › Público › Tags', () => {
     await goToAudienceStep();
     fireEvent.click(screen.getByText('Etiquetas'));
     fireEvent.click(await screen.findByRole('button', { name: 'lead-quente' }));
-    const alert = await screen.findByText(/contatos encontrados para as tags selecionadas/);
+    const alert = await screen.findByText(/contatos encontrados para as etiquetas selecionadas/);
     await waitFor(() => expect(alert).toHaveTextContent('1 contatos encontrados'));
     expect(calls).toContainEqual({ table: 'contact_tags', op: 'eq', args: ['contacts.channel', 'whatsapp'] });
   });
@@ -160,7 +160,7 @@ describe('Campanha › Público › Tags', () => {
     await goToAudienceStep();
     fireEvent.click(screen.getByText('Etiquetas'));
     fireEvent.click(await screen.findByRole('button', { name: 'lead-quente' }));
-    const alert = await screen.findByText(/contatos encontrados para as tags selecionadas/);
+    const alert = await screen.findByText(/contatos encontrados para as etiquetas selecionadas/);
     await waitFor(() => expect(alert).toHaveTextContent('2 contatos encontrados'));
   });
 });

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -135,9 +136,12 @@ export const FollowupSettings = () => {
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 pr-2">
-            <Label htmlFor="followup-cancel-scheduled">
-              Cancelar mensagens agendadas quando o cliente responder
-            </Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="followup-cancel-scheduled">
+                Cancelar mensagens agendadas quando o cliente responder
+              </Label>
+              <DicaDoCampo rotulo="Cancelar mensagens agendadas" texto="Ligado, quando o cliente responde, os envios automáticos marcados para ele são cancelados. Sequências seguem a própria trava." />
+            </div>
             <p className="text-sm text-muted-foreground">
               Mensagens que estavam marcadas para sair depois não saem mais. Sem isto, o cliente
               responde hoje e ainda recebe amanhã a cobrança automática que já não faz sentido.
@@ -156,9 +160,12 @@ export const FollowupSettings = () => {
 
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-1 pr-2">
-            <Label htmlFor="followup-cancel-manual">
-              Cancelar tarefas manuais quando o cliente responder
-            </Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="followup-cancel-manual">
+                Cancelar tarefas manuais quando o cliente responder
+              </Label>
+              <DicaDoCampo rotulo="Cancelar tarefas manuais" texto="Ligado, a resposta do cliente também apaga os lembretes que o time criou. Desligado, quem criou decide." />
+            </div>
             <p className="text-sm text-muted-foreground">
               Tarefa manual é um lembrete que alguém do time criou para si mesmo: "ligar na
               quinta", "levar a proposta". Ligando isto, a resposta do cliente apaga esses

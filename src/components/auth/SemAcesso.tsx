@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { aQuemPedir, type AcessoATela } from '@/lib/access/telas';
 import type { UserRole } from '@/types/userHierarchy';
 
@@ -21,7 +22,10 @@ export const SemAcesso = ({ papel, motivo }: SemAcessoProps) => (
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-muted">
         <Lock className="h-6 w-6 text-muted-foreground" />
       </div>
-      <h1 className="text-xl font-semibold">Você não tem acesso a esta tela</h1>
+      <div className="flex items-center justify-center gap-2">
+        <h1 className="text-xl font-semibold">Você não tem acesso a esta tela</h1>
+        <FeatureHelp helpKey="concept:cargos" />
+      </div>
       <p className="text-sm text-muted-foreground">{aQuemPedir(papel, motivo)}</p>
       <Button asChild>
         <Link to="/dashboard">Voltar ao Dashboard</Link>

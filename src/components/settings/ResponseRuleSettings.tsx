@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -244,7 +245,10 @@ export const ResponseRuleSettings = () => {
 
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <Label htmlFor="response-rule-enabled">Transferir conversa sem resposta</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="response-rule-enabled">Transferir conversa sem resposta</Label>
+              <DicaDoCampo rotulo="Transferir conversa sem resposta" texto="Ligado, a conversa com dono que esperar mais que o tempo abaixo passa para o próximo da distribuição. Ligue também para ver o horário da Loja." />
+            </div>
             <p className="text-sm text-muted-foreground">
               Desligada, nada muda: quem tem a conversa fica com ela até alguém mover à mão.
             </p>
@@ -263,7 +267,10 @@ export const ResponseRuleSettings = () => {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="response-rule-minutes">Tempo sem resposta</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="response-rule-minutes">Tempo sem resposta</Label>
+                  <DicaDoCampo rotulo="Tempo sem resposta" texto="De 5 a 1440 minutos. Só contam os minutos dentro do horário de funcionamento, desde o início da espera do cliente. Resposta do bot não zera." />
+                </div>
                 <div className="flex items-center gap-2">
                   <Input
                     id="response-rule-minutes"
@@ -289,7 +296,10 @@ export const ResponseRuleSettings = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="response-rule-max">Máximo de transferências por espera</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="response-rule-max">Máximo de transferências por espera</Label>
+                  <DicaDoCampo rotulo="Máximo de transferências por espera" texto="De 1 a 10. No limite, a conversa para de circular e o Gestor e o Gerente recebem um aviso no sino, uma vez só." />
+                </div>
                 <div className="flex items-center gap-2">
                   <Input
                     id="response-rule-max"
@@ -365,7 +375,10 @@ export const ResponseRuleSettings = () => {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="business-hours-tz">Fuso horário</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="business-hours-tz">Fuso horário</Label>
+                  <DicaDoCampo rotulo="Fuso horário" texto="Os horários abaixo valem neste fuso. O padrão é Brasília. É o mesmo horário que o chatbot usa para fora do horário." />
+                </div>
                 <Select
                   value={hours.timezone}
                   disabled={!canEdit}

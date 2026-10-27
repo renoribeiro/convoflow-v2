@@ -144,7 +144,7 @@ export const FunnelBoard = () => {
       
       toast({
         title: 'Sucesso',
-        description: 'Contato movido para novo estágio'
+        description: 'Contato movido para outra etapa.'
       });
     },
     onError: (error: Error, variables) => {

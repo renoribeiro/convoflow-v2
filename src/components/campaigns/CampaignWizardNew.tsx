@@ -19,6 +19,7 @@ import { useTenantId } from '@/contexts/TenantContext';
 import { useCampaignMutations, type Campaign, type CampaignCreateInput, type MessageType, type AudienceType } from '@/hooks/useCampaigns';
 import { logger } from '@/lib/logger';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -680,6 +681,7 @@ export const CampaignWizard = ({
         <Label htmlFor="require-opt-in" className="cursor-pointer">
           Só para quem aceita campanhas (contatos com a autorização marcada)
         </Label>
+        <DicaDoCampo rotulo="Só para quem aceita campanhas" texto="Marcado, só recebe quem tem Aceita campanhas; na Planilha, só telefone de contato que aceita. Quem não quer campanhas nunca recebe, marcado ou não." />
       </div>
 
       {/* Send type — only for official (Meta Cloud API) instances */}
@@ -1071,7 +1073,7 @@ export const CampaignWizard = ({
       {state.audience_type === 'tags' && (
         <div className="space-y-4">
           <div>
-            <Label className="mb-2 block">Selecione as Tags</Label>
+            <Label className="mb-2 block">Selecione as etiquetas</Label>
             <div className="flex flex-wrap gap-2 min-h-[40px]">
               {tags.map((tag) => {
                 const selected = state.selectedTagIds.includes(tag.id);
@@ -1098,7 +1100,7 @@ export const CampaignWizard = ({
                 );
               })}
               {tags.length === 0 && (
-                <p className="text-sm text-muted-foreground">Nenhuma tag cadastrada.</p>
+                <p className="text-sm text-muted-foreground">Nenhuma etiqueta cadastrada.</p>
               )}
             </div>
           </div>
@@ -1106,7 +1108,7 @@ export const CampaignWizard = ({
             <Alert>
               <Users className="h-4 w-4" />
               <AlertDescription>
-                <strong>{contactCount}</strong> contatos encontrados para as tags selecionadas.
+                <strong>{contactCount}</strong> contatos encontrados para as etiquetas selecionadas.
               </AlertDescription>
             </Alert>
           )}
@@ -1290,7 +1292,10 @@ export const CampaignWizard = ({
 
         <div className="space-y-2">
           <div className="flex justify-between">
-            <Label>Intervalo entre mensagens</Label>
+            <div className="flex items-center gap-1.5">
+              <Label>Intervalo entre mensagens</Label>
+              <DicaDoCampo rotulo="Intervalo entre mensagens" texto="Tempo de espera entre uma mensagem e a próxima. Quanto maior, mais devagar a lista inteira recebe e menor o risco de bloqueio." />
+            </div>
             <span className="text-sm font-medium">{state.delay_between_messages}s</span>
           </div>
           <Slider
@@ -1312,6 +1317,7 @@ export const CampaignWizard = ({
             onCheckedChange={(c) => set('respect_business_hours', !!c)}
           />
           <Label htmlFor="biz-hours">Respeitar horário comercial</Label>
+          <DicaDoCampo rotulo="Respeitar horário comercial" texto="Fora deste horário, de Brasília, a campanha espera e continua sozinha no dia seguinte. Vale todos os dias, inclusive fim de semana." />
         </div>
 
         {state.respect_business_hours && (
@@ -1338,7 +1344,10 @@ export const CampaignWizard = ({
         )}
 
         <div className="space-y-1">
-          <Label htmlFor="daily-limit">Limite diário de envios (opcional)</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="daily-limit">Limite diário de envios (opcional)</Label>
+            <DicaDoCampo rotulo="Limite diário de envios" texto="Máximo de mensagens desta campanha por dia. Passou disso, o resto espera o dia seguinte. Vazio, não há limite." />
+          </div>
           <Input
             id="daily-limit"
             type="number"

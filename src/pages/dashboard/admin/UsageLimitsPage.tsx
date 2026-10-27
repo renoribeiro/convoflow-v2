@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { toast } from 'sonner';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { UserRole, roleLabel } from '@/types/userHierarchy';
@@ -105,7 +106,12 @@ export default function UsageLimitsPage() {
                 { key: 'descricao', header: 'Descrição', cardFull: true, cellClassName: 'text-muted-foreground text-sm', cell: (l) => l.description ?? '—' },
                 {
                   key: 'valor',
-                  header: 'Valor',
+                  header: (
+                    <span className="inline-flex items-center gap-1.5">
+                      Valor
+                      <DicaDoCampo rotulo="Valor do limite" texto="Hoje só fica registrado: nada confere este número. Vazio é sem limite. Lojas e vagas de Atendente valem pelo plano e por Faturamento." />
+                    </span>
+                  ),
                   cardFull: true,
                   headClassName: 'w-[180px]',
                   cell: (l) => {

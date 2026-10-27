@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,7 +37,7 @@ import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
  * transferência); esta tela só grava a preferência e explica o efeito.
  */
 
-const TITLE = 'Escala e transferência de conversas';
+const TITLE = 'Visibilidade e transferência';
 
 export const VisibilitySettings = () => {
   const { tenant, updateTenantSettings } = useTenant();
@@ -137,7 +138,10 @@ export const VisibilitySettings = () => {
         )}
 
         <div className="space-y-3">
-          <Label id="visibility-label">O atendente vê</Label>
+          <div className="flex items-center gap-1.5">
+            <Label id="visibility-label">O atendente vê</Label>
+            <DicaDoCampo rotulo="O atendente vê" texto="Vale só para o cargo Atendente. Uma conversa que ele já respondeu ou passou adiante continua na lista dele. Gestor e Gerente sempre veem tudo." />
+          </div>
           <RadioGroup
             aria-labelledby="visibility-label"
             value={visibility}
@@ -177,7 +181,10 @@ export const VisibilitySettings = () => {
 
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <Label htmlFor="can-transfer">Atendente pode transferir conversas</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="can-transfer">Atendente pode transferir conversas</Label>
+              <DicaDoCampo rotulo="Atendente pode transferir conversas" texto="Desligado, o atendente ainda assume conversa sem dono, mas só Gestor e Gerente passam conversa a outra pessoa. O servidor também recusa." />
+            </div>
             <p className="text-sm text-muted-foreground">
               Desligado, o atendente ainda assume conversas sem responsável, mas só Gestor ou Gerente
               passam uma conversa para outra pessoa. Vale em todo lugar, não só neste botão.

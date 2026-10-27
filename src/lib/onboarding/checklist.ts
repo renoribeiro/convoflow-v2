@@ -87,6 +87,7 @@ const horario = (needsLoja: boolean): ChecklistStepDef => ({
   priority: 'recomendado',
   screen: '/dashboard/settings?tab=visibility',
   tourId: 'horario-distribuicao',
+  tutorialId: 'configurar-distribuicao',
   helpKey: 'page:settings-visibility',
   needsLoja,
   minRole: 'gestor',

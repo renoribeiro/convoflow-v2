@@ -325,7 +325,7 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
           {editingStage && (
             <Card>
               <CardContent className="p-4">
-                <h3 className="text-lg font-semibold mb-4">Editar Estágio</h3>
+                <h3 className="text-lg font-semibold mb-4">Editar etapa</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="edit-stage-name">Nome</Label>

@@ -15,6 +15,7 @@ import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { Link } from 'react-router-dom';
 import React, { useState, useMemo } from 'react';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { logger } from '@/lib/logger';
@@ -509,7 +510,12 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
       // se marca/desmarca. O que some abaixo de 2xl é informação (Fonte,
       // Última Interação), nunca um controle.
       key: 'consentimento',
-      header: 'Consentimento',
+      header: (
+        <span className="inline-flex items-center gap-1.5">
+          Consentimento
+          <DicaDoCampo rotulo="Consentimento" texto="Aceita campanhas: autorizou receber. Não quer campanhas: fica fora de toda campanha. Só marque Aceita campanhas com a autorização da pessoa." />
+        </span>
+      ),
       cardFull: true,
       cell: renderConsentimento,
     },

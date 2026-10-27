@@ -19,6 +19,7 @@ import { useMyStores, type MyStore } from '@/hooks/useMyStores';
 import { useAccountStoreSlots } from '@/hooks/useAccountStoreSlots';
 import { useRole, useTenant } from '@/contexts/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { canRenameStore } from '@/lib/stores/storeRename';
 import { useStoreAttendantSeats } from '@/hooks/useStoreAttendantSeats';
 import {
@@ -234,13 +235,16 @@ export default function TeamPage() {
                             )}
                           </span>
                           {vagas && (
-                            <span
-                              className="block text-xs text-muted-foreground"
-                              data-testid={`vagas-${loja.id}`}
-                            >
-                              {seatsCounterLabel(vagas)}
-                              {pendentes && ` · ${pendentes}`}
-                              {isStoreFull(vagas) && ' · Loja cheia'}
+                            <span className="flex items-center gap-1.5">
+                              <span
+                                className="block text-xs text-muted-foreground"
+                                data-testid={`vagas-${loja.id}`}
+                              >
+                                {seatsCounterLabel(vagas)}
+                                {pendentes && ` · ${pendentes}`}
+                                {isStoreFull(vagas) && ' · Loja cheia'}
+                              </span>
+                              <DicaDoCampo rotulo="Vagas de Atendente" texto="Vagas de Atendente da Loja. Ativo e convite pendente ocupam vaga; suspenso e excluído não. O Gestor não conta." />
                             </span>
                           )}
                         </span>

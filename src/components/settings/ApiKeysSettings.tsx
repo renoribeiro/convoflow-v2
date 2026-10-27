@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, Copy, KeyRound, Loader2, Plus } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -230,9 +232,9 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
             {liberado ? (
               <>
                 {' '}
-                <a href={API_DOCS_PATH} className="font-medium text-primary underline underline-offset-2">
+                <Link to={API_DOCS_PATH} className="font-medium text-primary underline underline-offset-2">
                   Ver a documentação
-                </a>
+                </Link>
               </>
             ) : null}
           </div>
@@ -335,7 +337,10 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
             </div>
 
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">O que a chave pode ler</legend>
+              <legend className="flex items-center gap-1.5 text-sm font-medium">
+                O que a chave pode ler
+                <DicaDoCampo rotulo="O que a chave pode ler" texto="Quanto menos, mais seguro. Histórico das conversas leva o texto das mensagens; fotos, áudios e documentos chegam por links que valem 15 minutos." />
+              </legend>
               {ESCOPOS.map((e) => {
                 const bloqueado = e === 'midia' && !escopos.includes('mensagens');
                 return (
@@ -386,7 +391,10 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
             </fieldset>
 
             <fieldset className="space-y-2">
-              <legend className="text-sm font-medium">Validade</legend>
+              <legend className="flex items-center gap-1.5 text-sm font-medium">
+                Validade
+                <DicaDoCampo rotulo="Validade" texto="Ao vencer, a chave para e não renova: crie outra e troque no serviço que a usa." />
+              </legend>
               <RadioGroup
                 value={String(validade)}
                 onValueChange={(v) => setValidade(Number(v) as Validade)}

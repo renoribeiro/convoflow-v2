@@ -282,13 +282,13 @@ describe('Help — busca', () => {
     expect(screen.getByRole('button', { name: 'Montar seu funil de vendas' })).toBeTruthy();
     expect(screen.getByText('Tutoriais')).toBeTruthy();
     // E nenhum outro tutorial casa com esse termo.
-    expect(screen.queryByRole('button', { name: 'Conectar seu WhatsApp' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Conectar número pela API Oficial' })).toBeNull();
   });
 
   it('acha um tutorial por palavra que só existe numa ressalva', () => {
     renderHelp();
     type('system user');
-    expect(screen.getByRole('button', { name: 'Conectar seu WhatsApp' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Conectar número pela API Oficial' })).toBeTruthy();
   });
 
   it('esconde a seção Tutoriais quando nenhum tutorial casa com a busca', () => {
@@ -488,9 +488,9 @@ describe('Help — visibilidade por cargo', () => {
     // lê as etapas e move os cards.
     currentRole = 'atendente';
     renderHelp();
-    expect(topic('Configurar sua equipe')).toBeNull();
+    expect(topic('Convidar pessoas e escolher o cargo')).toBeNull();
     expect(topic('Antes de conectar seu WhatsApp')).toBeNull();
-    expect(topic('Conectar seu WhatsApp')).toBeNull();
+    expect(topic('Conectar número pela API Oficial')).toBeNull();
     expect(topic('Conectar seu Instagram')).toBeNull();
     expect(topic('Disparar sua primeira campanha')).toBeNull();
     expect(topic('Montar seu funil de vendas')).toBeNull();
@@ -501,16 +501,16 @@ describe('Help — visibilidade por cargo', () => {
   it('gestor vê o tutorial de equipe (a tela Equipe abre para ele desde 2026-08-18)', () => {
     currentRole = 'gestor';
     renderHelp();
-    expect(topic('Configurar sua equipe')).not.toBeNull();
+    expect(topic('Convidar pessoas e escolher o cargo')).not.toBeNull();
     expect(topic('Antes de conectar seu WhatsApp')).not.toBeNull();
-    expect(topic('Conectar seu WhatsApp')).not.toBeNull();
+    expect(topic('Conectar número pela API Oficial')).not.toBeNull();
     expect(topic('Conectar seu Instagram')).not.toBeNull();
   });
 
   it('mostra o tutorial de equipe para gerente e superadmin', () => {
     currentRole = 'gerente';
     renderHelp();
-    expect(topic('Configurar sua equipe')).not.toBeNull();
+    expect(topic('Convidar pessoas e escolher o cargo')).not.toBeNull();
   });
 
   it('esconde tutorial cujo módulo está desabilitado', () => {
@@ -518,7 +518,7 @@ describe('Help — visibilidade por cargo', () => {
     enabledModules = ['whatsapp-numbers'];
     renderHelp();
 
-    expect(topic('Conectar seu WhatsApp')).not.toBeNull();
+    expect(topic('Conectar número pela API Oficial')).not.toBeNull();
     expect(topic('Disparar sua primeira campanha')).toBeNull();
     expect(topic('Criar seu primeiro chatbot')).toBeNull();
   });

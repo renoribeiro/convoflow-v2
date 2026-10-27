@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
@@ -169,7 +170,10 @@ export const IntegrationSettings = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="webhook-url">Endereço do outro sistema *</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="webhook-url">Endereço do outro sistema *</Label>
+                      <DicaDoCampo rotulo="Endereço do outro sistema" texto="Recebe um POST com os dados em JSON, em até 5 minutos. Se responder com erro, o ConvoFlow tenta de novo, até 5 vezes." />
+                    </div>
                     <Input
                       id="webhook-url"
                       value={webhookForm.url || ''}
@@ -180,7 +184,10 @@ export const IntegrationSettings = () => {
                 </div>
                 
                 <div>
-                  <Label>Avisar quando</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label>Avisar quando</Label>
+                    <DicaDoCampo rotulo="Avisar quando" texto="Vale só para a Loja escolhida no topo. Chega uma mensagem e Sai uma mensagem levam o texto das conversas: marque só se o outro sistema precisar." />
+                  </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                     {eventTypes.map((event) => (
                       <div key={event.id} className="flex items-center space-x-2">
@@ -213,7 +220,10 @@ export const IntegrationSettings = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="webhook-secret">Senha de conferência (opcional)</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="webhook-secret">Senha de conferência (opcional)</Label>
+                    <DicaDoCampo rotulo="Senha de conferência" texto="Com ela, cada aviso vai assinado. O outro sistema refaz a assinatura com a mesma senha e confere que veio do ConvoFlow." />
+                  </div>
                   <Input
                     id="webhook-secret"
                     value={webhookForm.secret || ''}
@@ -229,6 +239,7 @@ export const IntegrationSettings = () => {
                     onCheckedChange={(checked) => setWebhookForm(prev => ({ ...prev, active: checked }))}
                   />
                   <Label>Aviso ligado</Label>
+                  <DicaDoCampo rotulo="Aviso ligado" texto="Desligado, o cadastro fica salvo, mas nada é enviado ao outro sistema enquanto estiver assim." />
                 </div>
                 
                 <div className="flex gap-2">

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { DateRange } from 'react-day-picker';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -43,41 +44,44 @@ export const DashboardHeader = ({ period }: DashboardHeaderProps) => {
       helpKey="page:dashboard"
       description="Visão geral das suas conversas, contatos e métricas de WhatsApp"
       actions={
-        <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/60 p-1">
-          {PRESETS.map((p) => (
-            <Button
-              key={p.value}
-              size="sm"
-              variant={preset === p.value ? 'default' : 'ghost'}
-              className="h-8 px-3"
-              onClick={() => setPreset(p.value)}
-            >
-              {p.label}
-            </Button>
-          ))}
-
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5 rounded-lg bg-muted/60 p-1">
+            {PRESETS.map((p) => (
               <Button
+                key={p.value}
                 size="sm"
-                variant={preset === 'custom' ? 'default' : 'ghost'}
-                className={cn('h-8 px-3 gap-1.5')}
+                variant={preset === p.value ? 'default' : 'ghost'}
+                className="h-8 px-3"
+                onClick={() => setPreset(p.value)}
               >
-                <CalendarIcon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{customLabel}</span>
+                {p.label}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <Calendar
-                mode="range"
-                selected={{ from: custom.from, to: custom.to }}
-                onSelect={handleSelectRange}
-                numberOfMonths={2}
-                locale={ptBR}
-                className="pointer-events-auto"
-              />
-            </PopoverContent>
-          </Popover>
+            ))}
+
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant={preset === 'custom' ? 'default' : 'ghost'}
+                  className={cn('h-8 px-3 gap-1.5')}
+                >
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{customLabel}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  selected={{ from: custom.from, to: custom.to }}
+                  onSelect={handleSelectRange}
+                  numberOfMonths={2}
+                  locale={ptBR}
+                  className="pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <DicaDoCampo rotulo="Período" texto="Vale para os cartões, o gráfico e a seção Atendimento. Precisa de Atenção, Por atendente, o funil e os números mostram o momento atual." />
         </div>
       }
     />

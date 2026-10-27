@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Plus, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -360,7 +361,10 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Frequência</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label>Frequência</Label>
+                  <DicaDoCampo rotulo="Frequência" texto="Diário fala do último dia, Semanal dos últimos 7 dias e Mensal dos últimos 30. O envio sai no horário de Brasília, em até 5 minutos." />
+                </div>
                 <Select
                   value={formData.frequency}
                   onValueChange={(value: any) => setFormData({...formData, frequency: value})}

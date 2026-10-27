@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -585,11 +586,11 @@ const AdminDashboard = () => {
     { key: 'email', header: 'Email', card: 'subtitle', hideBelow: '2xl', cell: (user) => <span className="break-all">{user.email}</span> },
     {
       key: 'funcao',
-      header: 'Função',
+      header: 'Cargo',
       card: 'badge',
       cell: (user) => (
         <Badge variant={user.role === 'superadmin' ? 'destructive' : 'secondary'}>
-          {user.role}
+          {ROLE_LABELS[user.role as keyof typeof ROLE_LABELS] ?? user.role}
         </Badge>
       ),
     },
@@ -806,7 +807,7 @@ const AdminDashboard = () => {
               <CardContent>
                 <div className="text-2xl font-bold">{usersWithEmails.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  Últimos 30 dias
+                  Todas as pessoas com login
                 </p>
               </CardContent>
             </Card>
@@ -988,7 +989,7 @@ const AdminDashboard = () => {
               />
             </div>
             <div>
-              <Label htmlFor="create-role">Função</Label>
+              <Label htmlFor="create-role">Cargo</Label>
               <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value as User['role'] }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a função" />
@@ -1071,6 +1072,7 @@ const AdminDashboard = () => {
                 onCheckedChange={(checked) => setUserForm(prev => ({ ...prev, isActive: checked as boolean }))}
               />
               <Label htmlFor="create-active">Usuário ativo</Label>
+              <DicaDoCampo rotulo="Usuário ativo" texto="Desmarcado, o convite sai igual, mas a pessoa entra suspensa ao criar a senha. Deixe marcado para ela já começar a usar." />
             </div>
           </div>
           <DialogFooter>
@@ -1142,7 +1144,7 @@ const AdminDashboard = () => {
               />
             </div>
             <div>
-              <Label htmlFor="edit-role">Função</Label>
+              <Label htmlFor="edit-role">Cargo</Label>
               <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value as User['role'] }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a função" />
@@ -1192,7 +1194,7 @@ const AdminDashboard = () => {
               <p>
                 O cargo muda de {selectedUser ? ROLE_LABELS[selectedUser.role] ?? selectedUser.role : ''} para{' '}
                 {ROLE_LABELS[userForm.role] ?? userForm.role}. O que a pessoa vê e pode fazer muda na hora. A Conta ou
-                Loja dela não muda junto: confira o campo Loja antes de salvar.
+                Loja dela não muda junto, e não se troca por aqui.
               </p>
             )}
             {desativando && <p>A pessoa perde o acesso agora e não entra mais no sistema até ser ativada de novo.</p>}
@@ -1304,7 +1306,7 @@ const AdminDashboard = () => {
                   <p className="text-sm text-muted-foreground">{selectedUser.phone || 'N/A'}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Função</Label>
+                  <Label className="text-sm font-medium">Cargo</Label>
                   <div>
                     <Badge variant={selectedUser.role === 'superadmin' ? 'destructive' : 'secondary'}>
                       {selectedUser.role}

@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import {
   AlertCircle,
   CheckCircle,
@@ -107,6 +108,7 @@ export const EvolutionApiForm = ({
             <div className="flex items-center gap-2">
               <Webhook className="h-4 w-4 text-blue-600" />
               <CardTitle className="text-sm">Receber as mensagens automaticamente</CardTitle>
+              <DicaDoCampo rotulo="Receber as mensagens automaticamente" texto="Ligado, o ConvoFlow registra no servidor o endereço de entrega deste número, e as mensagens entram assim que ele conectar. Deixe ligado." />
             </div>
             <Switch
               checked={values.enableWebhookAutomation}

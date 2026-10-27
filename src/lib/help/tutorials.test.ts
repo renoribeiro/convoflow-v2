@@ -5,6 +5,7 @@
  * documentação (`helpKey`). Renomear uma rota ou apagar uma entrada quebraria o
  * tutorial em silêncio — os dois primeiros testes existem para isso não passar.
  */
+import { API_ADDON_RELEASED } from '@/lib/api/release';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -142,7 +143,7 @@ describe('integridade dos tutoriais', () => {
 
 describe('helpers de tutorial', () => {
   it('getTutorial acha por id e devolve null para desconhecido', () => {
-    expect(getTutorial('conectar-whatsapp')?.title).toBe('Conectar seu WhatsApp');
+    expect(getTutorial('conectar-whatsapp')?.title).toBe('Conectar número pela API Oficial');
     expect(getTutorial('nao-existe')).toBeNull();
     expect(getTutorial(null)).toBeNull();
     expect(getTutorial(undefined)).toBeNull();
@@ -218,15 +219,24 @@ describe('cobertura dos tutoriais de onboarding', () => {
     // último — não é onboarding, é a saída, e só o Gerente o vê. O tutorial
     // teste-gratis (entrega 2) está escrito mas fora da lista até a chave do
     // cadastro pelo site ligar (tutorialTesteGratis.test.ts).
+    // Desde 2026-10-27 (lote 4 do checkup): os dois jeitos de QR Code logo
+    // depois da API Oficial, a distribuição logo depois da equipe, e os avisos
+    // para sistemas e a chave da API (a integração com outros sistemas) depois
+    // do dia a dia. chave-api só aparece com a API liberada no site.
     expect(TUTORIALS.map((t) => t.id)).toEqual([
       'antes-de-conectar',
       'conectar-whatsapp',
+      'conectar-evolution',
+      'conectar-waha',
       'conectar-instagram',
       'configurar-equipe',
+      'configurar-distribuicao',
       'montar-funil',
       'primeiro-chatbot',
       'primeira-campanha',
       'atender-conversas',
+      'avisos-para-sistemas',
+      ...(API_ADDON_RELEASED ? ['chave-api'] : []),
       'cancelar-assinatura',
     ]);
   });

@@ -244,6 +244,14 @@ function buildRows(table: string, n: number, role: MockRole, tree: SelectNode[],
   for (let i = 0; i < n; i++) {
     const r = row(table, i, role);
     Object.assign(r, filters);
+    // Só a Conta (IDS.tenant) do Gerente é 'account': qualquer outro tenant
+    // pedido pelo id é uma Loja filha dela. Sem isto, o Gerente que escolhe uma
+    // Loja no topo continuava "na Conta" (kind 'account') e os tours e passos
+    // feitos dentro de uma Loja não podiam ser testados.
+    if (table === 'tenants' && role === 'gerente' && r.id !== IDS.tenant) {
+      r.kind = 'store';
+      r.parent_tenant_id = IDS.tenant;
+    }
     for (const node of tree) {
       if (!node.children || !node.name) continue;
       const key = node.alias || node.name;

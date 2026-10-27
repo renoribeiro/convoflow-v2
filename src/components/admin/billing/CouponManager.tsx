@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { stripeService, type Coupon, type CreateCouponPayload } from '@/services/stripeService';
 
 /**
@@ -395,7 +396,10 @@ export function CouponManager() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="coupon-duration">Duração</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="coupon-duration">Duração</Label>
+                      <DicaDoCampo rotulo="Duração" texto="Uma vez: só a primeira cobrança. Meses recorrentes: as cobranças dos meses escolhidos. Para sempre: todas, enquanto a assinatura durar." />
+                    </div>
                     <Select
                       value={form.duration}
                       onValueChange={(value: DurationType) => updateForm('duration', value)}

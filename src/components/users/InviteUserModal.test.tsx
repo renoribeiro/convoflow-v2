@@ -204,6 +204,34 @@ describe('gerente', () => {
     expect(screen.getByRole('button', { name: /enviar convite/i })).toBeDisabled();
   });
 
+  // Lote 4 do checkup (2026-10-27): com a CONTA em foco no topo, a TeamPage
+  // passa o id da Conta. Ele ia para o convite com o seletor em branco e o
+  // servidor recusava ("Esta loja não pertence à sua conta.").
+  it('com a Conta em foco e várias Lojas, a Loja fica por escolher e o botão diz o que falta', () => {
+    stores = [
+      { id: LOJA_A, name: 'Loja Teste' },
+      { id: LOJA_B, name: 'Loja Dois' },
+    ];
+    abrir(CONTA);
+    preencherBasico();
+    expect(screen.getByRole('button', { name: /enviar convite/i })).toBeDisabled();
+    expect(screen.getByTestId('convite-falta')).toHaveTextContent('Para enviar, preencha: Loja.');
+  });
+
+  it('com a Conta em foco e uma Loja só, o convite já vai para ela', async () => {
+    stores = [{ id: LOJA_A, name: 'Loja Teste' }];
+    abrir(CONTA);
+    preencherBasico();
+    fireEvent.click(screen.getByRole('button', { name: /enviar convite/i }));
+    await waitFor(() => expect(mockMutateAsync).toHaveBeenCalled());
+    expect(payloadEnviado().tenantId).toBe(LOJA_A);
+  });
+
+  it('formulário vazio: o botão cinza lista os campos que faltam', () => {
+    abrir(LOJA_A);
+    expect(screen.getByTestId('convite-falta')).toHaveTextContent('Para enviar, preencha: Nome, Sobrenome, Email.');
+  });
+
   it('Conta sem nenhuma Loja explica o que fazer em vez de travar em silêncio', () => {
     stores = [];
     abrir(null);

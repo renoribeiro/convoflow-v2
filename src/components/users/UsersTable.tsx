@@ -92,7 +92,7 @@ export function textoDaAcao(
     case 'senha':
       return {
         title: 'Mandar email de nova senha?',
-        description: `${nome} recebe um email com um link para criar uma senha nova. A senha atual continua valendo até ela trocar.`,
+        description: `${nome} recebe um email com um botão e um código de 6 dígitos para criar uma senha nova, válidos por 24 horas e por um uso. A senha atual continua valendo até ela trocar.`,
         confirmText: 'Enviar email',
         variant: 'default' as const,
       };

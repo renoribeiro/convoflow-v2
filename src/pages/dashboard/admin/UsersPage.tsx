@@ -45,7 +45,7 @@ export default function UsersPage() {
       <PageHeader
         title="Gestão de Usuários"
         helpKey="page:admin-users"
-        description="Hierarquia completa de Superadmins, Contas e Lojas."
+        description="Todas as pessoas com login no ConvoFlow, de todas as Contas, com o uso de cada uma."
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Administração', href: '/dashboard/admin' },
@@ -83,7 +83,7 @@ export default function UsersPage() {
               <SelectValue placeholder="Cargo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as funções</SelectItem>
+              <SelectItem value="all">Todos os cargos</SelectItem>
               {(Object.keys(ROLE_LABELS) as UserRole[]).map((r) => (
                 <SelectItem key={r} value={r}>
                   {ROLE_LABELS[r]}

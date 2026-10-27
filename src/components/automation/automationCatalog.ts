@@ -134,6 +134,11 @@ export interface CatalogEntry {
   fields: CatalogField[];
   /** sem suporte no motor ainda — aparece desabilitado ("Em breve") */
   comingSoon?: boolean;
+  /**
+   * Não é oferecido para automação nova: o motor não dispara. Continua no
+   * catálogo para uma automação antiga que já o usa abrir e mostrar o que é.
+   */
+  naoOferecer?: boolean;
   /** chave em src/lib/help/featureHelp.ts para o painel de ajuda rico */
   helpKey?: string;
 }
@@ -222,6 +227,9 @@ export const TRIGGERS: CatalogEntry[] = [
     key: 'scheduled_time',
     category: 'trigger',
     label: 'Horário Agendado',
+    // Nenhum cron chama o automation-processor para este gatilho (conferido
+    // em cron.job em 2026-10-27): ele nunca disparou. Fora da lista até existir.
+    naoOferecer: true,
     description: 'Dispara em horários definidos (diário, semanal, mensal).',
     Icon: CalendarClock,
     helpKey: 'trigger:scheduled_time',
@@ -379,6 +387,13 @@ export const TIMINGS: CatalogEntry[] = [
 ];
 
 export const ALL_ENTRIES: CatalogEntry[] = [...TRIGGERS, ...ACTIONS, ...CONDITIONS, ...TIMINGS];
+
+/**
+ * Os gatilhos que a tela oferece para escolher. O gatilho que uma automação
+ * antiga já usa entra também, para o seletor dela mostrar o valor salvo.
+ */
+export const gatilhosOferecidos = (atual?: string | null): CatalogEntry[] =>
+  TRIGGERS.filter((t) => !t.naoOferecer || t.key === atual);
 
 const BY_KEY: Record<string, CatalogEntry> = ALL_ENTRIES.reduce((acc, e) => {
   acc[e.key] = e;

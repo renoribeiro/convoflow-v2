@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Copy, Link } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -161,7 +162,10 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="utmSource">Origem (utm_source)</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="utmSource">Origem (utm_source)</Label>
+                    <DicaDoCampo rotulo="Códigos de campanha" texto="Códigos que vão no fim do link para a ferramenta de visitas do seu site. O ConvoFlow não lê esses códigos nem soma contatos a esta fonte por eles." />
+                  </div>
                   <Input
                     id="utmSource"
                     value={formData.utmSource}

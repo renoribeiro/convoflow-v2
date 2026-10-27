@@ -75,6 +75,22 @@ export const TELAS: readonly Tela[] = [
   { chave: 'notifications', nome: 'Notificações', grupo: 'fora_do_menu', modulo: null, capacidade: null },
 ];
 
+/**
+ * Telas operacionais (dado de cliente) que o superadmin não abre: ele passa
+ * pela guarda, mas o DashboardLayout mostra "Exclusivo para Lojas". Ele só vê
+ * estatísticas (Dashboard, Rastreamento, Relatórios) e administra.
+ */
+export const TELAS_SO_DE_LOJA: readonly string[] = [
+  'conversations',
+  'contacts',
+  'funnel',
+  'chatbots',
+  'campaigns',
+  'followups',
+  'automation',
+  'whatsapp-numbers',
+];
+
 const POR_CHAVE: ReadonlyMap<string, Tela> = new Map(TELAS.map((t) => [t.chave, t]));
 
 /** A tela pela chave. Lança se não existir: chave errada é erro de código, não de dado. */

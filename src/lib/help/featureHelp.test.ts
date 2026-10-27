@@ -38,6 +38,8 @@ const SRC_DIR = path.resolve(HERE, '..', '..');
 
 /** O próprio arquivo de definições: as chaves dele são a fonte, não uso. */
 const DEFINITIONS_FILE = path.join(SRC_DIR, 'lib', 'help', 'featureHelp.ts');
+/** A matriz de cobertura cita chaves para conferir, não para montar: não conta como uso. */
+const MATRIX_FILE = path.join(SRC_DIR, 'lib', 'help', 'cobertura.ts');
 
 /** `helpKey="x"`, `helpKey='x'`, `helpKey={'x'}` e `helpKey: 'x'`. */
 const HELP_KEY_LITERAL = /helpKey\s*[=:]\s*[{(]?\s*['"]([^'"]+)['"]/g;
@@ -58,6 +60,7 @@ function collectSourceFiles(dir: string, out: string[] = []): string[] {
     if (!/\.(ts|tsx)$/.test(item.name)) continue;
     if (/\.(test|spec)\.tsx?$/.test(item.name)) continue;
     if (full === DEFINITIONS_FILE) continue;
+    if (full === MATRIX_FILE) continue;
     out.push(full);
   }
   return out;

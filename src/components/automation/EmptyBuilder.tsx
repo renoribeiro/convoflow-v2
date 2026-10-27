@@ -5,7 +5,7 @@
 import React from 'react';
 import { Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TRIGGERS, CATEGORY_STYLES } from './automationCatalog';
+import { gatilhosOferecidos, CATEGORY_STYLES } from './automationCatalog';
 
 interface EmptyBuilderProps {
   onPick: (triggerKey: string) => void;
@@ -25,7 +25,7 @@ export const EmptyBuilder: React.FC<EmptyBuilderProps> = ({ onPick }) => {
       </p>
 
       <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">
-        {TRIGGERS.map((t) => (
+        {gatilhosOferecidos().map((t) => (
           <button
             key={t.key}
             type="button"

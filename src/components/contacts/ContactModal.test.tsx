@@ -182,7 +182,7 @@ describe('ContactModal — salvar', () => {
   it('telefone digitado com máscara vai só com dígitos', async () => {
     state.contact = { ...WHATSAPP_ROW };
     renderModal(WHATSAPP_ROW.id);
-    fireEvent.change(await screen.findByLabelText(/Telefone/), { target: { value: '+55 (85) 99999-0201' } });
+    fireEvent.change(await screen.findByLabelText(/^Telefone/), { target: { value: '+55 (85) 99999-0201' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     await waitFor(() => expect(contactWrites()).toHaveLength(1));
     expect(onlyWrite().payload.phone).toBe('5585999990201');
@@ -191,7 +191,7 @@ describe('ContactModal — salvar', () => {
   it('telefone vazio num contato de WhatsApp não salva e aponta o campo', async () => {
     state.contact = { ...WHATSAPP_ROW };
     renderModal(WHATSAPP_ROW.id);
-    fireEvent.change(await screen.findByLabelText(/Telefone/), { target: { value: '' } });
+    fireEvent.change(await screen.findByLabelText(/^Telefone/), { target: { value: '' } });
     fireEvent.submit(screen.getByRole('button', { name: 'Salvar' }).closest('form')!);
     expect(await screen.findByText('Telefone é obrigatório')).toBeInTheDocument();
     expect(contactWrites()).toHaveLength(0);
@@ -202,7 +202,7 @@ describe('ContactModal — salvar', () => {
     renderModal(INSTAGRAM_ROW.id);
 
     expect(await screen.findByText('Editar Contato')).toBeInTheDocument();
-    expect(screen.queryByLabelText(/Telefone/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Telefone/)).not.toBeInTheDocument();
     const handle = screen.getByLabelText('Instagram') as HTMLInputElement;
     expect(handle.value).toBe('@opauloandrade');
     expect(handle).toHaveAttribute('readonly');
@@ -235,7 +235,7 @@ describe('ContactModal — salvar', () => {
   it('cria contato novo: INSERT com o tenant_id da sessão', async () => {
     renderModal(null);
     fireEvent.change(await screen.findByLabelText(/Nome/), { target: { value: 'Contato Novo' } });
-    fireEvent.change(screen.getByLabelText(/Telefone/), { target: { value: '5585999990000' } });
+    fireEvent.change(screen.getByLabelText(/^Telefone/), { target: { value: '5585999990000' } });
     fireEvent.click(screen.getByRole('button', { name: 'Criar' }));
     await waitFor(() => expect(contactWrites()).toHaveLength(1));
     const write = onlyWrite();

@@ -358,7 +358,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
               <div>
                 <h3 className="text-lg font-semibold mb-1">O que vai no relatório</h3>
                 <p className="text-muted-foreground mb-4">
-                  Todo relatório traz estes números da Loja inteira, no período escolhido. O tipo muda só o título do email.
+                  Todo relatório traz estes números da Loja inteira, dos últimos 30 dias. O tipo muda só o título do email.
                 </p>
 
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">

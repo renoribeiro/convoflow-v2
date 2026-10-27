@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Store } from 'lucide-react';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { RoleDescriptionCard } from '@/components/admin/RoleDescriptionCard';
 import { useRole, useTenant } from '@/contexts/TenantContext';
 import { useMyStores } from '@/hooks/useMyStores';
@@ -97,6 +98,19 @@ export function InviteUserModal({
   const lojaDoGestor = ehGestor ? tenant : null;
 
   /**
+   * A Loja do seletor só vale se for uma das Lojas da Conta. Com a CONTA em
+   * foco no topo, `defaultTenantId` é a própria Conta: antes ela ia para o
+   * convite, o seletor aparecia em branco com "Enviar convite" liberado e o
+   * servidor recusava ("Esta loja não pertence à sua conta."). Agora a escolha
+   * fica vazia (e o botão espera) ou, com uma Loja só, já vem nela.
+   */
+  const lojaDoSeletor = stores.some((s) => s.id === tenantId)
+    ? tenantId
+    : stores.length === 1
+      ? (stores[0]?.id ?? '')
+      : '';
+
+  /**
    * Vagas de atendente (2 por Loja + as extras do ConvoFlow). Só avisa antes:
    * quem recusa de verdade é o servidor. Sem a leitura (carregando ou falhou),
    * nada é bloqueado aqui.
@@ -104,7 +118,7 @@ export function InviteUserModal({
   const { byStore: vagasPorLoja } = useStoreAttendantSeats({
     enabled: open && (callerRole === 'gerente' || callerRole === 'gestor'),
   });
-  const lojaEscolhida = ehGestor ? lojaDoGestor?.id ?? null : tenantId || null;
+  const lojaEscolhida = ehGestor ? lojaDoGestor?.id ?? null : lojaDoSeletor || null;
   const vagasDaEscolhida = lojaEscolhida ? vagasPorLoja[lojaEscolhida] : undefined;
   const lojaCheia = role === 'atendente' && !!vagasDaEscolhida && isStoreFull(vagasDaEscolhida);
 
@@ -131,7 +145,7 @@ export function InviteUserModal({
       role,
       // Para o gestor o servidor resolve sozinho; mandamos a própria Loja
       // mesmo assim para o payload ficar honesto com o que a tela mostrou.
-      tenantId: precisaDeLoja ? (ehGestor ? lojaDoGestor?.id ?? null : tenantId || null) : null,
+      tenantId: precisaDeLoja ? (ehGestor ? lojaDoGestor?.id ?? null : lojaDoSeletor || null) : null,
       newTenantName: precisaNomeDaConta ? nomeDaConta.trim() : undefined,
       redirectTo: `${window.location.origin}/definir-senha`,
     });
@@ -141,13 +155,22 @@ export function InviteUserModal({
 
   const semLojas = callerRole === 'gerente' && !lojasCarregando && stores.length === 0;
 
+  /** O que ainda falta, na ordem da tela: o botão cinza diz o porquê. */
+  const faltando = [
+    !firstName && 'Nome',
+    !lastName && 'Sobrenome',
+    !email && 'Email',
+    precisaDeLoja && !ehGestor && !semLojas && !lojaDoSeletor && 'Loja',
+    precisaNomeDaConta && !nomeDaConta.trim() && 'Nome da Conta',
+  ].filter((x): x is string => !!x);
+
   const podeEnviar =
     !invite.isPending &&
     !lojaCheia &&
     !!email &&
     !!firstName &&
     !!lastName &&
-    (!precisaDeLoja || ehGestor || !!tenantId) &&
+    (!precisaDeLoja || ehGestor || !!lojaDoSeletor) &&
     (!precisaNomeDaConta || !!nomeDaConta.trim());
 
   return (
@@ -163,7 +186,7 @@ export function InviteUserModal({
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="invite-firstName">Nome</Label>
+              <Label htmlFor="invite-firstName">Nome</Label><span aria-hidden="true" className="text-sm"> *</span>
               <Input
                 id="invite-firstName"
                 value={firstName}
@@ -172,7 +195,7 @@ export function InviteUserModal({
               />
             </div>
             <div>
-              <Label htmlFor="invite-lastName">Sobrenome</Label>
+              <Label htmlFor="invite-lastName">Sobrenome</Label><span aria-hidden="true" className="text-sm"> *</span>
               <Input
                 id="invite-lastName"
                 value={lastName}
@@ -182,7 +205,7 @@ export function InviteUserModal({
             </div>
           </div>
           <div>
-            <Label htmlFor="invite-email">Email</Label>
+            <Label htmlFor="invite-email">Email</Label><span aria-hidden="true" className="text-sm"> *</span>
             <Input
               id="invite-email"
               type="email"
@@ -200,7 +223,13 @@ export function InviteUserModal({
             />
           </div>
           <div>
-            <Label htmlFor="invite-role">Cargo</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="invite-role">Cargo</Label>
+              <DicaDoCampo
+                rotulo="Cargo"
+                texto="O cargo define o que a pessoa vê e faz: Gestor administra a Loja, Atendente atende as conversas dela. O cargo não muda depois pela Equipe."
+              />
+            </div>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
               <SelectTrigger id="invite-role">
                 <SelectValue />
@@ -239,7 +268,13 @@ export function InviteUserModal({
 
           {precisaDeLoja && !ehGestor && (
             <div>
-              <Label htmlFor="invite-loja">Loja</Label>
+              <div className="flex items-center gap-1.5">
+                <Label htmlFor="invite-loja">Loja</Label><span aria-hidden="true" className="text-sm"> *</span>
+                <DicaDoCampo
+                  rotulo="Loja"
+                  texto="Cada Loja tem 1 Gestor e 2 vagas de Atendente. Gestor suspenso ou com convite pendente ainda ocupa o lugar: exclua ou cancele o convite antes de trocar."
+                />
+              </div>
               {semLojas ? (
                 <Alert className="mt-1">
                   <AlertDescription>
@@ -249,7 +284,7 @@ export function InviteUserModal({
                 </Alert>
               ) : (
                 <>
-                  <Select value={tenantId} onValueChange={setTenantId}>
+                  <Select value={lojaDoSeletor} onValueChange={setTenantId}>
                     <SelectTrigger id="invite-loja">
                       <SelectValue
                         placeholder={lojasCarregando ? 'Carregando...' : 'Escolha a Loja'}
@@ -288,7 +323,7 @@ export function InviteUserModal({
 
           {precisaNomeDaConta && (
             <div>
-              <Label htmlFor="invite-conta">Nome da Conta</Label>
+              <Label htmlFor="invite-conta">Nome da Conta</Label><span aria-hidden="true" className="text-sm"> *</span>
               <Input
                 id="invite-conta"
                 value={nomeDaConta}
@@ -303,6 +338,12 @@ export function InviteUserModal({
             </div>
           )}
         </div>
+
+        {!invite.isPending && !lojaCheia && faltando.length > 0 && (
+          <p className="text-xs text-muted-foreground" data-testid="convite-falta">
+            Para enviar, preencha: {faltando.join(', ')}.
+          </p>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

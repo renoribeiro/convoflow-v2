@@ -70,6 +70,18 @@ describe('resolveTourSteps', () => {
     expect(wait).toHaveBeenCalledTimes(3); // 'existe', 'menu-ajuda' e 'sumiu'
   });
 
+  it('passo "só no computador": no celular vira cartão no centro sem procurar o alvo; no computador aponta', async () => {
+    const tour = getTour('conversas')!;
+    const presentes = ['conversas-filtros-rapidos', 'conversas-lista', 'conversas-filtros', 'conversas-janela'];
+    const noCelular = esperaFalsa(presentes);
+    const celular = await resolveTourSteps(tour, { mobile: true, wait: noCelular });
+    expect(celular[3]?.selector).toBeNull();
+    expect(celular[3]?.body).toBe(tour.steps[3]?.body);
+    expect(noCelular.mock.calls.map((c) => c[0])).not.toContain('[data-tour="conversas-janela"]');
+    const computador = await resolveTourSteps(tour, { mobile: false, wait: esperaFalsa(presentes) });
+    expect(computador[3]?.selector).toBe('[data-tour="conversas-janela"]');
+  });
+
   it('o tour real da boas-vindas no celular: lista destacada, Ajuda no cartão', async () => {
     const tour = getTour('primeiros-passos')!;
     const passos = await resolveTourSteps(tour, { mobile: true, wait: esperaFalsa(['primeiros-passos', 'menu-ajuda']) });

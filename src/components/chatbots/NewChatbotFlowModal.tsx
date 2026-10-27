@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { onlyWhatsApp } from '@/lib/whatsapp/connectionSections';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import {
   useCreateChatbot,
   useUpdateChatbotMeta,
@@ -347,7 +348,10 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
 
           {/* Prioridade */}
           <div className="space-y-1">
-            <Label htmlFor="cf-priority">Prioridade</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="cf-priority">Prioridade</Label>
+              <DicaDoCampo rotulo="Prioridade" texto="Quando dois bots podem responder no mesmo número, entra o de número maior (0 a 100). Com números iguais, a ordem não é garantida." />
+            </div>
             <Input
               id="cf-priority"
               type="number"
@@ -381,6 +385,9 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
                           <span className="ml-1 text-xs text-destructive">(ainda não dispara: desmarque)</span>
                         )}
                       </Label>
+                      {type === 'keyword' && (
+                        <DicaDoCampo rotulo="Palavras-chave" texto="O bot entra quando a mensagem contém a palavra em qualquer parte, maiúscula ou minúscula. Palavra curta como oi também casa com foi." />
+                      )}
                     </div>
 
                     {cfg.enabled && type === 'keyword' && (

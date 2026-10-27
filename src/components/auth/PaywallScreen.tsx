@@ -11,6 +11,7 @@ import { QUERY_KEYS } from '@/lib/queryClient';
 import { supabase } from '@/integrations/supabase/client';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { DadosFiscaisCard } from '@/components/billing/DadosFiscaisCard';
+import { motivoSemAssinatura } from '@/lib/billing/subscriptionView';
 import { useDadosFiscais } from '@/hooks/useDadosFiscais';
 import {
   COMO_CANCELAR_NO_TESTE,
@@ -117,6 +118,24 @@ export const PaywallScreen = () => {
         .maybeSingle();
       if (error) throw error;
       return data ? data.subscription_id == null : null;
+    },
+  });
+
+  // O motivo do bloqueio, para o Gerente (achado 118): ele lê a linha da
+  // própria Conta. Gestor e Atendente não leem a Conta (RLS de tenants) e
+  // continuam com a frase geral.
+  const statusDaConta = useQuery({
+    queryKey: [QUERY_KEYS.TENANT, 'paywall-status', contaId],
+    enabled: podeAssinar && !!contaId,
+    retry: false,
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('subscription_status')
+        .eq('id', contaId as string)
+        .maybeSingle();
+      if (error) throw error;
+      return (data?.subscription_status as string | null | undefined) ?? null;
     },
   });
 
@@ -372,6 +391,7 @@ export const PaywallScreen = () => {
                 ) : (
                   <>Sua Conta não está ativa. </>
                 )}
+                {statusDaConta.isSuccess ? `${motivoSemAssinatura(statusDaConta.data)} ` : null}
                 Assine para liberar o sistema para todas as suas Lojas.
               </>
             ) : (

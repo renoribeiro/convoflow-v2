@@ -29,6 +29,12 @@ export interface TourStep {
    * "Abra o menu ☰ e toque em <menuItem>." em vez de apontar.
    */
   menuItem?: string;
+  /**
+   * O alvo só existe na tela larga (ex.: a janela da conversa, que no celular
+   * só aparece depois de abrir uma conversa). No celular o passo vira cartão
+   * no centro, de propósito, em vez de esperar um elemento que não vem.
+   */
+  soNoComputador?: boolean;
   title: string;
   body: string;
 }
@@ -81,12 +87,16 @@ export const TOURS: Tour[] = [
       {
         target: 'conversas-filtros',
         title: 'Filtros',
-        body: 'Quando a lista crescer, filtre por etiqueta, responsável ou data.',
+        // O tour de Conversas é o do Atendente, que não tem o filtro por
+        // responsável (só Gestor e Gerente).
+        body: 'Quando a lista crescer, filtre por etiqueta, data, não lidas ou arquivadas.',
       },
       {
         target: 'conversas-janela',
+        // No celular a janela só abre depois de tocar numa conversa.
+        soNoComputador: true,
         title: 'Assuma antes de responder',
-        body: 'Com a conversa aberta, clique em Sem responsável no topo e depois em Assumir. Para passar a um colega, use Transferir.',
+        body: 'Com a conversa aberta, clique em Sem responsável no topo e depois em Assumir. Para passar a um colega, use Transferir, se a Loja permitir.',
       },
     ],
   },
@@ -124,7 +134,7 @@ export const TOURS: Tour[] = [
       {
         target: 'dados-fiscais',
         title: 'Dados para a nota fiscal',
-        body: 'Escolha CNPJ ou CPF, digite o documento e o CEP. O endereço se completa sozinho. Confira e clique em Salvar dados.',
+        body: 'Escolha CNPJ ou CPF, digite o documento, o nome e o CEP. O endereço se completa sozinho: complete o número e clique em Salvar dados.',
       },
     ],
   },
@@ -139,7 +149,7 @@ export const TOURS: Tour[] = [
       {
         target: 'whatsapp-nova-instancia',
         title: 'Clique em Conectar número',
-        body: 'Escolha API Oficial do WhatsApp e clique em Continuar. Depois clique em Conectar com a Meta e siga a janela da Meta até o fim.',
+        body: 'Escolha como conectar e clique em Continuar. Na API Oficial do WhatsApp, clique em Conectar com a Meta e siga a janela da Meta até o fim.',
       },
     ],
   },
@@ -151,14 +161,14 @@ export const TOURS: Tour[] = [
       {
         target: 'equipe-convidar',
         title: 'Clique em Convidar',
-        body: 'Preencha os dados da pessoa, escolha a função e clique em Enviar convite. Ela recebe o convite e cria a própria senha.',
+        body: 'Preencha nome, sobrenome e email, confira o cargo e clique em Enviar convite. A pessoa recebe o convite por email e cria a própria senha.',
       },
     ],
   },
   {
     id: 'configurar-funil',
     route: '/dashboard/funnel',
-    // O botão "Configurar Estágios" não existe para o atendente (20261021000003).
+    // O botão "Configurar etapas" não existe para o atendente (20261021000003).
     minRole: 'gestor',
     moduleName: 'funnel',
     steps: [
@@ -176,7 +186,7 @@ export const TOURS: Tour[] = [
       {
         target: 'respostas-rapidas-nova',
         title: 'Clique em Nova resposta',
-        body: 'Dê um nome curto e escreva o texto que o time repete todo dia. Na conversa, ele aparece no botão de raio ou digitando / no campo vazio.',
+        body: 'Dê um nome curto, escreva o texto que o time repete todo dia e clique em Criar. Na conversa, ele aparece no botão de raio ou digitando / no campo vazio.',
       },
     ],
   },
@@ -193,7 +203,7 @@ export const TOURS: Tour[] = [
       {
         target: 'horario-funcionamento',
         title: 'Horário de funcionamento',
-        body: 'Aqui ficam os dias e horários da Loja e a regra para quando ninguém responde. Ajuste e clique em Salvar regra.',
+        body: 'Ligue Transferir conversa sem resposta para ver os dias e horários da Loja. Ajuste e clique em Salvar regra. Para gravar só o horário, desligue a chave antes de salvar.',
       },
     ],
   },

@@ -47,6 +47,17 @@ function data(isoOrNull: string | null | undefined): string | null {
   return Number.isNaN(d.getTime()) ? null : format(d, 'dd/MM/yyyy', { locale: ptBR });
 }
 
+/**
+ * Por que a Conta está sem assinatura ativa, numa frase. A mesma na aba
+ * Assinatura e na tela de bloqueio do Gerente (achado 118 do checkup).
+ */
+export function motivoSemAssinatura(status: string | null | undefined): string {
+  if (status === 'unpaid') return 'A assinatura foi suspensa porque o pagamento não foi concluído.';
+  if (status === 'canceled') return 'A assinatura foi cancelada.';
+  if (status === 'incomplete' || status === 'incomplete_expired') return 'O pagamento da assinatura não foi concluído.';
+  return 'Você ainda não tem uma assinatura ativa.';
+}
+
 export function describeSubscription(row: SubscriptionRow): SubscriptionView {
   const status = row.subscription_status ?? null;
   const hasSubscription = subscriptionUnlocks(status);
@@ -129,12 +140,7 @@ export function describeSubscription(row: SubscriptionRow): SubscriptionView {
   }
 
   // ------------------------------------------------------- sem assinatura
-  const motivo =
-    status === 'unpaid'
-      ? 'A assinatura foi suspensa porque o pagamento não foi concluído.'
-      : status === 'canceled'
-        ? 'A assinatura foi cancelada.'
-        : 'Você ainda não tem uma assinatura ativa.';
+  const motivo = motivoSemAssinatura(status);
   return {
     hasSubscription,
     badge: null,

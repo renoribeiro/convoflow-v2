@@ -12,6 +12,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
 import { Camera, Save } from 'lucide-react';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export function ProfileSettings() {
@@ -190,7 +191,10 @@ export function ProfileSettings() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <DicaDoCampo rotulo="Email" texto="É o seu login e não muda por aqui. Para trocar, fale com quem administra a sua Conta." />
+          </div>
           <Input
             id="email"
             type="email"

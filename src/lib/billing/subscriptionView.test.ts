@@ -65,7 +65,7 @@ describe('tela de Assinatura', () => {
     [null, 'Você ainda não tem uma assinatura ativa.'],
     ['canceled', 'A assinatura foi cancelada.'],
     ['unpaid', 'A assinatura foi suspensa porque o pagamento não foi concluído.'],
-    ['incomplete', 'Você ainda não tem uma assinatura ativa.'],
+    ['incomplete', 'O pagamento da assinatura não foi concluído.'],
   ])('%s: sem assinatura, com o motivo', (status, motivo) => {
     const v = describeSubscription({ subscription_status: status });
     expect(v.hasSubscription).toBe(false);

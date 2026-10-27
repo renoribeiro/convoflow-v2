@@ -67,6 +67,7 @@ const EXEC_STATUS_LABEL: Record<string, string> = {
   failed: 'Falhou',
   pending: 'Pendente',
   scheduled: 'Agendada',
+  skipped: 'Não enviada',
 };
 
 function rate(n: number, d: number) {
@@ -397,8 +398,11 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                                 >
                                   {EXEC_STATUS_LABEL[ex.status] ?? ex.status}
                                 </Badge>
-                                {ex.status === 'failed' && ex.error_message && (
-                                  <p className="text-[10px] text-red-600 max-w-[200px] truncate" title={motivoDaFalhaGravada(ex.error_message)}>
+                                {(ex.status === 'failed' || ex.status === 'skipped') && ex.error_message && (
+                                  <p
+                                    className={`text-[10px] max-w-[200px] truncate ${ex.status === 'failed' ? 'text-red-600' : 'text-muted-foreground'}`}
+                                    title={motivoDaFalhaGravada(ex.error_message)}
+                                  >
                                     {motivoDaFalhaGravada(ex.error_message)}
                                   </p>
                                 )}

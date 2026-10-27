@@ -29,7 +29,7 @@ import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   getCatalogEntry,
   UNKNOWN_ENTRY,
-  TRIGGERS,
+  gatilhosOferecidos,
   CONTACT_FIELD_OPTIONS,
   OPERATOR_OPTIONS,
   FOLLOWUP_TYPE_NAMES,
@@ -298,7 +298,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
             <Select value={flow.trigger_type} onValueChange={handleTriggerChange}>
               <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {TRIGGERS.map((t) => (
+                {gatilhosOferecidos(flow.trigger_type).map((t) => (
                   <SelectItem key={t.key} value={t.key}>{t.label}</SelectItem>
                 ))}
               </SelectContent>

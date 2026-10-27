@@ -112,7 +112,7 @@ function SequenceBuilderModal({ onClose }: { onClose: () => void }) {
             <div>
               <p className="font-medium text-sm">Parar ao receber resposta</p>
               <p className="text-xs text-muted-foreground">
-                Pausa a cadência automaticamente quando o contato responder.
+                Encerra a cadência do contato quando ele responder.
               </p>
             </div>
             <Switch checked={stopOnReply} onCheckedChange={setStopOnReply} />
@@ -122,7 +122,7 @@ function SequenceBuilderModal({ onClose }: { onClose: () => void }) {
             <div>
               <p className="font-medium text-sm">Ativa</p>
               <p className="text-xs text-muted-foreground">
-                Sequências inativas não inscrevem novos contatos.
+                Desligada, não inscreve ninguém e encerra quem está nela no próximo passo.
               </p>
             </div>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
@@ -267,7 +267,7 @@ export function SequencesManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <span>Sequências de mensagens de WhatsApp e tarefas que seguem sozinhas, passo a passo. Elas param quando o cliente responde.</span>
+          <span>Sequências de mensagens de WhatsApp e tarefas que seguem sozinhas, passo a passo. Com "Parar ao receber resposta", elas param quando o cliente responde.</span>
           <FeatureHelp helpKey="page:followups-sequences" />
         </p>
         <Button size="sm" onClick={() => setShowBuilder(true)}>

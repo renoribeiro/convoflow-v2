@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -311,18 +312,21 @@ function ContactPanelBody({
             ) : (
               <p className="text-xs text-muted-foreground">Sem etapa definida</p>
             )}
-            <Select value={profileContact?.current_stage_id ?? ''} onValueChange={handleStageChange}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Mover para etapa..." />
-              </SelectTrigger>
-              <SelectContent>
-                {(funnelStages as any[]).map((stage) => (
-                  <SelectItem key={stage.id} value={stage.id}>
-                    {stage.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-1.5">
+              <Select value={profileContact?.current_stage_id ?? ''} onValueChange={handleStageChange}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Mover para etapa..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {(funnelStages as any[]).map((stage) => (
+                    <SelectItem key={stage.id} value={stage.id}>
+                      {stage.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <DicaDoCampo rotulo="Etapa" texto="Trocar a etapa aqui vale como arrastar o card no Funil: as automações de Mudança de etapa disparam na hora." />
+            </div>
           </div>
         </CollapsibleSection>
 
@@ -347,8 +351,8 @@ function ContactPanelBody({
           </Button>
         </CollapsibleSection>
 
-        {/* Fonte do lead */}
-        <CollapsibleSection title="Fonte do lead" icon={<Info className="w-4 h-4 text-muted-foreground" />} defaultOpen={false}>
+        {/* Fonte do contato */}
+        <CollapsibleSection title="Fonte do contato" icon={<Info className="w-4 h-4 text-muted-foreground" />} defaultOpen={false}>
           <p className="text-sm text-foreground">{profileContact?.lead_sources?.name || 'Não informada'}</p>
         </CollapsibleSection>
 

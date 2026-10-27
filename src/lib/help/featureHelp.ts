@@ -143,6 +143,29 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     ],
     category: 'conceito',
   },
+  // Montado na tela "Você não tem acesso a esta tela" (SemAcesso.tsx). A regra
+  // de verdade é a matriz DEFAULT_CAPABILITIES e o registro de telas
+  // (docs/PERMISSOES_POR_CARGO.md); este texto conta a mesma coisa para quem usa.
+  'concept:cargos': {
+    title: 'Cargos: o que cada um vê e faz',
+    whatItDoes:
+      'Cada pessoa entra com um cargo, e o cargo decide quais telas aparecem no menu e quais botões aparecem nelas. Se você abriu uma tela pelo endereço e viu "Você não tem acesso a esta tela", ela é de outro cargo ou a parte do sistema está desligada na sua Conta. A frase embaixo do título diz a quem pedir.',
+    howToConfigure: [
+      'Atendente: atende as conversas da Loja, cuida dos contatos e do funil, usa chatbots, automações, follow ups e respostas rápidas, e acompanha as campanhas sem disparar. Não vê Números de WhatsApp, Equipe, Avisos para sistemas nem Assinatura.',
+      'Gestor: tudo o que o Atendente faz, mais a Loja dele: conecta os números, convida os Atendentes, configura a distribuição, os avisos para sistemas e as etapas do funil, e dispara campanhas.',
+      'Gerente: tudo o que o Gestor faz, em todas as Lojas da Conta (escolhidas em "Escolher Loja", no topo), mais criar Lojas, convidar Gestores, comparar Lojas, a Assinatura e as Chaves de API.',
+      'Superadmin: a equipe do ConvoFlow. Administra as Contas, mas não abre conversas, contatos nem números de nenhuma Loja: essas telas mostram "Exclusivo para Lojas".',
+      'Viu "Esta tela é do Gestor da sua Loja" ou "do Gerente da sua Conta"? Peça a essa pessoa o que você precisa. Viu "Esta parte do sistema não está ligada na sua Conta"? O Gerente pede ao ConvoFlow para ligar, em contato@convoflow.com.br.',
+    ],
+    example:
+      'O Atendente abre /dashboard/whatsapp-numbers porque o número caiu. A tela diz que ela é do Gestor da Loja; o Atendente avisa o Gestor, que reconecta com o QR Code.',
+    tips: [
+      'O cargo é escolhido no convite e não muda pela Equipe. Cargo errado é a causa mais comum de "essa tela não abre para mim".',
+      'Esconder um botão é só a tela: quem recusa de verdade é o servidor, que confere o cargo de novo a cada ação.',
+      'O botão "Voltar ao Dashboard" leva de volta à primeira tela. Nada foi perdido.',
+    ],
+    category: 'conceito',
+  },
 
   // -------------------------------------------------------------- Nós chatbot
   start: {
@@ -293,9 +316,13 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   },
   'trigger:scheduled_time': {
     title: 'Gatilho: Horário Agendado',
-    whatItDoes: 'Inicia a automação em horários definidos (diário, semanal, mensal).',
-    howToConfigure: ['Escolha a periodicidade.', 'Defina o horário.'],
-    example: 'Todo dia às 9h → enviar lembrete.',
+    whatItDoes:
+      'Este gatilho ainda não dispara: nenhuma parte do sistema chama a automação no horário. Por isso ele não aparece mais na lista de gatilhos de uma automação nova. Uma automação antiga que já usa ele continua abrindo, mas não roda.',
+    howToConfigure: [
+      'Abra a automação antiga e troque o gatilho por um que dispara (mensagem recebida, novo contato, mudança de etapa ou variável capturada).',
+      'Para um lembrete com data e hora, use um follow up agendado.',
+    ],
+    example: 'Em vez de "todo dia às 9h, enviar lembrete", crie um follow up "Agendado" para o contato.',
     category: 'automacao',
     area: 'Gatilhos',
   },
@@ -435,29 +462,31 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:dashboard': {
     title: 'Dashboard',
     whatItDoes:
-      'É a primeira parada do dia: mostra se o atendimento está saudável e o que precisa de ação agora. Todos os números obedecem ao período escolhido no topo: trocar de 7 para 30 dias muda cartões e gráficos de uma vez.',
+      'É a primeira parada do dia: mostra se o atendimento está saudável e o que precisa de ação agora. Os cartões, o gráfico e a seção "Atendimento" obedecem ao período escolhido no topo; "Precisa de Atenção", "Por atendente", o funil e a situação dos números mostram o momento atual, e a atividade recente, os últimos 7 dias.',
     howToConfigure: [
-      'Chegou agora? No primeiro acesso aparece uma janela de boas vindas e, no topo do Dashboard, a lista "Primeiros passos" com o que falta configurar. Em cada passo, "Fazer agora" abre a tela certa e destaca onde clicar; "Ver passo a passo" abre o tutorial completo na Ajuda. Cada passo é marcado sozinho quando você o conclui, e "Esconder" tira a lista da tela.',
-      'Escolha o período no topo (Hoje, 7 dias, 30 dias ou uma faixa personalizada). O resto da tela segue essa escolha.',
-      'Comece pelo painel "Precisa de Atenção": é onde estão as conversas e os contatos parados.',
+      'Chegou agora? No primeiro acesso aparece uma janela de boas vindas e, no topo do Dashboard, a lista "Primeiros passos" com o que falta configurar. Nos passos que têm tela, "Fazer agora" abre a tela certa e destaca onde clicar; "Ver passo a passo" abre o tutorial completo na Ajuda. Cada passo é marcado sozinho quando você o conclui, e "Esconder" tira a lista da tela.',
+      'Escolha o período no topo (Hoje, 7 dias, 30 dias ou uma faixa personalizada). Os cartões, o gráfico e a seção "Atendimento" seguem essa escolha.',
+      'Comece pelo painel "Precisa de Atenção": é onde estão as conversas e os contatos parados e os follow ups atrasados.',
       'Clique em um cartão de métrica para ir direto à tela correspondente (Conversas, Contatos, Funil).',
       'Na seção "Atendimento", leia os dois tempos de resposta como coisas diferentes: "1ª resposta do bot" é quanto o cliente espera pela primeira mensagem automática; "1ª resposta de uma pessoa" é quanto ele espera até alguém do time responder de verdade. Um não entra no outro. Os dois são medianas, isto é, na metade das conversas o tempo foi até aquele valor. A média foi trocada de propósito, porque meia dúzia de conversas esquecidas por dias puxavam o número para longe do que acontece de fato.',
       'Ainda em "Atendimento": "Esperando uma pessoa agora" conta as conversas em que o cliente falou por último e ninguém do time respondeu, com quantas delas não têm responsável; "Sem resposta de pessoa" conta as conversas do período em que só o bot falou (ou ninguém). Campanha, follow up e chatbot não contam como resposta de pessoa.',
       'Como Gestor ou Gerente, você vê também a seção "Por atendente": quem está com cada conversa aberta agora, como ela chegou (assumiu, recebeu de colega ou automático), quantas esperam resposta e quantas vezes a regra de tempo tirou ou entregou conversa à pessoa. Isso é POSSE, não autoria: diz quem é o responsável, não quem escreveu. O aviso no topo da seção diz quantas conversas estão sem responsável e quantas delas esperam alguém. Leia esse número antes da tabela: conversa sem dono não aparece na linha de ninguém. Quem saiu do time mas ainda tem conversa aparece com o motivo ao lado do nome, e o Gerente da Conta aparece marcado como "da Conta".',
-      'Abra "Análise detalhada" no fim da página para ver origem dos contatos e desempenho das automações.',
+      'Role até "Análise detalhada", no fim da página, para ver origem dos contatos e desempenho das automações. Na tela larga ela já vem aberta; no celular, toque no título para abrir.',
     ],
     example:
       'Você abre o dia em "7 dias": o bot responde em 6 segundos, mas a 1ª resposta de uma pessoa está em 2 horas e há 90 conversas esperando alguém, quase todas sem responsável. Distribuir essas conversas passa a ser a primeira tarefa.',
     tips: [
-      'A lista "Primeiros passos" muda com o cargo. Gerente: a Conta inteira (criar a Loja, conectar o WhatsApp e convidar a equipe são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional). Gestor: os mesmos passos, só da sua Loja. Atendente: foto e a primeira conversa respondida. Superadmin não vê boas vindas nem lista.',
-      'Gerente: WhatsApp, funil, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única; com várias, destaca o seletor do topo para você escolher.',
+      'A lista "Primeiros passos" muda com o cargo. Gerente, a Conta inteira: "Assinatura ativa", "Criar sua primeira Loja", "Conectar o WhatsApp" e "Convidar a equipe" são obrigatórios; "Dados para a nota fiscal", o funil, as respostas rápidas e "Definir horário e distribuição" são recomendados; o chatbot é opcional. "Assinatura ativa" não tem "Fazer agora": ela fica feita quando a Conta está liberada. Gestor, só a sua Loja: "Conectar o WhatsApp" e "Convidar os atendentes" são obrigatórios; funil, respostas rápidas e horário são recomendados; chatbot é opcional. Atendente: "Colocar sua foto" e "Responder sua primeira conversa", os dois recomendados. Superadmin não vê boas vindas nem lista.',
+      'Quando os obrigatórios e os recomendados ficam prontos, a lista dá lugar a "Tudo pronto por aqui", com o botão "Fechar". O passo opcional não segura a lista.',
+      'Quem já usava o ConvoFlow antes de 21/10/2026 não vê a boas vindas, e a lista só aparece para essa pessoa enquanto houver passo OBRIGATÓRIO pendente na Conta ou na Loja dela. Por isso o Atendente antigo, que não tem passo obrigatório, não vê a lista.',
+      'Gerente: WhatsApp, funil, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única (aparece "Abrimos a Loja ... para este passo."); com várias, destaca "Escolher Loja", no topo, para você escolher; sem nenhuma Loja, avisa "Crie a primeira Loja antes deste passo." e abre a Equipe.',
       'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página.',
       'Em imobiliária, a 1ª resposta de uma pessoa é a métrica que mais move venda: o contato de portal fala com três corretores e fecha com quem responde primeiro. O bot responder rápido não substitui isso.',
       'Os números de atendimento olham conversas iniciadas no período escolhido; só "Esperando uma pessoa agora" é retrato de hoje, seja qual for o período.',
       'A tela se atualiza sozinha a cada 30 segundos. Não precisa recarregar.',
       'Como Gerente ou Superadmin você troca a Conta em foco pelo seletor do topo. Como Gestor ou Atendente, você vê sempre a sua Loja.',
-      'Gerente: ao escolher uma Loja no seletor, os dados dela aparecem: conversas, contatos, funil, campanhas. Você atende junto na caixa de entrada (responder, editar contato, marcar etiqueta); nas demais telas da Loja a visão é de acompanhamento, sem edição.',
-      'Gerente: para sair da Loja e voltar à sua Conta, abra o seletor e clique em "Voltar para a Conta", o primeiro item da lista. Ele só aparece enquanto uma Loja está aberta; com a Conta em foco, o seletor mostra "Selecionar Loja". A Conta tem dados próprios, como as conversas dela. O Instagram não é um deles: a conta do Instagram fica sempre numa Loja, como o WhatsApp de cada Loja.',
+      'Gerente: ao escolher uma Loja em "Escolher Loja", os dados dela aparecem: conversas, contatos, funil, campanhas. Você trabalha dentro dela como o Gestor: atende na caixa de entrada, configura as etapas do funil, os números, as respostas rápidas, a distribuição e o chatbot da Loja.',
+      'Gerente: para sair da Loja e voltar à sua Conta, abra o seletor e clique em "Voltar para a Conta", o primeiro item da lista. Ele só aparece enquanto uma Loja está aberta; com a Conta em foco, o seletor mostra "Escolher Loja". A Conta tem dados próprios, como as conversas dela. O Instagram não é um deles: a conta do Instagram fica sempre numa Loja, como o WhatsApp de cada Loja.',
     ],
     category: 'tela',
     area: 'Operação',
@@ -490,9 +519,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O filtro por responsável e as pílulas "Minhas" / "Sem responsável" não se somam, porque olham a mesma coisa: marcar alguém em "Filtros" devolve a pílula a "Todas", e clicar em "Minhas" ou "Sem responsável" tira os nomes marcados. As outras pílulas ("Aguardando", "Não lidas", "Responsável indisponível"...) somam normalmente ao filtro por responsável.',
       'Como Gestor ou Gerente, use a pílula "Responsável indisponível" para achar conversas presas com alguém suspenso, excluído, fora da Loja ou em 0 % na distribuição, e transfira-as à mão pelo cabeçalho.',
       'Ative a sinalização de conversas não respondidas em Configurações › Atendimento para que os atrasos apareçam coloridos aqui e para a pílula "Não respondidas" existir; sem a sinalização ela não aparece.',
-      'Quando um chatbot está conduzindo a conversa, aparece o selo "Bot em atendimento" na linha da lista e, com o nome do bot, no cabeçalho do chat. Antes de responder, abra o menu ⋮ e clique em "Encerrar sessão do bot": o bot para na hora e a partir daí é você quem atende. Sem esse passo, vocês dois falam com o cliente ao mesmo tempo.',
+      'Quando um chatbot está conduzindo a conversa, aparece o selo "Bot em atendimento" na linha da lista e, com o nome do bot, no cabeçalho do chat. Antes de responder, abra o menu ⋮ e clique em "Encerrar sessão do bot" (com o nome do bot ao lado). Uma janela confirma: clique em "Encerrar sessão". O bot para de responder este contato e a partir daí é você quem atende; ele só volta se uma mensagem nova disparar um gatilho. Sem esse passo, vocês dois falam com o cliente ao mesmo tempo.',
       'Sem selo, não há bot na conversa e "Encerrar sessão do bot" fica desabilitado. Não precisa clicar por garantia.',
       'Para responder um cliente do Instagram, abra a conversa dele e escreva no campo "Responder no Instagram...". Sai só texto: nessa conversa não aparecem anexo, áudio, template nem a citação de mensagem.',
+      'Para criar, renomear ou apagar etiquetas da Loja, clique em "Etiquetas", no topo da tela. Para pôr uma etiqueta num contato, use o menu ⋮ da conversa ou o painel do contato.',
+      'No menu ⋮ do cabeçalho você também acha "Marcar como não lida" (a conversa volta a contar como não lida) e "Editar Contato" (nome, telefone, fonte e etapa do funil; trocar a etapa ali vale como arrastar o card no Funil).',
     ],
     example:
       'Chega "ainda está disponível o apartamento do anúncio?". Você responde em minutos e o contato já entra na base com nome e telefone, pronto para acompanhar no Funil.',
@@ -500,7 +531,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'A visão "Por pendência" (o botão ao lado de "Lista") é opcional e só classifica as conversas já carregadas na tela. Role a lista para incluir as mais antigas.',
       'No número da pílula, "12" é o total da fila e "12+" quer dizer "pelo menos 12": as pílulas "Todas", "Minhas", "Sem responsável", "Não lidas" e "Arquivadas" sabem o total; "Aguardando", "Não respondidas", "Em atendimento" e "Responsável indisponível" contam só o que já foi carregado, e o "+" some quando você rola até o fim.',
       'A lista se atualiza sozinha a cada poucos segundos, então numa fila filtrada entram conversas que estavam fora da tela conforme você trabalha. Acompanhe o número da pílula: é ele que mostra a fila diminuindo.',
-      'Dá para parar de sinalizar uma conversa específica quando a demora é justificada, sem tirá-la da lista: clique no sino da linha, em "Parar de sinalizar esta conversa". O mesmo sino, em "Voltar a sinalizar esta conversa", desfaz.',
+      'Dá para parar de sinalizar uma conversa específica quando a demora é justificada, sem tirá-la da lista: clique no sino da linha, em "Parar de sinalizar esta conversa", e confirme em "Parar de sinalizar". O aviso de atraso some e ela deixa de contar como sem resposta. O mesmo sino, em "Voltar a sinalizar esta conversa", desfaz.',
       'Em número Evolution ou WAHA, tudo o que você manda daqui (texto, foto, vídeo, documento, áudio, mensagem de voz e o aviso de "digitando") sai pelo servidor do ConvoFlow, que guarda a chave do número. A tela não fala direto com o servidor do WhatsApp, e o anexo nunca vira link público. A resposta sai sempre pelo número da conversa, nunca por outro número da Loja.',
       'Se aparecer "Este número está desconectado. Peça ao Gestor da Loja para reconectar.", o número caiu e nada é enviado até ele voltar. O Gestor ou o Gerente reconecta em Números de WhatsApp, pelo botão de QR Code, com o celular do número em mãos. Se aparecer que o número "não tem a chave salva no ConvoFlow" ou que o servidor "recusou a chave", o Gestor abre os detalhes do número em Números de WhatsApp e usa "Substituir chave".',
       'Em número Evolution ou WAHA, "Arquivar conversa" (menu ⋮) também arquiva a conversa no WhatsApp do celular do número, e "Desarquivar" desfaz nos dois. No número da API Oficial a opção não aparece.',
@@ -520,7 +551,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Gerente atende as Lojas da própria Conta escolhendo a Loja no seletor do topo: abre o histórico, responde e marca como lida, igual ao Gestor. O que o Gerente não faz é apagar conversa ou contato de uma Loja.',
       'A resposta rápida entra no campo com as variáveis já trocadas pelos dados de quem está na conversa, e só sai quando você clica em enviar. Dá para ajustar antes.',
       'No campo de mensagem, Enter envia e Shift+Enter quebra a linha. Depois de enviar o cursor continua no campo, então dá para emendar a próxima mensagem sem clicar na caixa de novo.',
-      'Microfone apagado não grava: passe o mouse ou toque nele para ver o motivo. Ou o número da Loja está desconectado (peça ao Gestor da Loja para reconectar em Números de WhatsApp), ou é número da API Oficial e o cliente não escreve há mais de 24 horas: aí só um template reabre a conversa, e o anexo também fica travado até lá.',
+      'Microfone apagado não grava: passe o mouse ou toque nele para ver o motivo. São quatro: a conversa não tem número de WhatsApp para enviar (peça ao Gestor da Loja para conectar um); o número da conversa está desconectado (peça ao Gestor para reconectar em Números de WhatsApp); o contato não tem número de WhatsApp para receber; ou é número da API Oficial e o cliente não escreve há mais de 24 horas, e aí só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa. Nesse último caso o anexo também é recusado quando você clica em enviar.',
+      'Se ao clicar no microfone aparecer "Este navegador não grava áudio", grave pelo celular ou anexe um arquivo de áudio pelo clipe.',
       'Se aparecer "O microfone está bloqueado", clique no cadeado ao lado do endereço do site, permita o microfone e tente de novo. No celular a permissão fica nos ajustes do navegador. "Nenhum microfone encontrado" quer dizer que o aparelho não tem microfone ligado; "está sendo usado por outro programa", que uma chamada ou outro app está com ele.',
       'A mensagem de voz chega para o cliente com o microfone, igual às gravadas no próprio WhatsApp, e no número da API Oficial ele pode ver a transcrição. Até cerca de 2 minutos e meio ela toca na hora; mais longa, o cliente toca depois de baixar. Em iPhone com sistema anterior ao iOS 18.4 a gravação chega como arquivo de áudio, não como mensagem de voz.',
       'No histórico, áudio com o desenho do microfone é mensagem de voz, sua ou do cliente; sem o microfone é arquivo de áudio.',
@@ -550,16 +582,16 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É o único jeito de voltar a falar com um cliente pela API Oficial da Meta depois de 24 horas sem mensagem dele. Passado esse prazo, o texto livre não é entregue: a Meta só aceita um modelo que ela já aprovou, e é ele que reabre a conversa.',
     howToConfigure: [
-      'Abra a conversa. Se o cliente não escreve há mais de 24 horas, aparece um aviso acima do campo de mensagem com o botão "Enviar template"; ele também fica no menu ⋮ do cabeçalho, em qualquer momento.',
-      'Escolha o modelo na lista "Template": só os marcados como aprovados são entregues. Se a lista não carregar, digite o nome exato em "Nome do template" e escolha o idioma.',
-      'Preencha os "Parâmetros do corpo" na ordem: cada campo é um {{1}}, {{2}} do modelo. O que você digita vai substituir a marcação. Confira antes, porque o envio não tem prévia.',
+      'Abra a conversa. Se o cliente não escreve há mais de 24 horas, aparece um aviso no topo do chat, logo abaixo do cabeçalho, com o botão "Enviar template" (cinza enquanto o número estiver desconectado). O mesmo botão fica no menu ⋮ do cabeçalho, em qualquer momento.',
+      'Escolha o template na lista "Template": só os aprovados são entregues, e os outros aparecem com o selo e o aviso "Este template não está APROVADO". Se a lista não carregar, clique em "Digitar o nome manualmente" e preencha "Nome do template" e "Idioma do template" exatamente como estão na Meta.',
+      'Preencha os "Parâmetros do corpo" na ordem: cada campo é um {{1}}, {{2}} do template. O texto do template aparece na janela, mas sem os seus parâmetros: confira cada campo antes de enviar.',
       'Clique em "Enviar template". O modelo sai pelo número da conversa e fica gravado no histórico como uma mensagem sua; se o cliente responder, a janela de 24 horas reabre e o texto livre volta a funcionar.',
     ],
     example:
       'O cliente pediu orçamento na segunda e sumiu. Na quinta você abre a conversa, vê o aviso das 24 horas, escolhe o modelo "retorno_orcamento" com o nome dele no {{1}} e envia. Ele responde à tarde, e a partir daí você escreve normalmente.',
     tips: [
       'Isto só existe em número da API Oficial. Número conectado por QR Code (Evolution ou WAHA) não tem janela de 24 horas nem template: nele o texto livre sai sempre.',
-      'Fora da janela não é só o texto: o microfone e o anexo também ficam travados, com o motivo, até o cliente responder ao template.',
+      'Fora da janela não é só o texto: o microfone fica apagado, com o motivo, e o anexo é recusado ao enviar, até o cliente responder ao template.',
       'Modelo com variável errada é recusado pela Meta na hora, com o motivo no aviso vermelho e o código da Meta no fim, por exemplo "(código 132001 da Meta)" para modelo que não existe ou não foi aprovado. O erro mais comum é deixar um parâmetro vazio.',
       'Para falar com um telefone que ainda não está na lista, use "Nova Conversa": num número da API Oficial ela também começa por um template aprovado.',
       'Os modelos são criados e aprovados no Gerenciador do WhatsApp Business, não aqui. Para ver a lista completa da sua conta com o selo de cada um, use a tela Templates.',
@@ -578,7 +610,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Escolha em "Número da Loja" o número que vai enviar. Ele precisa estar conectado; se a Loja tem um número só, ele já vem escolhido.',
       'Digite o "Número do WhatsApp" com DDD.',
       'Número conectado por QR Code: escreva a "Mensagem inicial" (até 1000 caracteres).',
-      'Número da API Oficial: escolha o template na lista "Template" e preencha cada variável ({{1}}, {{2}}…). Só aparecem os aprovados. Se o cliente escreveu para esse número nas últimas 24 horas, o botão "Texto livre" fica liberado e você pode escrever em vez de usar template.',
+      'Número da API Oficial: com "Template aprovado" marcado, escolha o template na lista "Template" e preencha cada variável ({{1}}, {{2}}…). Só aparecem os aprovados. Se o cliente escreveu para esse número nas últimas 24 horas, o botão "Texto livre" fica liberado e você pode escrever em vez de usar template.',
       'Clique em "Iniciar Conversa". Se a Meta ou o WhatsApp recusar, o motivo aparece em vermelho na própria janela e nada é cadastrado. Se der certo, o contato é cadastrado (caso ainda não fosse) e a conversa abre na lista, já com a sua mensagem.',
     ],
     example:
@@ -599,11 +631,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a ficha do cliente ao lado do chat, para você mexer no cadastro sem sair da conversa: etapa do funil, etiquetas, anotações, follow ups pendentes e a origem do contato. O que você muda aqui vale em Contatos e no Funil na mesma hora.',
     howToConfigure: [
-      'Abra o painel pelo ícone no canto direito do cabeçalho da conversa ("Abrir painel do contato"); o mesmo ícone fecha. Em tela larga (1280px ou mais) a escolha fica salva: nas próximas conversas ele volta como você deixou. Em janela mais estreita (tablet, celular ou navegador reduzido), ele abre por cima do chat, como uma gaveta, e fecha ao tocar fora; e nasce fechado, mesmo que esteja aberto na tela larga.',
+      'Abra o painel pelo ícone "Detalhes do contato", no canto direito do cabeçalho da conversa; o mesmo ícone fecha. Em tela larga (1280px ou mais) a escolha fica salva: nas próximas conversas ele volta como você deixou. Em janela mais estreita (tablet, celular ou navegador reduzido), ele abre por cima do chat, como uma gaveta, e fecha ao tocar fora; e nasce fechado, mesmo que esteja aberto na tela larga.',
       'Em "Funil", troque a etapa em "Mover para etapa...": é o mesmo que arrastar o card no Funil de Vendas, e dispara as mesmas automações.',
-      'Em "Etiquetas", o botão de mais abre o mesmo diálogo de etiquetar do menu ⋮; a etiqueta vale para campanhas segmentadas.',
-      'Em "Notas", escreva o que o resto do time precisa saber antes de responder. Não há botão de salvar: o texto grava sozinho, e "Salvo automaticamente" confirma.',
-      'Em "Follow ups pendentes", veja o que já está marcado para este cliente antes de marcar outro. Para editar o cadastro inteiro (nome, email, telefone), use o link para Contatos no topo do painel.',
+      'Em "Etiquetas", o botão "Adicionar" abre o mesmo diálogo de etiquetar do menu ⋮; a etiqueta vale para campanhas segmentadas.',
+      'Em "Notas", escreva o que o resto do time precisa saber antes de responder. Não há botão de salvar: o texto grava sozinho 1 segundo depois que você para de digitar. A nota é a mesma de "Observações" em Contatos.',
+      'Em "Follow ups pendentes", veja o que já está marcado para este cliente antes de marcar outro. Para editar o cadastro inteiro (nome, email, telefone), clique em "Ver perfil completo", no topo do painel: ele abre a tela Contatos, onde você procura o cliente.',
       'Se a mesma pessoa fala com a Loja pelo WhatsApp e pelo Instagram, clique em "Vincular a um contato do Instagram" no topo do painel (na conversa do Instagram, o botão é "Vincular a um contato do WhatsApp"). Digite o nome, o @ ou o telefone da outra conta e escolha a pessoa certa na lista.',
       'Na confirmação, escolha o que vale quando os dois contatos discordam: nome, email, etapa do funil e campos personalizados. O resto acontece sozinho e aparece listado: etiquetas somadas, notas do Instagram embaixo das do WhatsApp, e "Não quer campanhas" ou bloqueio de qualquer um dos lados valendo para os dois. Clique em "Vincular".',
       'Com os contatos vinculados, use "Abrir conversa" ao lado do outro canal para pular para a conversa dele. Para desfazer, clique em "Desvincular" e confirme.',
@@ -611,7 +643,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Cliente confirma a visita pelo chat. Sem sair da conversa você move para "Visita agendada", anota "quer ver o de 2 quartos também" e confere que o follow up de amanhã já existe.',
     tips: [
-      'As seções "Fonte do lead", "Campos personalizados" e "Informações" vêm recolhidas: origem do anúncio, o que o chatbot coletou nas variáveis e os dados de cadastro. Clique no título para abrir.',
+      'As seções "Fonte do contato", "Campos personalizados" e "Informações" vêm recolhidas: origem do anúncio, o que o chatbot coletou nas variáveis e os dados de cadastro. Clique no título para abrir. "Campos personalizados" só aparece quando o contato tem algum.',
       'A nota é do contato, não da conversa: quem abrir esse cliente por qualquer número vê a mesma anotação.',
       'Mover de etapa aqui pode disparar automação (gatilho "Mudança de etapa") e follow up, igual ao Funil.',
       'Vincular não junta nada: os dois contatos e as duas conversas continuam existindo, cada um no seu canal e com o seu responsável. O que você escolhe na confirmação é gravado no contato do WhatsApp; o do Instagram fica como estava, sem telefone. Se a etapa mudar, as automações de etapa disparam como num arraste no Funil.',
@@ -631,8 +663,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É o cadastro por trás de toda conversa. Quem o chatbot capturou, quem veio de campanha e quem você cadastrou à mão ficam todos aqui, e é desta base que campanhas e automações escolhem para quem falar.',
     howToConfigure: [
       'Não precisa cadastrar nada para começar: o contato é criado sozinho na primeira mensagem recebida.',
-      'Complete nome e email e aplique tags. Tag é o que você vai usar depois para segmentar campanha.',
-      'O selo "Aceita campanhas" na linha quer dizer que a pessoa autorizou receber campanhas; "Não quer campanhas", que ela pediu para não receber. Para mudar, clique no selo: uma janela pergunta antes e explica o efeito. Só marque "Aceita campanhas" com a autorização da pessoa.',
+      'Complete nome e email e aplique etiquetas. Etiqueta é o que você vai usar depois para separar o público de uma campanha.',
+      'A coluna "Consentimento" mostra a autorização de cada pessoa. "Aceita campanhas": ela autorizou receber campanhas. "Não quer campanhas": pediu para não receber, e fica fora de toda campanha. "Bloqueado": o contato foi bloqueado. Sem selo, aparecem os dois botões, "Aceita campanhas" e "Não quer campanhas", para você registrar. Para mudar, clique no selo: uma janela pergunta antes e explica o efeito. Só marque "Aceita campanhas" com a autorização da pessoa.',
       'Não existe importação de planilha: base antiga entra sozinha, à medida que essas pessoas escrevem, ou à mão em "Novo Contato". Cadastre antes só quem precisa estar numa campanha segmentada, e já coloque a etiqueta no cadastro.',
       'Em "Novo Contato", digite o telefone com DDI e DDD, como 55 11 99999-9999. Pode colar com espaço, parêntese ou traço: fica gravado só com os dígitos.',
       'Na Loja com Instagram, use o filtro "Todos / WhatsApp / Instagram" acima da lista. Cada contato traz o logo do canal ao lado do nome, e a busca também acha pelo @, com ou sem o "@".',
@@ -643,12 +675,12 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Campos personalizados são preenchidos automaticamente pelo chatbot quando você usa "Salvar resposta como variável". Não precisa criar o campo antes.',
       'Padronize as etiquetas em minúscula e sem acento ("cliente quente"): fica muito mais fácil de acertar na hora de separar o público.',
-      'Contato sem tag nenhuma é contato que nunca vai entrar numa campanha segmentada.',
+      'Contato sem etiqueta nenhuma é contato que nunca vai entrar numa campanha separada por etiqueta.',
       'Contato do Instagram não tem telefone. No lugar do número aparece o @ (ou "Instagram", enquanto o @ não chegou), e em "Editar" o @ fica só para leitura. Nome, email, observações e etiquetas você edita igual.',
       'A mesma pessoa no WhatsApp e no Instagram são dois contatos. O sistema nunca junta nem vincula os dois sozinho, nem quando o nome é igual: só quem atende decide, pelo "Vincular". Vinculados, continuam sendo duas linhas, cada uma com o ícone de corrente ao lado do nome.',
       'Vincular pode quem atende, desde que enxergue as conversas dos dois contatos. Desvincular pode o Gestor, o Gerente, o Superadmin e quem fez o vínculo; a opção "Desvincular" só aparece no menu para essas pessoas.',
       '"Novo Contato" cria contato de WhatsApp. Contato do Instagram só aparece quando a pessoa manda mensagem no direct.',
-      'Na exportação, as colunas "Canal" e "Usuário do Instagram" dizem de onde cada contato veio, e a última, "Vinculado a", diz qual é o outro contato da mesma pessoa. O filtro de canal e o de conexão também valem para o arquivo.',
+      'Na exportação, as colunas "Canal" e "Usuário do Instagram" dizem de onde cada contato veio, e a última, "Vinculado a", diz qual é o outro contato da mesma pessoa. O arquivo segue só o filtro de canal e o seletor de número, acima da lista: busca, etapa, fonte e etiquetas da coluna de filtros não entram nele.',
       'Campanha continua indo só para contato do WhatsApp: vincular não dá telefone ao contato do Instagram, e as etiquetas dele não o colocam numa campanha.',
     ],
     category: 'tela',
@@ -658,7 +690,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     moduleName: 'funnel',
     title: 'Funil de Vendas',
     whatItDoes:
-      'É onde a venda tem etapa e responsável. Cada card é um lead numa etapa, e mover o card é o que registra que a negociação andou. O chatbot e as automações também movem cards sozinhos.',
+      'É onde a venda tem etapa. Cada card é um lead numa etapa, e mover o card é o que registra que a negociação andou. O chatbot e as automações também movem cards sozinhos.',
     howToConfigure: [
       'Ajuste as etapas para o seu processo real antes de usar: clique em "Configurar etapas", crie as etapas na ordem em que acontecem (botão "Adicionar etapa") e feche. Etapa genérica não informa nada; "Visita agendada" informa.',
       'O funil é sempre de uma Loja. Gestor: você monta o da sua Loja. Gerente: você monta o de qualquer Loja da Conta; com a Conta em foco no seletor do topo, o Funil pede para escolher a Loja antes do quadro, do "Novo Lead" e do "Configurar etapas" (com uma Loja só, "Abrir a Loja" já entra nela e reabre a janela que você tinha aberto).',
@@ -666,6 +698,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Arraste o card do lead para a etapa nova conforme a negociação evolui.',
       'Para cadastrar um lead direto no funil, clique em "Novo Lead" (ou em "Adicionar lead", no menu da coluna): nome, telefone com DDD e etapa, e "Criar lead". Telefone que já é contato da Loja não é duplicado: o card dele vai para a etapa escolhida.',
       'Para automatizar, use a ação "Mudar de etapa" nas Automações ou o bloco "Mover no Funil" no chatbot.',
+      'O menu de cada coluna (Gestor e Gerente) tem "Adicionar lead", "Editar etapa" (nome e cor), "Configurar etapa" e "Apagar etapa", que abre "Configurar etapas" para você confirmar lá.',
     ],
     example:
       'Etapas "Novo lead → Contato feito → Visita agendada → Proposta → Fechado". O chatbot qualifica e já joga o lead em "Contato feito"; o corretor move para "Visita agendada" quando marca a visita.',
@@ -691,7 +724,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Não há o que configurar para anúncios: a origem chega junto com a primeira mensagem e o anúncio vira uma fonte sozinho.',
       'Abra a aba Resumo e escolha o período (o único filtro da aba). Os números são só dos contatos que chegaram nesse intervalo. A comparação de cada cartão é com o período anterior de mesmo tamanho.',
-      'Use a aba Fontes para ver quantos contatos cada anúncio trouxe, e para cadastrar à mão uma origem que você controla por fora (link na bio, portal, indicação). "Nova fonte", no topo, abre o mesmo formulário: nome, tipo e os códigos de campanha (Origem, Meio e Campanha, os UTM), e a tela monta o link para você copiar. Troque o começo do link pelo endereço da sua página.',
+      'Use a aba Fontes para ver quantos contatos cada anúncio trouxe. Para organizar uma origem que você controla por fora (link na bio, portal, indicação), clique em "Nova fonte", no topo, ou em "Adicionar fonte", na aba: nome, tipo e os códigos de campanha (Origem, Meio e Campanha, os UTM), e a tela monta o link para você copiar. Troque o começo do link pelo endereço da sua página.',
       'A aba Análises abre os mesmos contatos por dia, por fonte e por etapa do funil.',
     ],
     example:
@@ -702,6 +735,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'A Meta reaproveita o mesmo código em criativos diferentes, então o nome da fonte termina com os últimos dígitos do anúncio. É o que separa dois criativos de mesmo título.',
       'A tela não sabe quanto você gastou: o valor investido não vem da Meta para cá. Ela responde "quantos contatos cada anúncio trouxe", não "quanto custou cada contato".',
       'Os números são atualizados a cada 15 minutos. Um contato que acabou de chegar pode levar esse tempo para aparecer nos gráficos, mas já aparece na conversa.',
+      'Fonte cadastrada à mão não soma contatos sozinha: o ConvoFlow não lê os códigos UTM de quem clica no seu link. Os códigos servem para a ferramenta de visitas do seu site; quem conta contato por anúncio aqui é a identificação automática da Meta.',
     ],
     category: 'tela',
     area: 'Marketing',
@@ -712,9 +746,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Serve para prestar contas a quem não abre o sistema: o dono da imobiliária, o diretor, o cliente da agência. Você monta o recorte uma vez em vez de remontar planilha todo mês.',
     howToConfigure: [
-      'Escolha o período: o relatório sai da Loja aberta no seletor, no período escolhido. O tipo (Campanhas, Conversas, Funil, Geral) muda só o título do email; o conteúdo é sempre o mesmo.',
+      'Clique em "Novo Relatório", dê um nome e escolha o tipo (Campanhas, Conversas, Funil de Vendas ou Geral) e "Como os números chegam": só no corpo do email, ou no corpo e numa planilha CSV anexa. O tipo muda só o título do email. O relatório sai da Loja aberta no seletor, sempre com os últimos 30 dias: o envio na hora não tem escolha de período.',
       'Na segunda etapa você vê a lista do que vai no relatório. É a lista completa: contatos, conversas, mensagens, contatos por etapa do funil e três números de atendimento da Loja inteira: a 1ª resposta de uma pessoa (mediana, isto é, na metade das conversas iniciadas no período alguém do time respondeu em até aquele tempo; não conta bot nem campanha), quantas conversas esperam uma pessoa agora (e quantas delas sem responsável) e quantas conversas do período ficaram sem resposta de pessoa. Não há nada para marcar ou desmarcar.',
-      'Na última etapa escolha como os números chegam: só no corpo do email, ou no corpo e numa planilha CSV anexa. Escolha os destinatários e clique em "Enviar agora". O envio é feito uma vez, na hora.',
+      'Na última etapa marque "Enviar por Email", "Enviar por WhatsApp" ou os dois, escreva os "Destinatários" (emails e números com DDD, separados por vírgula) e clique em "Enviar agora". O envio é feito uma vez, na hora.',
       'Mande primeiro para você mesmo e confira os números no email antes de mandar para o dono ou o cliente.',
       'Para repassar sozinho toda semana, abra a aba Agendamentos e crie um agendamento: nome, frequência, horário e os emails que recebem. Email digitado no campo entra na lista mesmo sem clicar no +.',
       'Vai gerar sempre o mesmo recorte? Na aba Criar, salve um modelo com nome, descrição e tipo. Ele aparece na primeira aba, e "Gerar" abre o envio já preenchido. Para mudar um modelo, exclua e salve outro: não há edição.',
@@ -744,16 +778,19 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Aqui você administra os bots: quais existem, qual está no ar e em qual número. O desenho do fluxo é feito no construtor; esta lista é quem coloca o bot em produção.',
     howToConfigure: [
       'Crie o chatbot e escolha, em "Número de WhatsApp", o número em que ele vai responder.',
-      'Defina o gatilho, que é o que faz o bot entrar na conversa: "Primeiro contato" (a primeira mensagem de quem nunca falou com você), "Palavra-chave" (uma das palavras que você cadastrar), "Fora do horário" (qualquer mensagem fora do horário de funcionamento da Loja) ou "Etapa do funil" (contato que está numa etapa escolhida).',
-      'Abra o construtor, monte o fluxo e publique. Bot salvo não é bot publicado.',
-      'Se houver mais de um bot no mesmo número, ajuste a prioridade para decidir quem responde primeiro.',
+      'Defina o gatilho, que é o que faz o bot entrar na conversa: "Primeiro contato" (a primeira mensagem de quem nunca falou com você), "Palavra-chave" (a mensagem contém uma das palavras que você cadastrar, em qualquer parte), "Fora do horário" (qualquer mensagem fora do horário de funcionamento da Loja) ou "Etapa do funil" (um contato que já está na etapa escolhida manda mensagem). O bot só entra quando chega mensagem e não há outra sessão de bot aberta com esse contato.',
+      'Clique em "Criar e Abrir Editor", monte o fluxo e clique em "Publicar". O bot só responde com a chave "Ativo" ligada (ela vem ligada) e com o selo "Publicado".',
+      'Se houver mais de um bot no mesmo número, ajuste a "Prioridade" (0 a 100): entra o de número MAIOR. Com números iguais, a ordem não é garantida.',
+      'Para mudar depois o nome, o número, os gatilhos ou a prioridade, abra o construtor e clique em "Editar Bot", na barra do topo.',
       'Não existe gatilho para quando o atendente não responde: o bot não entra sozinho numa conversa parada. Para isso, use a regra de tempo sem resposta em Configurações › Distribuição e transferência.',
     ],
     example:
       '"Triagem de plantão" atende toda primeira mensagem, pergunta o bairro de interesse e transfere para o corretor de plantão. Fica publicado no número da imobiliária, com prioridade 1.',
     tips: [
       'Publicar valida o fluxo: se faltar ligação entre blocos ou campo obrigatório, o sistema recusa e mostra o que corrigir.',
-      'Para parar de atender por um período, desative o bot em vez de apagar. Apagar leva o fluxo junto.',
+      'Para parar de atender por um período, desligue a chave "Ativo" do bot em vez de apagar. Excluir pede confirmação e leva o fluxo junto, sem desfazer.',
+      '"Ativo" e "Publicado" são coisas diferentes: "Publicado" quer dizer que o fluxo passou pela validação; "Ativo" é a chave do cartão. O contador "Ativos" do topo conta também bot ainda não publicado.',
+      'O chatbot responde só no WhatsApp. Conversa do Instagram não passa por bot nenhum: a conta do Instagram nem aparece na escolha do número.',
       'Bot só responde por um número conectado: sem número de WhatsApp conectado, ele não responde ninguém, mesmo publicado.',
       'O bot pertence à Loja que está no seletor do topo, porque o número de WhatsApp é da Loja. Se você é gerente e cuida de mais de uma, confira a Loja selecionada antes de criar ou editar: o bot montado numa não responde na outra.',
       'O gatilho "Fora do horário" usa o horário de funcionamento da Loja, que não fica nesta tela: edita-se em Configurações › Distribuição e transferência, dentro do cartão "Transferência por tempo sem resposta". O horário só aparece com a chave do cartão ligada. Ligue-a só para ele aparecer, ajuste fuso, dias e horas, desligue a chave de volta e salve: o horário fica gravado e a transferência automática continua desligada. Sem nada gravado, vale segunda a sexta, 9h às 18h, horário de Brasília.',
@@ -771,13 +808,14 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Arraste "Início do Fluxo" primeiro. Só pode existir um por chatbot.',
       'Arraste os blocos seguintes e ligue as bolinhas, saída de um na entrada do próximo. Bloco solto não executa.',
       'Clique num bloco para configurar o conteúdo dele no painel da direita (no tablet e no celular o painel abre por cima do desenho e fecha ao tocar fora).',
-      'Salvar guarda o rascunho; Publicar valida o fluxo inteiro e coloca no ar.',
+      'Publicar valida o fluxo inteiro e coloca no ar. Salvar grava o fluxo sem validar: num bot que AINDA não foi publicado, é rascunho; num bot já publicado, o que você salva passa a valer na hora, nas próximas conversas. Por isso, num bot no ar, prefira "Publicar" para salvar: ele confere antes.',
     ],
     example:
       'Início → Enviar Texto ("Olá! Sou o assistente da imobiliária") → Fazer Pergunta ("Qual bairro você procura?", salvando em {bairro}) → Transferir para Atendente.',
     tips: [
       'Cada bloco tem o próprio botão de ajuda no painel da direita, com o passo-a-passo daquele bloco.',
-      'Com o selo "Não salvo" no topo, a seta de voltar pergunta antes de sair: o que não foi salvo se perde.',
+      'Com o selo "Não salvo" no topo, a seta de voltar pergunta antes de sair: o que não foi salvo se perde. Enquanto ele aparece, o selo "Publicado" some.',
+      'Para trocar o nome, o número, os gatilhos ou a prioridade do bot, clique em "Editar Bot", na barra do topo.',
       'Ctrl+Z desfaz e Ctrl+Y refaz. Delete apaga o bloco selecionado.',
       'Para remover uma ligação, use o × sobre a seta ou arraste a ponta dela para um espaço vazio.',
       'Se Publicar recusar por falta de ligação, o aviso lista os blocos com saída solta, um por um, e o "Ver no fluxo" de cada linha leva o desenho até ele. No desenho esses blocos ficam com borda vermelha. Menu de Opções precisa de uma ligação por opção, e Condição precisa das duas saídas, Verdadeiro e Falso.',
@@ -792,7 +830,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É o envio ativo: você fala com muita gente de uma vez, sem esperar o cliente escrever. É também a função com mais risco de bloqueio do número, então cuidar da lista e do texto faz parte do trabalho.',
     howToConfigure: [
-      'Monte primeiro o público: escolha por etiqueta em vez de mandar para a base toda. Marque "Só para quem aceita campanhas" para respeitar quem autorizou.',
+      'Monte primeiro o público: escolha por etiqueta em vez de mandar para a base toda. Marque "Só para quem aceita campanhas" para mandar só a quem autorizou; na "Planilha", aí, só sai o telefone de um contato que já aceita campanhas. Marcado ou não, quem não quer campanhas e quem está bloqueado ficam sempre de fora.',
+      'Em número da API Oficial aparece "Tipo de envio", com "Texto livre" já marcado. Para falar com quem não escreveu nas últimas 24 horas, clique em "Template aprovado" (mensagem pronta que a Meta aprovou), escolha o template e preencha os "Parâmetros do corpo". Com template, o que sai é ele: o campo "Mensagem" não é enviado. Em número de QR Code não existe essa escolha.',
       'Escreva a mensagem e clique nos botões de variável ("Nome do contato", "Primeiro nome"...) para personalizar: eles inserem {name}, {first_name} no texto.',
       'Faça um teste com poucos contatos antes de liberar a lista inteira.',
       'Depois do disparo, acompanhe a entrega e as respostas na própria campanha.',
@@ -802,10 +841,13 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Mensagem idêntica para milhares de números é o caminho mais rápido para o WhatsApp bloquear a linha. Personalize e envie em lotes.',
       'Quem nunca falou com você tende a denunciar como spam. Priorize contatos que já conversaram.',
-      'Número da API Oficial recém-conectado tem um teto diário de envio na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time. Quem ficar fora do teto naquele dia aparece nos Detalhes da campanha como "skipped" e não é reenviado sozinho. Monte outra campanha para esses contatos no dia seguinte, ou planeje a primeira semana em lotes.',
+      'Número da API Oficial recém-conectado tem um teto diário de envio na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time. Quem ficar fora do teto naquele dia aparece nos Detalhes da campanha como "Não enviada" e não é reenviado sozinho. Monte outra campanha para esses contatos no dia seguinte, ou planeje a primeira semana em lotes.',
       'Como Atendente você acompanha as campanhas e as respostas que elas geram, mas não cria nem dispara: para você não aparecem "Nova Campanha", "Disparar agora", Editar, Duplicar, Pausar, Cancelar nem Excluir. Quem dispara é o Gestor ou o Gerente; os passos acima são deles.',
       'Antes de agir, o sistema pergunta: "Disparar agora" (e "Confirmar e Disparar" no assistente) mostra para quantos contatos e por qual número a campanha vai sair; "Cancelar" e "Excluir" avisam que não dá para desfazer; e fechar o assistente com algo preenchido pergunta se você quer sair sem salvar.',
-      'Campanha é só WhatsApp. Contato do Instagram não aparece na lista de "Contatos" do passo Público e não conta no total das Tags, mesmo com a etiqueta escolhida. Para falar com ele, responda pelo direct em Conversas.',
+      'O total que aparece antes de disparar é uma estimativa: quem não quer campanhas, quem está bloqueado e, com a caixa marcada, quem não autorizou saem na hora do envio. O número de verdade fica nos Detalhes.',
+      'Número da API Oficial com "Texto livre": quem está fora da janela de 24 horas não recebe e aparece como "Não enviada" nos Detalhes, com o motivo. Número de QR Code não tem essa trava.',
+      'As abas mostram "Ativas" (inclui as pausadas), "Agendadas", "Concluídas" e "Rascunhos". Campanha cancelada não aparece em nenhuma delas.',
+      'Campanha é só WhatsApp. Contato do Instagram não aparece na lista de "Contatos" do passo Público e não conta no total das etiquetas, mesmo com a etiqueta escolhida. Para falar com ele, responda pelo direct em Conversas.',
     ],
     category: 'tela',
     area: 'Marketing',
@@ -817,10 +859,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É o raio-X de uma campanha depois do disparo: o que foi configurado, a mensagem como saiu, os números de entrega e, pessoa por pessoa, se a mensagem foi enviada, entregue, lida, respondida, ou se falhou e por quê.',
     howToConfigure: [
       'Na lista de Campanhas, abra o menu ⋮ da campanha e clique em "Ver detalhes".',
-      'Leia primeiro os contadores: Total, Enviadas, Entregues, Lidas, Respondidas, Falhas e a "Taxa de entrega". Entregue e não lida é normal nas primeiras horas; enviada e não entregue por muito tempo é número inválido ou bloqueado.',
-      'Se houve falhas, o bloco vermelho lista os erros mais comuns com a quantidade de cada um. É ele que diz se o problema foi número inválido, template recusado ou limite da Meta.',
-      'Em "Destinatários", ache a pessoa pelo nome e veja o status dela com data de envio, entrega e leitura. Para responder a quem respondeu, vá em Conversas: a resposta chegou lá.',
-      'Em "Configuração" e "Prévia da mensagem", confira o que realmente saiu: número, público, horário comercial, limite diário e o texto com as variáveis trocadas.',
+      'Leia primeiro os contadores: Total, Pendentes, Enviadas, Entregues, Lidas, Respondidas, Falhas e a "Taxa de entrega". Entregue e não lida é normal nas primeiras horas; enviada e não entregue por muito tempo é número inválido ou bloqueado.',
+      'Se houve falhas, o bloco vermelho lista os erros mais comuns com a quantidade de cada um. É ele que diz se o problema foi número inválido, template recusado ou limite da Meta. Envio "Não enviada" não entra nesse bloco: o motivo dele fica na linha da pessoa.',
+      'Em "Destinatários" ficam os 50 envios mais recentes, com o status de cada um e as datas de envio, entrega e leitura. "Não enviada" traz embaixo o motivo que o servidor registrou, como fora da janela de 24 horas. Para responder a quem respondeu, vá em Conversas: a resposta chegou lá.',
+      'Em "Configuração", confira público, horário comercial e limite diário; o número aparece no topo da janela. A "Prévia da mensagem" mostra o texto com um nome de exemplo no lugar das variáveis, não a mensagem de cada pessoa; numa campanha de template, o que saiu foi o template.',
     ],
     example:
       '500 disparos, 60 falhas. O bloco de erros mostra 58 vezes "número inválido": a lista importada tinha DDD faltando. Você corrige os contatos e duplica a campanha só para eles.',
@@ -838,21 +880,21 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:templates': {
     title: 'Templates',
     whatItDoes:
-      'Mostra os modelos de mensagem que a Meta já aprovou para a sua conta. É a lista do que você pode disparar para quem está fora da janela de 24 horas, sem precisar abrir o Gerenciador da Meta para conferir.',
+      'Mostra os templates aprovados da sua conta: as mensagens prontas que a Meta aprovou. É a lista do que você pode mandar para quem está fora da janela de 24 horas, sem precisar abrir o Gerenciador da Meta para conferir.',
     howToConfigure: [
-      'Confira o selo de cada modelo: só o que está "Aprovado" pode ser enviado. Pendente, Rejeitado, Pausado e Desativado aparecem para você saber por que aquele nome não funciona.',
+      'Use "Buscar" para achar pelo nome e confira o selo de cada template: só o que está "Aprovado" pode ser enviado. Pendente, Rejeitado, Pausado e Desativado aparecem para você saber por que aquele nome não funciona.',
       'Leia o corpo da mensagem. Os trechos destacados como {{1}} e {{2}} são as variáveis: você preenche cada uma na hora do envio, na ordem em que aparecem.',
-      'Se a sua Loja tiver mais de uma conta do WhatsApp Business, escolha a conta no seletor do topo. Os modelos são de cada conta, não de cada número.',
-      'Use "Atualizar" depois de aprovar um modelo na Meta. A lista é buscada na hora, mas fica alguns minutos em memória.',
+      'Se a sua Loja tiver mais de uma conta do WhatsApp Business, escolha a conta no seletor do topo. Os templates são de cada conta, não de cada número.',
+      'Use "Atualizar" depois de aprovar um template na Meta. A lista é buscada na hora, mas fica alguns minutos em memória.',
     ],
     example:
       'O cliente sumiu há três dias. Você abre esta tela, vê que "retorno_orcamento" está Aprovado com duas variáveis, e usa esse modelo na conversa para reabrir o atendimento.',
     tips: [
-      'Modelos são criados e enviados para aprovação no WhatsApp Manager da Meta, não aqui. Esta tela é consulta: ela não cria, não edita e não exclui.',
-      'Passadas 24 horas desde a última mensagem do cliente, o WhatsApp bloqueia texto livre. Só um modelo aprovado reabre a conversa. É para isso que eles existem.',
+      'Templates são criados e enviados para aprovação no WhatsApp Manager da Meta, não aqui. Esta tela é consulta: ela não cria, não edita e não exclui.',
+      'Passadas 24 horas desde a última mensagem do cliente, o WhatsApp bloqueia texto livre. Só um template aprovado reabre a conversa. É para isso que eles existem.',
       'O mesmo nome aparece uma vez por idioma. Aqui eles vêm agrupados: o nome aparece uma vez só, com os idiomas dentro.',
-      'Modelos existem apenas na API Oficial (Meta). Número conectado por QR Code não tem modelo: nele vale texto livre dentro da janela de 24 horas.',
-      'Aprovação na Meta não é definitiva: ela pode pausar ou desativar um modelo depois, por qualidade. Por isso esta tela consulta a Meta na hora, em vez de guardar uma cópia que envelhece.',
+      'Templates existem apenas na API Oficial (Meta). Número conectado por QR Code não tem template: nele o texto livre sai sempre.',
+      'Aprovação na Meta não é definitiva: ela pode pausar ou desativar um template depois, por qualidade. Por isso esta tela consulta a Meta na hora, em vez de guardar uma cópia que envelhece.',
     ],
     category: 'tela',
     area: 'Marketing',
@@ -873,7 +915,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Excluir um follow up (no botão de excluir da janela de edição) pede confirmação: se ele era um envio agendado, a mensagem não sai mais.',
       'Quando o cliente responde, o sistema já para a sequência e cancela as mensagens agendadas dele. Você não precisa limpar a lista na mão. O que ele cancela é ajustável em Configurações › Follow ups.',
       'Tarefa manual é a exceção: por padrão ela sobrevive à resposta, porque foi você quem planejou aquele passo.',
-      'Follow up sem mensagem definida é só um lembrete para o corretor; com mensagem, vira envio.',
+      'O modo decide o que acontece: "Manual" é só um lembrete para quem atende, sem mensagem; "Agendado" exige a mensagem e envia sozinho na hora marcada; "Sequência" inscreve o contato numa cadência pronta. Em "Agendado", "Recorrência" repete o envio na frequência e no número de vezes escolhidos.',
+      'O envio agendado sai pelo número do follow up; sem ele, pelo número da conversa do contato; sem nenhum dos dois, pelo número ativo mais antigo da Loja.',
+      'Número da API Oficial: o envio "Agendado" é só texto. Se o cliente não escreveu nas últimas 24 horas, ele não sai e o follow up fica com o aviso "Configure um template aprovado no follow up.". Para esse caso, mande o template aprovado pela conversa.',
       'Contato do Instagram só aparece no modo "Manual" do "Novo Follow up". Em "Agendado" e "Sequência" ele sai da lista, porque esses modos mandam WhatsApp sozinhos e ele não tem telefone. Se você escolher um contato do Instagram no Manual e trocar para um desses modos, a escolha é desfeita e você escolhe de novo.',
       'Cadência curta demais irrita e cadência longa demais perde a venda. Uma semana é o intervalo em que a maioria dos contatos ainda lembra de você.',
     ],
@@ -888,16 +932,17 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Clique em "Nova sequência" e dê um nome que diga o objetivo ("Reativação de leads frios", por exemplo).',
       'Decida "Parar ao receber resposta": ligado, a primeira mensagem do cliente encerra a cadência dele, e os passos que faltavam não saem. Desligado, a sequência vai até o fim mesmo com o cliente respondendo.',
-      'Monte os passos com "Adicionar passo". Cada passo é uma mensagem de WhatsApp (com variáveis como {{primeiro_nome}}) ou uma tarefa para o operador, com prioridade. O tempo de cada um conta "Após a inscrição" ou "Após o passo anterior", em minutos, horas ou dias.',
-      'Deixe "Ativa" ligada e salve. Sequência inativa continua rodando para quem já está nela, mas não aceita inscrição nova.',
+      'Monte os passos com "Adicionar passo". Cada passo é "WhatsApp (automático)", uma mensagem com variáveis como {{primeiro_nome}}, ou "Tarefa manual", uma tarefa para o atendente, com prioridade. O tempo de cada um conta "Após a inscrição" ou "Após o passo anterior", em minutos, horas ou dias.',
+      'Deixe "Ativa" ligada e salve. Sequência desligada não aceita inscrição nova e encerra quem está nela antes do próximo passo; religar não traz ninguém de volta.',
       'Para inscrever um contato, vá em "Novo Follow up", escolha o modo "Sequência" e a sequência. É por lá que a cadência começa; a aba só desenha. Contato do Instagram não aparece nesse modo: sequência manda WhatsApp, e ele não tem telefone.',
     ],
     example:
       'Sequência "Pós-visita": mensagem em 1 dia ("o que você achou?"), tarefa "Ligar para o cliente" em 3 dias, mensagem em 7 dias com um imóvel parecido. O contato que responde no segundo dia sai da cadência; o que não responde recebe as três etapas.',
     tips: [
       'Excluir uma sequência pede confirmação: os contatos que estão nela saem e não recebem os próximos passos.',
-      'Não dá para editar uma sequência depois de criada. Para mudar um passo, crie outra, inscreva os próximos contatos nela e desative a antiga. Quem já estava inscrito termina a versão antiga.',
-      '"Excluir" apaga a sequência, os passos e TODAS as inscrições em andamento de uma vez, sem desfazer. As tarefas e mensagens que já tinham sido criadas ficam na lista de Follow ups, mas soltas, sem a cadência a que pertenciam. Prefira desativar.',
+      'Não dá para editar uma sequência depois de criada. Para mudar um passo, crie outra e inscreva os próximos contatos nela. Deixe a antiga ligada enquanto houver gente terminando nela: desligar encerra essas inscrições no próximo passo.',
+      '"Excluir" apaga a sequência, os passos e TODAS as inscrições em andamento de uma vez, sem desfazer. As tarefas e mensagens que já tinham sido criadas ficam na lista de Follow ups, mas soltas, sem a cadência a que pertenciam.',
+      'Número da API Oficial: um passo de WhatsApp para quem não escreveu nas últimas 24 horas não sai, porque o passo não leva template. Planeje a cadência para quem ainda conversa com você, ou use tarefa manual.',
       'A opção "Parar ao receber resposta" é da sequência, não da Loja: a aba Configurações › Follow ups decide o que a resposta cancela nos follow ups avulsos, e não manda nesta trava.',
       'As mensagens saem pelo número da Loja em que o contato foi inscrito, nos horários dos passos, também de madrugada, se a conta cair de madrugada. Pense nos intervalos em dias inteiros.',
     ],
@@ -910,10 +955,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Automação reage a eventos; chatbot conduz conversa. Aqui você diz "quando isso acontecer, faça aquilo", sem diálogo e sem esperar o cliente escolher opção. É o que trabalha nos bastidores.',
     howToConfigure: [
-      'Escolha o gatilho: o evento que inicia tudo (mensagem recebida, novo contato, mudança de etapa, variável capturada, horário).',
-      'Adicione as ações na ordem em que devem acontecer.',
+      'Escolha o gatilho: o evento que inicia tudo (mensagem recebida, novo contato, mudança de etapa ou variável capturada pelo chatbot).',
+      'Adicione as ações na ordem em que devem acontecer. Para esperar entre uma e outra, use o passo "Aguardar".',
       'Use condições para a automação parar quando não fizer sentido continuar.',
-      'Ative a automação. Automação criada e desativada não roda.',
+      'Clique em "Ativar". Automação pausada não roda; "Pausar" suspende sem apagar.',
     ],
     example:
       'Gatilho "Mudança de etapa" para "Visita agendada" → ação "Agendar follow up" em 24 horas com "Confirmando sua visita amanhã, {first_name}?" → ação "Adicionar etiqueta" com "visita marcada".',
@@ -921,6 +966,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Fechar o construtor com mudanças não salvas pergunta antes ("Sair sem salvar?"). Excluir um passo também pede confirmação; a lixeira fica no canto de cada passo. Uma automação ativa só salva com todos os passos completos: passo com o selo "Incompleto" impede, mas dá para salvar a automação inativa e terminar depois.',
       'Condição que não passa PARA a automação: ela não desvia para um caminho alternativo. Para ter dois caminhos, use o chatbot.',
       'Cada passo tem o próprio botão de ajuda no painel de configuração.',
+      'Excluir uma automação pede confirmação e não dá para desfazer. O selo "Com erros" na lista avisa que execuções recentes falharam: abra e confira os passos.',
+      'Número da API Oficial: "Enviar Mensagem" para quem não escreveu nas últimas 24 horas não sai, sem aviso na conversa. Num gatilho de etapa com espera longa, isso acontece com frequência.',
       'Comece com uma automação curta e confira as execuções antes de montar algo longo: automação grande errada erra em silêncio.',
     ],
     category: 'tela',
@@ -935,18 +982,20 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É a base de tudo: sem um número conectado aqui, não existe conversa, campanha nem chatbot. Cada linha da lista é um número de WhatsApp ligado ao ConvoFlow.',
     howToConfigure: [
       'Clique em "Conectar número" e escolha como conectar: "API Oficial do WhatsApp" (direto com a Meta, o caminho mais estável e o único que dispara campanha dentro das regras), "QR Code pelo ConvoFlow (Evolution)" (número comum, lendo o QR Code, no servidor do ConvoFlow) ou "QR Code no seu servidor (WAHA)" (número comum, lendo o QR Code, num servidor WAHA seu). As duas de QR Code são conexões não oficiais.',
-      'Na API Oficial, clique em "Conectar com a Meta": abre uma janela da própria Meta, em que você entra com o login do Facebook da empresa, escolhe (ou cria) a conta do WhatsApp Business, informa o número e confirma o código. Você não copia código nem chave. Os campos "Código do número na Meta", "Código da conta do WhatsApp Business" e "Chave de acesso permanente" são só para a empresa que já tem um app próprio na Meta. O que ter em mãos antes está no tutorial "Antes de conectar seu WhatsApp"; o passo-a-passo da conexão, em "Conectar seu WhatsApp".',
-      'No QR Code pelo ConvoFlow você informa só o nome do número e um código interno (o botão "Gerar" cria um): o servidor de WhatsApp é o do ConvoFlow e já vem configurado. Deixe ligado "Receber as mensagens automaticamente".',
-      'No QR Code no seu servidor (WAHA) você informa o nome do número, o endereço do seu servidor WAHA, a chave do servidor se ele exigir e o nome da sessão. Aqui o servidor é seu (ou de quem o hospeda para você): endereço e chave são pedidos porque a plataforma não o conhece. Ao salvar, o servidor do ConvoFlow confere o endereço (endereço de rede interna, como localhost, 10... ou 192.168..., é recusado), cria a sessão no seu servidor WAHA com um endereço de entrega e uma senha só deste número, e guarda endereço, chave e senha no cofre do ConvoFlow. Se o seu servidor recusar a chave ou não criar a sessão, nada é salvo.',
-      'Conecte lendo o QR Code no celular que tem o número, ou use o código de pareamento se preferir não escanear. No Evolution e no WAHA, o botão de QR Code fica ao lado do número enquanto ele está desconectado. Se o WAHA ainda estiver iniciando a sessão, a janela mostra "Preparando o QR Code..." e pede de novo sozinha.',
-      'O estado do número se atualiza sozinho: quando ele conecta ou cai, o Evolution ou o WAHA avisa o ConvoFlow e a lista mostra a mudança em até 30 segundos. Ao abrir a tela, o ConvoFlow confere uma vez o estado de cada número Evolution e WAHA. O botão "Atualizar status" confere na hora.',
-      'O botão de detalhes (o "i" ao lado de um número Evolution ou WAHA) mostra se a chave de acesso ao servidor está guardada: "Chave configurada: sim" ou "não". A chave e o endereço do servidor nunca aparecem, nem em parte. "Substituir chave" testa a chave nova naquele número antes de guardar; se o servidor recusar, nada muda. No WAHA é a chave do seu servidor; no Evolution, a chave deste número, nunca a do servidor inteiro.',
+      'Na API Oficial, clique em "Conectar com a Meta": abre uma janela da própria Meta, em que você entra com o login do Facebook da empresa, escolhe (ou cria) a conta do WhatsApp Business, informa o número e confirma o código. Você não copia código nem chave. Os campos "Código do número na Meta", "Código da conta do WhatsApp Business" e "Chave de acesso permanente" são só para a empresa que já tem um app próprio na Meta. O que ter em mãos antes está no tutorial "Antes de conectar seu WhatsApp"; o passo a passo da conexão, em "Conectar número pela API Oficial". Para QR Code, veja "Conectar número por QR Code (Evolution)" e "Conectar número no seu servidor (WAHA)".',
+      'No QR Code pelo ConvoFlow você informa só o "Nome do número" e o "Código interno do número" (o botão "Gerar" cria um): o servidor de WhatsApp é o do ConvoFlow e já vem configurado. Deixe ligado "Receber as mensagens automaticamente" e clique em "Criar e abrir QR Code": a janela do QR Code abre sozinha. Neste modo, ligações para o número são recusadas sozinhas e mensagens de grupos não entram no ConvoFlow.',
+      'No QR Code no seu servidor (WAHA) você informa o nome do número, o endereço do seu servidor WAHA (o campo vem preenchido com um exemplo: troque pelo seu), a chave do servidor se ele exigir e o nome da sessão. Aqui o servidor é seu (ou de quem o hospeda para você): endereço e chave são pedidos porque a plataforma não o conhece. Ao clicar em "Salvar número", o servidor do ConvoFlow confere o endereço (endereço de rede interna, como localhost, 10... ou 192.168..., é recusado), testa se o seu servidor responde, cria a sessão nele com um endereço de entrega e uma senha só deste número, e guarda endereço, chave e senha no cofre do ConvoFlow. Se o seu servidor recusar a chave ou não criar a sessão, nada é salvo. Depois, clique no ícone de QR Code do número na lista.',
+      'O nome da sessão WAHA precisa ser só deste número em todo o ConvoFlow: se outro número já usa o mesmo nome, o cadastro é recusado. Evite deixar "default".',
+      'Conecte lendo o QR Code no celular que tem o número: no WhatsApp do celular, Configurações › Aparelhos conectados › Conectar um aparelho. O botão de QR Code fica ao lado do número enquanto ele está desconectado. "Atualizar conexão" pede um QR Code novo se o anterior venceu, e a janela fecha sozinha em "Conectado com sucesso!". Se o WAHA ainda estiver iniciando a sessão, a janela mostra "Preparando o QR Code..." e pede de novo sozinha. O código de pareamento só aparece quando o servidor Evolution manda um; o WAHA não manda.',
+      'O estado do número se atualiza sozinho: quando ele conecta ou cai, o Evolution ou o WAHA avisa o ConvoFlow e a lista mostra a mudança em até 30 segundos. Ao abrir a tela, o ConvoFlow confere uma vez o estado de cada número Evolution e WAHA. O botão "Atualizar status", na linha, confere aquele número na hora; "Atualizar", no topo, só relê a lista.',
+      'O botão de detalhes (o ícone de informação ao lado de um número Evolution ou WAHA) mostra o "Código interno do número" e se a chave de acesso ao servidor está guardada: "Chave configurada: sim" ou "não". A chave e o endereço do servidor nunca aparecem, nem em parte. "Substituir chave" pede a chave nova (pelo menos 8 caracteres) e, em "Testar e guardar", testa naquele número antes de guardar; se o servidor recusar, nada muda. No WAHA é a chave do seu servidor; no Evolution, a chave deste número, nunca a do servidor inteiro.',
       'Confirme que o status ficou "Conectado" antes de configurar chatbot ou campanha.',
       'O endereço de entrega (o "webhook") é o que faz as mensagens chegarem na hora, e você não configura nada: ele é ligado sozinho quando o número é conectado. Num número Evolution conectado, o botão "Ver endereço de entrega" ao lado dele só mostra esse endereço, para conferir ou passar ao suporte; a tela não muda nem testa o endereço. Na API Oficial ele é configurado uma única vez para o ConvoFlow inteiro, não a cada número.',
       'Errou o nome? Use o lápis "Renomear número" para trocar. Muda só o rótulo que aparece nas telas; a conexão, as conversas e o número continuam os mesmos. Gerente e Gestor renomeiam; Atendente não vê o botão.',
       'A lixeira "Excluir número" só funciona em número VAZIO. Ao abrir, a janela confere e mostra quantas conversas, mensagens, contatos, chatbots, sessões de chatbot, campanhas e follow ups dependem dele. Se qualquer quantidade for maior que zero, a exclusão é recusada e não há como forçar: apagar o número apagaria tudo isso, sem volta. Gerente e Gestor veem a lixeira; Atendente não. O Gerente também exclui nas Lojas da Conta dele.',
       'Quer usar o número de novo ou refazer a conexão? Isso é reconectar, não excluir. Na API Oficial, reconectar é o mesmo botão da primeira vez: "Conectar número" › "API Oficial do WhatsApp" › "Conectar com a Meta", escolhendo o mesmo número na janela da Meta. O ConvoFlow reconhece o número e atualiza no lugar (as mesmas conversas, mensagens, contatos, chatbot e sessões) e avisa "Número reconectado". O nome só muda se você digitar um novo; o registro do número não é refeito, então o aquecimento da primeira semana não recomeça. Excluir e criar de novo é exatamente o caminho que perde o histórico.',
-      'Reconectar exige o mesmo alcance que conectar: Gestor na própria Loja, Gerente na Conta dele ou numa Loja dela. Se o número já está conectado em outra Conta ou Loja que você não administra, a Meta nem é chamada: aparece "Este número já está conectado em outra Conta ou Loja que você não administra" e nada muda. Se o número é seu, escreva para contato@convoflow.com.br. Na primeira conexão, o número nasce na Conta ou Loja que está escolhida no seletor do topo, não na Conta do seu perfil: o Gerente confere o seletor antes de clicar.',
+      'Reconectar exige o mesmo alcance que conectar: Gestor na própria Loja, Gerente na Conta dele ou numa Loja dela. Se o número já está conectado em outra Conta ou Loja que você não administra, a Meta nem é chamada: aparece "Este número já está conectado em outra Conta ou Loja que você não administra" e nada muda. Se o número é seu, escreva para contato@convoflow.com.br. Na API Oficial, o número novo nasce na Conta ou Loja que está escolhida no seletor do topo: o Gerente confere o seletor antes de clicar.',
+      'Gerente: número de QR Code (Evolution ou WAHA) nasce sempre na Conta do seu perfil, mesmo com uma Loja escolhida no topo, e por isso não aparece na lista daquela Loja. Para um número de QR Code ficar numa Loja, quem conecta é o Gestor dela.',
       'A conexão do Instagram tem validade, e o cartão dela mostra até quando vale: "Válida até", com dia e hora de Brasília. Você não precisa fazer nada para mantê-la: todo dia o ConvoFlow confere e, quando faltam 30 dias ou menos, renova sozinho. Depois de cada renovação a data avança.',
       'Se o cartão do Instagram mudar, ele diz o que houve. "Vence em", seguido de quantos dias faltam: a renovação automática não conseguiu renovar e tenta de novo no dia seguinte. "Reconectar": o Instagram não aceita mais renovar aquele acesso, por exemplo porque a senha da conta mudou ou a permissão do ConvoFlow foi retirada no Instagram. "Vencida": passou da data, e as respostas pelo Instagram param. Nos dois últimos casos só reconectar a conta resolve: clique em "Reconectar" no cartão e entre no Instagram com a MESMA conta. Quem não vê o botão (o Atendente), ou uma conta antiga que ficou na Conta e não numa Loja, faz o que o cartão diz: escreve para contato@convoflow.com.br.',
       'Na Loja com Instagram, a tela tem duas seções: "Números de WhatsApp" e "Contas do Instagram". O cartão de cada conta mostra o @, até quando a conexão vale e o estado dela. Os contadores do topo somam as duas seções: o primeiro vira "Total de conexões" e diz quantas são de cada canal, e uma conta do Instagram vencida, por reconectar ou desligada conta como desconectada.',
@@ -964,8 +1013,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Desconectar um número conectado por QR Code (Evolution ou WAHA) pede confirmação: a janela diz qual número para de receber e enviar e como conectar de novo (botão de QR Code, com o celular em mãos). Mensagens que chegarem enquanto ele estiver desconectado podem não entrar no sistema.',
       'O endereço e a chave do servidor de cada número Evolution e WAHA ficam no cofre do ConvoFlow. Quem usa os dois é só o servidor do ConvoFlow, para conferir o estado, gerar o QR Code, desconectar, enviar pelo chatbot e pelas campanhas e enviar as respostas das Conversas. Nenhuma tela, de nenhum cargo, os mostra, e o banco recusa a leitura das colunas antigas de chave, servidor e QR Code para qualquer cargo, inclusive pela API.',
       'Chave, senha ou endereço de servidor também não entram pela configuração do número: se alguém tentar gravar isso pela API, o banco recusa com "A configuração do número não pode levar chave, senha ou endereço de servidor". Para trocar a chave de um número Evolution ou WAHA, abra os detalhes do número e use "Substituir chave".',
-      'Os números pertencem à Conta e quem os conecta é o Gerente ou o Gestor. Como Superadmin você não abre esta tela de nenhuma Conta: ela mostra "Exclusivo para Lojas" mesmo com a Conta escolhida no seletor. Para apoiar um cliente que não consegue conectar: confira na Administração se a Conta tem acesso e se a pessoa tem o cargo certo, e passe a ela os tutoriais "Antes de conectar seu WhatsApp" e "Conectar seu WhatsApp" da Ajuda. O que trava costuma ser um pré-requisito (login da Meta, número ainda no aplicativo, PIN), não a tela.',
+      'Os números pertencem à Conta e quem os conecta é o Gerente ou o Gestor. Como Superadmin você não abre esta tela de nenhuma Conta: ela mostra "Exclusivo para Lojas" mesmo com a Conta escolhida no seletor. Para apoiar um cliente que não consegue conectar: confira na Administração se a Conta tem acesso e se a pessoa tem o cargo certo, e passe a ela os tutoriais "Antes de conectar seu WhatsApp" e "Conectar número pela API Oficial" da Ajuda. O que trava costuma ser um pré-requisito (login da Meta, número ainda no aplicativo, PIN), não a tela.',
       'Número desconectado é atendimento parado: mensagem que chega com ele fora pode não entrar no sistema. Reconecte assim que ver "Desconectado".',
+      'Tamanho dos arquivos em número Evolution ou WAHA: documento até 30 MB; foto, vídeo e áudio até 16 MB. Na API Oficial valem os limites da Meta.',
       'Número conectado por QR Code (Evolution ou WAHA): usar o mesmo número no WhatsApp do celular e aqui ao mesmo tempo pode derrubar a sessão.',
       'Número na API Oficial: ele deixa de funcionar no aplicativo do WhatsApp do celular. Não é instabilidade, é a regra da Meta: o número passa a atender só pela API, e o ConvoFlow não liga o modo em que os dois convivem. Avise o time antes de conectar.',
       'Na API Oficial, quem cobra as conversas é a Meta, e ela cobra você, não o ConvoFlow. O cartão fica no seu portfólio empresarial da Meta, o mesmo em que a conta do WhatsApp Business foi criada. Sem forma de pagamento válida lá, as mensagens param de sair mesmo com o número "Conectado" aqui. Os valores atuais estão na página da Meta: developers.facebook.com/docs/whatsapp/pricing.',
@@ -981,7 +1031,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:settings': {
     title: 'Configurações',
     whatItDoes:
-      'Reúne o que vale só para você e o que vale para a Loja inteira. A diferença importa: Perfil e Segurança são seus; Atendimento, Distribuição e transferência, Respostas rápidas, Follow ups e Avisos para sistemas mudam o comportamento para todo o time; Assinatura e Chaves de API são da Conta e só o Gerente as vê.',
+      'Reúne o que vale só para você e o que vale para a Loja inteira. A diferença importa: Perfil e Segurança são seus; Atendimento, Distribuição e transferência, Respostas rápidas, Follow ups e Avisos para sistemas mudam o comportamento para todo o time; Assinatura e Chaves de API são da Conta e, dos cargos da Conta, só o Gerente as vê. Avisos para sistemas não aparece para o Atendente.',
     howToConfigure: [
       'Escolha a aba. Cada aba tem o próprio botão de ajuda com o passo-a-passo dela.',
       'Antes de salvar algo em Atendimento, Distribuição e transferência, Respostas rápidas, Follow ups ou Avisos para sistemas, lembre que a mudança atinge o time todo.',
@@ -1001,15 +1051,17 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'São seus dados como usuário: é o nome que o resto do time vê quando uma conversa é transferida e o que aparece nos relatórios por pessoa. Não é o nome da Loja.',
     howToConfigure: [
+      'Para pôr sua foto, clique em "Alterar Foto" e escolha uma imagem JPG, GIF ou PNG de até 1 MB.',
       'Preencha nome e sobrenome: é assim que você aparece para o time.',
-      'Confira o telefone, usado para te identificar e para avisos.',
-      'Salve para aplicar.',
+      'Confira o telefone: ele aparece para quem administra a equipe.',
+      'Clique em "Salvar Alterações", no fim do quadro.',
     ],
     example:
       'A corretora preenche "Ana Ribeiro" e a foto. Nas conversas transferidas o time passa a ver quem está atendendo, em vez de um email solto.',
     tips: [
       'Perfil em branco atrapalha relatório por pessoa: fica impossível saber quem atendeu o quê.',
       'Trocar senha é na aba Segurança, não aqui.',
+      'O email é o seu login e não muda por aqui. Para trocar, fale com quem administra a sua Conta.',
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1062,19 +1114,19 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   'page:settings-visibility': {
     title: 'Configurações › Distribuição e transferência',
     whatItDoes:
-      'Quatro assuntos, três cartões, na ordem em que uma conversa passa por eles: o que cada atendente enxerga na caixa de entrada e se ele pode passar uma conversa para um colega (cartão 1), como as conversas NOVAS são divididas entre a equipe, a distribuição automática (cartão 2), e o que acontece quando o responsável não responde a tempo: a transferência automática por tempo sem resposta (cartão 3). As duas primeiras valem só para o cargo atendente; Gestor e Gerente sempre veem e transferem tudo. A distribuição automática e a transferência automática vêm desligados: sem mexer neles, nada muda. Só Gestor e Gerente alteram os três cartões; como Atendente você vê os valores da Loja em modo leitura, e os passos abaixo são deles.',
+      'Quatro assuntos, três cartões, na ordem em que uma conversa passa por eles: o que cada atendente enxerga na caixa de entrada e se ele pode passar uma conversa para um colega (cartão 1), como as conversas NOVAS são divididas entre a equipe, a distribuição automática (cartão 2), e o que acontece quando o responsável não responde a tempo: a transferência automática por tempo sem resposta (cartão 3). As duas primeiras valem só para o cargo atendente; Gestor e Gerente sempre veem e transferem tudo. A distribuição automática e a transferência automática vêm desligadas: sem mexer nelas, nada muda. Só Gestor e Gerente alteram os três cartões; como Atendente você vê o cartão 1 em modo leitura e, nos cartões 2 e 3, uma frase dizendo se estão ligados. Os passos abaixo são do Gestor e do Gerente.',
     howToConfigure: [
       'Escolha o que o atendente vê: "Todas as conversas da Loja" (como hoje), "Sem responsável + as dele" (vê a fila sem dono e o que está com ele, não vê o que está com um colega) ou "Só as dele" (só o que está com ele).',
       'Em qualquer opção, quem já respondeu numa conversa continua vendo-a depois de transferida, e quem passou uma conversa adiante continua vendo-a até outra pessoa reatribuí-la.',
       'Decida se o atendente pode transferir. Desligado, ele ainda assume conversas sem responsável; passar para outra pessoa fica só com Gestor e Gerente. O servidor recusa a tentativa; não é só o botão que some.',
-      'Salve o primeiro cartão. A mudança vale na hora: a lista de Conversas do atendente se refaz no próximo carregamento.',
+      'Clique em "Salvar alterações" no primeiro cartão. A mudança vale na hora: a lista de Conversas do atendente se refaz no próximo carregamento.',
       'No cartão "Distribuição de conversas novas", ligue "Distribuir conversas novas automaticamente". Ele só aparece com pelo menos 2 atendentes ativos na Loja; com um só, a tela diz isso em uma linha em vez de esconder.',
       'Decida se o Gestor também recebe conversas e quando a conversa ganha responsável: "Na primeira mensagem" (na hora, mesmo com chatbot) ou "Quando o chatbot terminar" (só depois que a sessão do bot acaba; sem bot publicado para o número, é na hora; se o bot não engatar, o sistema atribui sozinho em até 2 minutos). Se algum fluxo termina em "Transferir para Atendente" nomeando uma pessoa, escolha "Quando o chatbot terminar" (veja a dica sobre isso abaixo).',
       'Ajuste a fatia de cada pessoa. A soma precisa dar exatamente 100: a tela diz quanto falta ou sobra e não corrige o que você digitou. Coloque 0 para tirar alguém da distribuição automática sem tirar da Loja; "Dividir igualmente" refaz as fatias por igual.',
-      'Salve a distribuição. Se você mudou a chave do Gestor, salve antes de mexer nas fatias: quem participa muda, o sistema divide igual e aí você ajusta.',
-      'No cartão "Transferência por tempo sem resposta", ligue a regra e defina o tempo em MINUTOS DE FUNCIONAMENTO (mínimo 5; o padrão é 60) e o máximo de transferências por espera (padrão 3). A tela mostra, com o histórico real da Loja, quantas esperas dos últimos 30 dias teriam passado do limite com o valor que você digitou. Use isso para calibrar antes de salvar.',
-      'Confira o horário de funcionamento da Loja (fuso, dias e horas). Só os minutos dentro dele contam: cliente que escreve às 22:00 não gera transferência de madrugada; o relógio retoma quando a Loja abre. É o mesmo horário que o chatbot usa para "fora do horário": mudar aqui muda lá.',
-      'Salve a regra. A partir daí, a cada 2 minutos o sistema confere as conversas com responsável em que o cliente espera resposta humana há mais tempo que o limite e passa cada uma para o próximo da distribuição automática, nunca para quem já a tinha. Quem recebe é avisado no sino.',
+      'Clique em "Salvar distribuição". Se você mudou a chave "Gestor também recebe conversas", salve antes de mexer nas fatias: quem participa muda, o sistema divide igual e aí você ajusta.',
+      'No cartão "Transferência por tempo sem resposta", ligue "Transferir conversa sem resposta" e defina o "Tempo sem resposta" em MINUTOS DE FUNCIONAMENTO (de 5 a 1440; o padrão é 60) e o "Máximo de transferências por espera" (de 1 a 10; padrão 3). A tela mostra, com o histórico real da Loja, quantas esperas dos últimos 30 dias teriam passado do limite com o valor que você digitou. Use isso para calibrar antes de salvar.',
+      'Confira o "Horário de funcionamento da Loja" (fuso, dias e horas), que aparece dentro do cartão 3 só com "Transferir conversa sem resposta" ligado. Só os minutos dentro dele contam: cliente que escreve às 22:00 não gera transferência de madrugada; o relógio retoma quando a Loja abre. É o mesmo horário que o chatbot usa para "fora do horário": mudar aqui muda lá. Quer só o horário, sem a transferência? Ligue a chave, ajuste o horário, desligue a chave e clique em "Salvar regra": o horário fica gravado.',
+      'Clique em "Salvar regra". A partir daí, a cada 2 minutos o sistema confere as conversas com responsável em que o cliente espera resposta humana há mais tempo que o limite e passa cada uma para o próximo da distribuição automática, nunca para quem já a tinha. Quem recebe é avisado no sino.',
     ],
     example:
       'Loja com Ana e Bruno em 70/30: a cada 10 conversas novas, 7 chegam já com a Ana e 3 com o Bruno, sem ninguém precisar transferir e sem aviso no sino. Quando um cliente antigo volta a escrever, a conversa continua com quem já atendia: a distribuição automática nunca troca um responsável que já existe.',
@@ -1134,6 +1186,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Para cancelar, clique em "Cancelar assinatura" e leia o aviso até o fim: ele diz até que dia o sistema continua liberado. No teste grátis, nada é cobrado. Depois da primeira cobrança, você usa até o fim do período já pago, sem nova cobrança e sem reembolso dos dias que faltam.',
       'Mudou de ideia? Enquanto a data não chega, "Desfazer cancelamento" deixa a assinatura como estava. Ele pede confirmação, porque a próxima mensalidade volta a ser cobrada no cartão salvo.',
       'Para ter mais Lojas, escolha quantas em "Quantas Lojas extras?" e clique em "Contratar". Com a assinatura ativa, uma janela mostra o novo total de Lojas e quanto a mais por mês, antes de cobrar; a diferença proporcional do mês entra na próxima fatura. Para reduzir as Lojas extras, escreva para contato@convoflow.com.br.',
+      ...(API_ADDON_RELEASED
+        ? [
+            `Para outro sistema ler os dados da sua Conta, ligue a API no cartão "API e integrações": clique em "Ligar a API" (o botão mostra o preço por mês) e confirme. No primeiro mês entra na próxima fatura só o valor proporcional aos dias que faltam. Dá para contratar com a assinatura paga, depois do teste grátis e com o cartão em dia. As chaves são criadas depois, na aba "Chaves de API".`,
+          ]
+        : []),
       'Em "Cobranças", no fim da aba, veja cada pagamento: a data, o valor, a situação ("Paga", "Reembolsada" ou "Reembolso parcial", com o valor e a data da devolução) e o recibo, em "Ver no Stripe". Quando a nota fiscal entrar no ar, a lista ganha a coluna "Nota fiscal", com o número da NFS-e e os botões "PDF" e "XML".',
     ],
     example:
@@ -1168,6 +1225,11 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O Superadmin vê os dados para a nota fiscal e as cobranças da Conta, mas não altera nada.',
       'A coluna "Nota fiscal" só aparece depois que a nota fiscal entra no ar; até lá a lista mostra só os pagamentos. A nota é emitida sozinha, alguns minutos depois do pagamento, e chega no email cadastrado nos dados para a nota fiscal, com o PDF anexado e um link que vale 7 dias. Depois disso, baixe o PDF e o XML pela própria lista.',
       'Reembolso total cancela a nota sozinho. Em reembolso parcial, ou se a nota aparecer como "Cancelar à mão", fale com o ConvoFlow (contato@convoflow.com.br).',
+      ...(API_ADDON_RELEASED
+        ? [
+            'Para parar a API, clique em "Desligar a API" no cartão "API e integrações" e confirme. O valor sai da fatura seguinte, sem crédito, e as chaves funcionam até o fim do mês já pago; o cartão mostra até quando. "Ligar de novo" volta a contratar. Numa Conta liberada pelo ConvoFlow, o cartão diz que a API é liberada por ele.',
+          ]
+        : []),
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1191,7 +1253,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Gerente: antes do botão, preencha o quadro "Dados para a nota fiscal" (CPF ou CNPJ, nome ou razão social, CEP e o resto do endereço, e o email que recebe a nota) e clique em "Salvar dados". Sem eles o botão fica travado. O CEP preenche rua, bairro, cidade e UF; se a busca não responder, preencha à mão.',
       'De volta do Stripe, a tela mostra "Confirmando seu pagamento" e abre o sistema sozinha assim que o pagamento é confirmado, normalmente em segundos. Não assine de novo enquanto isso: seria uma segunda assinatura.',
       'Gestor e Atendente: a tela não tem preço nem botão. Quem assina é a Conta, e a Conta é do Gerente; fale com ele.',
-      'Pagou em outra aba ou o suporte liberou seu acesso? Use o botão de reconferir acesso, em vez de sair e entrar de novo.',
+      'Pagou em outra aba ou o suporte liberou seu acesso? Use o botão de reconferir acesso ("Já paguei, reconferir acesso"; no teste grátis, "Já cadastrei o cartão, reconferir acesso"), em vez de sair e entrar de novo.',
+      'Gerente: embaixo de "não está ativa" a tela diz o motivo, por exemplo "A assinatura foi cancelada." ou "A assinatura foi suspensa porque o pagamento não foi concluído."',
     ],
     example: TRIAL_OFFER_ENABLED
       ? `Você criou a Conta ontem pelo site e hoje abre o sistema: aparece "Comece seu teste grátis de ${TRIAL_DAYS} dias", com a data da primeira cobrança. Você cadastra o cartão, volta do Stripe, vê "Confirmando seu pagamento" por alguns segundos e o sistema abre.`
@@ -1216,7 +1279,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Troca a senha que você usa para entrar. Antes de trocar, o sistema confere a sua senha atual. Depois da troca, todos os outros aparelhos e navegadores em que você estava conectado saem da sua conta; este aqui continua conectado. Quem vê o quê não muda: isso é definido pelo cargo, em Equipe.',
     howToConfigure: [
       'Digite a sua senha atual.',
-      'Digite a nova senha, com pelo menos 8 caracteres.',
+      'Digite a nova senha, com pelo menos 8 caracteres e diferente da atual.',
       'Repita a nova senha no último campo.',
       'Clique em "Salvar nova senha". Uma mensagem acima do botão confirma a troca e avisa que os outros aparelhos saíram.',
     ],
@@ -1225,11 +1288,6 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Esqueceu a senha atual? Saia do sistema e use "Esqueci minha senha" na tela de login.',
       'Se aparecer "A senha atual não confere", confira se o Caps Lock está ligado.',
-      ...(API_ADDON_RELEASED
-        ? [
-            `Em "API e integrações" você contrata o acesso à API por ${API_ADDON_PRICE_LABEL} por mês: no primeiro mês entra na próxima fatura só o valor proporcional aos dias que faltam. Dá para contratar depois do teste grátis e com o cartão em dia. Ao desligar, o valor sai da fatura seguinte, sem crédito, e as chaves funcionam até o fim do mês já pago. As chaves são criadas na aba "Chaves de API".`,
-          ]
-        : []),
       'Senha longa protege mais que senha complicada.',
       'Para remover o acesso de quem saiu do time, vá em Equipe. Trocar a sua senha não afeta o login das outras pessoas.',
     ],
@@ -1244,15 +1302,16 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Dê um nome ao aviso e informe o "Endereço do outro sistema", que vai receber os avisos.',
       'Em "Avisar quando", marque só o que interessa. Marcar tudo enche o outro sistema de avisos.',
-      'Preencha a "Senha de conferência". É com ela que o outro sistema confere que o aviso veio mesmo do ConvoFlow.',
-      'Deixe "Aviso ligado" marcado, clique em "Criar aviso" e provoque o acontecimento uma vez para ver o aviso chegar.',
+      'Preencha a "Senha de conferência (opcional)". Com ela, cada aviso chega assinado no cabeçalho X-ConvoFlow-Signature (sha256 do corpo com a senha), e o outro sistema confere que o aviso veio mesmo do ConvoFlow.',
+      'Deixe "Aviso ligado" marcado, clique em "Criar aviso" e provoque o acontecimento uma vez para ver o aviso chegar. Não há botão de teste: o primeiro aviso de verdade é o teste.',
     ],
     example:
       'Quando entra um contato novo, o n8n recebe o aviso, cadastra o contato no sistema da construtora e avisa o corretor de plantão por email.',
     tips: [
       'Remover um aviso pede confirmação: o endereço para de receber na hora, e o sistema que dependia dele deixa de ser avisado.',
       'Sem senha de conferência, qualquer um que descobrir o endereço pode se passar pelo ConvoFlow. Use sempre que o outro sistema aceitar.',
-      'Se o outro sistema responder com erro, o ConvoFlow tenta de novo por um tempo. Endereço errado só acumula tentativas: confira o endereço.',
+      'Os avisos saem em até 5 minutos depois do acontecimento, como um POST com os dados em JSON. Se o outro sistema responder com erro ou demorar mais de 10 segundos, o ConvoFlow tenta de novo, até 5 vezes, esperando mais a cada vez. Endereço errado só acumula tentativas: confira o endereço.',
+      'Cada aviso é da Loja escolhida no seletor do topo e só recebe o que acontece nela. Gerente: escolha a Loja antes de criar.',
       'Isto é saída de dados. Receber mensagem do WhatsApp é a outra ponta, em Números de WhatsApp.',
       'Só o Gestor e o Gerente cadastram, alteram e veem os avisos. O Atendente não vê esta aba: um aviso pode levar as mensagens da Loja inteira, inclusive as que o atendente não enxerga.',
     ],
@@ -1266,20 +1325,23 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Cria as chaves que deixam outro sistema ler os dados da sua Conta: uma planilha, um painel, o n8n. A chave é a senha desse acesso. Quem tem a chave lê o que você permitiu, e nada além.',
     howToConfigure: [
-      'Clique em "Nova chave" e dê um nome que diga onde ela vai ser usada, por exemplo Painel de vendas.',
+      `Antes da primeira chave, ligue a API da Conta: em Configurações › Assinatura, no cartão "API e integrações", clique em "Ligar a API" (o botão mostra o preço por mês). Sem isso, o servidor recusa criar a chave.`,
+      'Clique em "Nova chave" e dê um nome que diga onde ela vai ser usada, por exemplo Painel de vendas (até 60 letras).',
       'Marque o que a chave pode ler: contatos, conversas, funil, equipe e métricas já vêm marcados. O histórico das conversas (o texto das mensagens) e as fotos, áudios e documentos vêm desmarcados. Marque só se o serviço realmente precisar.',
       'Fotos, áudios e documentos só funcionam junto com o histórico das conversas. Eles chegam por links que valem 15 minutos.',
       'Em "Lojas", deixe "Todas as Lojas" (inclui as conversas da própria Conta) ou escolha só as Lojas que essa chave pode ver.',
-      'Escolha a validade: 30 dias, 90 dias ou 1 ano. Quando vence, a chave para de funcionar e você cria outra.',
+      'Escolha a validade: 30 dias, 90 dias (o padrão) ou 1 ano. Quando vence, a chave para de funcionar e você cria outra.',
       'Leia e marque a confirmação, depois clique em "Criar chave".',
-      'Copie a chave na tela que abre e guarde num lugar seguro. Ela aparece uma única vez: se perder, revogue e crie outra.',
-      'Para cortar um acesso, clique em "Revogar" na linha da chave. Vale na hora e não dá para desfazer.',
+      'Na janela "Sua chave está pronta", clique em "Copiar chave", guarde num lugar seguro e clique em "Já guardei a chave". Ela aparece uma única vez: se perder, revogue e crie outra.',
+      'Para usar, o outro sistema chama https://api.convoflow.com.br com a chave. O passo a passo para quem programa está em "Ver a documentação", ao lado do endereço.',
+      'Para cortar um acesso, clique em "Revogar" na linha da chave e confirme em "Revogar chave". Vale na hora e não dá para desfazer.',
     ],
     example:
       'Você cria a chave Painel de vendas só com Contatos, Funil e Métricas, para as Lojas do Centro e da Zona Sul, com validade de 90 dias. O painel passa a mostrar o funil sem ninguém copiar planilha, e não enxerga nenhuma mensagem.',
     tips: [
-      'Cada chave aceita 60 pedidos por minuto, e a Conta inteira, 5.000 por dia. Passou disso, o serviço recebe um aviso de limite e tenta de novo depois.',
-      'A Conta pode ter até 10 chaves em uso. A lista mostra quantas já foram criadas.',
+      'Cada chave aceita 60 pedidos por minuto, e a Conta inteira, 5.000 por dia. O dia vira à meia noite UTC, 21h de Brasília. Passou disso, o serviço recebe um aviso de limite e tenta de novo depois.',
+      'A Conta pode ter até 10 chaves em uso, e o topo da aba mostra quantas estão em uso ("3 de 10 chaves em uso"). Chave vencida ou revogada não conta.',
+      'O selo de cada chave diz como ela está: "Ativa"; "Suspensa (API desligada)", que volta sozinha quando a API é ligada de novo; "Dono inativo", quando quem criou a chave saiu da Conta, foi suspenso ou deixou de ser Gerente, e aí ela parou de vez (revogue e crie outra); "Expirada"; "Revogada".',
       'Em cada linha você vê o prefixo da chave, as permissões, as Lojas, quando expira e o último uso, com o endereço de rede de onde veio. Uso que você não reconhece é motivo para revogar.',
       'Se a API for desligada na Conta, as chaves ficam suspensas, não apagadas. Ao ligar de novo elas voltam a funcionar.',
       'A chave dá acesso aos dados dos seus clientes. Não cole em conversa, email ou arquivo que outras pessoas leem.',
@@ -1303,6 +1365,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Os avisos são seus: marcar como lido não muda nada para o resto do time.',
       'Aviso lido não resolve o atendimento: a conversa sem resposta continua na tela de Conversas.',
       '"Conversa transferida para você" com a frase "não respondeu em X min de funcionamento" é a regra de tempo sem resposta da Loja agindo: o cliente já está esperando. "Conversa sem resposta precisa de você" chega só ao Gestor e ao Gerente, quando a regra bateu no máximo de transferências ou não tem mais para quem transferir, uma vez só, até alguém responder.',
+      'Superadmin: os avisos "Política do WhatsApp foi atualizada" e "Monitor de política com problema" vêm da conferência semanal das regras do WhatsApp; a explicação está na ajuda da Administração.',
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1325,9 +1388,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Confira também a linha "Atendentes: 1 de 2" embaixo de cada Loja: são as vagas de atendente dela. Convite pendente aparece ali e ocupa vaga até a pessoa aceitar ou você cancelar.',
       'Use "Abrir" na lista de Lojas para colocar uma delas em foco e trabalhar dentro dela.',
       'Para mudar o nome de uma Loja, clique no lápis ao lado dela, digite o nome novo e clique em "Salvar nome". Como Gerente, você renomeia qualquer Loja da sua Conta; como Gestor, só a sua, no cartão "Sua Loja". Atendente não renomeia.',
-      'Convide a pessoa pelo email dela.',
-      'Escolha o cargo: ele define o que a pessoa vê e o que pode fazer.',
-      'Quem sai do time deve ter o acesso removido no mesmo dia.',
+      'Clique em "Convidar" e preencha Nome, Sobrenome e Email (o email é o login). Os obrigatórios têm asterisco, e enquanto falta algum o botão "Enviar convite" fica cinza e a janela diz o que falta.',
+      'Escolha o "Cargo": ele define o que a pessoa vê e o que pode fazer, e o cartão embaixo lista o que o cargo pode e não pode. Como Gerente, escolha também a "Loja"; como Gestor, o convite entra na sua Loja.',
+      'Clique em "Enviar convite". A pessoa aparece na lista com a situação "Pendente" e passa a "Ativo" quando cria a senha.',
+      'Quem sai do time deve ter o acesso removido no mesmo dia: no menu de Ações da pessoa, "Suspender" (dá para reativar) ou "Excluir" (de vez).',
     ],
     example:
       'Você abre a segunda unidade: cria a Loja "Filial Norte", convida um Gestor para ela e depois os corretores como Atendentes, cada um com o login próprio, em vez de todos usarem o mesmo acesso.',
@@ -1338,14 +1402,17 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O convite chega por email com um botão e um código de 6 dígitos, e vale por 24 horas. Quando a pessoa usa um, o outro deixa de valer. Quem perdeu o prazo, ou esqueceu a senha, resolve sozinho pelo "Esqueci minha senha" da tela de login: recebe um código novo e cria a senha. Você também pode disparar pelo "Redefinir senha" no menu de Ações.',
       'O plano Gerente inclui 5 Lojas. Quando elas acabam, "Nova Loja" fica cinza e o motivo aparece ao passar o mouse. Lojas adicionais são contratadas em Configurações › Assinatura.',
       'Cada Loja tem 1 Gestor e 2 vagas de Atendente, inclusive as Lojas adicionais. O Gestor não ocupa vaga de Atendente. Ocupam vaga quem está ativo e o convite pendente; quem está suspenso não. Para ter mais Atendentes em uma Loja, fale com o ConvoFlow: contato@convoflow.com.br. O atendente adicional é cobrado por mês, junto com o plano, ao preço combinado.',
-      'Com a Loja cheia, "Convidar" avisa antes de você preencher e não deixa enviar convite de Atendente para ela. Para abrir vaga: cancele um convite pendente ("Cancelar convite" no menu de Ações) ou suspenda alguém.',
+      'Com a Loja cheia, a janela de convite avisa assim que você escolhe "Atendente" e a Loja, e não deixa enviar. Para abrir vaga: cancele um convite pendente ("Cancelar convite" no menu de Ações) ou suspenda alguém.',
+      'Cada Loja tem um lugar de Gestor só. Gestor suspenso ou com convite pendente ainda ocupa esse lugar: para pôr outro, exclua o antigo ou cancele o convite. Se não fizer isso, o convite é recusado com "Esta loja já possui um gestor.".',
       '"Reativar" só funciona se a Loja tiver vaga: a pessoa volta a ocupar uma. Quem foi excluído não volta por "Reativar"; para essa pessoa voltar, convide de novo.',
       'Com a distribuição automática ligada (Configurações › Distribuição e transferência), quem entra na Loja recebe a própria fatia sozinho e quem sai é removido dela: as fatias se refazem em divisão igual, preservando quem estava em 0 %. Quem sai FICA com as conversas que já tinha; use a pílula "Responsável indisponível" em Conversas para movê-las.',
       'Como Gerente esta tela mostra as Lojas da sua Conta e as pessoas delas; como Gestor, mostra a sua Loja e as pessoas dela, e o convite já entra nela. Você não escolhe Loja, porque só tem a sua.',
       'Renomear muda só o nome: equipe, números de WhatsApp, conversas, histórico e o plano da Loja continuam como estão. O nome novo aparece na hora para você; quem já está com a tela aberta vê depois de recarregar a página.',
       'Login compartilhado quebra relatório por pessoa e apaga o histórico de quem atendeu o quê.',
       'Suspender corta o acesso na hora: a pessoa não consegue mais entrar (na tela de login ela vê "Acesso suspenso", com o pedido de falar com quem administra a equipe), e uma tela que ela deixou aberta para de mostrar conversas e de enviar mensagens. Quem está abaixo dela (os Atendentes de um Gestor suspenso) é suspenso junto. "Reativar" devolve tudo como era, mas só para a pessoa escolhida: quem foi suspenso junto precisa ser reativado um por um.',
-      'Suspender, Excluir, Cancelar convite e Redefinir senha pedem confirmação antes: a janela diz o que acontece com a pessoa (e com quem está abaixo dela, no caso de um Gestor) e se dá para desfazer. Redefinir senha manda um email com um link para a pessoa criar uma senha nova; a senha atual continua valendo até ela trocar.',
+      'Suspender, Excluir, Cancelar convite e Redefinir senha pedem confirmação antes: a janela diz o que acontece com a pessoa (e com quem está abaixo dela, no caso de um Gestor) e se dá para desfazer. "Reativar" não pergunta. Redefinir senha manda um email com o botão "Criar nova senha" e um código de 6 dígitos, que valem por 24 horas e por um uso; a senha atual continua valendo até ela trocar.',
+      '"Excluir" (só para quem está Ativo ou Suspenso) tira o acesso de vez e libera a vaga de Atendente ou o lugar de Gestor. As conversas e mensagens da pessoa ficam. Quem está abaixo dela é SUSPENSO, não excluído. A pessoa continua na lista com a situação "Excluído", e só volta com um convite novo.',
+      'O cargo, a Loja e o nome de quem já entrou não mudam pela Equipe. Cargo ou Loja errados: exclua e convide de novo, ou peça ao ConvoFlow.',
     ],
     category: 'tela',
     area: 'Equipe',
@@ -1358,12 +1425,13 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Leia a coluna que importa no seu momento: contatos (entrada), conversas (atendimento) ou mensagens (volume).',
       'Procure a Loja com muitos contatos e poucas conversas: é onde tem contato entrando e ninguém atendendo.',
-      'Entre nessa Loja pelo seletor de Conta do topo para investigar o caso.',
+      'Entre nessa Loja por "Escolher Loja", no topo, para investigar o caso.',
     ],
     example:
-      'Duas Lojas com 300 contatos no mês: a primeira teve 280 conversas e a segunda 90. O problema da segunda é atendimento, não geração de contato.',
+      'Duas Lojas com 300 contatos cada: a primeira tem 280 conversas e a segunda 90. O problema da segunda é atendimento, não geração de contato.',
     tips: [
       'Muitas mensagens com poucas conversas costuma ser campanha disparando sem ninguém responder as respostas.',
+      'Os números são o total de sempre de cada Loja, sem período: Loja nova sempre parece menor. A linha "Total" soma todas.',
       'A tela é do Gerente. Gestor e Atendente enxergam apenas a própria Loja.',
     ],
     category: 'tela',
@@ -1387,7 +1455,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Liberação manual é auditada: fica gravado quem liberou e quando.',
       'Superadmin não abre Conversas, Contatos, Funil, Chatbots, Campanhas, Follow ups, Automação nem Números de WhatsApp de NENHUMA Conta, nem escolhendo a Conta no seletor do topo: essas telas mostram "Exclusivo para Lojas". É privacidade do dado do cliente, de propósito.',
       'Quando um cliente pedir ajuda numa dessas telas, você apoia por três lugares: a Ajuda (você lê toda a documentação, inclusive das telas que não abre), o Dashboard da Conta escolhida no seletor (só números, sem conversa) e a Administração (acesso liberado, cargo certo, usuário ativo). O que é dado operacional, só quem é da Loja vê; peça a ela um print.',
-      'Revogar acesso fecha o sistema na hora para todo o time daquela Conta, o Gerente incluído. Ele não fica de fora do bloqueio: vê a tela de "Acesso bloqueado" com o botão de assinar, e resolve sozinho pelo cartão se quiser.',
+      'Revogar a liberação manual só fecha o sistema de uma Conta que não tem assinatura paga, em teste ou com pagamento pendente. Numa Conta assim, fecha na hora para todo o time, o Gerente incluído: ele vê a tela de "Acesso bloqueado" com o botão de assinar, e resolve sozinho pelo cartão se quiser. Numa Conta que paga, nada muda.',
+      'Toda segunda às 9h (UTC), o ConvoFlow confere as páginas de política do WhatsApp. Se o texto mudou, o Superadmin recebe no sino "Política do WhatsApp foi atualizada", com o resumo e o botão "Ver política", e um email. Se a conferência falhou, chega "Monitor de política com problema", com "Ver página": nada foi anunciado e o texto guardado continua o mesmo.',
       'O bloqueio não alcança o superadmin. Você continua entrando em qualquer Conta, inclusive nas que acabou de revogar.',
     ],
     category: 'tela',
@@ -1404,6 +1473,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Leia "Visto por último" para saber se a pessoa está usando o sistema. Ele é mais fiel que "Último acesso".',
       'Abra "Ver detalhes" no menu de Ações para ver tudo da pessoa: Conta, conversas em 7 e 30 dias, IP e navegador do último login.',
       'Para trazer um cliente novo, clique em "Convidar usuário". Daqui sai só convite de Gerente, com o "Nome da Conta" que é criada junto.',
+      'O menu de Ações de cada linha também tem "Redefinir senha", "Suspender", "Reativar", "Cancelar convite" e "Excluir", com as mesmas regras e confirmações da Equipe.',
     ],
     example:
       'Chega um "não consigo entrar". Você busca o nome e vê "Visto por último: há 2 horas": a pessoa estava usando até agora há pouco, então o problema é desta tentativa, não de acesso bloqueado. Se fosse "há 40 dias", você olharia antes a assinatura da Conta.',
@@ -1454,9 +1524,9 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     minRole: 'superadmin',
     title: 'Limites de uso por nível',
     whatItDoes:
-      'Registra o teto de uso planejado para cada nível da hierarquia: quantos números de WhatsApp, contatos ou disparos cada cargo poderá ter. Hoje é só registro: nenhuma parte do sistema confere esses valores, e ninguém é impedido de criar nada por causa deles. A aplicação de verdade vem com o novo desenho dos níveis e acessos.',
+      'Registra o teto de uso planejado para cada nível da hierarquia: números de WhatsApp, mensagens por mês, chatbots e pessoas da equipe. Hoje é só registro: nenhuma parte do sistema confere esses valores, e ninguém é impedido de criar nada por causa deles. A aplicação de verdade vem com o novo desenho dos níveis e acessos.',
     howToConfigure: [
-      'Escolha o nível da hierarquia.',
+      'Ache a linha do nível e do limite na tabela: ela já traz todos os níveis.',
       'Preencha o limite. Campo vazio significa sem limite, não zero.',
       'Clique em Salvar na linha. O valor fica gravado para quando os limites passarem a valer.',
     ],
@@ -1465,6 +1535,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Vazio é ilimitado: apagar o campo libera em vez de bloquear.',
       'O aviso no topo da tela some quando os limites passarem a ser aplicados. Até lá, não prometa a um cliente que ele será bloqueado ao passar do limite.',
+      'Os limites que valem de verdade hoje não moram aqui: as 5 Lojas do plano (mais as contratadas em Assinatura) e as vagas de Atendente de cada Loja (2, mais as extras em Faturamento › Atendentes). As linhas de "equipe" desta tabela não mudam nenhum dos dois.',
     ],
     category: 'tela',
     area: 'Admin',
@@ -1480,14 +1551,15 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Busque pelo nome ou email; a lista filtra enquanto você digita.',
       'Leia a coluna Plano / Acesso antes de qualquer ação. "Pago" é assinatura ativa; "Em teste até" é o teste grátis de 7 dias, já com cartão cadastrado; "Pagamento pendente" é o cartão recusado com o Stripe ainda tentando (o sistema segue aberto); os três liberam a Conta. Um "cancela em" embaixo do selo é cancelamento agendado. "Manual (Liberado)" é liberação sua, com a data ao passar o mouse; "Bloqueado" é sem acesso. Numa Loja o selo é o da Conta acima, e a lista diz de onde ele vem. A Loja não decide nada sozinha.',
-      'Para abrir o sistema sem pagamento, clique em "Liberar Manualmente" na linha da pessoa: a Conta inteira abre, para todo o time, e fica registrado quem liberou e quando. "Revogar Acesso" fecha na hora para todos, inclusive o Gerente. Os dois pedem confirmação, e revogar exige digitar o nome da Conta antes. "Liberar API" e "Tirar API" também perguntam: tirar a API faz as chaves da Conta pararem na hora.',
-      'Para criar alguém, use "Novo Usuário": nome, email, cargo e a Loja (Gestor e Atendente) ou o nome da Conta nova (Gerente: a Conta nasce junto). A pessoa recebe o convite por email e define a própria senha.',
-      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo; o email é o login e não se troca ali) e a lixeira abre "Excluir Usuário". Trocar o cargo ou desmarcar "Usuário ativo" pede confirmação antes de salvar, e a confirmação lembra de conferir a Loja. Excluir tira o login e some com a pessoa das listas; o histórico de atendimento dela fica. Se ela tentar entrar, vê "Acesso suspenso", o mesmo aviso de quem foi suspenso. Não existe botão para desfazer.',
+      'Para abrir o sistema sem pagamento, clique em "Liberar Manualmente" na linha da pessoa: a Conta inteira abre, para todo o time, e fica registrado quem liberou e quando. "Revogar Acesso" tira a liberação; numa Conta sem assinatura paga, em teste ou pendente, o sistema fecha na hora para todos, inclusive o Gerente. Os dois pedem confirmação, e revogar exige digitar o nome da Conta antes.',
+      '"Liberar API" e "Tirar API" só aparecem para Conta com liberação manual e sem assinatura: a Conta que paga contrata a API sozinha, em Assinatura. Os dois perguntam antes; tirar a API faz as chaves da Conta pararem na hora. A Conta com a API liberada mostra o selo "API liberada".',
+      'Para criar alguém, use "Novo Usuário": nome, email, cargo e a Loja (Gestor e Atendente; a lista traz as Lojas de todas as Contas, pelo nome) ou o nome da Conta nova (Gerente: a Conta nasce junto). A pessoa recebe o convite por email e define a própria senha. Deixe "Usuário ativo" marcado: desmarcado, o convite sai igual, mas a pessoa entra suspensa ao criar a senha.',
+      'Na coluna Ações, o olho abre "Detalhes do Usuário", o lápis abre "Editar Usuário" (nome, telefone, cargo; o email é o login e não se troca ali) e a lixeira abre "Excluir Usuário". Trocar o cargo ou desmarcar "Usuário ativo" pede confirmação antes de salvar; a Loja não muda por ali. Excluir tira o login; a pessoa continua na lista com a situação "Excluído" e o histórico de atendimento dela fica. Excluir um Gerente suspende todo mundo da Conta dele. Se a pessoa tentar entrar, vê "Acesso suspenso". Não existe botão para desfazer.',
     ],
     example:
       'Chega um "não consigo entrar". Você busca o email e vê "Bloqueado" na Conta: é cobrança, não senha. O contrato já foi assinado, então "Liberar Manualmente" abre na hora, e você revoga se o pagamento não vier.',
     tips: [
-      'Esta aba e a tela "Gestão de Usuários" (Admin › Usuários no menu lateral) mostram as mesmas pessoas de dois jeitos: aqui, a lista plana com o selo de acesso e os botões de liberar, editar e excluir; lá, a hierarquia Superadmin → Conta → Loja, com "Convidar usuário". Para saber de quem é uma Loja, vá lá; para liberar ou excluir, é aqui.',
+      'Esta aba e a tela "Gestão de Usuários" (fora do menu: abra pela busca rápida, Ctrl+K, ou pelo endereço /dashboard/admin/users) mostram as mesmas pessoas de dois jeitos: aqui, com o selo de acesso e os botões de liberar, editar e excluir; lá, com o uso de cada pessoa e "Convidar usuário". Para saber de quem é uma Loja, abra "Ver detalhes" lá; para liberar ou excluir, é aqui.',
       'Excluir é o último recurso. Quem só saiu do time deve ser suspenso pelo Gestor ou Gerente em Equipe. Assim a distribuição automática se refaz e as conversas dela aparecem na pílula "Responsável indisponível".',
       'Cargo Superadmin vê tudo, inclusive esta aba. Dê a alguém só quando essa pessoa opera a plataforma.',
       'Na sua própria linha, o lápis salva nome e telefone, mas não troca o seu cargo, o seu status nem a sua Loja: o sistema recusa, para ninguém mudar o próprio acesso. Se precisar mudar o seu, peça a outro Superadmin.',
@@ -1511,7 +1583,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Os botões da coluna: "PDF" e "XML" baixam os arquivos da nota emitida ou cancelada (o link abre em outra aba e vale 60 segundos); "Emitir de novo" tenta outra vez uma nota parada em erro, aguardando a Prefeitura, certificado vencido ou aguardando emissão; "Cancelar nota" cancela uma nota emitida, depois de uma confirmação, com o motivo fixo "Serviço não prestado".',
       'No cartão "Nota fiscal automática", acima da lista, confira o ambiente ativo (teste ou produção), até quando o certificado vale (o aviso aparece a menos de 30 dias) e se Fortaleza já ligou o Emissor Nacional em PRODUÇÃO, com a data da última leitura. Logo abaixo, em letra menor, a situação de Fortaleza no ambiente de teste.',
       'Para mudar o percentual de tributos do Simples, digite o valor com até duas casas (por exemplo 6,00) e clique em "Salvar". Ele vai em toda nota nova, no campo de tributos aproximados (Lei 12.741); nota já emitida não muda. O padrão é 6,00, do Anexo III, primeira faixa. Se o Fator R ficar abaixo de 28%, a empresa cai no Anexo V: use 15,50. O anexo do mês aparece no extrato do DAS. Abaixo do campo ficam as 5 últimas mudanças, com o valor anterior, o novo, quem mudou e quando.',
-      'Em "Conexão", confira se o Stripe está conectado, se os dois preços do checkout (Plano da Conta e Loja extra) e o produto "Atendente extra" existem na conta conectada e se o webhook aponta para o endereço mostrado, com os 8 eventos marcados. "Testar Conexão" só consulta de novo; não grava nada. Se faltar algum evento, clique em "Marcar os eventos que faltam": ele só acrescenta os que faltam ao webhook do Stripe, sem tirar nenhum.',
+      'Em "Conexão", confira se o Stripe está conectado, se os dois preços do checkout (Plano da Conta e Loja extra) e o "Produto do atendente extra" existem na conta conectada e se o webhook aponta para o endereço mostrado, com os 8 eventos marcados. "Testar Conexão" só consulta de novo; não grava nada. Se faltar algum evento, clique em "Marcar os eventos que faltam": ele só acrescenta os que faltam ao webhook do Stripe, sem tirar nenhum.',
+      'No cartão "API e integrações", em "Conexão", confira o produto e o preço da API no Stripe. Se faltar algum, "Criar produto e preço da API no Stripe" cria os dois; a tela mostra os códigos com "Copiar" e pede para colá-los nas secrets STRIPE_PRODUCT_API e STRIPE_PRICE_API e publicar as funções de novo.',
       'Para dar mais atendentes a uma Loja, como combinado com o cliente: na aba "Contas", no cartão "Atendentes por Loja", clique em "Atendentes" na linha da Conta. Para cada Loja aparece quanto está em uso e o limite; mude o número em "Extras" e clique em "Salvar". A observação, se preenchida, vai para o histórico junto com quem mudou.',
       'Antes de dar a primeira vaga extra a uma Conta que paga, defina o preço dela: na mesma janela, em "Preço por atendente extra (R$ por mês)", digite o valor combinado e clique em "Salvar preço". Cada Conta tem o próprio preço.',
       'Salvar as vagas de uma Loja já ajusta a assinatura da Conta: a quantidade cobrada passa a ser a soma das vagas extras de todas as Lojas. Vaga dada no meio do mês entra proporcional na próxima fatura; no teste grátis nada é cobrado até o fim do teste. A linha de cima da janela diz o que ficou cobrado.',
@@ -1543,10 +1616,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     minRole: 'superadmin',
     title: 'Administração › Relatórios',
     whatItDoes:
-      'É o tamanho da plataforma em números: quantas pessoas têm login, quantas estão ativas, quantos Superadmins, Contas e Lojas existem. Serve para saber quanto o ConvoFlow cresceu, não para acompanhar um cliente.',
+      'É o tamanho da plataforma em números: quantas pessoas têm login, quantas estão ativas e quantas há de cada cargo. Serve para saber quanto o ConvoFlow cresceu, não para acompanhar um cliente.',
     howToConfigure: [
       'Leia os dois cartões do topo: Total de Usuários (todo mundo cadastrado) e Usuários Ativos (quem pode entrar hoje).',
-      'Na tabela "Resumo do Sistema", cada linha é uma contagem com a explicação ao lado: Usuários Cadastrados, Superadmins, Contas (Gerentes) e Lojas (Gestores).',
+      'Na tabela "Resumo do Sistema", cada linha é uma contagem com a explicação ao lado: Usuários Cadastrados, Superadmins, Contas (Gerentes) e Lojas (Gestores). "Contas" e "Lojas" contam PESSOAS com esses cargos, inclusive excluídas: uma Loja sem Gestor não entra, e um Gestor excluído entra.',
       'Para investigar uma Conta específica, saia daqui: a aba Usuários mostra a pessoa e o acesso; o seletor de Conta no topo mostra o Dashboard dela.',
     ],
     example:
@@ -1566,7 +1639,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Manutenção vem primeiro de propósito: é a única coisa aqui que fecha o sistema para todos os clientes. O botão de ajuda dele está no próprio cartão.',
       'Em "Quem recebe os relatos de problema": escreva em "Emails (um por linha)" quem deve receber os relatos que qualquer usuário manda pelo botão "Relatar problema", e clique em "Salvar". O relato chega com print, tela e Conta de quem mandou.',
-      'Em "Número de envio dos relatórios", escolha o número de WhatsApp que envia relatório quando alguém pede entrega por WhatsApp em Relatórios. Sem escolher, a entrega por WhatsApp falha e só o email sai. Só aparecem números de WhatsApp: a conta do Instagram não envia relatório.',
+      'No cartão "Envio do sistema (WhatsApp)", em "Número de envio dos relatórios", escolha o número de WhatsApp que envia relatório quando alguém pede entrega por WhatsApp em Relatórios. Sem escolher, a entrega por WhatsApp falha e só o email sai. Só aparecem números de WhatsApp: a conta do Instagram não envia relatório. Número da API Oficial só manda texto para quem escreveu a ele nas últimas 24 horas; para relatório, prefira um número de QR Code.',
     ],
     example:
       'Você põe suporte@ e dev@ como destinatários. Um Gestor relata "o funil não abre" pelo botão: os dois recebem o email com o print e a Conta dele, sem ninguém precisar pedir detalhes.',
@@ -1585,7 +1658,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a lista de quem se cadastrou pelo site, com o contato e o que aconteceu com cada cadastro. É daqui que vendas liga para quem não conseguiu terminar.',
     howToConfigure: [
-      'Leia a chave no topo. "Desligado" quer dizer que os botões da página de vendas ainda levam ao login e ninguém se cadastra sozinho.',
+      'Leia a chave no topo. "desligado" quer dizer que os botões da página de vendas ainda levam ao login e ninguém se cadastra sozinho. O cartão "Cadastros (30 dias)" conta quantos chegaram no último mês.',
       'Comece pelo cartão "Para vendas ligar": são os cadastros em que o convite não saiu ou o processamento parou. A pessoa não recebeu nada; ligue ou escreva para ela.',
       'Na coluna Situação, "Convite enviado" é quem recebeu o email e ainda não criou a senha; "Em teste grátis" e "Assinante" já estão usando. Embaixo de "Convite não saiu" aparece o motivo.',
       'O cartão "Emails de login barrados" conta os emails de login que não saíram nos últimos 7 dias (convites, emails de nova senha e cadastros), por limite por hora ou por endereço recusado. Quando esse número passa de zero com frequência, é hora de trocar o envio de email: o passo-a-passo está em docs/RUNBOOK_trocar_envio_email.md.',

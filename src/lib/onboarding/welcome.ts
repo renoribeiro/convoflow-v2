@@ -30,7 +30,7 @@ export const WELCOME_COPY: Record<OnboardingRole, WelcomeCopy> = {
     intro: 'Você atende as conversas da Loja pelo ConvoFlow.',
     bullets: [
       'Vamos mostrar a tela de Conversas em 4 passos rápidos.',
-      'Depois, uma lista curta ajuda você a deixar seu perfil pronto.',
+      'Depois, uma lista curta ajuda você a começar: sua foto e a primeira conversa.',
       'Se precisar, a Ajuda tem o passo a passo completo.',
     ],
   },
@@ -46,7 +46,7 @@ export const WELCOME_FOOTNOTE = 'Para ver isto de novo, abra a Ajuda e clique em
 export const CHECKLIST_SUBTITLE: Record<OnboardingRole, string> = {
   gerente: 'Deixe a Conta pronta para atender. Os obrigatórios vêm primeiro.',
   gestor: 'Deixe a sua Loja pronta para atender. Os obrigatórios vêm primeiro.',
-  atendente: 'Três passos rápidos para deixar seu perfil pronto.',
+  atendente: 'Dois passos rápidos para começar a atender.',
 };
 
 export const CHECKLIST_DONE_TITLE = 'Tudo pronto por aqui';

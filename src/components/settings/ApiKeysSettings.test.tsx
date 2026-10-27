@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -48,9 +49,11 @@ const chave = (extra: Record<string, unknown> = {}) => ({
 
 const renderizar = (liberado = true) =>
   render(
-    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <ApiKeysSettings liberado={liberado} />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        <ApiKeysSettings liberado={liberado} />
+      </QueryClientProvider>
+    </MemoryRouter>,
   );
 
 beforeEach(() => {

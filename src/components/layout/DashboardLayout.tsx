@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { telaDoCaminho } from '@/lib/access/telas';
+import { TELAS_SO_DE_LOJA, telaDoCaminho } from '@/lib/access/telas';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
@@ -12,19 +12,6 @@ import { useRole } from '@/contexts/TenantContext';
 import { MaintenanceBanner } from '@/components/maintenance/MaintenanceBanner';
 import { TourHost } from '@/components/onboarding/TourHost';
 
-// Telas operacionais (dados de cliente) que o superadmin NÃO acessa — ele só
-// vê estatísticas (Dashboard/Rastreamento/Relatórios) e gerencia (Administração).
-const LOJA_ONLY_SEGMENTS = [
-  'conversations',
-  'contacts',
-  'funnel',
-  'chatbots',
-  'campaigns',
-  'followups',
-  'automation',
-  'whatsapp-numbers',
-];
-
 export const DashboardLayout = () => {
   // Barra fixa expandida/recolhida (desktop). No mobile quem manda é o drawer.
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -36,7 +23,7 @@ export const DashboardLayout = () => {
 
   // Bloqueio "Exclusivo para lojas" para o superadmin nas telas operacionais.
   const firstSegment = location.pathname.replace(/^\/dashboard\/?/, '').split('/')[0] ?? '';
-  const blockedForSuperadmin = role === 'superadmin' && LOJA_ONLY_SEGMENTS.includes(firstSegment);
+  const blockedForSuperadmin = role === 'superadmin' && TELAS_SO_DE_LOJA.includes(firstSegment);
 
   // Paywall: Conta sem acesso liberado (pago/manual) vê só a tela de bloqueio.
   // Só o superadmin tem bypass (ver useTenantAccess) — o gerente perdeu o dele

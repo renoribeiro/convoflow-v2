@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DatePicker } from '@/components/ui/date-picker';
@@ -139,7 +140,10 @@ export function ConversationFiltersModal({ isOpen, onClose, value, onChange }: C
           <Separator />
 
           <div className="space-y-2">
-            <Label>Período da última mensagem</Label>
+            <div className="flex items-center gap-1.5">
+              <Label>Período da última mensagem</Label>
+              <DicaDoCampo rotulo="Período da última mensagem" texto="Olha a data da última mensagem da conversa. Uma conversa antiga que recebeu mensagem nova entra no período. O dia Até entra inteiro." />
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <Label className="text-xs text-muted-foreground">De</Label>

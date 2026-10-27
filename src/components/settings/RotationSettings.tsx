@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -305,7 +306,10 @@ export const RotationSettings = () => {
 
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <Label htmlFor="rotation-includes-gestor">Gestor também recebe conversas</Label>
+                <div className="flex items-center gap-1.5">
+                  <Label htmlFor="rotation-includes-gestor">Gestor também recebe conversas</Label>
+                  <DicaDoCampo rotulo="Gestor também recebe conversas" texto="Ligado, o Gestor entra na divisão das conversas novas como os atendentes. Salve antes de mexer nas fatias: quem participa muda." />
+                </div>
                 <p className="text-sm text-muted-foreground">
                   Ligado, o Gestor entra na lista abaixo com a própria fatia. Desligado, só os
                   atendentes recebem.
@@ -320,7 +324,10 @@ export const RotationSettings = () => {
             </div>
 
             <div className="space-y-3">
-              <Label id="rotation-timing-label">Quando a conversa ganha responsável</Label>
+              <div className="flex items-center gap-1.5">
+                <Label id="rotation-timing-label">Quando a conversa ganha responsável</Label>
+                <DicaDoCampo rotulo="Quando a conversa ganha responsável" texto="Na primeira mensagem: dono na hora, mesmo com chatbot. Quando o chatbot terminar: espera o bot acabar; sem bot no número, é na hora." />
+              </div>
               <RadioGroup
                 aria-labelledby="rotation-timing-label"
                 value={timing}

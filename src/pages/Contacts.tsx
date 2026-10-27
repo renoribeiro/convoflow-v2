@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
 import { ContactChannelFilter } from '@/components/contacts/ContactChannelFilter';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { buildContactsCsv, linkedContactLabel, type ContactExportRow } from '@/lib/contacts/exportCsv';
 import { useContactLinks } from '@/hooks/useContactLinks';
 import { linkedCounterpartId } from '@/lib/contacts/links';
@@ -191,6 +192,7 @@ export default function Contacts() {
               <Download className="w-4 h-4 mr-2" />
               {isExporting ? 'Exportando...' : 'Exportar'}
             </Button>
+            <DicaDoCampo rotulo="Exportar" texto="O arquivo leva os contatos do canal e do número escolhidos acima da lista. Busca, etapa, fonte e etiquetas dos filtros não entram nele." />
             <Button onClick={() => setIsModalOpen(true)} size="sm">
               <Plus className="w-4 h-4 mr-2" />
               Novo Contato

@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { ServerCog, Info } from 'lucide-react';
 
 export interface WahaFormValues {
@@ -49,7 +50,10 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-url">Endereço do seu servidor WAHA *</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="waha-url">Endereço do seu servidor WAHA *</Label>
+          <DicaDoCampo rotulo="Endereço do servidor WAHA" texto="Troque o endereço que vem preenchido pelo do seu servidor. Antes de salvar, o ConvoFlow testa se ele responde. Endereço de rede interna é recusado." />
+        </div>
         <Input
           id="waha-url"
           placeholder="https://waha.suaempresa.com.br"
@@ -64,7 +68,10 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-key">Chave do servidor WAHA (X-Api-Key)</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="waha-key">Chave do servidor WAHA (X-Api-Key)</Label>
+          <DicaDoCampo rotulo="Chave do servidor WAHA" texto="Fica guardada no cofre do ConvoFlow e não aparece mais em nenhuma tela. Se o servidor recusar a chave, nada é salvo." />
+        </div>
         <Input
           id="waha-key"
           type="password"
@@ -77,7 +84,10 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-session">Nome da sessão *</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="waha-session">Nome da sessão *</Label>
+          <DicaDoCampo rotulo="Nome da sessão" texto="Use um nome que só este número tem em todo o ConvoFlow. Se outro número já usa esse nome, o cadastro é recusado. Evite deixar default." />
+        </div>
         <Input
           id="waha-session"
           placeholder="default"

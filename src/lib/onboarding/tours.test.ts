@@ -13,6 +13,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { ROLE_ORDER } from '@/types/userHierarchy';
 import { TELAS } from '@/lib/access/telas';
+import { podeAcessarConteudo, type HelpAccessDeclaration } from '@/lib/help/acesso';
+import { contextoDoCargo, toursDoCargo } from '@/lib/help/cobertura';
 import { TOURS, getTour, menuCardBody, routeMatches } from './tours';
 import { CHECKLISTS, PRIORITY_LABELS } from './checklist';
 import {
@@ -110,6 +112,63 @@ describe('marcas data-tour', () => {
         if (s.menuItem) expect(DO_MENU.has(s.target ?? ''), `${t.id}: menuItem sem alvo no menu`).toBe(true);
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+/**
+ * Quem ENXERGA cada marca: a regra que esconde o elemento na tela, escrita no
+ * mesmo vocabulário da Ajuda (cargo mínimo, capacidade, módulo). Marca nova
+ * sem linha aqui quebra o teste: é o lembrete de conferir quem a vê.
+ *
+ * Desde 2026-10-27 (lote 4 do checkup): antes só se conferia que a marca
+ * existia em algum lugar do src/, não que o cargo que recebe o tour a via.
+ */
+const ALCANCE_DAS_MARCAS: Record<string, HelpAccessDeclaration> = {
+  'menu-ajuda': {}, // Sidebar: Ajuda é tela de todo cargo
+  'primeiros-passos': {}, // PrimeirosPassosCard: todo cargo de onboarding
+  'perfil-foto': {}, // ProfileSettings
+  'respostas-rapidas-nova': {}, // QuickRepliesSettings: todo cargo cria
+  distribuicao: {}, // Settings, aba visível a todos (só leitura para o atendente)
+  'horario-funcionamento': {},
+  'dados-fiscais': { minRole: 'gerente' }, // SubscriptionSettings: isGerente || isSuperAdmin
+  'seletor-loja': { minRole: 'gerente' }, // StoreSwitcher: só isGerente
+  'chatbots-novo': { capacidade: 'automations.operate', moduleName: 'chatbots' },
+  'conversas-filtros-rapidos': { capacidade: 'conversations.handle', moduleName: 'conversations' },
+  'conversas-lista': { capacidade: 'conversations.handle', moduleName: 'conversations' },
+  'conversas-filtros': { capacidade: 'conversations.handle', moduleName: 'conversations' },
+  'conversas-janela': { capacidade: 'conversations.handle', moduleName: 'conversations' },
+  'equipe-nova-loja': { minRole: 'gerente' }, // TeamPage: isGerente
+  'equipe-convidar': { capacidade: 'store.admin' }, // TeamPage: a tela exige store.admin
+  'funil-configurar-estagios': { capacidade: 'store.admin', moduleName: 'funnel' }, // podeConfigurarEtapas
+  'whatsapp-nova-instancia': { capacidade: 'whatsapp.configure', moduleName: 'whatsapp-numbers' }, // canConfigure
+};
+
+describe('cada cargo só recebe tour cujo alvo ele enxerga', () => {
+  it('toda marca do src/ tem a regra de quem a vê declarada aqui', () => {
+    const semRegra = [...NOMES].filter((n) => !(n in ALCANCE_DAS_MARCAS));
+    const sobrando = Object.keys(ALCANCE_DAS_MARCAS).filter((n) => !NOMES.has(n));
+    expect(semRegra, 'marca nova: declare quem a enxerga em ALCANCE_DAS_MARCAS').toEqual([]);
+    expect(sobrando, 'regra de marca que não existe mais').toEqual([]);
+  });
+
+  it.each(['gerente', 'gestor', 'atendente'] as const)(
+    '%s: todo passo de todo tour que ele recebe aponta para algo que ele vê',
+    (papel) => {
+      const ctx = contextoDoCargo(papel);
+      const tours = toursDoCargo(papel);
+      expect(tours.length, `${papel} sem tour nenhum`).toBeGreaterThan(0);
+      const invisiveis = tours.flatMap((t) =>
+        t.steps
+          .filter((s) => s.target && !podeAcessarConteudo(ALCANCE_DAS_MARCAS[s.target] ?? {}, ctx))
+          .map((s) => `${t.id} → ${s.target}`),
+      );
+      expect(invisiveis).toEqual([]);
+    },
+  );
+
+  it('o atendente recebe só o tour de Conversas e o da foto', () => {
+    expect(toursDoCargo('atendente').map((t) => t.id).sort()).toEqual(['conversas', 'foto-perfil']);
   });
 });
 

@@ -83,8 +83,8 @@ describe('ResponseRuleSettings', () => {
     const user = userEvent.setup();
     abrir();
     await user.click(chave());
-    expect(screen.getByLabelText(/Tempo sem resposta/i)).toHaveValue(60);
-    expect(screen.getByLabelText(/Máximo de transferências/i)).toHaveValue(3);
+    expect(screen.getByLabelText(/^Tempo sem resposta/i)).toHaveValue(60);
+    expect(screen.getByLabelText(/^Máximo de transferências/i)).toHaveValue(3);
     expect(screen.getByRole('switch', { name: /Segunda aberto/i })).toBeChecked();
     expect(screen.getByRole('switch', { name: /Sábado aberto/i })).not.toBeChecked();
     expect(screen.getByRole('switch', { name: /Domingo aberto/i })).not.toBeChecked();
@@ -99,7 +99,7 @@ describe('ResponseRuleSettings', () => {
     const user = userEvent.setup();
     abrir();
     await user.click(chave());
-    const minutos = screen.getByLabelText(/Tempo sem resposta/i);
+    const minutos = screen.getByLabelText(/^Tempo sem resposta/i);
     await user.clear(minutos);
     await user.type(minutos, '3');
     expect(screen.getByText(/entre 5 e 1440 minutos/)).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('ResponseRuleSettings', () => {
     const user = userEvent.setup();
     abrir();
     await user.click(chave());
-    const minutos = screen.getByLabelText(/Tempo sem resposta/i);
+    const minutos = screen.getByLabelText(/^Tempo sem resposta/i);
     await user.clear(minutos);
     await user.type(minutos, '30');
     await user.click(screen.getByRole('switch', { name: /Sábado aberto/i }));
@@ -158,8 +158,8 @@ describe('ResponseRuleSettings', () => {
     };
     abrir();
     expect(chave()).toBeChecked();
-    expect(screen.getByLabelText(/Tempo sem resposta/i)).toHaveValue(15);
-    expect(screen.getByLabelText(/Máximo de transferências/i)).toHaveValue(5);
+    expect(screen.getByLabelText(/^Tempo sem resposta/i)).toHaveValue(15);
+    expect(screen.getByLabelText(/^Máximo de transferências/i)).toHaveValue(5);
     expect(screen.getByLabelText(/Segunda abre às/i)).toHaveValue('08:00');
     // schedule presente com dia ausente = fechado (regra do motor)
     expect(screen.getByRole('switch', { name: /Terça aberto/i })).not.toBeChecked();

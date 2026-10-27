@@ -45,7 +45,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
     onSuccess: () => {
       toast({ 
         title: 'Sucesso!', 
-        description: 'Estágio atualizado com sucesso!' 
+        description: 'Etapa atualizada.' 
       });
       onStageUpdated?.();
       onClose();
@@ -71,7 +71,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
     if (!stage || !stageName.trim()) {
       toast({
         title: 'Não deu certo',
-        description: 'Nome do estágio é obrigatório',
+        description: 'Dê um nome à etapa.',
         variant: 'destructive'
       });
       return;
@@ -106,7 +106,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Editar Estágio</DialogTitle>
+          <DialogTitle>Editar etapa</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -114,7 +114,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
             <CardContent className="p-4">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="stage-name">Nome do Estágio</Label>
+                  <Label htmlFor="stage-name">Nome da etapa</Label>
                   <Input
                     id="stage-name"
                     value={stageName}
@@ -125,7 +125,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
                 </div>
                 
                 <div>
-                  <Label>Cor do Estágio</Label>
+                  <Label>Cor da etapa</Label>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {colorOptions.map((color) => (
                       <Badge

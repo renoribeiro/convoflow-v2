@@ -27,24 +27,16 @@ import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { useCapabilities, useIsGerente, useTenant } from '@/contexts/TenantContext';
 import { API_ADDON_RELEASED } from '@/lib/api/release';
 import { useApiAddonEstado } from '@/lib/api/addon';
-import { Capability } from '@/types/userHierarchy';
+import { abaDeConfiguracoes } from '@/lib/access/abasConfiguracoes';
 import { useSearchParams } from 'react-router-dom';
 
 /**
- * Ajuda contextual de cada aba. "profile" fica de fora de propósito:
+ * Ajuda contextual da aba aberta. "profile" fica de fora de propósito:
  * ProfileSettings já traz o próprio botão no cabeçalho do card, porque o mesmo
  * componente também atende a rota /dashboard/profile.
  */
-const TAB_HELP_KEYS: Record<string, string> = {
-  attendance: 'page:settings-attendance',
-  visibility: 'page:settings-visibility',
-  'quick-replies': 'page:settings-quick-replies',
-  followups: 'page:settings-followups',
-  subscription: 'page:settings-subscription',
-  security: 'page:settings-security',
-  integrations: 'page:settings-integrations',
-  api: 'page:settings-api',
-};
+const ajudaDaAba = (value: string): string | null =>
+  value === 'profile' ? null : abaDeConfiguracoes(value).helpKey;
 
 interface ContextoDasAbas {
   gerente: boolean;
@@ -54,14 +46,17 @@ interface ContextoDasAbas {
 
 interface AbaConfig {
   value: string;
-  label: string;
   icon: typeof User;
-  /** Capacidade exigida para a aba existir. Ausente = todo mundo vê. */
-  requer?: Capability;
-  /** Regra extra de visibilidade, além de `requer`. Ausente = sempre visível. */
-  visivel?: (ctx: ContextoDasAbas) => boolean;
   render: () => JSX.Element;
 }
+
+/** Quem alcança a aba: a regra declarada em src/lib/access/abasConfiguracoes.ts. */
+const abaVisivel = (value: string, capabilities: Record<string, boolean>, ctx: ContextoDasAbas): boolean => {
+  const aba = abaDeConfiguracoes(value);
+  if (aba.requer && !capabilities[aba.requer]) return false;
+  if (aba.soGerenteComApi && !(ctx.gerente && (API_ADDON_RELEASED || ctx.apiAtiva))) return false;
+  return true;
+};
 
 /**
  * As abas e quem alcança cada uma.
@@ -84,8 +79,8 @@ interface AbaConfig {
  * como a Loja está configurada é útil para o atendente.
  */
 const ABAS: AbaConfig[] = [
-  { value: 'profile', label: 'Perfil', icon: User, render: () => <ProfileSettings /> },
-  { value: 'attendance', label: 'Atendimento', icon: Headset, render: () => <AttendanceSettings /> },
+  { value: 'profile', icon: User, render: () => <ProfileSettings /> },
+  { value: 'attendance', icon: Headset, render: () => <AttendanceSettings /> },
   // Sem `requer`, como ATENDIMENTO: o painel mostra os valores em modo leitura
   // para quem não tem `store.admin`. Saber o que a própria Loja esconde dele é
   // o que explica ao atendente por que a lista dele é menor que o número do
@@ -98,7 +93,6 @@ const ABAS: AbaConfig[] = [
   // quarto assunto aqui pede aba própria, não um quarto cartão.
   {
     value: 'visibility',
-    label: 'Distribuição e transferência',
     icon: Users,
     render: () => (
       <div className="space-y-6">
@@ -135,7 +129,6 @@ const ABAS: AbaConfig[] = [
   // de `quick_replies` reflete isso: compara a Conta e nada mais.
   {
     value: 'quick-replies',
-    label: 'Respostas rápidas',
     icon: Zap,
     render: () => <QuickRepliesSettings />,
   },
@@ -144,15 +137,12 @@ const ABAS: AbaConfig[] = [
   // Loja cancela sozinho muda como o atendente planeja o proprio follow-up.
   {
     value: 'followups',
-    label: 'Follow ups',
     icon: CalendarClock,
     render: () => <FollowupSettings />,
   },
   {
     value: 'subscription',
-    label: 'Assinatura',
     icon: CreditCard,
-    requer: 'billing.view',
     render: () => <SubscriptionSettings />,
   },
   // A aba "Notificações" saiu em 2026-10-25 (achado 113 do checkup de
@@ -161,17 +151,15 @@ const ABAS: AbaConfig[] = [
   // coluna continua no banco. Para construir de verdade: o sino e as funções
   // que criam avisos precisam respeitar a escolha; aí a aba, o passo do
   // onboarding (migração nova em onboarding_checklist) e o tour voltam.
-  { value: 'security', label: 'Segurança', icon: Shield, render: () => <SecuritySettings /> },
+  { value: 'security', icon: Shield, render: () => <SecuritySettings /> },
   // Só quem tem store.admin: o servidor (RLS dos webhooks) recusa o resto, e o
   // atendente via um formulário que não salvava (achado 119 do checkup).
-  { value: 'integrations', label: 'Avisos para sistemas', icon: Database, requer: 'store.admin', render: () => <IntegrationSettings /> },
+  { value: 'integrations', icon: Database, render: () => <IntegrationSettings /> },
   // Só o Gerente, e só com a API liberada para o público OU já ligada na Conta
   // dele (Conta de teste que o superadmin ligou). Gestor e Atendente nunca.
   {
     value: 'api',
-    label: 'Chaves de API',
     icon: KeyRound,
-    visivel: ({ gerente, apiAtiva }) => gerente && (API_ADDON_RELEASED || apiAtiva),
     render: () => <ApiKeysSettings />,
   },
 ];
@@ -187,9 +175,7 @@ export default function Settings() {
   const estadoApi = useApiAddonEstado(contaId, gerente && !API_ADDON_RELEASED);
   const contexto: ContextoDasAbas = { gerente, apiAtiva: estadoApi.data?.ativo === true };
 
-  const abasVisiveis = ABAS.filter(
-    (aba) => (!aba.requer || capabilities[aba.requer]) && (!aba.visivel || aba.visivel(contexto)),
-  );
+  const abasVisiveis = ABAS.filter((aba) => abaVisivel(aba.value, capabilities, contexto));
 
   /**
    * Aba pedida pela URL, se ela existir PARA ESTE CARGO. Sem esta checagem, um
@@ -236,16 +222,16 @@ export default function Settings() {
             return (
               <TabsTrigger key={aba.value} value={aba.value} className="flex items-center gap-2">
                 <Icon className="w-4 h-4" />
-                {aba.label}
+                {abaDeConfiguracoes(aba.value).label}
               </TabsTrigger>
             );
           })}
         </TabsList>
 
-        {TAB_HELP_KEYS[currentTab] && (
+        {ajudaDaAba(currentTab) && (
           <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
             <span>Como funciona esta aba</span>
-            <FeatureHelp helpKey={TAB_HELP_KEYS[currentTab]} />
+            <FeatureHelp helpKey={ajudaDaAba(currentTab) as string} />
           </div>
         )}
 

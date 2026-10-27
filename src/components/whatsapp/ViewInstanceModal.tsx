@@ -104,7 +104,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
                 <Badge variant={conectado ? 'default' : 'secondary'}>{conectado ? 'Conectado' : 'Desconectado'}</Badge>
               </div>
               <p>
-                <span className="font-medium">Chave do número:</span>{' '}
+                <span className="font-medium">Código interno do número:</span>{' '}
                 <code className="bg-muted px-2 py-0.5 rounded text-xs">{instance.instance_key}</code>
               </p>
               {instance.profile_name && (

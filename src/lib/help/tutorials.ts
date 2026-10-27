@@ -17,10 +17,11 @@
  * nas entradas de tela do featureHelp.ts e são consumidos pelo MESMO
  * useHelpVisibility. Não existe segunda fonte de permissão.
  */
-import type { UserRole } from '@/types/userHierarchy';
+import type { Capability, UserRole } from '@/types/userHierarchy';
 import { matchesSearchTerms } from './featureHelp';
 import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS } from '@/lib/billing/trialOffer';
+import { API_ADDON_RELEASED } from '@/lib/api/release';
 
 export interface TutorialStep {
   title: string;
@@ -45,6 +46,8 @@ export interface Tutorial {
   minRole?: UserRole;
   /** Módulo exigido, mesmo nome do ModuleGuard. */
   moduleName?: string;
+  /** Capacidade exigida (matriz DEFAULT_CAPABILITIES). */
+  capacidade?: Capability;
   /** Tutorial que vem depois deste (renderizado como link no fim dos passos). */
   nextTutorialId?: string;
 }
@@ -57,6 +60,9 @@ export const tutorialKey = (id: string) => `${TUTORIAL_KEY_PREFIX}${id}`;
 
 /** O tutorial do cadastro pelo site (só aparece com a chave ligada). */
 export const TUTORIAL_TESTE_GRATIS_ID = 'teste-gratis';
+
+/** O tutorial da chave da API (só aparece com a API liberada no site). */
+export const TUTORIAL_CHAVE_API_ID = 'chave-api';
 
 /**
  * Ordem = ordem recomendada de leitura, não alfabética. A preparação para a
@@ -116,7 +122,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confira a lista e vá para a conexão',
         body:
-          'Número certo e fora do aplicativo; quem tem o login do Facebook e o celular, presentes; portfólio empresarial, ou a decisão de criar na hora; dados da empresa; nome escolhido; cartão cadastrado; primeira semana planejada. Com isso em mãos, a conexão é um clique em "Conectar com a Meta", em Números de WhatsApp. O passo-a-passo é o próximo tutorial, "Conectar seu WhatsApp".',
+          'Número certo e fora do aplicativo; quem tem o login do Facebook e o celular, presentes; portfólio empresarial, ou a decisão de criar na hora; dados da empresa; nome escolhido; cartão cadastrado; primeira semana planejada. Com isso em mãos, a conexão é um clique em "Conectar com a Meta", em Números de WhatsApp. O passo-a-passo é o próximo tutorial, "Conectar número pela API Oficial".',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },
@@ -126,10 +132,11 @@ export const ALL_TUTORIALS: Tutorial[] = [
   // ------------------------------------------------------------------ 2
   {
     id: 'conectar-whatsapp',
-    title: 'Conectar seu WhatsApp',
+    title: 'Conectar número pela API Oficial',
     goal:
       'No fim, seu número estará conectado pela API Oficial da Meta, recebendo e enviando mensagens dentro do ConvoFlow.',
-    forWhom: 'Gerente ou Gestor: quem cuida da configuração da Loja. Atendente não conecta número.',
+    forWhom:
+      'Gestor da Loja, que cuida da configuração dela (o Gerente faz o mesmo, numa Loja escolhida no topo). Atendente não conecta número. Quer conectar por QR Code? Veja "Conectar número por QR Code (Evolution)" ou "Conectar número no seu servidor (WAHA)".',
     moduleName: 'whatsapp-numbers',
     minRole: 'gestor',
     steps: [
@@ -148,7 +155,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Escolha "API Oficial do WhatsApp" e clique em "Continuar"',
         body:
-          'São três jeitos de conectar. Escolha o primeiro, "API Oficial do WhatsApp": é o mais estável e o único que dispara campanha dentro das regras da Meta.',
+          'São três jeitos de conectar. Escolha o primeiro, "API Oficial do WhatsApp": é o mais estável e o único que dispara campanha dentro das regras da Meta. Os outros dois, por QR Code, têm tutorial próprio.',
       },
       {
         title: 'Dê um nome ao número e clique em "Conectar com a Meta"',
@@ -191,6 +198,136 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", cole o "Código do número na Meta (Phone Number ID)", o "Código da conta do WhatsApp Business (WABA ID)" e a "Chave de acesso permanente (Access Token)" e clique em "Validar e conectar". O ConvoFlow confere os dados na Meta antes de gravar; se estiverem errados, nada é salvo e você corrige sem duplicar o número.',
         note:
           'Use a chave de um usuário do sistema da Meta (System User), de longa duração. A chave de um usuário comum vence em poucas horas e a conexão cai junto. O endereço de entrega da Meta é configurado uma vez para o ConvoFlow inteiro, por quem opera a plataforma. Não é passo seu.',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------ 2a
+  // QR Code pelo servidor do ConvoFlow. Conferido em 2026-10-27 contra
+  // CreateInstanceModal, EvolutionApiForm, QRCodeModal e evolution-provision.
+  {
+    id: 'conectar-evolution',
+    title: 'Conectar número por QR Code (Evolution)',
+    goal:
+      'No fim, um número comum de WhatsApp estará conectado ao ConvoFlow lendo um QR Code, sem você configurar servidor nenhum.',
+    forWhom:
+      'Gestor da Loja, com o celular do número em mãos. Atendente não conecta número. Gerente: número de QR Code nasce na sua Conta, não na Loja escolhida no topo; para ficar numa Loja, quem conecta é o Gestor dela.',
+    moduleName: 'whatsapp-numbers',
+    minRole: 'gestor',
+    steps: [
+      {
+        title: 'Confira se o QR Code é o caminho certo',
+        body:
+          'É uma conexão não oficial: o ConvoFlow entra no número como um aparelho conectado, igual ao WhatsApp Web. Não tem template nem janela de 24 horas, mas também não dispara campanha dentro das regras da Meta. Neste modo, ligações para o número são recusadas sozinhas e mensagens de grupos não entram no ConvoFlow. Para campanha, prefira a API Oficial.',
+        note:
+          'Usar o mesmo número no WhatsApp do celular e aqui ao mesmo tempo pode derrubar a sessão.',
+      },
+      {
+        title: 'Abra Números de WhatsApp e clique em "Conectar número"',
+        body:
+          'Na primeira vez, o botão se chama "Conectar o primeiro número".',
+        screen: '/dashboard/whatsapp-numbers',
+        helpKey: 'page:whatsapp-numbers',
+      },
+      {
+        title: 'Escolha "QR Code pelo ConvoFlow (Evolution)" e clique em "Continuar"',
+        body:
+          'O servidor de WhatsApp é o do ConvoFlow e já vem configurado: você não informa endereço nem chave.',
+      },
+      {
+        title: 'Preencha "Nome do número" e gere o "Código interno do número"',
+        body:
+          'O nome é o rótulo que aparece nas telas, de 3 a 50 letras (ex.: "WhatsApp Vendas"). No "Código interno do número", clique em "Gerar": é um código que o ConvoFlow usa por dentro e não pode repetir em todo o ConvoFlow.',
+      },
+      {
+        title: 'Deixe "Receber as mensagens automaticamente" ligado e clique em "Criar e abrir QR Code"',
+        body:
+          'Aparece "Número criado" e a janela do QR Code abre sozinha. Com a chave ligada, as mensagens do número entram no ConvoFlow assim que ele conectar.',
+        note:
+          'Se aparecer que já existe um número com esse código interno, clique em "Gerar" de novo. Se o aviso disser para falar com o suporte, o número foi criado mas o endereço de entrega não: escreva para contato@convoflow.com.br.',
+      },
+      {
+        title: 'Leia o QR Code com o celular do número',
+        body:
+          'No celular, abra o WhatsApp e vá em Configurações › Aparelhos conectados › Conectar um aparelho. Aponte a câmera para o QR Code. Venceu antes de você ler? Clique em "Atualizar conexão". Quando conecta, aparece "Conectado com sucesso!" e a janela fecha sozinha.',
+      },
+      {
+        title: 'Faça um teste real',
+        body:
+          'De outro celular, mande uma mensagem para o número e confira que ela aparece em Conversas. Responda por ali e veja chegar.',
+        screen: '/dashboard/conversations',
+        helpKey: 'page:conversations',
+      },
+      {
+        title: 'Se o número cair, reconecte pelo QR Code',
+        body:
+          'Número desconectado mostra o ícone "Conectar pelo QR Code" na linha dele. Clique, leia o QR Code de novo com o mesmo celular e pronto: as conversas continuam no lugar. Não exclua o número para recomeçar.',
+        screen: '/dashboard/whatsapp-numbers',
+        helpKey: 'page:whatsapp-numbers',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------ 2a'
+  // QR Code num servidor WAHA do cliente. Conferido em 2026-10-27 contra
+  // WahaApiForm, QRCodeModal e _shared/waha-provision.ts.
+  {
+    id: 'conectar-waha',
+    title: 'Conectar número no seu servidor (WAHA)',
+    goal:
+      'No fim, um número comum de WhatsApp estará conectado ao ConvoFlow pelo seu próprio servidor WAHA, lendo um QR Code.',
+    forWhom:
+      'Gestor da Loja que já tem um servidor WAHA no ar (ou quem o hospeda para a empresa), com o celular do número em mãos. Gerente: número de QR Code nasce na sua Conta, não na Loja escolhida no topo.',
+    moduleName: 'whatsapp-numbers',
+    minRole: 'gestor',
+    steps: [
+      {
+        title: 'Separe o endereço, a chave e um nome de sessão',
+        body:
+          'Você vai precisar do endereço público do servidor WAHA, de preferência com https, da chave dele (X-Api-Key), se ele pedir, e de um nome de sessão que só este número vai usar. Endereço de rede interna, como localhost, 10... ou 192.168..., é recusado.',
+        note:
+          'O nome da sessão não pode repetir em todo o ConvoFlow. Se o servidor também atende outro sistema (o n8n, por exemplo), não use "default".',
+      },
+      {
+        title: 'Abra Números de WhatsApp e clique em "Conectar número"',
+        body: 'Na primeira vez, o botão se chama "Conectar o primeiro número".',
+        screen: '/dashboard/whatsapp-numbers',
+        helpKey: 'page:whatsapp-numbers',
+      },
+      {
+        title: 'Escolha "QR Code no seu servidor (WAHA)" e clique em "Continuar"',
+        body:
+          'Aqui o servidor é seu: por isso o ConvoFlow pede o endereço e a chave dele.',
+      },
+      {
+        title: 'Preencha os dados do número e do servidor',
+        body:
+          'Preencha "Nome do número", "Endereço do seu servidor WAHA" (o campo vem com um endereço de exemplo: troque pelo seu), "Chave do servidor WAHA (X-Api-Key)", se o servidor exigir, e "Nome da sessão".',
+      },
+      {
+        title: 'Clique em "Salvar número"',
+        body:
+          'O ConvoFlow testa se o servidor responde, cria a sessão nele com o endereço de entrega e uma senha só deste número, e guarda endereço, chave e senha no cofre. Aparece "Número WAHA criado". Se o servidor recusar a chave, não responder ou não criar a sessão, a janela diz o motivo e nada é salvo.',
+      },
+      {
+        title: 'Clique em "Conectar pelo QR Code", na linha do número',
+        body:
+          'Aqui o QR Code não abre sozinho. Se o servidor ainda estiver iniciando a sessão, a janela mostra "Preparando o QR Code..." e tenta de novo sozinha. Leia com o celular do número: WhatsApp › Configurações › Aparelhos conectados › Conectar um aparelho. Ao conectar, aparece "Conectado com sucesso!".',
+        note: 'No WAHA não existe código de pareamento: só o QR Code.',
+      },
+      {
+        title: 'Faça um teste real',
+        body:
+          'De outro celular, mande uma mensagem para o número e confira que ela aparece em Conversas. Responda por ali e veja chegar.',
+        screen: '/dashboard/conversations',
+        helpKey: 'page:conversations',
+      },
+      {
+        title: 'Trocou a chave do servidor? Use "Substituir chave"',
+        body:
+          'Abra os detalhes do número (o ícone de informação na linha dele), clique em "Substituir chave", digite a chave nova e clique em "Testar e guardar". O ConvoFlow testa antes de guardar; se o servidor recusar, nada muda.',
+        screen: '/dashboard/whatsapp-numbers',
+        helpKey: 'page:whatsapp-numbers',
       },
     ],
   },
@@ -263,7 +400,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
   // ------------------------------------------------------------------ 3
   {
     id: 'configurar-equipe',
-    title: 'Configurar sua equipe',
+    title: 'Convidar pessoas e escolher o cargo',
     goal:
       'No fim, cada pessoa da operação terá o próprio acesso, com o cargo certo e vinculada à Loja onde trabalha.',
     forWhom:
@@ -288,7 +425,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Só o Gerente: coloque em foco a Loja onde a pessoa vai trabalhar',
         body:
-          'Use o seletor de Conta no topo da tela, ou "Abrir" na lista de Lojas, para entrar na Loja de destino. O convite usa a Loja que está em foco, então trocar antes evita convidar para o lugar errado. Como Gestor você não tem seletor: está sempre na sua Loja.',
+          'Use "Escolher Loja", no topo da tela, ou "Abrir" na lista de Lojas, para entrar na Loja de destino. O convite já vem com a Loja em foco escolhida; com a Conta em foco, você escolhe a Loja na janela do convite. Como Gestor você não tem seletor: está sempre na sua Loja.',
         note:
           'Acabou de criar a Loja? O aviso de sucesso traz o atalho "Abrir a Loja", que já coloca ela em foco.',
       },
@@ -304,39 +441,97 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Preencha nome, sobrenome, email e o Cargo',
         body:
-          'O email é o login da pessoa. O telefone é opcional. Preencha o nome de verdade: é ele que o time vê quando uma conversa é transferida e é por ele que os relatórios separam quem atendeu o quê. Ao trocar o Cargo, o cartão logo abaixo lista o que aquele cargo pode e o que não pode fazer. Leia antes de enviar.',
+          'Nome, Sobrenome e Email têm asterisco: são obrigatórios. O email é o login da pessoa; o telefone é opcional. Preencha o nome de verdade: é ele que o time vê quando uma conversa é transferida. No "Cargo", o Gerente escolhe Gestor ou Atendente; o Gestor só convida Atendente, que já vem escolhido. O cartão logo abaixo lista o que o cargo pode e o que não pode fazer. Leia antes de enviar: o cargo não muda depois pela Equipe.',
         note:
           'Cada Loja tem 1 Gestor e 2 vagas de Atendente; o convite pendente já ocupa a vaga. Com a Loja cheia, o convite de Atendente não sai: cancele um convite pendente ou suspenda alguém, ou fale com o ConvoFlow (contato@convoflow.com.br) para ter mais vagas.',
       },
       {
         title: 'Escolha a Loja e clique em "Enviar convite"',
         body:
-          'Para Gestor e Atendente aparece uma lista com as Lojas da sua Conta, já marcada na que você colocou em foco. Para Atendente, cada Loja da lista mostra quantas vagas livres tem. Confira se é a certa antes de enviar: é ela que define quais conversas e contatos a pessoa vai enxergar.',
+          'Para Gestor e Atendente aparece a lista "Loja", com as Lojas da sua Conta, já marcada na que está em foco (ou na única, se a Conta tem uma só). Para Atendente, cada Loja da lista mostra quantas vagas livres tem. Confira se é a certa antes de enviar: é ela que define quais conversas e contatos a pessoa vai enxergar. Enquanto falta algo, o botão fica cinza e a janela diz o quê.',
         note:
           'Como Gestor você não escolhe nada aqui: o convite entra na sua Loja, que é a única que você administra.',
       },
       {
         title: 'Confirme que a pessoa conseguiu entrar',
         body:
-          'Ela recebe um email de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Volte em Equipe e veja se o nome aparece na lista. Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
+          'Ela recebe um email de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Em Equipe, a pessoa aparece com a situação "Pendente" desde o convite; quando ela cria a senha, passa a "Ativo". Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
         screen: '/dashboard/team',
         note:
           'O convite vale por 24 horas e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa a distribuição automática de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
       },
       {
-        title: 'Divida as conversas novas entre a equipe',
-        body:
-          'Com pelo menos 2 atendentes ativos na Loja, abra Configurações › Distribuição e transferência e, no cartão "Distribuição de conversas novas", ligue "Distribuir conversas novas automaticamente". Decida se o Gestor também recebe e se a conversa ganha responsável na primeira mensagem ou só quando o chatbot terminar. Ajuste a fatia de cada pessoa até a soma dar 100 (0 tira alguém da distribuição automática sem tirar da Loja) e clique em "Salvar distribuição".',
-        screen: '/dashboard/settings',
-        helpKey: 'page:settings-visibility',
-        note:
-          'Com um atendente só, o cartão mostra uma linha explicando que a distribuição automática aparece a partir do segundo, porque não há com quem dividir. A distribuição automática nunca troca uma conversa que já tem responsável, e não toca o sino. Na mesma aba, o cartão "Transferência por tempo sem resposta" faz o oposto para quem já tem a conversa e não responde: em X minutos de funcionamento ela passa para o próximo da distribuição automática, com aviso no sino. Vem desligado; ligue quando o time já souber que isso vai acontecer.',
-      },
-      {
         title: 'Remova o acesso de quem sair do time no mesmo dia',
         body:
-          'Ainda em Equipe, retire o acesso de quem saiu. Enquanto o acesso existe, a pessoa continua vendo as conversas e os contatos da Loja. Quem sai é removido da distribuição automática sozinho, mas FICA com as conversas que já tinha: abra Conversas, pílula "Responsável indisponível", e transfira cada uma para quem vai continuar o atendimento.',
+          'Ainda em Equipe, no menu de Ações da pessoa, use "Suspender" (dá para reativar) ou "Excluir" (de vez; a vaga fica livre e só volta com convite novo). Enquanto o acesso existe, a pessoa continua vendo as conversas e os contatos da Loja. Quem sai é removido da distribuição automática sozinho, mas FICA com as conversas que já tinha: abra Conversas, pílula "Responsável indisponível", e transfira cada uma para quem vai continuar o atendimento.',
         screen: '/dashboard/team',
+        helpKey: 'page:team',
+        note:
+          'Com 2 ou mais atendentes, divida as conversas novas entre eles: o tutorial "Configurar a distribuição de conversas" mostra como.',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------ 3b
+  // Distribuição e transferência. Conferido em 2026-10-27 contra
+  // VisibilitySettings, RotationSettings e ResponseRuleSettings.
+  {
+    id: 'configurar-distribuicao',
+    minRole: 'gestor',
+    title: 'Configurar a distribuição de conversas',
+    goal:
+      'No fim, a Loja terá definido o que cada atendente vê, como as conversas novas são divididas e o que acontece quando ninguém responde a tempo.',
+    forWhom:
+      'Gestor da Loja (o Gerente faz o mesmo, com a Loja escolhida no topo). O Atendente vê esta aba só para leitura.',
+    steps: [
+      {
+        title: 'Abra Configurações › Distribuição e transferência',
+        body:
+          'São três cartões, na ordem em que a conversa passa por eles: quem vê e quem transfere, como a conversa nova chega e o que acontece se ninguém responde. Tudo aqui vale para a Loja inteira.',
+        screen: '/dashboard/settings',
+        helpKey: 'page:settings-visibility',
+      },
+      {
+        title: 'No cartão 1, escolha o que o atendente vê e clique em "Salvar alterações"',
+        body:
+          'Em "O atendente vê", escolha "Todas as conversas da Loja", "Sem responsável + as dele" ou "Só as dele". Depois decida "Atendente pode transferir conversas": desligado, só Gestor e Gerente passam conversas adiante.',
+        note: 'Gestor e Gerente sempre veem e transferem tudo.',
+      },
+      {
+        title: 'No cartão 2, ligue "Distribuir conversas novas automaticamente"',
+        body:
+          'O cartão "Distribuição de conversas novas" só oferece a chave com pelo menos 2 atendentes ativos na Loja; com um só, ele diz isso numa linha. Decida também "Gestor também recebe conversas".',
+      },
+      {
+        title: 'Escolha "Quando a conversa ganha responsável"',
+        body:
+          '"Na primeira mensagem" dá dono na hora, mesmo com chatbot. "Quando o chatbot terminar" espera o bot acabar; sem bot publicado no número, é na hora.',
+        note:
+          'Se algum fluxo termina em "Transferir para Atendente" nomeando uma pessoa, escolha "Quando o chatbot terminar": senão a conversa já chega com dono e o bloco não troca.',
+        helpKey: 'transfer_agent',
+      },
+      {
+        title: 'Ajuste a "Fatia de cada pessoa" e clique em "Salvar distribuição"',
+        body:
+          'A soma precisa dar 100; a tela diz quanto falta ou sobra. "Dividir igualmente" refaz as fatias por igual, e 0 tira alguém da distribuição sem tirar da Loja. A distribuição nunca troca uma conversa que já tem responsável, e não toca o sino.',
+      },
+      {
+        title: 'No cartão 3, ligue "Transferir conversa sem resposta" se quiser que a conversa mude de mão',
+        body:
+          'Defina o "Tempo sem resposta" em minutos de funcionamento (de 5 a 1440) e o "Máximo de transferências por espera" (de 1 a 10). O quadro logo abaixo mostra quantas esperas dos últimos 30 dias teriam passado do limite: use para calibrar.',
+        note: 'Vem desligada. Ligue quando o time já souber que isso vai acontecer.',
+      },
+      {
+        title: 'Confira o "Horário de funcionamento da Loja" e clique em "Salvar regra"',
+        body:
+          'Escolha o fuso e os dias e horas. Só os minutos dentro do horário contam, e é o mesmo horário que o chatbot usa para "fora do horário". O horário só aparece com a chave do cartão 3 ligada: para gravar só o horário, ligue, ajuste, desligue a chave e salve.',
+      },
+      {
+        title: 'Acompanhe pelas Conversas e pelo Dashboard',
+        body:
+          'Em Conversas, a pílula "Responsável indisponível" mostra conversas presas com alguém suspenso ou em 0 %; transfira à mão. No Dashboard, a seção "Por atendente" mostra quanto está com cada pessoa e quantas vezes a regra de tempo agiu.',
+        screen: '/dashboard/conversations',
+        helpKey: 'concept:conversation-routing',
       },
     ],
   },
@@ -394,7 +589,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Cadastre um contato de teste pelo botão "Novo Lead"',
         body:
-          'Preencha o nome e o telefone com DDD, escolha a etapa e clique em "Criar lead". O card aparece na coluna escolhida, e o contato entra em Contatos. Telefone que já é contato da Loja não é duplicado: o card desse contato vai para a etapa. O menu de cada coluna tem "Adicionar Lead", que já abre com aquela etapa escolhida.',
+          'Preencha o nome e o telefone com DDD, escolha a etapa e clique em "Criar lead". O card aparece na coluna escolhida, e o contato entra em Contatos. Telefone que já é contato da Loja não é duplicado: o card desse contato vai para a etapa. O menu de cada coluna tem "Adicionar lead", que já abre com aquela etapa escolhida.',
         note:
           'Terminado o teste, apague o contato em Contatos: no menu ⋯ da linha dele, clique em "Excluir" e confirme em "Excluir".',
         screen: '/dashboard/funnel',
@@ -428,7 +623,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Dê um nome e escolha o número de WhatsApp',
         body:
-          'Preencha o Nome. Em "Número de WhatsApp", escolha o número em que o bot responde. Deixar em "Todos os números" faz ele valer para qualquer número conectado. A Prioridade só importa se houver mais de um bot no mesmo número.',
+          'Preencha o Nome. Em "Número de WhatsApp", escolha o número em que o bot responde. Deixar em "Todos os números" faz ele valer para qualquer número conectado. A Prioridade só importa se houver mais de um bot no mesmo número: entra o de número maior.',
       },
       {
         title: 'Marque o gatilho "Primeiro contato"',
@@ -438,9 +633,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Se escolher "Palavra-chave", você precisa cadastrar pelo menos uma palavra, senão o formulário não salva.',
       },
       {
-        title: 'Salve: o construtor do fluxo abre sozinho',
+        title: 'Clique em "Criar e Abrir Editor"',
         body:
-          'Ao salvar, o ConvoFlow leva você direto para o construtor daquele bot. À esquerda ficam os blocos, no meio a área de desenho, e à direita o painel de configuração do bloco selecionado.',
+          'O ConvoFlow cria o bot e leva você direto para o construtor dele. À esquerda ficam os blocos, no meio a área de desenho, e à direita o painel de configuração do bloco selecionado.',
         helpKey: 'page:chatbot-builder',
       },
       {
@@ -466,7 +661,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Clique em "Publicar" e corrija o que a validação apontar',
         body:
-          'Salvar guarda o rascunho; Publicar é o que coloca no ar. Ao publicar, o sistema valida o fluxo inteiro e, se houver bloco sem ligação ou campo obrigatório vazio, mostra a lista do que corrigir em vez de publicar quebrado.',
+          'Publicar é o que coloca no ar. Ao publicar, o sistema valida o fluxo inteiro e, se houver bloco sem ligação ou campo obrigatório vazio, mostra a lista do que corrigir em vez de publicar quebrado. Depois de publicado, mexa no fluxo e clique em "Publicar" de novo: "Salvar" num bot no ar já vale na hora, sem conferir.',
       },
       {
         title: 'Mande uma mensagem para o número e confirme a resposta',
@@ -506,7 +701,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Prepare a segmentação em Contatos',
         body:
-          'Aplique tags nos contatos que devem receber, em vez de mirar a base toda. Campanha segmentada tem resposta melhor e reduz muito o risco de denúncia por spam.',
+          'Aplique etiquetas nos contatos que devem receber, em vez de mirar a base toda. Campanha separada por etiqueta tem resposta melhor e reduz muito o risco de denúncia por spam.',
         screen: '/dashboard/contacts',
         helpKey: 'page:contacts',
       },
@@ -520,7 +715,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'No passo Conteúdo, escolha o número e o tipo de envio',
         body:
-          'Dê um nome à campanha, escolha o "Número de WhatsApp" e marque "Só para quem aceita campanhas" para enviar só a quem autorizou. Com número da API Oficial, aparece a escolha entre template e texto livre: escolha template e digite o nome exato aprovado e o idioma.',
+          'Dê um nome à campanha, escolha o "Número de WhatsApp" e marque "Só para quem aceita campanhas" para enviar só a quem autorizou. Com número da API Oficial aparece "Tipo de envio", com "Texto livre" marcado: clique em "Template aprovado", escolha o template e preencha os "Parâmetros do corpo" ({{1}}, {{2}}). Número de QR Code não tem essa escolha: ele envia o texto.',
       },
       {
         title: 'No passo Público, escolha Etiquetas, Contatos ou Planilha',
@@ -533,11 +728,11 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Agendar exige data. Horário comercial responde melhor: disparo de madrugada chega com o cliente dormindo e vira bloqueio ou denúncia na manhã seguinte.',
       },
       {
-        title: 'No passo Revisão, comece pequeno',
+        title: 'No passo Revisão, confira e dispare',
         body:
-          'Confira o resumo e dispare primeiro para um punhado de contatos, não para a lista inteira. Se preferir revisar depois, use "Salvar como Rascunho". Confirmado, a campanha entra na fila de envio.',
+          'Confira o resumo. Na primeira vez, comece pequeno: volte ao passo Público e escolha poucos contatos, porque a Revisão não corta a lista. Se preferir revisar depois, use "Salvar como Rascunho". Confirmado, a campanha entra na fila de envio, que roda a cada 5 minutos.',
         note:
-          'Número da API Oficial recém-conectado tem teto diário na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; depois disso o teto some. Se a lista passar do teto, o resto fica como "skipped" nos Detalhes e não sai sozinho no dia seguinte. Planeje a primeira semana em lotes.',
+          'Número da API Oficial recém-conectado tem teto diário na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; depois disso o teto some. Se a lista passar do teto, o resto fica como "Não enviada" nos Detalhes e não sai sozinho no dia seguinte. Planeje a primeira semana em lotes.',
       },
       {
         title: 'Acompanhe a entrega pelo botão "Relatórios"',
@@ -588,7 +783,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Reconheça o selo "Bot em atendimento" e encerre a sessão antes de responder',
         body:
-          'O selo na linha da lista e no cabeçalho quer dizer que um chatbot está conduzindo a conversa agora. Antes de escrever, abra o menu ⋮ e clique em "Encerrar sessão do bot": o bot para na hora e a conversa passa a ser sua para responder. Sem isso, você e o bot falam com o cliente ao mesmo tempo.',
+          'O selo na linha da lista e no cabeçalho quer dizer que um chatbot está conduzindo a conversa agora. Antes de escrever, abra o menu ⋮, clique em "Encerrar sessão do bot" e confirme em "Encerrar sessão": o bot para e a conversa passa a ser sua para responder. Sem isso, você e o bot falam com o cliente ao mesmo tempo.',
         note:
           'Sem selo, não há bot e o item fica desabilitado. Encerrar a sessão não muda o responsável nem chama a distribuição automática: é uma ação sua, e só.',
         helpKey: 'page:conversations',
@@ -614,6 +809,14 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:conversations',
       },
       {
+        title: 'Mande voz, áudio ou documento pela conversa',
+        body:
+          'Com o campo vazio, clique no microfone, fale, clique no quadrado para parar, ouça e envie (a gravação para sozinha em 5 minutos). Para um arquivo, clique no clipe: áudio MP3, M4A, AAC ou OGG de até 16 MB; documento até 30 MB em número de QR Code. Microfone apagado? Passe o mouse ou toque nele: ele diz o motivo.',
+        note:
+          'Em número da API Oficial, passadas 24 horas sem mensagem do cliente, só um template aprovado reabre a conversa: use "Enviar template", no aviso do topo do chat.',
+        helpKey: 'page:conversations',
+      },
+      {
         title: 'Use as cores e a pílula "Não respondidas" para priorizar',
         body:
           'Com a sinalização ligada em Configurações › Atendimento, a conversa em que o cliente espera fica amarela, laranja e vermelha conforme as horas passam, e a pílula "Não respondidas" filtra só elas. Responda as vermelhas primeiro: perto de 24 horas sem resposta, um número da API Oficial só reabre com template.',
@@ -624,6 +827,119 @@ export const ALL_TUTORIALS: Tutorial[] = [
       },
     ],
   },
+  // ------------------------------------------------------------------ 8
+  // Avisos para sistemas (webhooks de saída). Conferido em 2026-10-27 contra
+  // IntegrationSettings e webhook-dispatcher.
+  {
+    id: 'avisos-para-sistemas',
+    title: 'Configurar avisos para sistemas',
+    goal:
+      'No fim, outro sistema seu (um CRM, uma planilha, o n8n) vai receber sozinho um aviso a cada acontecimento que você escolheu no ConvoFlow.',
+    forWhom:
+      'Gestor da Loja, junto com quem cuida do outro sistema (o Gerente faz o mesmo, numa Loja escolhida no topo). O Atendente não vê esta aba.',
+    minRole: 'gestor',
+    capacidade: 'store.admin',
+    steps: [
+      {
+        title: 'Pegue no outro sistema o endereço que vai receber os avisos',
+        body:
+          'No n8n, por exemplo, é o endereço do nó Webhook. Ele precisa começar com http:// ou https:// e aceitar um POST com os dados em JSON.',
+      },
+      {
+        title: 'Abra Configurações › Avisos para sistemas',
+        body:
+          'O aviso é da Loja que está aberta e só recebe o que acontece nela. Gerente: escolha a Loja antes, em "Escolher Loja".',
+        screen: '/dashboard/settings',
+        helpKey: 'page:settings-integrations',
+      },
+      {
+        title: 'Preencha "Nome" e "Endereço do outro sistema"',
+        body: 'O nome é só para você reconhecer o aviso na lista (ex.: "Sistema de CRM").',
+      },
+      {
+        title: 'Em "Avisar quando", marque só o que o outro sistema usa',
+        body:
+          'Por exemplo, "Entra um contato novo" para cadastrar o contato no CRM. "Chega uma mensagem" e "Sai uma mensagem" levam o texto das conversas da Loja inteira: marque só se o outro sistema precisar mesmo.',
+      },
+      {
+        title: 'Preencha a "Senha de conferência"',
+        body:
+          'É opcional, mas proteja-se: com ela, cada aviso chega assinado no cabeçalho X-ConvoFlow-Signature, e o outro sistema refaz a assinatura com a mesma senha para conferir que veio do ConvoFlow.',
+      },
+      {
+        title: 'Deixe "Aviso ligado" marcado e clique em "Criar aviso"',
+        body:
+          'Aparece "Aviso criado" e ele entra em "Avisos cadastrados", com o selo "Ligado". Desligado, o cadastro fica salvo mas nada é enviado.',
+      },
+      {
+        title: 'Provoque o acontecimento uma vez e confira no outro sistema',
+        body:
+          'Não existe botão de teste: cadastre um contato de teste, por exemplo. O aviso sai em até 5 minutos. Se o outro sistema responder com erro, o ConvoFlow tenta de novo, até 5 vezes.',
+        note:
+          'Para parar, use "Remover" no aviso e confirme em "Remover aviso": o endereço deixa de receber na hora.',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------ 8b
+  // Chave da API (complemento pago). Conferido em 2026-10-27 contra
+  // ApiAddonCard, ApiKeysSettings e api_chave_criar. Só aparece com
+  // API_ADDON_RELEASED ligada (ver visibleTutorials).
+  {
+    id: TUTORIAL_CHAVE_API_ID,
+    title: 'Criar e usar a chave da API',
+    goal:
+      'No fim, outro sistema (uma planilha, um painel, o n8n) vai ler os dados da sua Conta com uma chave que só lê o que você permitiu.',
+    forWhom:
+      'Gerente da Conta: a chave e a cobrança são da Conta. Gestor e Atendente não veem a aba Chaves de API.',
+    minRole: 'gerente',
+    steps: [
+      {
+        title: 'Ligue a API em Configurações › Assinatura',
+        body:
+          'No cartão "API e integrações", clique em "Ligar a API" (o botão mostra o preço por mês) e confirme em "Contratar a API e integrações?". No primeiro mês entra na próxima fatura só o valor proporcional. Precisa da assinatura paga, depois do teste grátis e com o cartão em dia.',
+        screen: '/dashboard/settings',
+        helpKey: 'page:settings-subscription',
+        note: 'Sem a API ligada, o ConvoFlow recusa criar a chave.',
+      },
+      {
+        title: 'Abra Configurações › Chaves de API e clique em "Nova chave"',
+        body:
+          'A aba mostra quantas chaves estão em uso (até 10) e o endereço da API, https://api.convoflow.com.br.',
+        helpKey: 'page:settings-api',
+      },
+      {
+        title: 'Dê um nome em "Nome da chave"',
+        body: 'Use o lugar onde ela vai ser usada, por exemplo Painel de vendas. Até 60 letras.',
+      },
+      {
+        title: 'Em "O que a chave pode ler", deixe marcado só o necessário',
+        body:
+          'Contatos, conversas, funil, equipe e métricas vêm marcados. O histórico das conversas e as fotos, áudios e documentos vêm desmarcados: marque só se o serviço precisar mesmo. Quanto menos, mais seguro.',
+      },
+      {
+        title: 'Escolha as Lojas e a "Validade"',
+        body:
+          'Deixe "Todas as Lojas" ou escolha só algumas. Na validade, 30 dias, 90 dias (o padrão) ou 1 ano: vencida, a chave para e você cria outra.',
+      },
+      {
+        title: 'Marque a confirmação e clique em "Criar chave"',
+        body:
+          'Na janela "Sua chave está pronta", clique em "Copiar chave", guarde num lugar seguro e clique em "Já guardei a chave". Ela não aparece de novo.',
+      },
+      {
+        title: 'Use a chave no outro sistema',
+        body:
+          'Passe o endereço da API e a chave para quem configura o outro sistema; o passo a passo técnico está em "Ver a documentação", ao lado do endereço. Cada chave aceita 60 pedidos por minuto, e a Conta, 5.000 por dia (o dia vira às 21h de Brasília).',
+      },
+      {
+        title: 'Corte o acesso com "Revogar" quando não usar mais',
+        body:
+          'Na linha da chave, clique em "Revogar" e confirme em "Revogar chave". Vale na hora e não dá para desfazer. Confira o "Último uso" de vez em quando: uso que você não reconhece é motivo para revogar.',
+      },
+    ],
+  },
+
   // ------------------------------------------------------------------ 9
   // Cadastro pelo site (teste grátis, entrega 2). Escrito e testado, mas só
   // aparece com PUBLIC_SIGNUP_ENABLED ligada — ver visibleTutorials abaixo.
@@ -745,11 +1061,15 @@ export const ALL_TUTORIALS: Tutorial[] = [
  * está desligada: ensinar um caminho que não está no ar é pior que não ensinar.
  * Ele continua escrito em ALL_TUTORIALS e é conferido pelos testes do mesmo jeito.
  */
-export function visibleTutorials(all: Tutorial[], publicSignupEnabled: boolean): Tutorial[] {
-  return all.filter((t) => t.id !== TUTORIAL_TESTE_GRATIS_ID || publicSignupEnabled);
+export function visibleTutorials(all: Tutorial[], publicSignupEnabled: boolean, apiAddonReleased = true): Tutorial[] {
+  return all.filter(
+    (t) =>
+      (t.id !== TUTORIAL_TESTE_GRATIS_ID || publicSignupEnabled) &&
+      (t.id !== TUTORIAL_CHAVE_API_ID || apiAddonReleased),
+  );
 }
 
-export const TUTORIALS: Tutorial[] = visibleTutorials(ALL_TUTORIALS, PUBLIC_SIGNUP_ENABLED);
+export const TUTORIALS: Tutorial[] = visibleTutorials(ALL_TUTORIALS, PUBLIC_SIGNUP_ENABLED, API_ADDON_RELEASED);
 
 export function getTutorial(id: string | null | undefined): Tutorial | null {
   if (!id) return null;

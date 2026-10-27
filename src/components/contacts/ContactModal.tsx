@@ -14,6 +14,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useEnhancedSupabaseMutation } from '@/hooks/enhanced/useEnhancedSupabaseMutation';
 import { contactFormSchemaFor, buildContactPayload, type ContactFormValues } from '@/lib/validations/contact';
 import { ChannelLogo } from '@/components/conversations/ChannelLogo';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { CHANNEL_LABEL, asChannel } from '@/lib/conversations/channel';
 import { instagramHandle } from '@/lib/instagram/contactProfile';
 import { supabase } from '@/integrations/supabase/client';
@@ -428,7 +429,10 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                 </div>
               ) : (
                 <div>
-                  <Label htmlFor="phone">Telefone *</Label>
+                  <div className="flex items-center gap-1.5">
+                    <Label htmlFor="phone">Telefone *</Label>
+                    <DicaDoCampo rotulo="Telefone" texto="Digite 55, o DDD e o número, como 55 11 99999 9999. O 55 não entra sozinho, e o número fica gravado só com os dígitos." />
+                  </div>
                   <Input
                     id="phone"
                     value={formData.phone}
