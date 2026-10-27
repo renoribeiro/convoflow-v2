@@ -129,11 +129,14 @@ function buildTemplateCsv(): string {
 // Variable chips
 // ─────────────────────────────────────────────
 
+/** Tipo da mensagem com o nome que a tela mostra (o banco guarda o código). */
+const NOME_DO_TIPO: Record<string, string> = { text: 'Texto', image: 'Imagem', video: 'Vídeo', audio: 'Áudio', document: 'Documento' };
+
 const VARIABLE_CHIPS = [
-  { label: '{name}', value: '{name}' },
-  { label: '{first_name}', value: '{first_name}' },
-  { label: '{phone}', value: '{phone}' },
-  { label: '{email}', value: '{email}' },
+  { label: 'Nome do contato', value: '{name}' },
+  { label: 'Primeiro nome', value: '{first_name}' },
+  { label: 'Telefone', value: '{phone}' },
+  { label: 'Email', value: '{email}' },
 ];
 
 function insertAtCursor(
@@ -633,13 +636,13 @@ export const CampaignWizard = ({
 
       {/* Instance */}
       <div className="space-y-2">
-        <Label>Instância do WhatsApp *</Label>
+        <Label>Número de WhatsApp *</Label>
         <Select
           value={state.whatsapp_instance_id}
           onValueChange={(v) => set('whatsapp_instance_id', v)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione uma instância" />
+            <SelectValue placeholder="Escolha o número que vai enviar" />
           </SelectTrigger>
           <SelectContent>
             {instances
@@ -663,7 +666,7 @@ export const CampaignWizard = ({
           </SelectContent>
         </Select>
         {instances.length === 0 && (
-          <p className="text-xs text-muted-foreground">Nenhuma instância ativa encontrada.</p>
+          <p className="text-xs text-muted-foreground">Nenhum número de WhatsApp conectado. Conecte um em Números de WhatsApp.</p>
         )}
       </div>
 
@@ -675,7 +678,7 @@ export const CampaignWizard = ({
           onCheckedChange={(c) => set('require_opt_in', !!c)}
         />
         <Label htmlFor="require-opt-in" className="cursor-pointer">
-          Exigir opt-in (só enviar para contatos que consentiram)
+          Só para quem aceita campanhas (contatos com a autorização marcada)
         </Label>
       </div>
 
@@ -694,7 +697,7 @@ export const CampaignWizard = ({
               }`}
             >
               <span className="text-sm font-medium">Template aprovado</span>
-              <span className="text-xs text-muted-foreground">Recomendado para Meta Cloud API</span>
+              <span className="text-xs text-muted-foreground">Mensagem pronta que a Meta aprovou. Recomendado na API Oficial</span>
             </button>
             <button
               type="button"
@@ -706,16 +709,15 @@ export const CampaignWizard = ({
               }`}
             >
               <span className="text-sm font-medium">Texto livre</span>
-              <span className="text-xs text-muted-foreground">Apenas dentro da janela de 24h</span>
+              <span className="text-xs text-muted-foreground">Só para quem escreveu nas últimas 24 horas</span>
             </button>
           </div>
           {!state.is_template && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="text-sm">
-                Mensagens de texto livre só são entregues dentro da janela de 24h após a última
-                interação do contato. Envios fora dessa janela são bloqueados pelo WhatsApp e podem
-                resultar em restrições ao número.
+                Texto livre só chega a quem escreveu para este número nas últimas 24 horas. Para os
+                outros, a Meta recusa a mensagem, e muitas recusas podem restringir o número.
               </AlertDescription>
             </Alert>
           )}
@@ -961,8 +963,8 @@ export const CampaignWizard = ({
       <div className="grid grid-cols-3 gap-3">
         {(
           [
-            { type: 'csv_import', icon: <Upload className="h-5 w-5" />, label: 'CSV' },
-            { type: 'tags', icon: <Tags className="h-5 w-5" />, label: 'Tags' },
+            { type: 'csv_import', icon: <Upload className="h-5 w-5" />, label: 'Planilha' },
+            { type: 'tags', icon: <Tags className="h-5 w-5" />, label: 'Etiquetas' },
             { type: 'contact_list', icon: <ListChecks className="h-5 w-5" />, label: 'Contatos' },
           ] as const
         ).map(({ type, icon, label }) => (
@@ -986,7 +988,7 @@ export const CampaignWizard = ({
       {state.audience_type === 'csv_import' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <Label>Importar CSV</Label>
+            <Label>Importar planilha (arquivo CSV)</Label>
             <button
               type="button"
               onClick={() => {
@@ -1004,7 +1006,8 @@ export const CampaignWizard = ({
             </button>
           </div>
           <p className="text-xs text-muted-foreground">
-            Colunas esperadas: <code>phone</code> (obrigatório), <code>name</code>, <code>email</code>
+            A planilha precisa de uma coluna <code>phone</code> com o telefone (obrigatória) e pode ter
+            <code> name</code> (nome) e <code>email</code>. Baixe o modelo e preencha nele.
           </p>
           <DragDropCsv
             fileName={state.csvFileName}
@@ -1039,7 +1042,7 @@ export const CampaignWizard = ({
                   <tr>
                     <th className="text-left p-2">Telefone</th>
                     <th className="text-left p-2">Nome</th>
-                    <th className="text-left p-2">E-mail</th>
+                    <th className="text-left p-2">Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1353,22 +1356,22 @@ export const CampaignWizard = ({
     const instance = instances.find((i) => i.id === state.whatsapp_instance_id);
     const audienceLabel =
       state.audience_type === 'csv_import'
-        ? `CSV: ${state.csvRows.length} contatos`
+        ? `Planilha: ${state.csvRows.length} contatos`
         : state.audience_type === 'tags'
-        ? `Tags: ${contactCount} contatos`
+        ? `Etiquetas: ${contactCount} contatos`
         : `Lista: ${state.selectedContactIds.length} contatos`;
 
     return (
       <div className="space-y-5">
         <div className="grid grid-cols-2 gap-4">
           <SummaryRow label="Campanha" value={state.name} />
-          <SummaryRow label="Instância" value={instance?.name ?? '—'} />
-          <SummaryRow label="Tipo" value={state.message_type} />
+          <SummaryRow label="Número" value={instance?.name ?? '—'} />
+          <SummaryRow label="Tipo" value={NOME_DO_TIPO[state.message_type] ?? state.message_type} />
           <SummaryRow label="Público" value={audienceLabel} />
           <SummaryRow label="Envio" value={scheduleLabel()} />
           <SummaryRow label="Intervalo" value={`${state.delay_between_messages}s`} />
           {state.require_opt_in && (
-            <SummaryRow label="Opt-in" value="Apenas contatos com consentimento" />
+            <SummaryRow label="Autorização" value="Só quem aceita campanhas" />
           )}
           {isOfficialProvider && (
             <SummaryRow

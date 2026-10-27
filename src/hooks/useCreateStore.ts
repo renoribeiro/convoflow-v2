@@ -35,7 +35,7 @@ export function useCreateStore() {
         throw new Error(
           await mensagemDaEdgeFunction(
             error,
-            'Não foi possível criar a loja. Tente novamente.',
+            'Não foi possível criar a Loja. Tente novamente.',
           ),
         );
       }
@@ -46,13 +46,13 @@ export function useCreateStore() {
         throw new Error(
           typeof payload === 'string'
             ? payload
-            : payload?.message ?? 'Não foi possível criar a loja.',
+            : payload?.message ?? 'Não foi possível criar a Loja.',
         );
       }
 
       const store = (data as { store?: CreatedStore } | null)?.store;
       if (!store?.id) {
-        throw new Error('A loja foi criada, mas o servidor não devolveu os dados dela.');
+        throw new Error('A Loja foi criada, mas o servidor não devolveu os dados dela.');
       }
       return store;
     },

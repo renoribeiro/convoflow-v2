@@ -3,9 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { ShieldCheck, Info, Loader2, Zap, Copy } from 'lucide-react';
-import { env } from '@/lib/env';
-import { useToast } from '@/hooks/use-toast';
+import { ShieldCheck, Loader2, Zap } from 'lucide-react';
 import { useMetaEmbeddedSignup } from '@/hooks/useMetaEmbeddedSignup';
 
 export interface OfficialFormValues {
@@ -32,19 +30,6 @@ interface Props {
 export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: Props) => {
   const { isAvailable: embeddedSignupAvailable, startSignup, loading: signupLoading } =
     useMetaEmbeddedSignup();
-  const { toast } = useToast();
-
-  const supabaseUrl = env.get('SUPABASE_URL') || '';
-  const webhookUrl = supabaseUrl ? `${supabaseUrl}/functions/v1/meta-webhook` : '';
-
-  const copyWebhookUrl = () => {
-    if (!webhookUrl) return;
-    navigator.clipboard.writeText(webhookUrl);
-    toast({
-      title: 'Copiado!',
-      description: 'Callback URL copiada para a área de transferência',
-    });
-  };
 
   const handleEmbeddedSignup = async () => {
     try {
@@ -66,13 +51,13 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
             <span className="text-sm font-medium text-blue-900">Conexão automática</span>
           </div>
           <p className="text-xs text-blue-800">
-            Clique abaixo para conectar sua conta WhatsApp Business diretamente via Meta, sem
-            precisar copiar IDs ou tokens manualmente.
+            Clique abaixo para conectar a conta do WhatsApp Business da empresa pela própria Meta.
+            Você não precisa copiar nenhum código.
           </p>
           <p className="text-xs text-blue-800">
-            Número que já está cadastrado aqui? O mesmo botão <strong>reconecta</strong>: o
-            ConvoFlow reconhece o número, atualiza a instância no lugar e o histórico fica onde
-            está. Não exclua a instância para reconectar.
+            O número já está aqui? O mesmo botão <strong>reconecta</strong>: o ConvoFlow reconhece
+            o número, atualiza no lugar e o histórico fica onde está. Não exclua o número para
+            reconectar.
           </p>
           <Button
             type="button"
@@ -84,7 +69,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
             Conectar com a Meta
           </Button>
           <p className="text-xs text-muted-foreground text-center">
-            ou preencha os campos abaixo manualmente
+            ou preencha os campos abaixo, se a empresa já tem um app próprio na Meta
           </p>
         </div>
       ) : (
@@ -102,7 +87,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Configuração da Meta pendente (VITE_FACEBOOK_APP_ID / VITE_META_CONFIG_ID)</p>
+            <p>A conexão automática com a Meta ainda não está ligada. Fale com o suporte do ConvoFlow.</p>
           </TooltipContent>
         </Tooltip>
       )}
@@ -111,11 +96,11 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
           campos são a exceção; sem ela, continuam sendo o único caminho. */}
       <Alert className="border-emerald-200 bg-emerald-50/60">
         <ShieldCheck className="h-4 w-4 text-emerald-700" />
-        <AlertTitle>API Oficial do WhatsApp (Meta Cloud API)</AlertTitle>
+        <AlertTitle>API Oficial do WhatsApp</AlertTitle>
         <AlertDescription className="text-xs">
           {embeddedSignupAvailable ? (
             <>
-              Você não precisa de app nem de token: "Conectar com a Meta" abre uma janela da própria
+              Você não precisa de app nem de chave: "Conectar com a Meta" abre uma janela da própria
               Meta, onde você entra com o login do Facebook da empresa, escolhe (ou cria) a conta do
               WhatsApp Business, informa o número e confirma o código. Tenha em mãos esse login e um
               número que receba SMS ou ligação e que não esteja em uso no aplicativo do WhatsApp.
@@ -132,7 +117,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
             </>
           ) : (
             <>
-              Antes de continuar, você precisa de um App configurado no{' '}
+              Antes de continuar, a empresa precisa de um app no{' '}
               <a
                 href="https://developers.facebook.com/"
                 target="_blank"
@@ -141,19 +126,19 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
               >
                 Meta for Developers
               </a>
-              {' '}com WhatsApp Business habilitado e um Access Token permanente (System User). O webhook
-              do ConvoFlow é configurado uma única vez na instalação, não a cada número. Veja o aviso
-              no fim do formulário.
+              {' '}com o WhatsApp Business ligado e uma chave de acesso permanente (Access Token de um
+              System User). As mensagens chegam pelo endereço de entrega que o ConvoFlow já
+              configurou na Meta: você não precisa configurar isso.
             </>
           )}
         </AlertDescription>
       </Alert>
 
       <div className="space-y-2">
-        <Label htmlFor="meta-name">Nome da Instância *</Label>
+        <Label htmlFor="meta-name">Nome do número *</Label>
         <Input
           id="meta-name"
-          placeholder="Ex: WhatsApp Vendas Oficial"
+          placeholder="Ex: WhatsApp Vendas"
           value={values.name}
           onChange={(e) => onChange({ name: e.target.value })}
           disabled={isDisabled}
@@ -162,7 +147,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="meta-phone-id">Phone Number ID *</Label>
+          <Label htmlFor="meta-phone-id">Código do número na Meta (Phone Number ID) *</Label>
           <Input
             id="meta-phone-id"
             placeholder="123456789012345"
@@ -172,7 +157,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="meta-waba-id">WhatsApp Business Account ID *</Label>
+          <Label htmlFor="meta-waba-id">Código da conta do WhatsApp Business (WABA ID) *</Label>
           <Input
             id="meta-waba-id"
             placeholder="123456789012345"
@@ -184,7 +169,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="meta-token">Access Token (permanente) *</Label>
+        <Label htmlFor="meta-token">Chave de acesso permanente (Access Token) *</Label>
         <Input
           id="meta-token"
           type="password"
@@ -195,56 +180,14 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess }: 
           autoComplete="off"
         />
         <p className="text-xs text-muted-foreground">
-          Use um System User Token de longa duração. O token será armazenado de forma cifrada no Supabase Vault.
+          Use a chave de longa duração de um usuário do sistema da Meta (System User). O ConvoFlow guarda a chave cifrada, no cofre, e ela não aparece mais.
         </p>
       </div>
 
-      <Alert>
-        <Info className="h-4 w-4" />
-        <AlertTitle className="text-sm">Webhook da Meta: configuração única da plataforma</AlertTitle>
-        <AlertDescription className="text-xs space-y-2">
-          <p>
-            O webhook vale para a instalação inteira do ConvoFlow, não para cada número. Se algum
-            número já recebe mensagens aqui, ele já está configurado e não há nada a fazer nesta
-            etapa. Siga para "Validar e conectar".
-          </p>
-          <p>
-            Na primeira instalação, quem opera a plataforma configura, no Meta App → Webhooks →
-            WhatsApp Business Account:
-          </p>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>
-              <strong>Callback URL:</strong>{' '}
-              <code className="bg-background border px-1.5 py-0.5 rounded text-[11px]">
-                {webhookUrl || 'Configure VITE_SUPABASE_URL'}
-              </code>
-              {webhookUrl && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 px-1.5 ml-1 align-middle"
-                  onClick={copyWebhookUrl}
-                >
-                  <Copy className="h-3 w-3" />
-                  <span className="sr-only">Copiar Callback URL</span>
-                </Button>
-              )}
-            </li>
-            <li>
-              <strong>Verify Token:</strong> o token da instalação, guardado no secret{' '}
-              <code className="bg-background border px-1.5 py-0.5 rounded text-[11px]">
-                META_GLOBAL_VERIFY_TOKEN
-              </code>{' '}
-              do Supabase. Por segurança ele não é exibido aqui; quem administra a instalação lê o
-              valor no painel do Supabase. Não use o token do campo acima.
-            </li>
-            <li>
-              Subscreva os campos: <code>messages</code>, <code>message_template_status_update</code>.
-            </li>
-          </ul>
-        </AlertDescription>
-      </Alert>
+      {/* O endereço de entrega da Meta (Callback URL e Verify Token) é configurado UMA
+          vez na instalação, por quem opera a plataforma, não pelo cliente:
+          docs/RUNBOOK_troca_app_meta.md. Até o lote 3 do checkup isto aparecia
+          aqui com nomes internos (VITE_*, secret do Supabase). */}
     </div>
   );
 };

@@ -13,18 +13,18 @@ export const PricingSection = () => {
   const comTeste = salesTrialOn();
 
   const features = [
-    '5 lojas incluídas (extra por R$ 99,90/mês)',
+    '5 Lojas incluídas (extra por R$ 99,90/mês)',
     'API e integrações por R$ 99,90/mês (opcional, por Conta)',
-    '1 gestor e 2 atendentes por loja (mais sob consulta)',
-    'WhatsApp Business API integrado',
-    'Chatbots inteligentes ilimitados',
-    'Multi-atendimento em tempo real',
-    'Analytics e relatórios avançados',
-    'Automação de fluxos completa',
-    'Templates de mensagem profissionais',
-    'Segmentação avançada de contatos',
-    'Webhooks para integrar com CRM, ERP ou n8n',
-    'Suporte técnico prioritário',
+    '1 gestor e 2 atendentes por Loja (mais sob consulta)',
+    'API Oficial do WhatsApp ou conexão por QR Code',
+    'Chatbots ilimitados',
+    'Vários atendentes no mesmo número, ao vivo',
+    'Relatórios e rastreamento de anúncios',
+    'Automações completas',
+    'Templates aprovados pela Meta',
+    'Contatos com etiquetas e etapas do funil',
+    'Avisos automáticos (webhooks) para o seu CRM, ERP ou n8n',
+    'Suporte brasileiro por email',
     'Tutoriais e ajuda dentro do produto'
   ];
 
@@ -46,7 +46,7 @@ export const PricingSection = () => {
         >
           <Badge className="mb-4" variant="outline">
             <Crown className="w-4 h-4 mr-2" />
-            Plano Gerente
+            Plano único
           </Badge>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-4 px-4 sm:px-0">
             Preço simples e{' '}
@@ -85,7 +85,7 @@ export const PricingSection = () => {
                   <span className="text-xl sm:text-2xl text-muted-foreground font-normal">/mês</span>
                 </div>
                 <div className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
-                  Plano Gerente com 5 lojas incluídas
+                  Um plano por Conta, com 5 Lojas incluídas
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground/80 px-4 sm:px-0 mt-1">
                   Loja adicional por R$ 99,90/mês · API e integrações por R$ 99,90/mês

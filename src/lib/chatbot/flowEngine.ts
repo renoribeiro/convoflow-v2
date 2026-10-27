@@ -186,7 +186,7 @@ export interface FlowValidationResult {
  * de publicação o substitui pela lista de blocos (que diz qual e leva até ele) —
  * por isso a constante é exportada, em vez de comparada por texto solto.
  */
-export const FLOW_NODE_CONNECTION_ERROR = 'Há nós sem conexões de saída obrigatórias.';
+export const FLOW_NODE_CONNECTION_ERROR = 'Há blocos com uma saída obrigatória sem ligação.';
 
 /**
  * Validate a flow graph before publishing:
@@ -205,9 +205,9 @@ export function validateFlowForPublish(
 
   const startNodes = nodes.filter((n) => n.node_type === 'start');
   if (startNodes.length === 0) {
-    errors.push('O fluxo precisa de um nó de Início.');
+    errors.push('O fluxo precisa de um bloco de Início.');
   } else if (startNodes.length > 1) {
-    errors.push('O fluxo só pode ter um nó de Início.');
+    errors.push('O fluxo só pode ter um bloco de Início.');
   }
 
   const outgoingByNode = new Map<string, Set<string>>();
@@ -222,7 +222,7 @@ export function validateFlowForPublish(
     const handles = outgoingByNode.get(node.id);
 
     if (!handles || handles.size === 0) {
-      nodeErrors[node.id] = 'Este nó não está conectado a nenhuma saída.';
+      nodeErrors[node.id] = 'Este bloco não está ligado a nenhum outro.';
       continue;
     }
 

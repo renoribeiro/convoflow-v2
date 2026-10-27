@@ -18,7 +18,7 @@ import { DeleteInstanceModal, providerEffectLines, type DeleteInstanceCounts } f
 
 /**
  * O modal não decide nada: ele mostra o que a RPC whatsapp_instance_delete_preview
- * devolveu e só oferece "Excluir instância" quando ela disse ok. Estes testes
+ * devolveu e só oferece "Excluir número" quando ela disse ok. Estes testes
  * fixam os quatro estados (conferindo, recusada com histórico, vazia, erro) e
  * o texto — em especial que NENHUM estado manda o usuário "criar uma nova
  * instância", que é o caminho que perde o histórico.
@@ -56,7 +56,7 @@ function renderModal(props: Partial<React.ComponentProps<typeof DeleteInstanceMo
   return { onOpenChange, onSuccess };
 }
 
-const deleteButton = () => screen.queryByRole('button', { name: 'Excluir instância' });
+const deleteButton = () => screen.queryByRole('button', { name: 'Excluir número' });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -80,7 +80,7 @@ describe('DeleteInstanceModal — estados', () => {
     stubPreview({ ok: false, reason: 'has_history', counts: VAGA_CERTA, total: 3104, message: 'x' });
     renderModal();
 
-    await screen.findByText('Exclusão recusada: esta instância guarda histórico');
+    await screen.findByText('Exclusão recusada: este número guarda histórico');
     const table = screen.getByTestId('delete-counts');
     expect(table).toHaveTextContent('Conversas163');
     expect(table).toHaveTextContent('Mensagens2.622');
@@ -88,7 +88,7 @@ describe('DeleteInstanceModal — estados', () => {
     expect(table).toHaveTextContent('Chatbots1');
     expect(table).toHaveTextContent('Sessões de chatbot155');
     expect(table).toHaveTextContent('Campanhas0');
-    expect(table).toHaveTextContent('Follow-ups0');
+    expect(table).toHaveTextContent('Follow ups0');
 
     expect(deleteButton()).toBeNull();
     expect(screen.getByRole('button', { name: 'Fechar' })).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe('DeleteInstanceModal — estados', () => {
     });
     renderModal();
     await screen.findByTestId('delete-counts');
-    expect(screen.getByTestId('delete-counts')).toHaveTextContent('Follow-ups6');
+    expect(screen.getByTestId('delete-counts')).toHaveTextContent('Follow ups6');
     expect(deleteButton()).toBeNull();
   });
 
@@ -124,7 +124,7 @@ describe('DeleteInstanceModal — estados', () => {
   it('preview falhou: explica, oferece "Tentar de novo" e não oferece excluir', async () => {
     stubPreview(null, { message: 'permission denied for function' });
     renderModal();
-    await screen.findByText('Não deu para conferir a instância');
+    await screen.findByText('Não deu para conferir o número');
     expect(screen.getByText('permission denied for function')).toBeInTheDocument();
     expect(deleteButton()).toBeNull();
 
@@ -137,7 +137,7 @@ describe('DeleteInstanceModal — estados', () => {
   it('vazia (Meta): oferece excluir e diz que na Meta nada muda', async () => {
     stubPreview({ ok: true, reason: 'empty', counts: ZERO, total: 0 });
     renderModal();
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     expect(deleteButton()).not.toBeNull();
     expect(screen.getByText(/Na Meta, nada muda/)).toBeInTheDocument();
     expect(screen.getByText(/app do ConvoFlow continua inscrito/)).toBeInTheDocument();
@@ -148,15 +148,15 @@ describe('DeleteInstanceModal — estados', () => {
   it('vazia (Evolution): diz que a sessão é encerrada no servidor da plataforma', async () => {
     stubPreview({ ok: true, reason: 'empty', counts: ZERO, total: 0 });
     renderModal({ instance: { ...baseInstance, provider: 'evolution' } });
-    await screen.findByText('Esta instância está vazia');
-    expect(screen.getByText(/servidor WhatsApp da plataforma \(Evolution\)/)).toBeInTheDocument();
+    await screen.findByText('Este número está vazio');
+    expect(screen.getByText(/servidor de WhatsApp do ConvoFlow \(Evolution\)/)).toBeInTheDocument();
     expect(screen.queryByText(/Na Meta, nada muda/)).toBeNull();
   });
 
   it('vazia (WAHA): diz que a sessão é apagada no servidor do cliente', async () => {
     stubPreview({ ok: true, reason: 'empty', counts: ZERO, total: 0 });
     renderModal({ instance: { ...baseInstance, provider: 'waha' } });
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     expect(screen.getByText(/seu servidor WAHA/)).toBeInTheDocument();
   });
 });
@@ -167,13 +167,13 @@ describe('DeleteInstanceModal — excluir', () => {
     mockInvoke.mockResolvedValue({ data: { ok: true, provider_cleanup: 'not_applicable' }, error: null });
     const { onOpenChange, onSuccess } = renderModal();
 
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     fireEvent.click(deleteButton()!);
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(mockInvoke).toHaveBeenCalledWith('delete-whatsapp-instance', { body: { instance_id: baseInstance.id } });
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Instância excluída' }));
+    expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Número excluído' }));
   });
 
   it('provedor não confirmou: ainda é sucesso no ConvoFlow, mas o aviso diz isso', async () => {
@@ -181,28 +181,28 @@ describe('DeleteInstanceModal — excluir', () => {
     mockInvoke.mockResolvedValue({ data: { ok: true, provider_cleanup: 'failed' }, error: null });
     const { onSuccess } = renderModal({ instance: { ...baseInstance, provider: 'evolution' } });
 
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     fireEvent.click(deleteButton()!);
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(mockToast).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Instância excluída do ConvoFlow', variant: 'destructive' }),
+      expect.objectContaining({ title: 'Número excluído do ConvoFlow', variant: 'destructive' }),
     );
   });
 
   it('servidor recusou na hora (ok:false): nada de onSuccess, recarrega o preview', async () => {
     stubPreview({ ok: true, reason: 'empty', counts: ZERO, total: 0 });
     mockInvoke.mockResolvedValue({
-      data: { ok: false, reason: 'has_history', error: 'Chegou uma mensagem nesta instância durante a exclusão.' },
+      data: { ok: false, reason: 'has_history', error: 'Chegou uma mensagem neste número durante a exclusão.' },
       error: null,
     });
     const { onSuccess, onOpenChange } = renderModal();
 
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     stubPreview({ ok: false, reason: 'has_history', counts: { ...ZERO, messages: 1, conversations: 1 }, total: 2 });
     fireEvent.click(deleteButton()!);
 
-    await screen.findByText('Exclusão recusada: esta instância guarda histórico');
+    await screen.findByText('Exclusão recusada: este número guarda histórico');
     expect(onSuccess).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Exclusão recusada', variant: 'destructive' }));
@@ -211,15 +211,15 @@ describe('DeleteInstanceModal — excluir', () => {
 
   it('edge function devolveu non-2xx: mostra a mensagem do corpo, sem onSuccess', async () => {
     stubPreview({ ok: true, reason: 'empty', counts: ZERO, total: 0 });
-    const context = new Response(JSON.stringify({ ok: false, error: 'Instância não encontrada.' }), { status: 404 });
+    const context = new Response(JSON.stringify({ ok: false, error: 'Número não encontrado.' }), { status: 404 });
     mockInvoke.mockResolvedValue({ data: null, error: Object.assign(new Error('Edge Function returned a non-2xx status code'), { context }) });
     const { onSuccess } = renderModal();
 
-    await screen.findByText('Esta instância está vazia');
+    await screen.findByText('Este número está vazio');
     fireEvent.click(deleteButton()!);
 
     await waitFor(() =>
-      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Erro', description: 'Instância não encontrada.' })),
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Não deu certo', description: 'Número não encontrado.' })),
     );
     expect(onSuccess).not.toHaveBeenCalled();
   });

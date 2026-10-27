@@ -40,7 +40,7 @@ for (const caminho of ['/login', '/auth']) {
 
     const link = page.getByRole('link', { name: 'Esqueci minha senha' });
     await expect(link).toBeVisible();
-    await expect(page.getByLabel('E-mail')).toBeVisible();
+    await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByText('Entre na sua conta')).toBeVisible();
     // Nada da tela antiga.
     await expect(page.getByText('Criar conta')).toHaveCount(0);

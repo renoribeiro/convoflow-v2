@@ -90,13 +90,13 @@ const RealTimeStatus: React.FC<RealTimeStatusProps> = ({
       icon: Pause,
       color: 'bg-status-warning/15 text-status-warning border-status-warning/30',
       label: 'Pausado',
-      description: 'Atualizações pausadas pelo usuário'
+      description: 'Você pausou as atualizações'
     },
     error: {
       icon: AlertCircle,
       color: 'bg-status-error/15 text-status-error border-status-error/30',
       label: 'Erro',
-      description: error || 'Erro desconhecido'
+      description: 'Não foi possível atualizar. Clique em atualizar agora para tentar de novo.'
     }
   };
 
@@ -140,7 +140,7 @@ const RealTimeStatus: React.FC<RealTimeStatusProps> = ({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Última atualização: {lastUpdate.toLocaleString()}</p>
+              <p>Última atualização: {lastUpdate.toLocaleString('pt-BR')}</p>
             </TooltipContent>
           </Tooltip>
         )}
@@ -205,7 +205,7 @@ const RealTimeStatus: React.FC<RealTimeStatusProps> = ({
           </TooltipTrigger>
           <TooltipContent>
             <p>
-              WebSocket: {isConnected ? 'Conectado' : 'Desconectado'}
+              {isConnected ? 'Atualização ao vivo ligada' : 'Atualização ao vivo desligada'}
             </p>
           </TooltipContent>
         </Tooltip>

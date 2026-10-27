@@ -27,9 +27,9 @@ export const REPORT_CONTENTS: ReadonlyArray<ReportContentItem> = [
   { id: 'conversations_new', label: 'Novas conversas', description: 'Quantas começaram no período.' },
   { id: 'conversations_archived', label: 'Conversas arquivadas', description: 'Quantas estão arquivadas hoje.' },
   { id: 'messages_total', label: 'Mensagens no período', description: 'Enviadas e recebidas, somadas.' },
-  { id: 'messages_sent', label: 'Mensagens enviadas', description: 'Inclui bot, campanha e follow-up.' },
+  { id: 'messages_sent', label: 'Mensagens enviadas', description: 'Inclui bot, campanha e follow up.' },
   { id: 'messages_received', label: 'Mensagens recebidas', description: 'O que os clientes mandaram.' },
-  { id: 'funnel_stages', label: 'Leads por estágio do funil', description: 'Quantos contatos há em cada etapa hoje.' },
+  { id: 'funnel_stages', label: 'Contatos por etapa do funil', description: 'Quantos contatos há em cada etapa hoje.' },
   {
     id: 'first_human_reply_median',
     label: '1ª resposta de uma pessoa (mediana)',
@@ -51,4 +51,4 @@ export const REPORT_CONTENT_IDS: ReadonlyArray<string> = REPORT_CONTENTS.map((c)
 
 /** O que o relatório NÃO traz, dito de frente — para ninguém procurar. */
 export const REPORT_NOT_INCLUDED =
-  'Não traz números por atendente: esses ficam no Dashboard, só para Gestor e Gerente, porque o e-mail vai para qualquer endereço.';
+  'Não traz números por atendente: esses ficam no Dashboard, só para Gestor e Gerente, porque o email vai para qualquer endereço.';

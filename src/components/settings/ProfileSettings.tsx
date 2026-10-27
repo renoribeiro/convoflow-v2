@@ -12,6 +12,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { toast } from 'sonner';
 import { Camera, Save } from 'lucide-react';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export function ProfileSettings() {
   const { user } = useAuth();
@@ -37,13 +38,13 @@ export function ProfileSettings() {
     table: 'profiles',
     operation: 'update',
     onSuccess: () => {
-      toast.success('Perfil atualizado com sucesso!');
+      toast.success('Perfil salvo.');
       // Recarregar dados do formulário e do cabeçalho
       refetch();
       refreshTenant();
     },
     onError: (error) => {
-      toast.error('Erro ao atualizar perfil: ' + error.message);
+      toast.error(`Não foi possível salvar o perfil. ${motivoDoErro(error)}`);
     }
   });
 
@@ -189,7 +190,7 @@ export function ProfileSettings() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">E-mail</Label>
+          <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"

@@ -121,7 +121,7 @@ describe('useMetaEmbeddedSignup', () => {
       await expect(result.current.startSignup()).rejects.toThrow(msg);
     });
 
-    expect(toast).toHaveBeenCalledWith({ title: 'Erro', description: msg, variant: 'destructive' });
+    expect(toast).toHaveBeenCalledWith({ title: 'Não deu certo', description: msg, variant: 'destructive' });
     expect(invalidateQueries).not.toHaveBeenCalled();
   });
 });

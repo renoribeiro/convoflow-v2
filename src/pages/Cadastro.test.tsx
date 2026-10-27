@@ -55,7 +55,7 @@ const renderizar = () =>
 const preencher = () => {
   fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Ana' } });
   fireEvent.change(screen.getByLabelText('Sobrenome'), { target: { value: 'Souza' } });
-  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: ' Ana@Empresa.example ' } });
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: ' Ana@Empresa.example ' } });
   fireEvent.change(screen.getByLabelText('Nome da empresa'), { target: { value: 'Imobiliária Horizonte' } });
   fireEvent.change(screen.getByLabelText('Telefone com DDD'), { target: { value: '(11) 99999-0000' } });
   fireEvent.click(screen.getByRole('checkbox'));
@@ -118,7 +118,7 @@ describe('/cadastro', () => {
     expect(body).not.toHaveProperty('tenant_id');
   });
 
-  it('sucesso → "Confira seu e-mail", com o mesmo texto de sempre', async () => {
+  it('sucesso → "Confira seu email", com o mesmo texto de sempre', async () => {
     mockInvoke.mockResolvedValueOnce({ data: { ok: true }, error: null });
     const { container } = renderizar();
     preencher();
@@ -126,7 +126,7 @@ describe('/cadastro', () => {
 
     expect(await screen.findByText(CADASTRO_ENVIADO_TITULO)).toBeInTheDocument();
     const texto = screen.getByTestId('cadastro-enviado').textContent;
-    expect(texto).toContain('Se este e-mail puder ser usado');
+    expect(texto).toContain('Se este email puder ser usado');
     expect(texto).toContain('Se você já tem conta no ConvoFlow');
     // Nenhuma pista de desfecho: nada de "já existe", "falhou", "limite".
     expect(container.textContent).not.toMatch(/já existe|já cadastrado|falhou|limite/i);

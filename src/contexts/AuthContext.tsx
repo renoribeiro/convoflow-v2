@@ -160,7 +160,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       toast({
         title: "Registro realizado com sucesso!",
-        description: "Verifique seu e-mail para confirmar a conta.",
+        description: "Verifique seu email para confirmar a conta.",
       });
     } catch (error) {
       console.error('Register error:', error);
@@ -177,8 +177,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         toast({
-          title: "Erro ao sair",
-          description: error.message,
+          title: "Não foi possível sair",
+          description: "Confira a internet e tente de novo.",
           variant: "destructive",
         });
         throw error;
@@ -188,10 +188,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // localStorage e não pode sobreviver para o próximo usuário do navegador.
       clearActiveTenant();
 
-      toast({
-        title: "Logout realizado com sucesso!",
-        description: "Até logo!",
-      });
+      toast({ title: "Você saiu do ConvoFlow" });
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

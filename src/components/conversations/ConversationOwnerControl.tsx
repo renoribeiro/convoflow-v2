@@ -51,7 +51,7 @@ interface ConversationOwnerControlProps {
  *     você — é assim que se toma uma conversa que está com outra pessoa.
  *
  * Todo cargo assume. Transferir pode ser desligado para ATENDENTES pela Loja
- * (Configurações › Escala/Transferência): aí o item "Transferir…" some daqui
+ * (Configurações › Distribuição e transferência): aí o item "Transferir…" some daqui
  * E o servidor recusa a escrita (trigger 42501) — esconder o botão sozinho não
  * seria proteção nenhuma. Quando não sobra ação (conversa com alguém + sem
  * transferir), o controle vira só o chip do responsável, sem menu.

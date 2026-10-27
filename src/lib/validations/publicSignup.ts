@@ -23,9 +23,9 @@ export const publicSignupSchema = z.object({
     .pipe(
       z
         .string()
-        .min(1, 'Informe seu e-mail.')
-        .max(254, 'E-mail longo demais.')
-        .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Informe um e-mail válido.'),
+        .min(1, 'Informe seu email.')
+        .max(254, 'Email longo demais.')
+        .regex(/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Informe um email válido.'),
     ),
   companyName: z
     .string()

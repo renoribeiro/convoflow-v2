@@ -126,7 +126,7 @@ describe('useRenameStore', () => {
 
     await expect(
       act(() => result.current.mutateAsync({ storeId: OUTRA_LOJA, name: 'Filial Sul' })),
-    ).rejects.toThrow('Não foi possível renomear a loja. Tente novamente.');
+    ).rejects.toThrow('Não foi possível renomear a Loja. Tente novamente.');
   });
 
   it('resposta sem a Loja é tratada como falha', async () => {
@@ -135,6 +135,6 @@ describe('useRenameStore', () => {
 
     await expect(
       act(() => result.current.mutateAsync({ storeId: OUTRA_LOJA, name: 'Filial Sul' })),
-    ).rejects.toThrow('Não foi possível renomear a loja. Tente novamente.');
+    ).rejects.toThrow('Não foi possível renomear a Loja. Tente novamente.');
   });
 });

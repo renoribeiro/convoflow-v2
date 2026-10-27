@@ -16,7 +16,7 @@ export const TestimonialsSection = () => {
       role: 'Gerente Comercial, Vendas Ágeis',
       avatar: '🧑‍💼',
       rating: 4,
-      text: 'O que mais gostei foi o atendimento automático de madrugada. Já pegamos lead que chegava 1h, 2h da manhã e a gente só via no outro dia. Não é milagre, mas ajuda pra caramba a não perder oportunidade. A automação liberou a equipe pra focar em fechar venda.'
+      text: 'O que mais gostei foi o atendimento automático de madrugada. Já pegamos cliente que chegava 1h, 2h da manhã e a gente só via no outro dia. Não é milagre, mas ajuda pra caramba a não perder oportunidade. A automação liberou a equipe pra focar em fechar venda.'
     },
     {
       name: 'Juliana Ferreira',

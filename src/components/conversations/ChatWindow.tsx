@@ -93,7 +93,7 @@ import {
 import { sendInstagramReply } from '@/services/instagram/sendInstagramReply';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { providerLabel, WhatsAppAdapterError } from '@/services/whatsapp';
+import { WhatsAppAdapterError } from '@/services/whatsapp';
 import { uploadWhatsAppMedia, detectMediaTypeFromMime } from '@/services/whatsapp/media-upload';
 import { motivoDocumentoGrande } from '@/lib/whatsapp/limiteDocumento';
 import { useMediaLinks } from '@/hooks/useMediaLinks';
@@ -115,6 +115,19 @@ import { ConversationOwnerControl } from './ConversationOwnerControl';
 import { BotSessionBadge } from './BotSessionBadge';
 import { insertAtSelection } from './composerInsert';
 import ErrorBoundary from '@/components/ErrorBoundary';
+
+/** Rótulo do tipo da mensagem citada, quando ela não tem texto. */
+function rotuloDoTipo(tipo: string | null | undefined): string {
+  switch (tipo) {
+    case 'image': return 'Foto';
+    case 'video': return 'Vídeo';
+    case 'audio': return 'Áudio';
+    case 'document': return 'Documento';
+    case 'sticker': return 'Figurinha';
+    case 'location': return 'Localização';
+    default: return 'Mensagem';
+  }
+}
 
 // O seletor de emoji (biblioteca + lista em português) só baixa no primeiro clique.
 const EmojiPickerPanel = lazy(() => import('./EmojiPickerPanel'));
@@ -188,10 +201,10 @@ function lastSeenLabel(iso?: string | null): string | null {
   if (!iso) return null;
   const d = new Date(iso);
   const mins = differenceInMinutes(new Date(), d);
-  if (mins < 1) return 'Visto agora há pouco';
-  if (mins < 60) return `Visto há ${mins} min`;
-  if (isToday(d)) return `Visto às ${format(d, 'HH:mm', { locale: ptBR })}`;
-  return `Visto em ${format(d, 'dd/MM', { locale: ptBR })} às ${format(d, 'HH:mm', { locale: ptBR })}`;
+  if (mins < 1) return 'Última interação agora há pouco';
+  if (mins < 60) return `Última interação há ${mins} min`;
+  if (isToday(d)) return `Última interação às ${format(d, 'HH:mm', { locale: ptBR })}`;
+  return `Última interação em ${format(d, 'dd/MM', { locale: ptBR })} às ${format(d, 'HH:mm', { locale: ptBR })}`;
 }
 
 export const ChatWindow = ({
@@ -417,7 +430,7 @@ export const ChatWindow = ({
       setIsEditModalOpen(false);
     },
     onError: () => {
-      toast.error('Erro ao atualizar contato. Tente novamente.');
+      toast.error('Não foi possível salvar o contato. Tente de novo em instantes.');
     },
   });
 
@@ -620,7 +633,7 @@ export const ChatWindow = ({
       <div className="flex-1 flex items-center justify-center p-4 h-full bg-card">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Erro ao carregar a conversa. Tente novamente.</AlertDescription>
+          <AlertDescription>Não foi possível carregar a conversa. Recarregue a página.</AlertDescription>
         </Alert>
       </div>
     );
@@ -723,11 +736,11 @@ export const ChatWindow = ({
       return false;
     }
     if (!contactId || !tenant?.id || !active) {
-      toast.error('Nenhuma instância de WhatsApp disponível.');
+      toast.error('Esta conversa não tem um número de WhatsApp para responder. Peça ao Gestor da Loja para conectar um em Números de WhatsApp.');
       return false;
     }
     if (!active.adapter.isReadyToSend()) {
-      toast.error(active.adapter.notReadyReason ?? `A instância "${active.row.name}" não está conectada.`);
+      toast.error(active.adapter.notReadyReason ?? `O número "${active.row.name}" está desconectado. Peça ao Gestor da Loja para reconectar.`);
       return false;
     }
     const phone = phoneOf(contact);
@@ -769,7 +782,7 @@ export const ChatWindow = ({
     });
     const status = providerResult?.status === 'sent' || providerResult?.status === 'pending' ? 'sent' : 'failed';
     if (status === 'failed') {
-      toast.error(`Mídia não enviada: ${providerResult?.error || 'erro desconhecido.'}`);
+      toast.error(`O arquivo não foi enviado. ${providerResult?.error || 'Tente de novo em instantes.'}`);
     }
     await sendMessageMutation.mutateAsync({
       contact_id: contactId,
@@ -850,7 +863,7 @@ export const ChatWindow = ({
       logger.error('[ChatWindow] envio pelo Instagram falhou', {
         error: e instanceof Error ? e.message : String(e),
       });
-      toast.error('Erro ao enviar pelo Instagram.');
+      toast.error('A mensagem não saiu pelo Instagram. Tente de novo em instantes.');
     } finally {
       setIsSending(false);
       refocusComposer();
@@ -865,11 +878,11 @@ export const ChatWindow = ({
       return;
     }
     if (!active) {
-      toast.error('Nenhuma instância de WhatsApp disponível.');
+      toast.error('Esta conversa não tem um número de WhatsApp para responder. Peça ao Gestor da Loja para conectar um em Números de WhatsApp.');
       return;
     }
     if (!active.adapter.isReadyToSend()) {
-      toast.error(active.adapter.notReadyReason ?? `A instância "${active.row.name}" não está conectada.`);
+      toast.error(active.adapter.notReadyReason ?? `O número "${active.row.name}" está desconectado. Peça ao Gestor da Loja para reconectar.`);
       return;
     }
     // Contato sem telefone: até a fatia 1 do Instagram isso era impossível
@@ -881,7 +894,7 @@ export const ChatWindow = ({
       return;
     }
     if (outsideMetaWindow && !pendingFile && message.trim()) {
-      toast.warning('Fora da janela de 24h da Meta: esta conversa exige envio de template aprovado para iniciar.');
+      toast.warning('O cliente não escreve há mais de 24 horas. Pela regra da Meta, só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa.');
     }
 
     setIsSending(true);
@@ -928,7 +941,7 @@ export const ChatWindow = ({
         const status =
           providerResult?.status === 'sent' || providerResult?.status === 'pending' ? 'sent' : 'failed';
         if (status === 'failed') {
-          toast.error(`Mensagem não foi enviada: ${providerResult?.error || 'Erro desconhecido.'}`);
+          toast.error(`A mensagem não foi enviada. ${providerResult?.error || 'Tente de novo em instantes.'}`);
         }
 
         const pendingId = (pending as any)?.id;
@@ -955,11 +968,12 @@ export const ChatWindow = ({
       setPendingFilePreview(null);
       setReplyTo(null);
     } catch (e) {
-      if (e instanceof WhatsAppAdapterError) {
-        toast.error(`[${e.code}] ${e.message}`);
-      } else {
-        toast.error('Erro ao enviar mensagem.');
-      }
+      // O código e o texto técnico ficam no log; a tela diz o que fazer.
+      logger.error('[ChatWindow] envio falhou', {
+        code: e instanceof WhatsAppAdapterError ? e.code : undefined,
+        error: e instanceof Error ? e.message : String(e),
+      });
+      toast.error('A mensagem não foi enviada. Tente de novo em instantes.');
     } finally {
       setIsSending(false);
       refocusComposer();
@@ -1199,7 +1213,7 @@ export const ChatWindow = ({
                   )}
                   {active && (
                     <Badge variant="secondary" className="text-xs">
-                      {providerLabel(active.adapter.type)}
+                      {active.row.name}
                     </Badge>
                   )}
                   {/* Só existe enquanto há sessão ativa de bot neste contato:
@@ -1337,7 +1351,7 @@ export const ChatWindow = ({
             <AlertDescription>
               {isInstagram
                 ? `A conexão do Instagram "${active.row.name}" não está ativa. Nada é enviado até ela voltar.`
-                : active.adapter.notReadyReason ?? `Instância "${active.row.name}" está ${active.row.status}. Reconecte antes de enviar.`}
+                : active.adapter.notReadyReason ?? `O número "${active.row.name}" está desconectado. Peça ao Gestor da Loja para reconectar.`}
             </AlertDescription>
           </Alert>
         )}
@@ -1346,8 +1360,8 @@ export const ChatWindow = ({
             <AlertCircle className="w-4 h-4" />
             <AlertDescription className="text-xs flex items-center justify-between gap-2">
               <span>
-                Cloud API da Meta: o cliente não envia mensagem há mais de 24h. Para iniciar conversa,
-                é necessário usar um <strong>template aprovado</strong>.
+                O cliente não escreve há mais de 24 horas. Pela regra da Meta, a conversa só reabre com
+                um <strong>template aprovado</strong>, uma mensagem pronta que a Meta aprovou.
               </span>
               <Button
                 size="sm"
@@ -1367,11 +1381,9 @@ export const ChatWindow = ({
             <Alert className="rounded-none border-x-0 border-warning/30 bg-warning/10 text-warning">
               <AlertCircle className="w-4 h-4" />
               <AlertDescription className="text-xs">
-                Esta instância está usando o <strong>número de teste gratuito</strong> da Meta
-                (+1 555-052-9071). Só envia mensagens para destinatários cadastrados na
-                "Recipient list" do painel Meta (developers.facebook.com → seu app → WhatsApp →
-                API Setup → Manage phone number list). Para produção, registre um número real
-                na WABA.
+                Este é o <strong>número de teste gratuito</strong> da Meta (+1 555-052-9071). Ele só
+                envia para os telefones cadastrados na lista de destinatários do app, no painel da
+                Meta. Para atender clientes, conecte um número de verdade da empresa.
               </AlertDescription>
             </Alert>
           )}
@@ -1424,7 +1436,7 @@ export const ChatWindow = ({
             {replyTo && (
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="text-xs text-muted-foreground">Respondendo:</span>
-                <span className="text-xs truncate">{replyTo.content || `[${replyTo.message_type}]`}</span>
+                <span className="text-xs truncate">{replyTo.content || rotuloDoTipo(replyTo.message_type)}</span>
                 <Button variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
                   <X className="w-3 h-3" />
                 </Button>

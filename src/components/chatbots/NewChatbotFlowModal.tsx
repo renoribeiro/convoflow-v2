@@ -35,6 +35,7 @@ import type {
   ChatbotTriggerValue,
   ChatbotTriggerRow,
 } from '@/types/chatbot-flow.types';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /** Initial settings of an existing bot, for edit mode. */
 export interface ChatbotInitialSettings {
@@ -269,7 +270,7 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
         onSaved?.();
         onClose();
       } catch (err: any) {
-        toast.error('Erro ao atualizar bot', { description: err?.message });
+        toast.error('Não foi possível salvar o chatbot', { description: motivoDoErro(err) });
       }
       return;
     }
@@ -287,7 +288,7 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
       onClose();
       navigate(`/dashboard/chatbots/${chatbot.id}/builder`);
     } catch (err: any) {
-      toast.error('Erro ao criar chatbot', { description: err?.message });
+      toast.error('Não foi possível criar o chatbot', { description: motivoDoErro(err) });
     }
   };
 
@@ -297,7 +298,7 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Editar Bot' : 'Novo Chatbot'}</DialogTitle>
+          <DialogTitle>{isEdit ? 'Editar chatbot' : 'Novo chatbot'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
@@ -328,13 +329,13 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
 
           {/* Instância */}
           <div className="space-y-1">
-            <Label>Instância WhatsApp</Label>
+            <Label>Número de WhatsApp</Label>
             <Select value={instanceId} onValueChange={setInstanceId}>
               <SelectTrigger>
-                <SelectValue placeholder="Todas as instâncias" />
+                <SelectValue placeholder="Todos os números" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as instâncias</SelectItem>
+                <SelectItem value="all">Todos os números</SelectItem>
                 {(instances as any[]).map((inst) => (
                   <SelectItem key={inst.id} value={inst.id}>
                     {inst.name}

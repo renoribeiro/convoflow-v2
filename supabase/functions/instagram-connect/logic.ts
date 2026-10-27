@@ -196,7 +196,7 @@ export function bounceErrorPage(message: string): string {
 }
 
 export const BOUNCE_INVALID_MESSAGE =
-  'Este link de conexão do Instagram não vale mais (ele dura 10 minutos e só pode ser usado uma vez). Volte ao ConvoFlow, abra Instâncias e APIs e clique de novo no botão do Instagram. Nada foi alterado.';
+  'Este link de conexão do Instagram não vale mais (ele dura 10 minutos e só pode ser usado uma vez). Volte ao ConvoFlow, abra Números de WhatsApp e clique de novo no botão do Instagram. Nada foi alterado.';
 
 // -----------------------------------------------------------------------------
 // 4. Respostas da Meta

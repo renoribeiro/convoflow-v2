@@ -50,7 +50,7 @@ const Chatbots: React.FC = () => {
       await toggleActive.mutateAsync({ id: chatbot.id, is_active: !chatbot.is_active });
       toast.success(chatbot.is_active ? 'Chatbot desativado' : 'Chatbot ativado');
     } catch (err: any) {
-      toast.error('Erro ao alterar status', { description: err?.message });
+      toast.error('Não foi possível ligar ou desligar o chatbot', { description: 'Tente de novo em instantes.' });
     }
   };
 
@@ -61,7 +61,7 @@ const Chatbots: React.FC = () => {
       toast.success(`"${deleteTarget.name}" excluído`);
       setDeleteTarget(null);
     } catch (err: any) {
-      toast.error('Erro ao excluir chatbot', { description: err?.message });
+      toast.error('Não foi possível excluir o chatbot', { description: 'Tente de novo em instantes.' });
     }
   };
 

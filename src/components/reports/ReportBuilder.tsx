@@ -99,10 +99,10 @@ export const ReportBuilder = () => {
               <Label htmlFor="category">Categoria</Label>
               <Select value={reportCategory} onValueChange={setReportCategory}>
                 <SelectTrigger id="category">
-                  <SelectValue placeholder="Selecionar categoria" />
+                  <SelectValue placeholder="Escolha a categoria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="performance">Performance</SelectItem>
+                  <SelectItem value="performance">Desempenho</SelectItem>
                   <SelectItem value="financial">Financeiro</SelectItem>
                   <SelectItem value="traffic">Tráfego</SelectItem>
                   <SelectItem value="conversion">Conversão</SelectItem>

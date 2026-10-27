@@ -60,7 +60,9 @@ export const DefinirSenha = () => {
   const [erroDoLinkNovo, setErroDoLinkNovo] = useState<string | null>(null);
 
   // "Esqueci minha senha": e-mail → código → senha.
-  const [etapa, setEtapa] = useState<'email' | 'codigo'>('email');
+  const [etapa, setEtapa] = useState<'email' | 'codigo'>(() =>
+    chegada.tipo === 'visita' && chegada.digitarCodigo ? 'codigo' : 'email',
+  );
   const [email, setEmail] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [enviadoPara, setEnviadoPara] = useState<string | null>(null);
@@ -93,7 +95,7 @@ export const DefinirSenha = () => {
       setLinkAceito(true);
     } catch (err) {
       const e = err as { message?: string; code?: string };
-      logger.warn('[DefinirSenha] link do e-mail recusado', { code: e?.code, message: e?.message });
+      logger.warn('[DefinirSenha] link do email recusado', { code: e?.code, message: e?.message });
       setErroDoLinkNovo(mensagemDoErroDoLink(e));
     } finally {
       setContinuando(false);
@@ -123,7 +125,7 @@ export const DefinirSenha = () => {
       setPronto(true);
       toast({
         title: 'Senha definida',
-        description: 'Pronto! Da próxima vez é só entrar com o seu e-mail e essa senha.',
+        description: 'Pronto! Da próxima vez é só entrar com o seu email e essa senha.',
       });
       // Já existe sessão: entra direto, sem obrigar a digitar tudo de novo.
       setTimeout(() => navigate('/dashboard', { replace: true }), 800);
@@ -200,7 +202,7 @@ export const DefinirSenha = () => {
       logger.warn('[DefinirSenha] verifyOtp falhou', { message: msg });
       setErroCodigo(
         /expired|invalid|not found/i.test(msg)
-          ? 'Código inválido ou vencido. Confira o e-mail digitado ou peça um código novo.'
+          ? 'Código inválido ou vencido. Confira o email digitado ou peça um código novo.'
           : CODIGO_ERRO_GENERICO,
       );
     } finally {
@@ -245,10 +247,10 @@ export const DefinirSenha = () => {
     titulo = 'Digite o código';
     descricao = enviadoPara
       ? `Enviamos um código de 6 dígitos para ${enviadoPara}. Ele vale por 24 horas.`
-      : 'Digite o seu e-mail e o código de 6 dígitos que chegou para você.';
+      : 'Digite o seu email e o código de 6 dígitos que chegou para você.';
   } else {
     titulo = alertaDoLink ? 'Peça um código novo' : 'Esqueci minha senha';
-    descricao = 'Digite o e-mail da sua conta. Enviamos um código de 6 dígitos para você criar uma nova senha.';
+    descricao = 'Digite o email da sua conta. Enviamos um código de 6 dígitos para você criar uma nova senha.';
   }
 
   return (
@@ -356,7 +358,7 @@ export const DefinirSenha = () => {
             ) : etapa === 'email' ? (
               <form onSubmit={enviarCodigo} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="esqueci-email">Seu e-mail</Label>
+                  <Label htmlFor="esqueci-email">Seu email</Label>
                   <Input
                     id="esqueci-email"
                     type="email"
@@ -386,7 +388,7 @@ export const DefinirSenha = () => {
               <div className="space-y-4">
                 <form onSubmit={verificarCodigo} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="esqueci-email">Seu e-mail</Label>
+                    <Label htmlFor="esqueci-email">Seu email</Label>
                     <Input
                       id="esqueci-email"
                       type="email"
@@ -399,7 +401,7 @@ export const DefinirSenha = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="codigo-acesso">Código recebido por e-mail</Label>
+                    <Label htmlFor="codigo-acesso">Código recebido por email</Label>
                     <Input
                       id="codigo-acesso"
                       inputMode="numeric"
@@ -412,7 +414,7 @@ export const DefinirSenha = () => {
                       required
                     />
                     <p className="text-xs text-muted-foreground">
-                      Serve o código do e-mail de nova senha ou do e-mail de convite.
+                      Serve o código do email de nova senha ou do email de convite.
                     </p>
                   </div>
 

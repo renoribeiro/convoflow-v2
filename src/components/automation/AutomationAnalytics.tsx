@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { getCatalogEntry } from './automationCatalog';
 import {
   BarChart,
   Bar,
@@ -143,7 +144,7 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
   }, {} as Record<string, { total: number; completed: number; failed: number }>);
   
   const stepChartData = Object.entries(stepTypeData).map(([type, data]) => ({
-    type: type.replace('_', ' ').toUpperCase(),
+    type: getCatalogEntry(type)?.label ?? type,
     total: data.total,
     completed: data.completed,
     failed: data.failed,
@@ -195,10 +196,10 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
                 // Implementar filtro por fluxo específico
               }}>
                 <SelectTrigger className="w-60">
-                  <SelectValue placeholder="Todos os fluxos" />
+                  <SelectValue placeholder="Todas as automações" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os fluxos</SelectItem>
+                  <SelectItem value="all">Todas as automações</SelectItem>
                   {flows.map(flow => (
                     <SelectItem key={flow.id} value={flow.id}>
                       {flow.name}

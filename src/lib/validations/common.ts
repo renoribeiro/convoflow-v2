@@ -38,7 +38,7 @@ export const CommonSchemas = {
   }),
   
   instanceStatus: z.enum(['connected', 'disconnected', 'connecting', 'error'], {
-    errorMap: () => ({ message: 'Status de instância inválido' })
+    errorMap: () => ({ message: 'Estado do número inválido' })
   }),
   
   campaignStatus: z.enum(['draft', 'scheduled', 'running', 'paused', 'completed', 'cancelled'], {

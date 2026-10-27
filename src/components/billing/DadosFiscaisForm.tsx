@@ -220,7 +220,7 @@ export function DadosFiscaisForm({ inicial, salvando, erroDoServidor, onSalvar, 
         </Campo>
       </div>
 
-      <Campo id="nf-email" rotulo="E-mail para receber a nota" erro={erros.invoice_email}>
+      <Campo id="nf-email" rotulo="Email para receber a nota" erro={erros.invoice_email}>
         <Input id="nf-email" type="email" autoComplete="email" maxLength={LIMITES.invoice_email} value={form.invoice_email} onChange={(e) => muda('invoice_email', e.target.value)} aria-invalid={!!erros.invoice_email} />
       </Campo>
 

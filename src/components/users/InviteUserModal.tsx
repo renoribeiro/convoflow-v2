@@ -156,7 +156,7 @@ export function InviteUserModal({
         <DialogHeader>
           <DialogTitle>Convidar novo usuário</DialogTitle>
           <DialogDescription>
-            Um e-mail de convite será enviado. O usuário define a senha ao acessar pela primeira vez.
+            Um email de convite será enviado. O usuário define a senha ao acessar pela primeira vez.
           </DialogDescription>
         </DialogHeader>
 
@@ -182,7 +182,7 @@ export function InviteUserModal({
             </div>
           </div>
           <div>
-            <Label htmlFor="invite-email">E-mail</Label>
+            <Label htmlFor="invite-email">Email</Label>
             <Input
               id="invite-email"
               type="email"
@@ -200,7 +200,7 @@ export function InviteUserModal({
             />
           </div>
           <div>
-            <Label htmlFor="invite-role">Função</Label>
+            <Label htmlFor="invite-role">Cargo</Label>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
               <SelectTrigger id="invite-role">
                 <SelectValue />

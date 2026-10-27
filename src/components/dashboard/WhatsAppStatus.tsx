@@ -97,11 +97,11 @@ export const WhatsAppStatus = () => {
           ))
         ) : error ? (
           <div className="text-center py-4 text-muted-foreground">
-            Erro ao carregar instâncias do WhatsApp
+            Não foi possível carregar os números de WhatsApp. Recarregue a página.
           </div>
         ) : instances.length === 0 ? (
           <div className="text-center py-4 text-muted-foreground">
-            Nenhuma instância do WhatsApp configurada
+            Nenhum número de WhatsApp conectado
           </div>
         ) : (
           instances.map((instance) => (

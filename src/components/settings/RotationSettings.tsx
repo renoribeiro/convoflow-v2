@@ -31,9 +31,10 @@ import {
   type RotationMember,
   type RotationTiming,
 } from '@/lib/conversations/rotation';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /**
- * Configurações › Escala/Transferência — "Como as conversas novas são
+ * Configurações › Distribuição e transferência — "Como as conversas novas são
  * distribuídas" (migração 20260915000001).
  *
  * Três chaves em `tenants.settings` (rotation_enabled, rotation_includes_gestor,
@@ -47,7 +48,7 @@ import {
  *   - a soma tem de dar 100 para salvar; a tela mostra o que falta ou sobra e
  *     NÃO corrige o que o gestor digitou — o único ajuste automático acontece
  *     quando alguém entra ou sai da Loja, e é o banco quem faz;
- *   - 0 % é permitido e aparece marcado como "fora do rodízio" — a pessoa
+ *   - 0 % é permitido e aparece marcado como "fora da distribuição automática" — a pessoa
  *     continua na Loja e com as conversas que já tem;
  *   - trocar a chave do gestor muda QUEM está na lista, então nesse caso a
  *     tela salva só as chaves; o banco divide igual e a lista se refaz.
@@ -151,20 +152,17 @@ export const RotationSettings = () => {
       if (gestorKeyDirty) {
         toast.success(
           includesGestor
-            ? 'O gestor entrou no rodízio. As porcentagens foram divididas igualmente. Ajuste se quiser.'
-            : 'O gestor saiu do rodízio. As porcentagens foram divididas entre os atendentes. Ajuste se quiser.',
+            ? 'O gestor entrou na distribuição automática. As porcentagens foram divididas igualmente. Ajuste se quiser.'
+            : 'O gestor saiu da distribuição automática. As porcentagens foram divididas entre os atendentes. Ajuste se quiser.',
         );
         await rotation.refetch();
       } else {
         toast.success('Distribuição de conversas salva.');
       }
     } catch (error) {
-      // PostgrestError não é Error: a frase em pt-BR do banco (22023) vem em .message.
-      const detalhe =
-        (error && typeof error === 'object' && typeof (error as { message?: unknown }).message === 'string'
-          ? (error as { message: string }).message
-          : null) ?? 'tente novamente.';
-      toast.error(`Não foi possível salvar a distribuição: ${detalhe}`);
+      // A tela já confere a soma antes de enviar; o que o banco recusar vira a
+      // frase padrão (a dele cita o código do perfil, que não ajuda ninguém).
+      toast.error(`Não foi possível salvar a distribuição. ${motivoDoErro(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -217,7 +215,7 @@ export const RotationSettings = () => {
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3">
             <Lock className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              Apenas Gerente ou Gestor configura a distribuição. Se a sua Loja usa o rodízio, as
+              Apenas Gerente ou Gestor configura a distribuição. Se a sua Loja usa a distribuição automática, as
               conversas novas chegam já com você como responsável, sem aviso no sino.
             </p>
           </div>
@@ -231,7 +229,7 @@ export const RotationSettings = () => {
       <CardHeader>
         <CardTitle>{TITLE}</CardTitle>
         <CardDescription>
-          Com o rodízio ligado, cada conversa nova ganha um responsável sozinha, na proporção que
+          Com a distribuição automática ligada, cada conversa nova ganha um responsável sozinha, na proporção que
           você definir. Quem já tem responsável nunca é trocado: o cliente que volta cai com quem
           já o atendia.
         </CardDescription>
@@ -282,7 +280,7 @@ export const RotationSettings = () => {
           <div className="flex items-start gap-2 rounded-md border border-border bg-muted/40 p-3">
             <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
             <p className="text-sm text-muted-foreground">
-              O rodízio aparece quando a Loja tem pelo menos {ROTATION_MIN_ATENDENTES} atendentes
+              A distribuição automática aparece quando a Loja tem pelo menos {ROTATION_MIN_ATENDENTES} atendentes
               ativos. Hoje ela tem {atendentesAtivos}. Com um só, toda conversa nova é dele de
               qualquer jeito; convide o segundo em Equipe.
             </p>
@@ -294,7 +292,7 @@ export const RotationSettings = () => {
                 <Label htmlFor="rotation-enabled">Distribuir conversas novas automaticamente</Label>
                 <p className="text-sm text-muted-foreground">
                   Desligado, nada muda: as conversas novas chegam sem responsável e o time assume à
-                  mão, como hoje.
+                  mão.
                 </p>
               </div>
               <Switch
@@ -357,7 +355,7 @@ export const RotationSettings = () => {
                 <div className="space-y-0.5">
                   <Label>Fatia de cada pessoa</Label>
                   <p className="text-sm text-muted-foreground">
-                    A soma precisa dar 100. Coloque 0 para tirar alguém do rodízio sem tirar da
+                    A soma precisa dar 100. Coloque 0 para tirar alguém da distribuição automática sem tirar da
                     Loja: a pessoa continua com as conversas que já tem.
                   </p>
                 </div>
@@ -388,7 +386,7 @@ export const RotationSettings = () => {
                         </Label>
                         <div className="flex flex-wrap items-center gap-1.5">
                           <Badge variant="secondary">{ROLE_LABEL[member.role] ?? member.role}</Badge>
-                          {value === 0 && <Badge variant="outline">Fora do rodízio (0 %)</Badge>}
+                          {value === 0 && <Badge variant="outline">Fora da distribuição (0 %)</Badge>}
                         </div>
                       </div>
                       <div className="flex flex-shrink-0 items-center gap-1.5">

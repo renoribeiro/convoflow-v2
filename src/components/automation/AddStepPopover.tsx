@@ -31,7 +31,7 @@ const disponivel = (item: CatalogEntry) => !item.comingSoon;
 const GROUPS: { heading: string; items: CatalogEntry[] }[] = [
   { heading: 'Ações', items: ACTIONS.filter(disponivel) },
   { heading: 'Condições', items: CONDITIONS.filter(disponivel) },
-  { heading: 'Timing', items: TIMINGS.filter(disponivel) },
+  { heading: 'Espera', items: TIMINGS.filter(disponivel) },
 ];
 
 export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, children, align = 'center' }) => {
@@ -47,9 +47,9 @@ export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, childr
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent align={align} className="w-80 p-0" sideOffset={8}>
         <Command>
-          <CommandInput placeholder="Buscar etapa..." />
+          <CommandInput placeholder="Buscar passo..." />
           <CommandList className="max-h-80">
-            <CommandEmpty>Nenhuma etapa encontrada.</CommandEmpty>
+            <CommandEmpty>Nenhum passo encontrado.</CommandEmpty>
             {GROUPS.map((group) => (
               <CommandGroup key={group.heading} heading={group.heading}>
                 {group.items.map((item) => {

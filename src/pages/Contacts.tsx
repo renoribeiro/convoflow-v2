@@ -75,7 +75,7 @@ export default function Contacts() {
 
   const handleExport = async () => {
     if (!tenant?.id) {
-      toast.error('Tenant não identificado.');
+      toast.error('A Loja ainda não carregou. Recarregue a página e tente de novo.');
       return;
     }
     if (isExporting) return;
@@ -169,7 +169,7 @@ export default function Contacts() {
       <PageHeader
         title="Contatos"
         helpKey="page:contacts"
-        description="Gerencie todos os seus leads e contatos em um só lugar"
+        description="Todos os contatos da Loja num lugar só: quem são, em que etapa estão e quem aceita campanhas"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Contatos' }

@@ -170,10 +170,10 @@ export const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
   if (entry.key === 'unknown' && onChangeType) {
     return (
       <div className="space-y-3 p-4">
-        <p className="text-sm text-muted-foreground">Escolha o que esta etapa deve fazer:</p>
+        <p className="text-sm text-muted-foreground">Escolha o que este passo deve fazer:</p>
         <AddStepPopover onSelect={onChangeType} align="start">
           <button type="button" className="w-full rounded-lg border border-dashed p-3 text-sm hover:bg-muted">
-            + Escolher tipo da etapa
+            + Escolher o tipo do passo
           </button>
         </AddStepPopover>
       </div>
@@ -232,8 +232,8 @@ export const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
         {/* Condições: deixa claro o comportamento "se falso, encerra" */}
         {entry.category === 'condition' && (
           <div className="rounded-md border bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
-            <p><span className="font-medium text-emerald-600 dark:text-emerald-400">✓ Se verdadeiro:</span> o fluxo continua.</p>
-            <p><span className="font-medium text-red-500">✕ Se falso:</span> o fluxo é encerrado aqui.</p>
+            <p><span className="font-medium text-emerald-600 dark:text-emerald-400">✓ Se verdadeiro:</span> a automação continua.</p>
+            <p><span className="font-medium text-red-500">✕ Se falso:</span> a automação é encerrada aqui.</p>
           </div>
         )}
       </div>

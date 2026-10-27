@@ -79,8 +79,8 @@ export function DeleteConfirmationModal({ isOpen, onClose, onConfirm, template }
               <div className="text-sm">
                 <p className="font-medium text-amber-800">Impactos da exclusão:</p>
                 <ul className="mt-1 text-amber-700 space-y-1">
-                  <li>• O template será removido permanentemente</li>
-                  <li>• Relatórios baseados neste template podem ser afetados</li>
+                  <li>• O modelo é apagado de vez</li>
+                  <li>• Os agendamentos deste modelo são apagados junto, e as entregas dele somem da aba Entregas</li>
                   <li>• Configurações e seções serão perdidas</li>
                 </ul>
               </div>
@@ -107,7 +107,7 @@ export function DeleteConfirmationModal({ isOpen, onClose, onConfirm, template }
             ) : (
               <Trash2 className="h-4 w-4 mr-2" />
             )}
-            {loading ? 'Excluindo...' : 'Excluir Template'}
+            {loading ? 'Excluindo...' : 'Excluir modelo'}
           </Button>
         </DialogFooter>
       </DialogContent>

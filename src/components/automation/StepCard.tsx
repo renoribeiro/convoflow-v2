@@ -101,7 +101,7 @@ const StepCardBase: React.FC<StepCardProps> = ({
         {onDelete && (
           <button
             type="button"
-            aria-label="Excluir etapa"
+            aria-label="Excluir passo"
             title="Excluir"
             onClick={(e) => {
               e.stopPropagation();

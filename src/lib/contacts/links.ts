@@ -172,7 +172,7 @@ export function automaticLinkEffects(wa: LinkableContact, ig: LinkableContact): 
   }
 
   if (!text(wa.email) && text(ig.email)) {
-    out.push('O e-mail do Instagram passa para o contato do WhatsApp.');
+    out.push('O email do Instagram passa para o contato do WhatsApp.');
   }
 
   const waFields = asRecord(wa.custom_fields);

@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTenantId } from '@/contexts/TenantContext';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 // ─────────────────────────────────────────────
 // Types
@@ -378,8 +379,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao criar campanha', { error: error.message });
       toast({
-        title: 'Erro ao criar campanha',
-        description: error.message,
+        title: 'Não foi possível criar a campanha',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },
@@ -416,8 +417,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao atualizar campanha', { error: error.message });
       toast({
-        title: 'Erro ao atualizar campanha',
-        description: error.message,
+        title: 'Não foi possível atualizar a campanha',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },
@@ -439,8 +440,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao agendar campanha', { error: error.message });
       toast({
-        title: 'Erro ao agendar campanha',
-        description: error.message,
+        title: 'Não foi possível agendar a campanha',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },
@@ -477,8 +478,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao alterar status da campanha', { error: error.message });
       toast({
-        title: 'Erro',
-        description: error.message,
+        title: 'Não deu certo',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },
@@ -536,8 +537,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao duplicar campanha', { error: error.message });
       toast({
-        title: 'Erro ao duplicar campanha',
-        description: error.message,
+        title: 'Não foi possível duplicar a campanha',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },
@@ -564,8 +565,8 @@ export function useCampaignMutations() {
     onError: (error: Error) => {
       logger.error('Erro ao excluir campanha', { error: error.message });
       toast({
-        title: 'Erro ao excluir campanha',
-        description: error.message,
+        title: 'Não foi possível excluir a campanha',
+        description: motivoDoErro(error),
         variant: 'destructive',
       });
     },

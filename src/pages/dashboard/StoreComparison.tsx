@@ -36,7 +36,7 @@ const StoreComparison = () => {
             <FeatureHelp helpKey="page:store-comparison" />
           </div>
           <p className="text-sm text-muted-foreground">
-            Métricas lado a lado das lojas do seu grupo.
+            Métricas lado a lado das Lojas da sua Conta.
           </p>
         </div>
       </div>
@@ -44,7 +44,7 @@ const StoreComparison = () => {
       <Card>
         <CardHeader>
           <CardTitle>Visão comparativa</CardTitle>
-          <CardDescription>Contatos, conversas e mensagens por loja.</CardDescription>
+          <CardDescription>Contatos, conversas e mensagens por Loja.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -55,14 +55,14 @@ const StoreComparison = () => {
             </div>
           ) : metrics.length === 0 ? (
             <p className="text-sm text-muted-foreground py-8 text-center">
-              Nenhuma loja no seu grupo ainda. As lojas aparecem aqui assim que forem criadas.
+              Nenhuma Loja na sua Conta ainda. Crie a primeira em Equipe, no botão "Nova Loja", e ela aparece aqui.
             </p>
           ) : (
             // A linha "Total" é uma linha comum com id próprio, em negrito —
             // a ResponsiveTable não tem rodapé, e no cartão o total precisa
             // aparecer do mesmo jeito que as lojas.
             <ResponsiveTable
-              ariaLabel="Comparativo das lojas"
+              ariaLabel="Comparativo das Lojas"
               rows={[
                 ...metrics,
                 { id: '__total__', name: 'Total', contacts: totals.contacts, conversations: totals.conversations, messages: totals.messages },

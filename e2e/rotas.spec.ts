@@ -222,13 +222,13 @@ test.describe('links que chegam de fora', () => {
     await expect(page.getByText('Esqueci minha senha')).toBeVisible();
     await expect(page.getByText('Não deu para usar este link')).toHaveCount(0);
 
-    await page.getByLabel('Seu e-mail').fill('pessoa@exemplo.com.br');
+    await page.getByLabel('Seu email').fill('pessoa@exemplo.com.br');
     await page.getByRole('button', { name: 'Enviar código' }).click();
-    await expect(page.getByLabel('Código recebido por e-mail')).toBeVisible();
+    await expect(page.getByLabel('Código recebido por email')).toBeVisible();
     expect(pedidos.recover).toHaveLength(1);
     expect(pedidos.recover[0].url).toContain(encodeURIComponent('/definir-senha'));
 
-    await page.getByLabel('Código recebido por e-mail').fill('123456');
+    await page.getByLabel('Código recebido por email').fill('123456');
     await page.getByRole('button', { name: 'Continuar' }).click();
     await expect(page.getByLabel('Nova senha')).toBeVisible();
     expect(pedidos.verify).toHaveLength(1);

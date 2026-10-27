@@ -26,6 +26,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useTenant } from '@/contexts/TenantContext';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { logger } from '@/lib/logger';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export interface QuickReply {
   id: string;
@@ -57,7 +58,7 @@ function traduzirErro(error: unknown): Error {
   if (e?.code === '23514') {
     return new Error('Nome e mensagem não podem ficar em branco.');
   }
-  return new Error(e?.message || 'Não foi possível salvar. Tente novamente.');
+  return new Error(motivoDoErro(error));
 }
 
 export function useQuickReplies() {

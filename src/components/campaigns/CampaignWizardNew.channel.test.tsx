@@ -148,7 +148,7 @@ describe('Campanha › Público › Contatos', () => {
 describe('Campanha › Público › Tags', () => {
   it('o total conta só WhatsApp (o Instagram com a mesma etiqueta fica de fora)', async () => {
     await goToAudienceStep();
-    fireEvent.click(screen.getByText('Tags'));
+    fireEvent.click(screen.getByText('Etiquetas'));
     fireEvent.click(await screen.findByRole('button', { name: 'lead-quente' }));
     const alert = await screen.findByText(/contatos encontrados para as tags selecionadas/);
     await waitFor(() => expect(alert).toHaveTextContent('1 contatos encontrados'));
@@ -158,7 +158,7 @@ describe('Campanha › Público › Tags', () => {
   it('sem Instagram na etiqueta, o total é o mesmo de antes', async () => {
     db.tables.contact_tags = [contactTagRow(ANA, 'tag-quente'), contactTagRow(BRUNO, 'tag-quente')];
     await goToAudienceStep();
-    fireEvent.click(screen.getByText('Tags'));
+    fireEvent.click(screen.getByText('Etiquetas'));
     fireEvent.click(await screen.findByRole('button', { name: 'lead-quente' }));
     const alert = await screen.findByText(/contatos encontrados para as tags selecionadas/);
     await waitFor(() => expect(alert).toHaveTextContent('2 contatos encontrados'));

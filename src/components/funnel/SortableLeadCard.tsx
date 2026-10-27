@@ -126,7 +126,7 @@ export const SortableLeadCard = ({ lead }: SortableLeadCardProps) => {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleScheduleFollowup}>
                   <Calendar className="mr-2 h-4 w-4" />
-                  Agendar Follow-up
+                  Agendar Follow up
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

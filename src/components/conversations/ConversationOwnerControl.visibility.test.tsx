@@ -1,6 +1,6 @@
 /**
  * O controle de responsável quando a Loja DESLIGA a transferência para
- * atendentes (Configurações › Escala/Transferência). Esconder o botão é só
+ * atendentes (Configurações › Distribuição e transferência). Esconder o botão é só
  * metade: o servidor recusa a escrita (trigger 42501, coberto em
  * docs/teste_visibilidade_conversas.sql). Aqui: o que some, o que fica, e que
  * gestor/gerente não são afetados.

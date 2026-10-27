@@ -66,13 +66,13 @@ export const EvolutionApiForm = ({
       <Alert className="border-slate-200 bg-slate-50/60">
         <Info className="h-4 w-4 text-slate-700" />
         <AlertDescription className="text-xs">
-          O servidor WhatsApp já é o da plataforma: você não precisa configurar nada disso. Dê um
-          nome à linha, escolha uma chave e conecte pelo QR Code.
+          Você não precisa configurar servidor: o ConvoFlow já tem um. Dê um nome ao número e
+          conecte lendo o QR Code com o celular dele.
         </AlertDescription>
       </Alert>
 
       <div className="space-y-2">
-        <Label htmlFor="evo-name">Nome da Instância *</Label>
+        <Label htmlFor="evo-name">Nome do número *</Label>
         <Input
           id="evo-name"
           placeholder="Ex: WhatsApp Vendas"
@@ -83,7 +83,7 @@ export const EvolutionApiForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="evo-key">Chave da Instância *</Label>
+        <Label htmlFor="evo-key">Código interno do número *</Label>
         <div className="flex gap-2">
           <Input
             id="evo-key"
@@ -97,7 +97,7 @@ export const EvolutionApiForm = ({
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
-          Identificador único para esta instância. Use apenas letras, números, _ e -.
+          Um código só deste número, que o ConvoFlow usa por dentro. Clique em Gerar ou use letras, números, _ e -.
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export const EvolutionApiForm = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Webhook className="h-4 w-4 text-blue-600" />
-              <CardTitle className="text-sm">Configuração Automática de Webhook</CardTitle>
+              <CardTitle className="text-sm">Receber as mensagens automaticamente</CardTitle>
             </div>
             <Switch
               checked={values.enableWebhookAutomation}
@@ -115,7 +115,7 @@ export const EvolutionApiForm = ({
             />
           </div>
           <CardDescription className="text-xs">
-            Configura automaticamente o webhook da Evolution para receber eventos do WhatsApp.
+            Deixe ligado: assim as mensagens deste número entram no ConvoFlow assim que ele conectar.
           </CardDescription>
         </CardHeader>
 
@@ -146,7 +146,7 @@ export const EvolutionApiForm = ({
             </div>
 
             <div className="space-y-1">
-              <Label className="text-xs font-medium">URL do Webhook:</Label>
+              <Label className="text-xs font-medium">Endereço de entrega no ConvoFlow:</Label>
               <div className="bg-white border rounded px-2 py-1">
                 <code className="text-xs text-gray-600 break-all">{webhookUrl}</code>
               </div>
@@ -154,12 +154,12 @@ export const EvolutionApiForm = ({
 
             <details className="group">
               <summary className="text-xs font-medium cursor-pointer text-blue-600 hover:text-blue-800">
-                Configurações Avançadas
+                Detalhes técnicos (para o suporte)
               </summary>
               <div className="mt-2 space-y-2 pl-4 border-l-2 border-blue-200">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <Label className="text-xs">Tentativas:</Label>
+                    <Label className="text-xs">Tentativas de configurar:</Label>
                     <Input
                       type="number"
                       min={1}
@@ -173,7 +173,7 @@ export const EvolutionApiForm = ({
                     />
                   </div>
                   <div>
-                    <Label className="text-xs">Delay (ms):</Label>
+                    <Label className="text-xs">Espera entre tentativas (milissegundos):</Label>
                     <Input
                       type="number"
                       min={1000}

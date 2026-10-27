@@ -47,19 +47,19 @@ interface WhatsAppInstance {
  */
 export const DELETE_TEXTS = {
   whatsapp: {
-    title: 'Excluir instância',
-    checking: 'Conferindo o que esta instância guarda…',
-    checkFailed: 'Não deu para conferir a instância',
-    refusedTitle: 'Exclusão recusada: esta instância guarda histórico',
+    title: 'Excluir número',
+    checking: 'Conferindo o que este número guarda…',
+    checkFailed: 'Não deu para conferir o número',
+    refusedTitle: 'Exclusão recusada: este número guarda histórico',
     refusedBody:
-      'Excluir apagaria tudo o que está abaixo, sem volta. Por isso o ConvoFlow não exclui instância com histórico, e não há como forçar.',
-    refusedOther: 'Você não pode excluir esta instância.',
-    emptyTitle: 'Esta instância está vazia',
-    webhookLine: 'Os registros de webhook desta instância são apagados junto.',
-    confirm: 'Excluir instância',
-    fallbackError: 'Não foi possível excluir a instância.',
-    doneTitle: 'Instância excluída',
-    doneBody: 'Nenhum histórico foi apagado: a instância estava vazia.',
+      'Excluir apagaria tudo o que está abaixo, sem volta. Por isso o ConvoFlow não exclui número com histórico, e não há como forçar.',
+    refusedOther: 'Você não pode excluir este número. Peça ao Gestor da Loja.',
+    emptyTitle: 'Este número está vazio',
+    webhookLine: 'Os registros de entrega de mensagens deste número são apagados junto.',
+    confirm: 'Excluir número',
+    fallbackError: 'Não foi possível excluir o número. Tente de novo em instantes.',
+    doneTitle: 'Número excluído',
+    doneBody: 'Nenhum histórico foi apagado: o número estava vazio.',
   },
   instagram: {
     title: 'Excluir conta do Instagram',
@@ -121,7 +121,7 @@ export const COUNT_ROWS: Array<{ key: keyof DeleteInstanceCounts | 'followups_al
   { key: 'chatbots', label: 'Chatbots' },
   { key: 'chatbot_sessions', label: 'Sessões de chatbot' },
   { key: 'campaigns', label: 'Campanhas' },
-  { key: 'followups_all', label: 'Follow-ups' },
+  { key: 'followups_all', label: 'Follow ups' },
 ];
 
 export function countFor(counts: DeleteInstanceCounts, key: (typeof COUNT_ROWS)[number]['key']): number {
@@ -149,18 +149,18 @@ export function providerEffectLines(provider: ProviderType | null | undefined): 
   if (p === 'official') {
     return [
       'Na Meta, nada muda: o número continua registrado lá e o app do ConvoFlow continua inscrito na sua conta do WhatsApp Business.',
-      'O que é apagado é o vínculo aqui: a instância e o token de acesso guardado no cofre.',
+      'O que é apagado é o vínculo aqui: o número e a chave de acesso guardada no cofre.',
     ];
   }
   if (p === 'waha') {
     return [
-      'A sessão é apagada no seu servidor WAHA, com o endereço e a chave desta instância. O servidor continua seu.',
-      'A instância é apagada do ConvoFlow.',
+      'A sessão é apagada no seu servidor WAHA, com o endereço e a chave deste número. O servidor continua seu.',
+      'O número é apagado do ConvoFlow.',
     ];
   }
   return [
-    'A sessão é encerrada e a instância é apagada do servidor WhatsApp da plataforma (Evolution).',
-    'A instância é apagada do ConvoFlow.',
+    'A sessão é encerrada e o número é apagado do servidor de WhatsApp do ConvoFlow (Evolution).',
+    'O número é apagado do ConvoFlow.',
   ];
 }
 
@@ -180,11 +180,11 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
       });
       if (error) throw new Error(error.message);
       if (!data || typeof data !== 'object' || typeof data.ok !== 'boolean') {
-        throw new Error('Resposta inesperada ao conferir a instância.');
+        throw new Error('Não deu para conferir o número. Tente de novo em instantes.');
       }
       setPreview({ kind: 'loaded', preview: data as DeletePreview });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Não foi possível conferir a instância.';
+      const message = err instanceof Error ? err.message : 'Não foi possível conferir o número.';
       logger.error('Falha no preview de exclusão de instância', { instanceId: instance.id, error: message });
       setPreview({ kind: 'error', message });
     }
@@ -215,7 +215,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
 
       if (data.provider_cleanup === 'failed') {
         toast({
-          title: 'Instância excluída do ConvoFlow',
+          title: 'Número excluído do ConvoFlow',
           description:
             'Mas o servidor do provedor não confirmou o encerramento da sessão. Nada precisa ser refeito aqui; avise quem opera a plataforma.',
           variant: 'destructive',
@@ -228,7 +228,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
     } catch (err) {
       const message = err instanceof Error ? err.message : texts.fallbackError;
       logger.error('Erro ao excluir instância', { instanceId: instance.id, error: message });
-      toast({ title: 'Erro', description: message, variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: message, variant: 'destructive' });
     } finally {
       setDeleting(false);
     }
@@ -349,7 +349,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
                     excluir.{' '}
                     {instance.provider === 'official' ? (
                       <>
-                        Feche esta janela, clique em "Nova Instância" › "API Oficial do WhatsApp" › "Conectar
+                        Feche esta janela, clique em "Conectar número" › "API Oficial do WhatsApp" › "Conectar
                         com a Meta" e escolha este mesmo número: o ConvoFlow o reconhece, atualiza a instância
                         no lugar e o histórico fica. Se a reconexão recusar, escreva para{' '}
                         <a className="underline" href={`mailto:${SUPORTE_EMAIL}`}>{SUPORTE_EMAIL}</a> antes de
@@ -365,7 +365,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
                   </li>
                   )}
                   {(!instance.provider || instance.provider === 'evolution') && (
-                    <li>Quer só parar de receber por este número? Use "Desconectar" na linha da instância; o histórico fica.</li>
+                    <li>Quer só parar de receber por este número? Use "Desconectar" na linha do número; o histórico fica.</li>
                   )}
                 </ul>
               </div>
@@ -386,7 +386,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
                 <ShieldCheck className="h-4 w-4 text-emerald-700" />
                 <AlertTitle className="text-emerald-900">{texts.emptyTitle}</AlertTitle>
                 <AlertDescription className="text-emerald-900">
-                  Nenhuma conversa, mensagem, contato, chatbot, campanha ou follow-up depende dela. Excluir não
+                  Nenhuma conversa, mensagem, contato, chatbot, campanha ou follow up depende dela. Excluir não
                   apaga histórico nenhum.
                 </AlertDescription>
               </Alert>

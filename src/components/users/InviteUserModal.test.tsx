@@ -73,14 +73,14 @@ if (!Element.prototype.hasPointerCapture) {
 /** Troca a Função no seletor (Radix Select). */
 async function escolherFuncao(rotulo: string) {
   const user = userEvent.setup();
-  await user.click(screen.getByLabelText('Função'));
+  await user.click(screen.getByLabelText('Cargo'));
   await user.click(await screen.findByRole('option', { name: rotulo }));
 }
 
 const preencherBasico = () => {
   fireEvent.change(screen.getByLabelText('Nome'), { target: { value: 'Ana' } });
   fireEvent.change(screen.getByLabelText('Sobrenome'), { target: { value: 'Souza' } });
-  fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'ana@x.example' } });
+  fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'ana@x.example' } });
 };
 
 beforeEach(() => {

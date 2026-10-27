@@ -4,6 +4,8 @@ import { lerChegada, mensagemDoErro, mensagemDoErroDoLink, TIPO_DO_CODIGO } from
 describe('lerChegada: de onde a pessoa veio', () => {
   it('sem nada no endereço é o "Esqueci minha senha"', () => {
     expect(lerChegada('', '')).toEqual({ tipo: 'visita' });
+    // Link "Onde digitar" dos emails: abre direto no campo do código.
+    expect(lerChegada('?digitar=codigo', '')).toEqual({ tipo: 'visita', digitarCodigo: true });
   });
 
   it('link novo de nova senha traz token_hash e type=recovery', () => {

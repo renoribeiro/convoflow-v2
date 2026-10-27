@@ -8,6 +8,27 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { RefreshCw, Activity, AlertTriangle, CheckCircle, Clock, Zap } from 'lucide-react';
 import { useSupabase } from '@/hooks/useSupabase';
 import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
+
+// Tipo do aviso como o provedor manda (em inglês) → o que a pessoa lê.
+const NOME_DO_AVISO: Record<string, string> = {
+  'messages.upsert': 'Mensagem',
+  'messages.update': 'Situação da mensagem',
+  'messages.delete': 'Mensagem apagada',
+  'message': 'Mensagem',
+  'message.any': 'Mensagem',
+  'message.ack': 'Situação da mensagem',
+  'connection.update': 'Conexão',
+  'session.status': 'Conexão',
+  'qrcode.updated': 'QR Code',
+  'contacts.upsert': 'Contato',
+  'contacts.update': 'Contato',
+  'chats.upsert': 'Conversa',
+  'chats.update': 'Conversa',
+  'send.message': 'Mensagem enviada',
+};
+const nomeDoAviso = (tipo: string | null | undefined) =>
+  (tipo && (NOME_DO_AVISO[tipo] ?? NOME_DO_AVISO[tipo.toLowerCase()])) || 'Outro aviso';
 
 interface WebhookLog {
   id: string;
@@ -73,8 +94,8 @@ export function WebhookDashboard() {
         events_last_hour: eventsLastHour
       });
     } catch (error) {
-      console.error('Error fetching webhook stats:', error);
-      toast.error('Erro ao carregar estatísticas de webhook');
+      logger.error('Erro ao carregar as estatísticas dos avisos', { error: error instanceof Error ? error.message : String(error) });
+      toast.error('Não foi possível carregar os avisos dos números. Recarregue a página.');
     }
   };
 
@@ -89,8 +110,8 @@ export function WebhookDashboard() {
       if (error) throw error;
       setLogs(data || []);
     } catch (error) {
-      console.error('Error fetching webhook logs:', error);
-      toast.error('Erro ao carregar logs de webhook');
+      logger.error('Erro ao carregar os últimos avisos', { error: error instanceof Error ? error.message : String(error) });
+      toast.error('Não foi possível carregar os últimos avisos. Recarregue a página.');
     }
   };
 
@@ -141,7 +162,7 @@ export function WebhookDashboard() {
       setInstanceStatuses(Array.from(instanceMap.values()));
     } catch (error) {
       console.error('Error fetching instance statuses:', error);
-      toast.error('Erro ao carregar status das instâncias');
+      toast.error('Não foi possível carregar o estado dos números. Recarregue a página.');
     }
   };
 
@@ -182,11 +203,11 @@ export function WebhookDashboard() {
 
   const getStatusBadge = (httpStatus: number) => {
     if (httpStatus >= 200 && httpStatus < 300) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Sucesso</Badge>;
+      return <Badge variant="default" className="bg-green-100 text-green-800">Recebido</Badge>;
     } else if (httpStatus >= 400) {
       return <Badge variant="destructive">Erro</Badge>;
     }
-    return <Badge variant="secondary">Processando</Badge>;
+    return <Badge variant="secondary">Registrando</Badge>;
   };
 
   const formatDuration = (ms: number) => {
@@ -219,9 +240,9 @@ export function WebhookDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Dashboard de Webhooks</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Avisos dos números</h2>
           <p className="text-muted-foreground">
-            Monitore o desempenho e status dos webhooks em tempo real
+            Cada número avisa o ConvoFlow quando uma mensagem chega ou muda de situação. Aqui você vê se esses avisos estão chegando.
           </p>
         </div>
         <Button onClick={refreshData} disabled={refreshing} variant="outline">
@@ -234,7 +255,7 @@ export function WebhookDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
+            <CardTitle className="text-sm font-medium">Avisos recebidos</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -245,23 +266,23 @@ export function WebhookDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle>
+            <CardTitle className="text-sm font-medium">Recebidos sem erro</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.success_rate.toFixed(1) || 0}%</div>
-            <p className="text-xs text-muted-foreground">Eventos processados</p>
+            <p className="text-xs text-muted-foreground">Dos avisos recebidos</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tempo Médio</CardTitle>
+            <CardTitle className="text-sm font-medium">Tempo médio</CardTitle>
             <Zap className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatDuration(stats?.avg_processing_time || 0)}</div>
-            <p className="text-xs text-muted-foreground">Processamento</p>
+            <p className="text-xs text-muted-foreground">Para registrar cada aviso</p>
           </CardContent>
         </Card>
 
@@ -278,41 +299,41 @@ export function WebhookDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Última Hora</CardTitle>
+            <CardTitle className="text-sm font-medium">Última hora</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.events_last_hour || 0}</div>
-            <p className="text-xs text-muted-foreground">Eventos recentes</p>
+            <p className="text-xs text-muted-foreground">Avisos recebidos</p>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="logs" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="logs">Logs Recentes</TabsTrigger>
-          <TabsTrigger value="instances">Status das Instâncias</TabsTrigger>
+          <TabsTrigger value="logs">Últimos avisos</TabsTrigger>
+          <TabsTrigger value="instances">Estado dos números</TabsTrigger>
         </TabsList>
 
         <TabsContent value="logs" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Logs de Webhook</CardTitle>
+              <CardTitle>Últimos avisos</CardTitle>
               <CardDescription>
-                Últimos 50 eventos de webhook processados
+                Os 50 avisos mais recentes de todos os números
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-96">
                 <ResponsiveTable
-                  ariaLabel="Logs de webhook"
+                  ariaLabel="Últimos avisos dos números"
                   rows={logs}
                   rowKey={(log) => log.id}
                   empty="Nenhum evento ainda."
                   columns={[
-                    { key: 'instancia', header: 'Instância', card: 'title', cellClassName: 'font-medium', cell: (log) => log.instance_name },
-                    { key: 'evento', header: 'Evento', card: 'badge', cell: (log) => <Badge variant="outline">{log.event_type}</Badge> },
-                    { key: 'status', header: 'Status', card: 'badge', cell: (log) => getStatusBadge(log.http_status) },
+                    { key: 'instancia', header: 'Número', card: 'title', cellClassName: 'font-medium', cell: (log) => log.instance_name },
+                    { key: 'evento', header: 'Tipo de aviso', card: 'badge', cell: (log) => <Badge variant="outline">{nomeDoAviso(log.event_type)}</Badge> },
+                    { key: 'status', header: 'Resultado', card: 'badge', cell: (log) => getStatusBadge(log.http_status) },
                     { key: 'tempo', header: 'Tempo', cell: (log) => formatDuration(log.processing_time_ms) },
                     { key: 'quando', header: 'Quando', cell: (log) => formatRelativeTime(log.created_at) },
                   ]}
@@ -325,9 +346,9 @@ export function WebhookDashboard() {
         <TabsContent value="instances" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Status das Instâncias</CardTitle>
+              <CardTitle>Estado dos números</CardTitle>
               <CardDescription>
-                Status atual de cada instância WhatsApp
+                Como está cada número de WhatsApp agora
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -343,7 +364,7 @@ export function WebhookDashboard() {
                     <CardContent>
                       <div className="space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span>Eventos:</span>
+                          <span>Avisos:</span>
                           <span className="font-medium">{instance.event_count}</span>
                         </div>
                         <div className="flex justify-between text-sm">
@@ -351,7 +372,7 @@ export function WebhookDashboard() {
                           <span className="font-medium text-red-600">{instance.error_count}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span>Último evento:</span>
+                          <span>Último aviso:</span>
                           <span className="text-muted-foreground">
                             {formatRelativeTime(instance.last_event)}
                           </span>

@@ -18,6 +18,7 @@ import { useContactLinkIndex } from '@/hooks/useContactLinks';
 import { Skeleton } from '@/components/ui/skeleton';
 import { contactChannel, contactIdentifier, type ContactIdentity } from '@/lib/contacts/identity';
 import { contactDisplayName } from '@/lib/instagram/contactProfile';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 interface Lead {
   id: string;
@@ -158,8 +159,8 @@ export const FunnelBoard = () => {
       }
       
       toast({
-        title: 'Erro',
-        description: error.message || 'Erro ao mover contato',
+        title: 'Não deu certo',
+        description: motivoDoErro(error),
         variant: 'destructive'
       });
     },

@@ -47,8 +47,8 @@ import {
  * src/lib/legal/versions.ts — src/lib/signup/publicSignupHandler.test.ts exige
  * que as duas sejam iguais. Mudou a página, mude os dois.
  */
-export const SIGNUP_TERMS_VERSION = '2026-10-25';
-export const SIGNUP_PRIVACY_VERSION = '2026-10-26';
+export const SIGNUP_TERMS_VERSION = '2026-10-27';
+export const SIGNUP_PRIVACY_VERSION = '2026-10-27';
 
 /** A ação declarada no widget do Turnstile; o servidor confere. */
 export const TURNSTILE_ACTION = 'cadastro';
@@ -130,7 +130,7 @@ export function validateSignupBody(body: unknown): SignupValidation {
 
   const emailBruto = typeof b.email === 'string' ? b.email.trim().toLowerCase() : '';
   if (!emailBruto || emailBruto.length > 254 || !EMAIL.test(emailBruto)) {
-    return { ok: false, field: 'email', message: 'Informe um e-mail válido.' };
+    return { ok: false, field: 'email', message: 'Informe um email válido.' };
   }
 
   const companyName = texto(b.companyName, 2, 120);

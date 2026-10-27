@@ -57,12 +57,12 @@ export const WhatsAppStatusCompact = () => {
           Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-11 w-full rounded-lg" />)
         ) : error ? (
           <p className="py-4 text-center text-xs text-muted-foreground">
-            Erro ao carregar instâncias
+            Não foi possível carregar os números. Recarregue a página.
           </p>
         ) : instances.length === 0 ? (
           <div className="flex flex-col items-center gap-1 py-5 text-center">
             <Smartphone className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-xs text-muted-foreground">Nenhuma instância configurada</p>
+            <p className="text-xs text-muted-foreground">Nenhum número conectado</p>
             {podeConfigurar ? (
               <Button
                 variant="link"
@@ -93,7 +93,7 @@ export const WhatsAppStatusCompact = () => {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-sm font-semibold text-foreground">{instance.messagesCount}</p>
-                  <p className="text-[11px] text-muted-foreground">msgs hoje</p>
+                  <p className="text-[11px] text-muted-foreground">mensagens hoje</p>
                 </div>
               </div>
             );

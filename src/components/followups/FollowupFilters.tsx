@@ -30,7 +30,7 @@ interface FollowupFiltersProps {
 const followupTypes = [
   { value: 'call', label: 'Ligação' },
   { value: 'whatsapp', label: 'WhatsApp' },
-  { value: 'email', label: 'E-mail' },
+  { value: 'email', label: 'Email' },
   { value: 'meeting', label: 'Reunião' },
   { value: 'task', label: 'Tarefa' }
 ];
@@ -106,7 +106,7 @@ export const FollowupFilters = ({ filters, onFiltersChange }: FollowupFiltersPro
 
         {/* Tipo de Follow-up */}
         <div>
-          <Label>Tipo de Follow-up</Label>
+          <Label>Tipo de Follow up</Label>
           <Select 
             value={filters.type || 'all'} 
             onValueChange={(value) => updateFilters('type', value === 'all' ? '' : value)}

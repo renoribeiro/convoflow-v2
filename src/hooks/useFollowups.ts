@@ -72,7 +72,7 @@ export function useFollowups(): UseFollowupsReturn {
       if (fetchError) throw fetchError
       setFollowups(withEffectiveStatus((data as IndividualFollowup[]) || []))
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar follow-ups'
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao carregar follow ups'
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -104,10 +104,10 @@ export function useFollowups(): UseFollowupsReturn {
 
       if (createError) throw createError
       await refreshFollowups()
-      toast.success('Follow-up criado com sucesso!')
+      toast.success('Follow up criado com sucesso!')
       return newFollowup as IndividualFollowup
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar follow-up'
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar follow up'
       toast.error(errorMessage)
       return null
     }
@@ -123,10 +123,10 @@ export function useFollowups(): UseFollowupsReturn {
 
       if (updateError) throw updateError
       await refreshFollowups()
-      toast.success('Follow-up atualizado com sucesso!')
+      toast.success('Follow up atualizado com sucesso!')
       return true
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar follow-up'
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar follow up'
       toast.error(errorMessage)
       return false
     }
@@ -142,10 +142,10 @@ export function useFollowups(): UseFollowupsReturn {
 
       if (deleteError) throw deleteError
       await refreshFollowups()
-      toast.success('Follow-up excluído com sucesso!')
+      toast.success('Follow up excluído com sucesso!')
       return true
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir follow-up'
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao excluir follow up'
       toast.error(errorMessage)
       return false
     }

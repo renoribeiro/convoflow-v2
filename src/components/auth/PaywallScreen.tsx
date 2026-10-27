@@ -294,7 +294,7 @@ export const PaywallScreen = () => {
                 <li>
                   A primeira cobrança, de {PLAN_PRICE_LABEL}, acontece em{' '}
                   <strong>{dataDaCobranca}</strong>, no fim do teste. Depois, {PLAN_PRICE_LABEL} por mês
-                  ({PLAN_NAME} com {INCLUDED_SLOTS} lojas incluídas).
+                  ({PLAN_NAME} com {INCLUDED_SLOTS} Lojas incluídas).
                 </li>
                 <li>Para não ser cobrado, {COMO_CANCELAR_NO_TESTE}.</li>
               </ul>
@@ -397,7 +397,7 @@ export const PaywallScreen = () => {
               <span className="text-4xl font-bold">{PLAN_PRICE_LABEL}</span>
               <span className="text-muted-foreground">/mês</span>
               <p className="text-sm text-muted-foreground mt-1">
-                {PLAN_NAME} com {INCLUDED_SLOTS} lojas incluídas
+                {PLAN_NAME} com {INCLUDED_SLOTS} Lojas incluídas
               </p>
             </div>
 
@@ -421,7 +421,7 @@ export const PaywallScreen = () => {
                   <p>{falha}</p>
                   <p className="text-xs">
                     Se continuar assim, fale com o suporte pelo contato abaixo. Ninguém precisa
-                    ficar sem acesso esperando o checkout.
+                    ficar sem acesso esperando o pagamento.
                   </p>
                 </AlertDescription>
               </Alert>
@@ -518,7 +518,7 @@ const ContatoDeSuporte = ({ titulo }: { titulo: string }) => (
       className="inline-flex items-center gap-2 text-xs text-brand-primary hover:underline"
     >
       <Mail className="h-3.5 w-3.5" />
-      Falar com o suporte por e-mail
+      Falar com o suporte por email
     </a>
     <p className="text-xs text-muted-foreground">{SUPORTE_EMAIL}</p>
   </div>

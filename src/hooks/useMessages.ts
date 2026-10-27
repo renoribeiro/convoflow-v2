@@ -210,7 +210,7 @@ export const useSendMessage = () => {
     onError: (error) => {
       console.error('Error sending message:', error);
       toast({
-        title: 'Erro ao enviar mensagem',
+        title: 'Não foi possível enviar a mensagem',
         description: 'Ocorreu um erro ao enviar a mensagem. Tente novamente.',
         variant: 'destructive',
       });
@@ -299,7 +299,7 @@ export const useDeleteMessage = () => {
     onError: (error) => {
       console.error('Error deleting message:', error);
       toast({
-        title: 'Erro ao deletar mensagem',
+        title: 'Não foi possível excluir a mensagem',
         description: 'Ocorreu um erro ao deletar a mensagem. Tente novamente.',
         variant: 'destructive',
       });

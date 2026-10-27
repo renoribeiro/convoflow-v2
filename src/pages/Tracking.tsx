@@ -67,9 +67,9 @@ export default function Tracking() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Rastreamento de Leads"
+        title="Rastreamento de contatos"
         helpKey="page:tracking"
-        description="Configure e monitore suas fontes de tráfego para otimizar a geração de leads"
+        description="Veja de onde vêm seus contatos e quais fontes trazem mais conversões"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Rastreamento' }
@@ -78,7 +78,7 @@ export default function Tracking() {
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={handleCreateNewSource}>
               <Plus className="w-4 h-4 mr-2" />
-              Nova Fonte
+              Nova fonte
             </Button>
           </div>
         }
@@ -88,7 +88,7 @@ export default function Tracking() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-3">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
-            Dashboard
+            Resumo
           </TabsTrigger>
           <TabsTrigger value="sources" className="flex items-center gap-2">
             <Target className="w-4 h-4" />

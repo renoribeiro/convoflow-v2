@@ -21,6 +21,7 @@ export interface SubscriptionRow {
   trial_ends_at?: string | null;
   subscription_will_cancel?: boolean | null;
   subscription_cancel_at?: string | null;
+  manual_access_granted?: boolean | null;
 }
 
 export type BadgeTone = 'ativo' | 'teste' | 'pendente' | 'nenhum';
@@ -111,6 +112,19 @@ export function describeSubscription(row: SubscriptionRow): SubscriptionView {
           description: `O sistema continua liberado até ${cancelaEm}, fim do período já pago. Não há novas cobranças. Mudou de ideia? Clique em "Desfazer cancelamento" antes dessa data.`,
         }
         : null,
+    };
+  }
+
+  // ------------------------------------------- liberada à mão, sem assinatura
+  // O sistema funciona (tenant_access_state libera pela manual_access_granted):
+  // dizer "Nenhuma assinatura" em vermelho assustava sem motivo (achado 116).
+  if (row.manual_access_granted) {
+    return {
+      hasSubscription,
+      badge: { tone: 'ativo', label: 'LIBERADO' },
+      title: 'Acesso liberado pelo ConvoFlow',
+      description: 'O ConvoFlow liberou o sistema para a sua Conta. Nada é cobrado enquanto essa liberação valer.',
+      alert: null,
     };
   }
 

@@ -102,7 +102,7 @@ async function sendWhatsApp(
     if (isFreeFormBlocked({ isOfficial, isTemplate, inWindow: !winErr && inWindow === true })) {
       throw new ComplianceError(
         'Bloqueado por conformidade: fora da janela de 24h. Número oficial (Meta) só pode ' +
-          'enviar template aprovado para contatos frios. Configure um template no follow-up.',
+          'enviar template aprovado para contatos frios. Configure um template aprovado no follow up.',
       )
     }
   }
@@ -233,7 +233,7 @@ serve(async (req) => {
       if (!instanceRow) {
         await supabase.from('individual_followups').update({
           status: 'cancelled', cancelled_at: new Date().toISOString(),
-          error_message: 'Nenhuma instância de WhatsApp ativa na conta.', attempts: (fu.attempts ?? 0) + 1,
+          error_message: 'Nenhum número de WhatsApp conectado na Conta. Conecte um em Números de WhatsApp.', attempts: (fu.attempts ?? 0) + 1,
         }).eq('id', fu.id)
         stats.failed++
         continue
@@ -385,7 +385,7 @@ serve(async (req) => {
             tenant_id: enr.tenant_id,
             contact_id: enr.contact_id,
             whatsapp_instance_id: enr.whatsapp_instance_id ?? contact?.whatsapp_instance_id ?? null,
-            task: step.task_title || 'Tarefa de follow-up',
+            task: step.task_title || 'Tarefa de follow up',
             due_date: new Date().toISOString(),
             priority: step.task_priority || 'medium',
             type: 'task',
@@ -418,7 +418,7 @@ serve(async (req) => {
         if (!instanceRow) {
           await supabase.from('followup_sequence_enrollments').update({
             status: 'stopped_manual', stopped_at: new Date().toISOString(),
-            stopped_reason: 'Sem instância de WhatsApp ativa', next_run_at: null,
+            stopped_reason: 'Sem número de WhatsApp conectado', next_run_at: null,
           }).eq('id', enr.id)
           continue
         }

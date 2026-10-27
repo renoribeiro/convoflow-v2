@@ -27,7 +27,7 @@ export const TrafficChart = ({ data, isLoading }: TrafficChartProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Evolução de Leads e Conversões</CardTitle>
+        <CardTitle>Contatos e conversões ao longo do tempo</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -46,7 +46,7 @@ export const TrafficChart = ({ data, isLoading }: TrafficChartProps) => {
                 dataKey="leads"
                 stroke="hsl(var(--primary))"
                 strokeWidth={2}
-                name="Leads"
+                name="Contatos"
               />
               <Line
                 type="monotone"

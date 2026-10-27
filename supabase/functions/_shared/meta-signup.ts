@@ -101,9 +101,9 @@ export type MetaSignupDecision =
 /** Mensagens em pt-BR, sem dizer de quem é o número. Mesmas da função SQL. */
 export const META_SIGNUP_REFUSAL_MESSAGES: Record<MetaSignupRefusal, string> = {
   ambiguous:
-    'Este número aparece em mais de uma instância. Nada foi alterado. Escreva para contato@convoflow.com.br antes de tentar de novo.',
+    'Este número aparece mais de uma vez no ConvoFlow. Nada foi alterado. Escreva para contato@convoflow.com.br antes de tentar de novo.',
   provider_mismatch:
-    'Este identificador já é usado por uma instância de outro provedor. Nada foi alterado.',
+    'Este código já é usado por um número conectado de outro jeito (QR Code). Nada foi alterado.',
   foreign_instance:
     'Este número já está conectado em outra Conta ou Loja que você não administra. Se ele é seu, escreva para contato@convoflow.com.br.',
   tenant_required: 'Escolha a Conta ou Loja em que o número vai ser conectado.',

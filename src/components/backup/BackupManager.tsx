@@ -269,7 +269,7 @@ const CreateBackup = () => {
   const handleCreateBackup = () => {
     if (!backupName.trim()) {
       toast({
-        title: "Erro",
+        title: "Não deu certo",
         description: "Nome do backup é obrigatório",
         variant: "destructive"
       });
@@ -449,7 +449,7 @@ const RestoreManager = () => {
   const handleRestore = () => {
     if (!selectedBackup) {
       toast({
-        title: "Erro",
+        title: "Não deu certo",
         description: "Selecione um backup para restaurar",
         variant: "destructive"
       });

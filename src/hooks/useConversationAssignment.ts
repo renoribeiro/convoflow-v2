@@ -18,7 +18,7 @@ import { invalidateConversationCounts } from '@/lib/conversations/countKeys';
  * `src/lib/conversations/assignment.ts`.
  *
  * Qualquer cargo assume; transferir pode ser desligado para atendentes pela
- * Loja (Configurações › Escala/Transferência, migração 20260914000001). Quem
+ * Loja (Configurações › Distribuição e transferência, migração 20260914000001). Quem
  * recusa é o SERVIDOR (trigger tg_guard_conversation_transfer, 42501); o
  * `ConversationOwnerControl` só esconde o botão, e aqui a recusa vira a frase
  * do servidor no toast em vez do texto genérico.

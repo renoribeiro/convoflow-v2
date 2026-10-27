@@ -126,11 +126,13 @@ Deno.serve(async (req: Request) => {
   }
   if (!metaAppId) {
     logger.error('META_APP_ID env var is not set');
-    return jsonResponse({ success: false, error: 'META_APP_ID não configurado no servidor' }, 500);
+    logger.error('META_APP_ID ausente');
+    return jsonResponse({ success: false, error: 'A conexão automática com a Meta ainda não está ligada. Fale com o suporte do ConvoFlow.' }, 500);
   }
   if (!metaAppSecret) {
     logger.error('META_APP_SECRET env var is not set');
-    return jsonResponse({ success: false, error: 'META_APP_SECRET não configurado no servidor' }, 500);
+    logger.error('META_APP_SECRET ausente');
+    return jsonResponse({ success: false, error: 'A conexão automática com a Meta ainda não está ligada. Fale com o suporte do ConvoFlow.' }, 500);
   }
 
   const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -210,7 +212,7 @@ Deno.serve(async (req: Request) => {
 
   if (lookupError) {
     logger.error('Instance lookup failed', { error: lookupError.message });
-    return jsonResponse({ success: false, error: 'Falha ao consultar instâncias existentes' }, 500);
+    return jsonResponse({ success: false, error: 'Não foi possível conferir os números já conectados. Tente de novo em instantes.' }, 500);
   }
   const candidates = (candidateRows ?? []) as MetaSignupExistingInstance[];
 
@@ -300,7 +302,8 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(
         {
           success: false,
-          error: `Falha na troca do código Meta: ${errMsg}`,
+          error: 'A Meta não confirmou a conexão. Feche a janela e clique de novo em "Conectar com a Meta".',
+          meta_message: errMsg,
           meta_error_code: errCode,
         },
         tokenRes.ok ? 400 : tokenRes.status >= 500 ? 502 : 400,
@@ -310,7 +313,7 @@ Deno.serve(async (req: Request) => {
     if (!tokenData.access_token) {
       logger.error('Meta token exchange returned no access_token');
       return jsonResponse(
-        { success: false, error: 'Resposta da Meta não contém access_token' },
+        { success: false, error: 'A Meta não devolveu a chave de acesso. Clique de novo em "Conectar com a Meta".' },
         502,
       );
     }
@@ -343,7 +346,8 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(
         {
           success: false,
-          error: `Falha ao inscrever app no WABA: ${truncate(subscribeText, 200)}`,
+          error: 'A Meta não deixou o ConvoFlow receber as mensagens desta conta. Tente de novo em instantes; se continuar, fale com o suporte do ConvoFlow.',
+          meta_message: truncate(subscribeText, 200),
         },
         subscribeRes.status >= 500 ? 502 : 400,
       );
@@ -411,7 +415,7 @@ Deno.serve(async (req: Request) => {
     if (commitError) {
       logger.error('meta_signup_commit falhou', { mode: decision.mode, error: commitError.message });
       return jsonResponse(
-        { success: false, error: 'Falha ao salvar instância: ' + commitError.message },
+        { success: false, error: 'Não foi possível salvar o número. Tente de novo em instantes.' },
         500,
       );
     }
@@ -667,7 +671,7 @@ Deno.serve(async (req: Request) => {
 
     logger.error('meta-oauth-exchange failed', { error: err?.message });
     return jsonResponse(
-      { success: false, error: err?.message ?? 'Erro interno desconhecido' },
+      { success: false, error: 'Não foi possível concluir a conexão com a Meta. Tente de novo em instantes; se continuar, fale com o suporte do ConvoFlow.' },
       500,
     );
   }

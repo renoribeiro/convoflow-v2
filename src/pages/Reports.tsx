@@ -44,7 +44,7 @@ export default function Reports() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-4">
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <FileText className="w-4 h-4" />
-            Templates
+            Modelos de relatório
           </TabsTrigger>
           <TabsTrigger value="builder" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />

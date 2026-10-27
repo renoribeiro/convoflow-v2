@@ -27,10 +27,10 @@ export const isBannedLoginError = (error: { message?: string; code?: string }): 
   error.code === 'user_banned' || /user is banned/i.test(error.message ?? '');
 
 export const LOGIN_CREDENCIAIS_ERRADAS =
-  'E-mail ou senha incorretos. Se você esqueceu a senha, use "Esqueci minha senha".';
+  'Email ou senha incorretos. Se você esqueceu a senha, use "Esqueci minha senha".';
 
 export const LOGIN_EMAIL_NAO_CONFIRMADO =
-  'Este e-mail ainda não foi confirmado. Abra o convite que chegou por e-mail ou use "Esqueci minha senha".';
+  'Este email ainda não foi confirmado. Abra o convite que chegou por email ou use "Esqueci minha senha".';
 
 export const LOGIN_MUITAS_TENTATIVAS = 'Muitas tentativas seguidas. Espere alguns minutos e tente de novo.';
 

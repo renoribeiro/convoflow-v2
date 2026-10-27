@@ -72,7 +72,7 @@ export function UserDetailsDialog({ row, tenantName, activity, onClose }: Props)
         {row && (
           <div className="space-y-4">
             <div>
-              <Linha rotulo="Função">
+              <Linha rotulo="Cargo">
                 <RoleBadge role={row.role} />
               </Linha>
               <Linha rotulo="Situação">
@@ -91,7 +91,7 @@ export function UserDetailsDialog({ row, tenantName, activity, onClose }: Props)
                   <Linha rotulo="Visto por último">{relativaOu(activity?.last_seen_at, 'Nunca')}</Linha>
                   <Linha rotulo="Última mensagem">
                     <span title={activity?.last_message_at ? undefined : SEM_MENSAGEM_DICA}>
-                      {relativaOu(activity?.last_message_at, 'Nenhuma desde 21/09/2026')}
+                      {relativaOu(activity?.last_message_at, 'Nenhuma registrada')}
                     </span>
                   </Linha>
                   <Linha rotulo="Mensagens (7 / 30 dias)">

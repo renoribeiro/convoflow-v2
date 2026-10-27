@@ -10,7 +10,7 @@ export interface RenamedStore {
   changed: boolean;
 }
 
-const FALHA_GENERICA = 'Não foi possível renomear a loja. Tente novamente.';
+const FALHA_GENERICA = 'Não foi possível renomear a Loja. Tente novamente.';
 
 /**
  * Renomeia uma Loja. Só o nome: slug, Conta e cobrança não mudam.

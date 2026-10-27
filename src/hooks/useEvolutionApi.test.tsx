@@ -155,7 +155,7 @@ describe('useEvolutionApi.createInstance', () => {
 
   it('resposta 200 com ok:false também é falha', async () => {
     mockInvoke.mockResolvedValue({
-      data: { ok: false, error: 'Já existe uma instância com essa chave.' },
+      data: { ok: false, error: 'Já existe um número com esse código interno.' },
       error: null,
     });
 
@@ -164,7 +164,7 @@ describe('useEvolutionApi.createInstance', () => {
     await act(async () => {
       await expect(
         result.current.createInstance('vendas_001', undefined, {}),
-      ).rejects.toThrow(/Já existe uma instância/i);
+      ).rejects.toThrow(/Já existe um número/i);
     });
 
     expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive' }));

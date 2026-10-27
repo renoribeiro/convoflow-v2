@@ -28,6 +28,18 @@ const MOTIVOS: Record<string, string> = {
 };
 
 /**
+ * Motivo de uma falha já gravada (ex.: messages.error_message, execução de
+ * campanha), que pode vir em inglês e com o código da Meta no meio do texto.
+ * Com um código conhecido, a frase em português; sem ele, o texto gravado.
+ */
+export function motivoDaFalhaGravada(texto: string | null | undefined): string {
+  const bruto = (texto ?? '').trim();
+  if (!bruto) return 'A mensagem não foi enviada.';
+  const codigo = Object.keys(MOTIVOS).find((c) => bruto.includes(c));
+  return codigo ? motivoDaRecusaMeta(codigo, null) : bruto;
+}
+
+/**
  * Texto da recusa para a tela. Com código conhecido, a frase acima; sem ele, a
  * frase do servidor. Em qualquer caso, com o código da Meta no fim.
  */

@@ -46,7 +46,8 @@ export const AttendanceMetrics = ({ period }: AttendanceMetricsProps) => {
 
       {unavailable ? (
         <p className="text-sm text-muted-foreground" data-testid="attendance-unavailable">
-          Sem números de atendimento para esta Conta.
+          Ainda não há conversas para medir o atendimento aqui. Os números aparecem
+          quando as primeiras conversas chegarem.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">

@@ -128,7 +128,7 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
     } catch (err) {
       logger.error('Erro ao exportar relatório', { error: (err as Error).message });
       toast({
-        title: 'Erro ao exportar',
+        title: 'Não foi possível exportar',
         description: 'Tente novamente.',
         variant: 'destructive',
       });

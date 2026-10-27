@@ -73,7 +73,7 @@ export function useTags() {
     },
     onError: (error) => {
       logger.error('Erro ao criar etiqueta', { error });
-      toast.error('Erro ao criar etiqueta');
+      toast.error('Não foi possível criar a etiqueta');
     },
   });
 
@@ -95,7 +95,7 @@ export function useTags() {
     },
     onError: (error) => {
       logger.error('Erro ao atualizar etiqueta', { error });
-      toast.error('Erro ao atualizar etiqueta');
+      toast.error('Não foi possível atualizar a etiqueta');
     },
   });
 
@@ -111,7 +111,7 @@ export function useTags() {
     },
     onError: (error) => {
       logger.error('Erro ao excluir etiqueta', { error });
-      toast.error('Erro ao excluir etiqueta');
+      toast.error('Não foi possível excluir a etiqueta');
     },
   });
 

@@ -51,7 +51,7 @@ export interface RoleDescription {
  * ela — se o texto mudar num lugar, muda nos dois, e o filtro de duplicata não
  * para de funcionar em silêncio.
  */
-const GESTOR_CRIA_ATENDENTES = 'Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)';
+const GESTOR_CRIA_ATENDENTES = 'Convidar os atendentes da Loja (2 por Loja; mais com o ConvoFlow)';
 
 export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
   atendente: {
@@ -67,38 +67,38 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
       'Criar usuários',
       'Disparar campanhas',
       'Mexer no orçamento das campanhas',
-      'Configurar o WhatsApp da loja',
+      'Configurar o WhatsApp da Loja',
       'Ver faturamento',
     ],
   },
 
   gestor: {
     label: 'Gestor',
-    summary: 'Administra uma loja e a equipe de atendimento dela.',
+    summary: 'Administra uma Loja e a equipe de atendimento dela.',
     can: [
       'Tudo que o atendente faz',
       GESTOR_CRIA_ATENDENTES,
       'Disparar campanhas',
       'Definir o orçamento das campanhas',
-      'Configurar o WhatsApp da loja',
+      'Configurar o WhatsApp da Loja',
     ],
     cannot: [
       'Ver faturamento',
-      'Alternar entre lojas',
-      'Comparar lojas',
+      'Alternar entre Lojas',
+      'Comparar Lojas',
       'Criar outros gestores',
     ],
   },
 
   gerente: {
     label: 'Gerente',
-    summary: 'Responsável pela Conta e por todas as lojas dela.',
+    summary: 'Responsável pela Conta e por todas as Lojas dela.',
     can: [
       'Tudo que o gestor faz',
       'Criar gestores e atendentes',
       'Ver faturamento',
-      'Alternar entre lojas',
-      'Comparar o desempenho entre lojas',
+      'Alternar entre Lojas',
+      'Comparar o desempenho entre Lojas',
     ],
     cannot: ['Acessar o painel administrativo da plataforma'],
   },
@@ -106,7 +106,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
   superadmin: {
     label: 'Superadmin',
     summary:
-      'Administrador da plataforma ConvoFlow. Não abre as telas de loja (Conversas, Campanhas, Contatos e afins): esse acesso é de quem trabalha na loja.',
+      'Administrador da plataforma ConvoFlow. Não abre as telas de Loja (Conversas, Campanhas, Contatos e afins): esse acesso é de quem trabalha na Loja.',
     can: [
       'Acesso total à plataforma',
       'Painel administrativo',

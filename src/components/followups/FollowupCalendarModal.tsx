@@ -119,7 +119,7 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
   };
 
   const getFollowupTitle = (followup: IndividualFollowup) => {
-    return followup.task || `Follow-up ${followup.type}`;
+    return followup.task || `Follow up ${followup.type}`;
   };
 
   return (
@@ -128,7 +128,7 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
           conta); a partir de sm volta a ser o diálogo largo de sempre. */}
       <DialogContent className="max-w-6xl h-[100dvh] max-h-none rounded-none sm:h-auto sm:max-h-[80vh] sm:rounded-lg overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Calendário de Follow-ups</DialogTitle>
+          <DialogTitle>Calendário de Follow ups</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
@@ -172,7 +172,7 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
                   {loading ? (
                     <div className="flex items-center justify-center py-12">
                       <Loader2 className="w-8 h-8 animate-spin" />
-                      <span className="ml-2">Carregando follow-ups...</span>
+                      <span className="ml-2">Carregando follow ups...</span>
                     </div>
                   ) : (
                     // Sete colunas não cabem em 342px; abaixo disso a grade rola
@@ -287,7 +287,7 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <CalendarIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>Nenhum follow-up agendado</p>
+                      <p>Nenhum follow up agendado</p>
                       {selectedDate && (
                         <p className="text-xs mt-1">
                           para {new Date(selectedDate).toLocaleDateString('pt-BR')}

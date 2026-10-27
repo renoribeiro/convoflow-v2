@@ -103,9 +103,9 @@ describe('abas que todo cargo mantém', () => {
       for (const nome of [/perfil/i, /atendimento/i, /segurança/i]) {
         expect(screen.queryByRole('tab', { name: nome })).not.toBeNull();
       }
-      // Integrações exige store.admin (achado 119): o atendente não vê.
-      if (papel === 'atendente') expect(screen.queryByRole('tab', { name: /integrações/i })).toBeNull();
-      else expect(screen.queryByRole('tab', { name: /integrações/i })).not.toBeNull();
+      // Avisos para sistemas exige store.admin (achado 119): o atendente não vê.
+      if (papel === 'atendente') expect(screen.queryByRole('tab', { name: /avisos para sistemas/i })).toBeNull();
+      else expect(screen.queryByRole('tab', { name: /avisos para sistemas/i })).not.toBeNull();
       // A aba saiu em 2026-10-25: a preferência não era lida por nada (achado 113).
       expect(screen.queryByRole('tab', { name: /notificações/i })).toBeNull();
     },

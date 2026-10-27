@@ -21,7 +21,7 @@ const TYPE_META: Record<
   { icon: typeof MessageCircle; tint: string; label: string }
 > = {
   no_reply: { icon: MessageCircle, tint: 'text-status-error', label: 'Sem resposta' },
-  overdue_followup: { icon: CalendarClock, tint: 'text-status-warning', label: 'Follow-up atrasado' },
+  overdue_followup: { icon: CalendarClock, tint: 'text-status-warning', label: 'Follow up atrasado' },
   stalled_contact: { icon: UserX, tint: 'text-status-info', label: 'Parado no funil' },
 };
 
@@ -59,7 +59,7 @@ export const AttentionPanel = () => {
             <CheckCircle2 className="h-10 w-10 text-status-success" />
             <p className="text-sm font-medium text-foreground">Tudo em dia!</p>
             <p className="text-xs text-muted-foreground">
-              Nenhuma conversa, follow-up ou contato precisa de atenção agora.
+              Nenhuma conversa, follow up ou contato precisa de atenção agora.
             </p>
           </div>
         ) : (

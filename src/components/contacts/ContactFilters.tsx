@@ -100,16 +100,16 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
         </div>
 
         <div>
-          <Label>Estágio do Funil</Label>
+          <Label>Etapa do funil</Label>
           {stagesLoading ? (
             <Skeleton className="h-10 w-full" />
           ) : (
             <Select value={filters.stage || 'all'} onValueChange={(value) => updateFilters('stage', value === 'all' ? '' : value)}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os estágios" />
+                  <SelectValue placeholder="Todas as etapas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os estágios</SelectItem>
+                  <SelectItem value="all">Todas as etapas</SelectItem>
                   {stages.map((stage) => (
                     <SelectItem key={stage.id} value={stage.id}>
                       {stage.name}
@@ -121,7 +121,7 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
         </div>
 
         <div>
-          <Label>Fonte do Lead</Label>
+          <Label>Fonte do contato</Label>
           {sourcesLoading ? (
             <Skeleton className="h-10 w-full" />
           ) : (

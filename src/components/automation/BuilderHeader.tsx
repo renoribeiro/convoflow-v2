@@ -41,7 +41,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
       <div className="mb-2 flex items-center gap-1 text-xs text-muted-foreground">
         <span>Automação</span>
         <ChevronRight className="h-3 w-3" />
-        <span className="font-medium text-foreground">{name || 'Novo fluxo'}</span>
+        <span className="font-medium text-foreground">{name || 'Nova automação'}</span>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -52,7 +52,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
             <Input
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Nome do fluxo *"
+              placeholder="Nome da automação *"
               className={cn(
                 'border-transparent bg-transparent pl-8 font-medium hover:border-input focus:border-input',
                 nameInvalid && 'border-destructive focus-visible:ring-destructive',
@@ -79,7 +79,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
         <div className="flex items-center gap-3">
           {stat && stat.executions > 0 && (
             <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
-              <span className="inline-flex items-center gap-1"><Activity className="h-3.5 w-3.5" /> {stat.executions} exec.</span>
+              <span className="inline-flex items-center gap-1"><Activity className="h-3.5 w-3.5" /> {stat.executions} execuções</span>
               <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" /> {stat.successRate}%</span>
             </div>
           )}

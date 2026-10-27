@@ -168,7 +168,7 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
 
   const columns: ResponsiveColumn<UserRow>[] = [
     { key: 'nome', header: 'Nome', card: 'title', cell: nomeDe },
-    { key: 'funcao', header: 'Função', card: 'badge', cell: (u) => <RoleBadge role={u.role} /> },
+    { key: 'funcao', header: 'Cargo', card: 'badge', cell: (u) => <RoleBadge role={u.role} /> },
     { key: 'status', header: 'Status', card: 'badge', cell: (u) => <UserStatusBadge status={u.status} /> },
     ...(activity ? colunasSuperadmin : colunasEquipe),
   ];

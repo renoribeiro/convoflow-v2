@@ -53,7 +53,7 @@ export const useMetaApi = (): UseMetaApiReturn => {
 
       if (insertError || !inserted) {
         logger.error('Erro ao inserir instância Meta', { error: insertError });
-        throw new Error(insertError?.message || 'Falha ao salvar instância');
+        throw new Error('Não foi possível salvar o número. Tente de novo em instantes.');
       }
 
       const setupResult = await callMetaSetup({
@@ -74,13 +74,13 @@ export const useMetaApi = (): UseMetaApiReturn => {
       toast({
         title: 'Sucesso',
         description: setupResult.phoneNumberDisplay
-          ? `Instância Meta conectada (${setupResult.phoneNumberDisplay}).`
-          : 'Instância Meta conectada com sucesso.',
+          ? `Número da API Oficial conectado (${setupResult.phoneNumberDisplay}).`
+          : 'Número da API Oficial conectado.',
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       logger.error('useMetaApi.createInstance falhou', { message });
-      toast({ title: 'Erro', description: message, variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: message, variant: 'destructive' });
       throw err;
     } finally {
       setLoading(false);

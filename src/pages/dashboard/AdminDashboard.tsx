@@ -257,7 +257,7 @@ const AdminDashboard = () => {
   // Mostrar erro se houver problema na query de usuários
   React.useEffect(() => {
     if (usersError) {
-      toast.error('Erro ao carregar usuários: ' + usersError.message);
+      toast.error('Não foi possível carregar os usuários. ' + usersError.message);
     }
   }, [usersError]);
 
@@ -274,7 +274,7 @@ const AdminDashboard = () => {
       refetchUsers();
     },
     onError: (error) => {
-      toast.error('Erro ao atualizar usuário: ' + error.message);
+      toast.error('Não foi possível atualizar o usuário. ' + error.message);
     }
   });
 
@@ -325,7 +325,7 @@ const AdminDashboard = () => {
     // O convite é um e-mail de verdade: endereço sem domínio válido só falha lá
     // no Auth, com uma mensagem que não ajuda ninguém.
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(userForm.email)) {
-      toast.error('E-mail inválido. Use um endereço completo, como nome@empresa.com.br');
+      toast.error('Email inválido. Use um endereço completo, como nome@empresa.com.br');
       return;
     }
 
@@ -368,7 +368,7 @@ const AdminDashboard = () => {
         toast.warning('Usuário criado, mas: ' + data.warning);
       } else {
         // O manage-user manda um CONVITE (inviteUserByEmail), não um e-mail de nova senha.
-        toast.success('Usuário criado. Enviamos um convite por e-mail para a pessoa criar a senha.');
+        toast.success('Usuário criado. Enviamos um convite por email para a pessoa criar a senha.');
       }
 
       setIsCreateUserOpen(false);
@@ -376,7 +376,7 @@ const AdminDashboard = () => {
       refetchUsers();
     } catch (error: any) {
       logger.error('Erro ao criar usuário', { error: error?.message ?? 'Erro desconhecido' });
-      toast.error('Erro ao criar usuário: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Não foi possível criar o usuário. ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsLoading(false);
     }
@@ -446,7 +446,7 @@ const AdminDashboard = () => {
       refetchTenants();
       refetchUsers();
     } catch (error: any) {
-      toast.error('Erro ao alterar acesso: ' + error.message);
+      toast.error('Não foi possível alterar o acesso. ' + error.message);
       throw error;
     }
   };
@@ -483,7 +483,7 @@ const AdminDashboard = () => {
       refetchUsers();
     } catch (error: any) {
       logger.error('Erro ao excluir usuário', { error: error?.message ?? 'Erro desconhecido' });
-      toast.error('Erro ao excluir usuário: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Não foi possível excluir o usuário. ' + (error.message || 'Erro desconhecido'));
     } finally {
       setIsLoading(false);
     }
@@ -582,7 +582,7 @@ const AdminDashboard = () => {
       ),
       cardCell: (user) => <>{user.first_name} {user.last_name}</>,
     },
-    { key: 'email', header: 'E-mail', card: 'subtitle', hideBelow: '2xl', cell: (user) => <span className="break-all">{user.email}</span> },
+    { key: 'email', header: 'Email', card: 'subtitle', hideBelow: '2xl', cell: (user) => <span className="break-all">{user.email}</span> },
     {
       key: 'funcao',
       header: 'Função',
@@ -969,7 +969,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="create-email">E-mail</Label>
+              <Label htmlFor="create-email">Email</Label>
               <Input
                 id="create-email"
                 type="email"
@@ -1033,7 +1033,7 @@ const AdminDashboard = () => {
                   placeholder="Ex.: Silva Comércio"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Uma Conta nova é criada para este gerente. As lojas dele são cadastradas depois.
+                  Uma Conta nova é criada para este gerente. As Lojas dele são cadastradas depois.
                 </p>
               </div>
             )}
@@ -1059,8 +1059,8 @@ const AdminDashboard = () => {
                 </Select>
                 <p className="text-xs text-muted-foreground mt-1">
                   {userForm.role === 'gestor'
-                    ? 'Cada loja tem no máximo 1 gestor.'
-                    : 'Cada loja tem 2 atendentes (ativos e convites pendentes); mais vagas em Faturamento › Contas › Atendentes.'}
+                    ? 'Cada Loja tem no máximo 1 gestor.'
+                    : 'Cada Loja tem 2 atendentes (ativos e convites pendentes); mais vagas em Faturamento › Contas › Atendentes.'}
                 </p>
               </div>
             )}
@@ -1119,7 +1119,7 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-email">E-mail</Label>
+              <Label htmlFor="edit-email">Email</Label>
               {/* O email é o login e não é gravado por esta tela (handleEditUser
                   não o envia): deixar editável fazia a mudança sumir sem aviso
                   (achado 131 do checkup). */}
@@ -1296,7 +1296,7 @@ const AdminDashboard = () => {
                   <p className="text-sm text-muted-foreground">{selectedUser.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">E-mail</Label>
+                  <Label className="text-sm font-medium">Email</Label>
                   <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
                 </div>
                 <div>

@@ -78,7 +78,7 @@ function categorizeSupabaseError(error: SupabaseError): {
     return {
       category: 'permission',
       isRetryable: false,
-      userMessage: 'Você não tem permissão para acessar estes dados.'
+      userMessage: 'Você não tem permissão para ver isto. Peça ao Gestor da Loja.'
     };
   }
 
@@ -87,7 +87,7 @@ function categorizeSupabaseError(error: SupabaseError): {
     return {
       category: 'validation',
       isRetryable: false,
-      userMessage: 'Dados inválidos fornecidos.'
+      userMessage: 'O pedido saiu num formato que não vale. Recarregue a página.'
     };
   }
 
@@ -96,14 +96,14 @@ function categorizeSupabaseError(error: SupabaseError): {
     return {
       category: 'server',
       isRetryable: true,
-      userMessage: 'Erro interno do servidor. Tentando novamente...'
+      userMessage: 'O servidor falhou. Tentando de novo...'
     };
   }
 
   return {
     category: 'unknown',
     isRetryable: true,
-    userMessage: 'Erro inesperado. Tentando novamente...'
+    userMessage: 'Algo deu errado. Tentando de novo...'
   };
 }
 
@@ -275,7 +275,7 @@ export function useEnhancedSupabaseQuery(options: UseEnhancedSupabaseQueryOption
         if (showErrorToast) {
           const message = customErrorMessage || errorInfo.userMessage;
           toast({
-            title: 'Erro ao carregar dados',
+            title: 'Não foi possível carregar',
             description: message,
             variant: 'destructive',
           });
@@ -360,7 +360,7 @@ export function useEnhancedSupabaseQuerySingle(
         
         if (options.showErrorToast !== false) {
           toast({
-            title: 'Erro ao buscar registro',
+            title: 'Não foi possível carregar',
             description: errorInfo.userMessage,
             variant: 'destructive',
           });

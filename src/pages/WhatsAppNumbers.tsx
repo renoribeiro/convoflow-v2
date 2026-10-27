@@ -88,9 +88,9 @@ interface WhatsAppInstance {
 }
 
 const PROVIDER_BADGE: Record<ProviderType, { label: string; className: string }> = {
-  official: { label: 'Oficial', className: 'bg-emerald-600 hover:bg-emerald-600 text-white' },
-  waha: { label: 'WAHA', className: 'bg-sky-600 hover:bg-sky-600 text-white' },
-  evolution: { label: 'Evolution', className: 'bg-slate-600 hover:bg-slate-600 text-white' },
+  official: { label: 'API Oficial', className: 'bg-emerald-600 hover:bg-emerald-600 text-white' },
+  waha: { label: 'QR Code', className: 'bg-sky-600 hover:bg-sky-600 text-white' },
+  evolution: { label: 'QR Code', className: 'bg-slate-600 hover:bg-slate-600 text-white' },
   // Instância de Instagram (fatia 2) é criada por procedimento manual, sem tela
   // própria. Sem esta entrada o mapa devolve undefined e a página inteira cai.
   instagram: { label: 'Instagram', className: 'bg-fuchsia-600 hover:bg-fuchsia-600 text-white' },
@@ -312,10 +312,10 @@ export default function WhatsAppNumbers() {
     // Pelo servidor, com a chave do cofre. Ele mesmo grava o estado novo.
     const r = await instanceAction(instance.id, 'disconnect');
     if (r.ok) {
-      toast({ title: "Sucesso", description: "Instância desconectada com sucesso" });
+      toast({ title: 'Número desconectado', description: 'Para voltar a receber mensagens, conecte de novo pelo QR Code.' });
       refetch();
     } else {
-      toast({ title: "Erro", description: r.error || 'Erro ao desconectar instância', variant: "destructive" });
+      toast({ title: 'Não foi possível desconectar', description: r.error || 'Tente de novo em instantes.', variant: 'destructive' });
     }
   };
 
@@ -340,10 +340,10 @@ export default function WhatsAppNumbers() {
       // O servidor pergunta ao Evolution/WAHA com a chave do cofre e grava.
       const r = await instanceAction(instance.id, 'status');
       if (r.ok) {
-        toast({ title: "Sucesso", description: "Status atualizado com sucesso" });
+        toast({ title: 'Estado atualizado' });
         refetch();
       } else {
-        toast({ title: "Erro", description: r.error || 'Erro ao atualizar status', variant: "destructive" });
+        toast({ title: 'Não foi possível atualizar o estado', description: r.error || 'Tente de novo em instantes.', variant: 'destructive' });
       }
     } finally {
       setRefreshingInstance(null);
@@ -374,7 +374,7 @@ export default function WhatsAppNumbers() {
 
       if (error) {
         logger.error('register-meta-number invoke error', { instanceId: instance.id, error });
-        toast({ title: 'Erro', description: 'Falha ao chamar o serviço de registro.', variant: 'destructive' });
+        toast({ title: 'Não deu certo', description: 'Não foi possível falar com o servidor. Tente de novo em instantes.', variant: 'destructive' });
         return;
       }
 
@@ -385,11 +385,11 @@ export default function WhatsAppNumbers() {
       }
 
       if (!data?.success) {
-        toast({ title: 'Erro ao registrar', description: data?.error ?? 'Erro desconhecido.', variant: 'destructive' });
+        toast({ title: 'Não foi possível registrar o número', description: data?.error ?? 'Tente de novo em instantes.', variant: 'destructive' });
         return;
       }
 
-      toast({ title: 'Número registrado!', description: 'Registro concluído com sucesso.' });
+      toast({ title: 'Número registrado', description: 'Ele já pode enviar e receber mensagens pela API Oficial.' });
       if (data.pin) setPinGerado({ nome: instance.name, pin: String(data.pin) });
 
       if (data.warning) {
@@ -400,7 +400,7 @@ export default function WhatsAppNumbers() {
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       logger.error('register-meta-number falhou', { instanceId: instance.id, message });
-      toast({ title: 'Erro', description: message, variant: 'destructive' });
+      toast({ title: 'Não foi possível registrar o número', description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.', variant: 'destructive' });
     }
   };
 
@@ -448,12 +448,12 @@ export default function WhatsAppNumbers() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Instâncias e APIs"
+          title="Números de WhatsApp"
           helpKey="page:whatsapp-numbers"
-          description="Gerencie suas instâncias e integrações de WhatsApp"
+          description="Conecte e acompanhe os números de WhatsApp da Loja"
           breadcrumbs={[
             { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Instâncias e APIs' }
+            { label: 'Números de WhatsApp' }
           ]}
         />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -472,12 +472,12 @@ export default function WhatsAppNumbers() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Instâncias e APIs"
+          title="Números de WhatsApp"
           helpKey="page:whatsapp-numbers"
-          description="Gerencie suas instâncias e integrações de WhatsApp"
+          description="Conecte e acompanhe os números de WhatsApp da Loja"
           breadcrumbs={[
             { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Instâncias e APIs' }
+            { label: 'Números de WhatsApp' }
           ]}
         />
         <Card>
@@ -485,7 +485,7 @@ export default function WhatsAppNumbers() {
             <EmptyState
               icon={<Smartphone className="h-6 w-6" />}
               title="Nenhuma Conta selecionada"
-              description="Instâncias de WhatsApp são gerenciadas por Conta. Como superadmin, você não possui instâncias próprias. Acesse a administração para gerenciar as Contas."
+              description="Os números de WhatsApp são de cada Conta. Como superadmin, você não tem números próprios. Abra a Administração para cuidar das Contas."
             />
           </CardContent>
         </Card>
@@ -497,12 +497,12 @@ export default function WhatsAppNumbers() {
     return (
       <div className="space-y-6">
         <PageHeader
-          title="Instâncias e APIs"
+          title="Números de WhatsApp"
           helpKey="page:whatsapp-numbers"
-          description="Gerencie suas instâncias e integrações de WhatsApp"
+          description="Conecte e acompanhe os números de WhatsApp da Loja"
           breadcrumbs={[
             { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Instâncias e APIs' }
+            { label: 'Números de WhatsApp' }
           ]}
         />
         <Card>
@@ -520,16 +520,16 @@ export default function WhatsAppNumbers() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Instâncias e APIs"
+        title="Números de WhatsApp"
         helpKey="page:whatsapp-numbers"
         description={
           sections.instagram.length > 0
-            ? 'Gerencie suas instâncias de WhatsApp e as contas do Instagram da Loja'
-            : 'Gerencie suas instâncias e integrações de WhatsApp'
+            ? 'Conecte e acompanhe os números de WhatsApp e as contas do Instagram da Loja'
+            : 'Conecte e acompanhe os números de WhatsApp da Loja'
         }
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Instâncias e APIs' }
+          { label: 'Números de WhatsApp' }
         ]}
         actions={
           <div className="flex flex-wrap gap-2">
@@ -538,8 +538,8 @@ export default function WhatsAppNumbers() {
               onClick={() => {
                 refetch();
                 toast({
-                  title: "Cache atualizado",
-                  description: "Os dados foram recarregados do servidor"
+                  title: 'Lista atualizada',
+                  description: 'Os números foram lidos de novo.'
                 });
               }}
             >
@@ -552,7 +552,7 @@ export default function WhatsAppNumbers() {
             {canConfigure && (
               <Button onClick={() => setShowCreateModal(true)} data-tour="whatsapp-nova-instancia">
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Instância
+                Conectar número
               </Button>
             )}
           </div>
@@ -563,7 +563,7 @@ export default function WhatsAppNumbers() {
         <TabsList className="flex h-auto w-full flex-wrap justify-start md:grid md:grid-cols-2">
           <TabsTrigger value="instances" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
-            Instâncias
+            Números
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
@@ -618,7 +618,7 @@ export default function WhatsAppNumbers() {
           {/* Lista de Instâncias */}
           <Card>
         <CardHeader>
-          <CardTitle>Instâncias WhatsApp</CardTitle>
+          <CardTitle>Números de WhatsApp</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -630,13 +630,13 @@ export default function WhatsAppNumbers() {
           ) : instances.length === 0 ? (
             <div className="text-center py-8">
               <Smartphone className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Nenhuma instância cadastrada</h3>
+              <h3 className="text-lg font-medium mb-2">Nenhum número conectado ainda</h3>
               <p className="text-muted-foreground mb-4">
-                Crie sua primeira instância de WhatsApp para começar a usar a plataforma
+                Conecte o número de WhatsApp da Loja para receber e responder as mensagens aqui.
               </p>
               <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Criar Primeira Instância
+                Conectar o primeiro número
               </Button>
             </div>
           ) : (
@@ -645,7 +645,7 @@ export default function WhatsAppNumbers() {
             // vez de empurrar a página para o lado.
             sections.whatsapp.length === 0 ? (
               <p className="text-sm text-muted-foreground" data-testid="no-whatsapp-instances">
-                Nenhuma instância de WhatsApp cadastrada.
+                Nenhum número de WhatsApp conectado.
               </p>
             ) : (
             <div className="space-y-4">
@@ -666,14 +666,11 @@ export default function WhatsAppNumbers() {
                         >
                           {PROVIDER_BADGE[instance.provider || 'evolution'].label}
                         </Badge>
-                        <Badge variant={instance.is_active ? 'default' : 'secondary'}>
-                          {instance.is_active ? 'Ativo' : 'Inativo'}
-                        </Badge>
+                        {!instance.is_active && <Badge variant="secondary">Desligado</Badge>}
                       </div>
                       
                       <div className="text-sm text-muted-foreground space-y-1">
-                        <p>Chave: {instance.instance_key}</p>
-                        {instance.phone_number && (
+                                                {instance.phone_number && (
                           <p>Número: {instance.phone_number}</p>
                         )}
                         {instance.profile_name && (
@@ -713,8 +710,8 @@ export default function WhatsAppNumbers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleShowQR(instance)}
-                            title="Conectar via QR Code"
-                            aria-label="Conectar via QR Code"
+                            title="Conectar pelo QR Code"
+                            aria-label="Conectar pelo QR Code"
                           >
                             <QrCode className="h-4 w-4" />
                           </Button>
@@ -765,7 +762,7 @@ export default function WhatsAppNumbers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => verifyMetaConnection(instance.id)}
-                            title="Testar conexão Meta"
+                            title="Testar a conexão com a Meta"
                           >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
@@ -774,7 +771,7 @@ export default function WhatsAppNumbers() {
                             size="icon"
                             onClick={() => handleRegisterNumber(instance)}
                             disabled={registeringInstance === instance.id}
-                            title="Registrar número na Cloud API"
+                            title="Registrar o número na API Oficial"
                           >
                             {registeringInstance === instance.id
                               ? <Loader2 className="h-4 w-4 animate-spin" />
@@ -788,7 +785,7 @@ export default function WhatsAppNumbers() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleRename(instance)}
-                          title="Renomear instância"
+                          title="Renomear número"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -803,7 +800,7 @@ export default function WhatsAppNumbers() {
                           size="icon"
                           onClick={() => handleDelete(instance)}
                           className="text-red-600 hover:text-red-700"
-                          title="Excluir instância"
+                          title="Excluir número"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1048,10 +1045,10 @@ export default function WhatsAppNumbers() {
       <Dialog open={!!pinDialogInstance} onOpenChange={(open) => { if (!open) { setPinDialogInstance(null); setPinValue(''); } }}>
         <DialogContent className="sm:max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>PIN necessário</DialogTitle>
+            <DialogTitle>Informe o PIN do número</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Este número já possui um PIN de verificação em duas etapas configurado. Informe o PIN de 6 dígitos para prosseguir com o registro.
+            Este número já tem um PIN de confirmação em duas etapas no WhatsApp. Digite os 6 números do PIN para registrar.
           </p>
           <div className="space-y-2">
             <Label htmlFor="register-pin">PIN (6 dígitos)</Label>
@@ -1071,7 +1068,7 @@ export default function WhatsAppNumbers() {
             </Button>
             <Button onClick={handlePinSubmit} disabled={pinValue.length !== 6 || pinSubmitting}>
               {pinSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirmar
+              Registrar número
             </Button>
           </DialogFooter>
         </DialogContent>

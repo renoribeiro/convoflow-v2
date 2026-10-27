@@ -109,7 +109,7 @@ describe('sem número na API Oficial', () => {
     renderTela();
 
     expect(screen.getByText('Nenhum número na API Oficial da Meta')).toBeInTheDocument();
-    expect(screen.getByText(/Instâncias e APIs/)).toBeInTheDocument();
+    expect(screen.getByText(/Números de WhatsApp/)).toBeInTheDocument();
     expect(screen.getByText(/QR Code/)).toBeInTheDocument();
   });
 
@@ -117,7 +117,7 @@ describe('sem número na API Oficial', () => {
     podeConfigurar = false;
     renderTela();
     expect(screen.getByText(/peça ao Gestor da sua Loja/)).toBeInTheDocument();
-    expect(screen.queryByText(/em Instâncias e APIs/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/em Números de WhatsApp/)).not.toBeInTheDocument();
   });
 
   it('não oferece busca nem Atualizar quando não há o que buscar', () => {
@@ -134,7 +134,7 @@ describe('número oficial sem WABA ID', () => {
     estadoWabas = { groups: [], officialCount: 2, isLoading: false, error: null };
     renderTela();
 
-    expect(screen.getByText('Falta o WABA ID na conexão')).toBeInTheDocument();
+    expect(screen.getByText('Falta o código da conta do WhatsApp Business')).toBeInTheDocument();
     expect(
       screen.queryByText('Nenhum número na API Oficial da Meta'),
     ).not.toBeInTheDocument();

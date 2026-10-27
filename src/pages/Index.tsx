@@ -58,7 +58,7 @@ const Index = () => {
     },
     {
       title: 'Taxa de Conversão',
-      value: `${kpis.conversionRate.value.toFixed(1)}%`,
+      value: `${kpis.conversionRate.value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`,
       icon: <TrendingUp />,
       metric: kpis.conversionRate,
       href: '/dashboard/funnel',

@@ -61,7 +61,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ classNam
       .update({ is_read: true })
       .eq('id', notificationId);
     if (error) {
-      toast({ title: 'Erro', description: 'Não foi possível marcar como lida.', variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: 'Não foi possível marcar como lida.', variant: 'destructive' });
       return;
     }
     invalidate();
@@ -73,7 +73,7 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ classNam
       .update({ is_read: true })
       .eq('is_read', false);
     if (error) {
-      toast({ title: 'Erro', description: 'Não foi possível marcar todas como lidas.', variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: 'Não foi possível marcar todas como lidas.', variant: 'destructive' });
       return;
     }
     invalidate();

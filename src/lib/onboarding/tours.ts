@@ -138,7 +138,7 @@ export const TOURS: Tour[] = [
     steps: [
       {
         target: 'whatsapp-nova-instancia',
-        title: 'Clique em Nova Instância',
+        title: 'Clique em Conectar número',
         body: 'Escolha API Oficial do WhatsApp e clique em Continuar. Depois clique em Conectar com a Meta e siga a janela da Meta até o fim.',
       },
     ],
@@ -164,7 +164,7 @@ export const TOURS: Tour[] = [
     steps: [
       {
         target: 'funil-configurar-estagios',
-        title: 'Clique em Configurar Estágios',
+        title: 'Clique em Configurar etapas',
         body: 'Crie as etapas do seu processo de venda, na ordem em que acontecem. Quatro a seis etapas costumam bastar.',
       },
     ],

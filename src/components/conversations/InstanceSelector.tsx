@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { providerLabel, type ProviderType } from '@/services/whatsapp';
+import { estadoDoNumeroTexto } from '@/lib/whatsapp/connectionSections';
 
 /** Valor da opção "todas". Quem usa o seletor traduz para `null` (sem filtro). */
 export const ALL_INSTANCES_VALUE = '__all__';
@@ -49,12 +50,12 @@ export function InstanceSelector({
   instances,
   selectedId,
   onChange,
-  allLabel = 'Todas as instâncias',
+  allLabel = 'Todos os números',
 }: InstanceSelectorProps) {
   if (!instances.length) {
     return (
       <div className="text-xs text-muted-foreground border border-dashed border-border rounded-md px-3 py-2">
-        Nenhuma instância de WhatsApp cadastrada.
+        Nenhum número de WhatsApp conectado.
       </div>
     );
   }
@@ -67,7 +68,7 @@ export function InstanceSelector({
   return (
     <div className="flex items-center gap-2 w-full min-w-0">
       <Select value={current ? current.row.id : ALL_INSTANCES_VALUE} onValueChange={onChange}>
-        <SelectTrigger className="h-auto py-1.5 flex-1 min-w-0 text-xs" aria-label="Filtrar por instância">
+        <SelectTrigger className="h-auto py-1.5 flex-1 min-w-0 text-xs" aria-label="Filtrar por número">
           <SelectValue asChild>
             {current ? (
               <div className="flex items-center gap-2 min-w-0 flex-1 text-left">
@@ -82,7 +83,7 @@ export function InstanceSelector({
                 <div className="flex flex-col min-w-0 flex-1 leading-tight">
                   <span className="truncate font-medium text-xs">{current.row.name}</span>
                   <span className="truncate text-muted-foreground text-[10px]">
-                    {providerLabel((current.row.provider as ProviderType | null) ?? 'evolution')}
+                    {estadoDoNumeroTexto(current.row.status)}
                   </span>
                 </div>
               </div>

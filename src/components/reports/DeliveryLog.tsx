@@ -22,7 +22,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const PERIOD_LABELS: Record<string, string> = {
-  today: 'Hoje',
+  today: 'Últimas 24 horas',
   '1day': 'Último dia',
   '7days': 'Últimos 7 dias',
   '14days': 'Últimos 14 dias',
@@ -140,7 +140,7 @@ export const DeliveryLog = () => {
       }
       if (data && data.success === false) throw new Error(data?.error?.message || 'Falha ao reenviar');
       const delivered: Array<{ channel: string }> = data?.delivered ?? [];
-      const channels = delivered.map((d) => (d.channel === 'email' ? 'e-mail' : 'WhatsApp'));
+      const channels = delivered.map((d) => (d.channel === 'email' ? 'email' : 'WhatsApp'));
       toast({
         title: 'Relatório reenviado',
         description: channels.length ? `Enviado por ${channels.join(' e ')}.` : 'Reenviado.',
@@ -148,8 +148,8 @@ export const DeliveryLog = () => {
       queryClient.invalidateQueries({ queryKey: ['report-executions'] });
     } catch (e) {
       toast({
-        title: 'Erro ao reenviar',
-        description: e instanceof Error ? e.message : 'Tente novamente.',
+        title: 'Não foi possível reenviar',
+        description: e instanceof Error ? e.message : 'Tente de novo em instantes.',
         variant: 'destructive',
       });
     } finally {
@@ -158,7 +158,8 @@ export const DeliveryLog = () => {
   };
 
   const filteredExecutions = executions.filter(execution => {
-    const reportName = execution.report_templates?.name || 'Relatório sem nome';
+    // O mesmo nome que a linha mostra, senão a busca não acha o que está na tela (achado 74).
+    const reportName = (execution as any).parameters?.name || execution.report_templates?.name || 'Relatório sem nome';
     const matchesSearch = reportName.toLowerCase().includes(searchTerm.toLowerCase());
     const mappedStatus = mapExecutionStatus(execution.status);
     const matchesStatus = statusFilter === 'all' || mappedStatus === statusFilter;
@@ -176,8 +177,8 @@ export const DeliveryLog = () => {
   // Mostrar erro se houver
   if (error) {
     toast({
-      title: 'Erro ao carregar execuções',
-      description: 'Não foi possível carregar o histórico de execuções de relatórios.',
+      title: 'Não foi possível carregar as entregas',
+      description: 'Recarregue a página. Se continuar, fale com o suporte do ConvoFlow.',
       variant: 'destructive',
     });
   }
@@ -189,7 +190,7 @@ export const DeliveryLog = () => {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Erro ao carregar execuções de relatórios. Tente novamente mais tarde.
+            Não foi possível carregar as entregas. Recarregue a página. Se continuar, fale com o suporte do ConvoFlow.
           </AlertDescription>
         </Alert>
       )}

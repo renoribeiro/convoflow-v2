@@ -97,7 +97,7 @@ describe('UsersPage (superadmin)', () => {
     estado.atividade = { data: undefined, isLoading: false, isError: true };
     render(<UsersPage />);
     expect(screen.getByRole('alert')).toHaveTextContent('Não foi possível carregar a atividade');
-    expect(cabecalhos()).toEqual(['Nome', 'Função', 'Status', 'Loja', 'Último acesso', 'Acessos', 'Ações']);
+    expect(cabecalhos()).toEqual(['Nome', 'Cargo', 'Status', 'Loja', 'Último acesso', 'Acessos', 'Ações']);
     expect(celula('Último acesso').textContent).not.toBe('Nunca');
     expect(celula('Acessos').textContent).toBe('20');
   });

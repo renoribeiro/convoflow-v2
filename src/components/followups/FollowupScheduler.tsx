@@ -33,7 +33,7 @@ interface FollowupSchedulerProps {
 
 const followupTypes = [
   { id: 'call', name: 'Ligação', icon: Phone, description: 'Fazer uma ligação telefônica' },
-  { id: 'email', name: 'E-mail', icon: Mail, description: 'Enviar um e-mail' },
+  { id: 'email', name: 'Email', icon: Mail, description: 'Enviar um email' },
   { id: 'whatsapp', name: 'WhatsApp', icon: MessageSquare, description: 'Enviar mensagem no WhatsApp' },
 ];
 
@@ -45,8 +45,8 @@ const modeOptions: { id: FollowupMode; name: string; icon: typeof Hand; descript
 
 const taskTemplates = [
   'Ligar para apresentar nova proposta',
-  'Enviar material complementar por e-mail',
-  'Follow-up sobre proposta enviada',
+  'Enviar material complementar por email',
+  'Follow up sobre proposta enviada',
   'Verificar interesse no produto/serviço',
   'Agendar reunião de apresentação',
   'Solicitar feedback sobre atendimento',
@@ -142,7 +142,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
 
     if (mode === 'manual') {
       if (!formData.task.trim()) e.task = 'Descrição da tarefa é obrigatória';
-      if (!formData.type) e.type = 'Selecione o tipo de follow-up';
+      if (!formData.type) e.type = 'Selecione o tipo de follow up';
     }
     if (mode === 'scheduled') {
       if (!formData.messageBody.trim()) e.messageBody = 'Escreva a mensagem a enviar';
@@ -219,11 +219,11 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
 
       const result = await createFollowup(payload as never);
       if (result) {
-        toast.success(mode === 'scheduled' ? 'Envio agendado!' : 'Follow-up criado!');
+        toast.success(mode === 'scheduled' ? 'Envio agendado!' : 'Follow up criado!');
         onClose();
       }
     } catch (error) {
-      toast.error('Erro ao salvar follow-up. Tente novamente.');
+      toast.error('Não foi possível salvar o follow up. Tente de novo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -385,13 +385,13 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Follow-up</DialogTitle>
+          <DialogTitle>Novo Follow up</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Seletor de MODO */}
           <div>
-            <Label>Como este follow-up vai funcionar?</Label>
+            <Label>Como este follow up vai funcionar?</Label>
             <div className="grid grid-cols-3 gap-3 mt-2">
               {modeOptions.map((m) => {
                 const Icon = m.icon;
@@ -449,7 +449,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
                 </div>
               ) : sequences.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
-                  Nenhuma sequência criada ainda. Crie uma em Follow-ups → Sequências.
+                  Nenhuma sequência criada ainda. Crie uma em Follow ups → Sequências.
                 </p>
               ) : (
                 <Select
@@ -480,7 +480,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
           {/* MODO MANUAL: tipo da tarefa */}
           {mode === 'manual' && (
             <div>
-              <Label>Tipo de Follow-up</Label>
+              <Label>Tipo de Follow up</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
                 {followupTypes.map((type) => {
                   const Icon = type.icon;
@@ -594,7 +594,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
                 id="notes"
                 value={formData.notes}
                 onChange={(e) => setFormData((p) => ({ ...p, notes: e.target.value }))}
-                placeholder="Informações extras sobre este follow-up..."
+                placeholder="Informações extras sobre este follow up..."
               />
             </div>
           )}
@@ -613,7 +613,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
               ) : mode === 'scheduled' ? (
                 'Agendar envio'
               ) : (
-                'Criar follow-up'
+                'Criar follow up'
               )}
             </Button>
           </div>

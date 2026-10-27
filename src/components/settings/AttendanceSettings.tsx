@@ -18,6 +18,7 @@ import {
   validateSlaThresholds,
   type SlaThresholds,
 } from '@/components/conversations/slaLevels';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /**
  * Preferências de ATENDIMENTO da Loja — o primeiro painel de configuração por
@@ -116,8 +117,7 @@ export const AttendanceSettings = () => {
       );
       toast.success('Configurações de atendimento salvas.');
     } catch (error) {
-      const detalhe = error instanceof Error ? error.message : 'tente novamente.';
-      toast.error(`Não foi possível salvar as configurações: ${detalhe}`);
+      toast.error(`Não foi possível salvar. ${motivoDoErro(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -198,14 +198,14 @@ export const AttendanceSettings = () => {
           />
         </div>
 
-        {/* A regra de transferência automática (aba Escala/Transferência) mede
+        {/* A regra de transferência automática (aba Distribuição e transferência) mede
             outra coisa; a frase existe para as duas não parecerem a mesma. */}
         <div className="flex items-start gap-2">
           <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
           <p className="text-xs text-muted-foreground">
             Isto só colore a lista: conta horas corridas desde a última mensagem do cliente e não
             move a conversa. Para transferir automaticamente quem não responde, use
-            &quot;Transferência por tempo sem resposta&quot; na aba Escala/Transferência. Lá a conta
+            &quot;Transferência por tempo sem resposta&quot; na aba Distribuição e transferência. Lá a conta
             é em minutos de funcionamento, desde o início da espera.
           </p>
         </div>

@@ -294,14 +294,13 @@ export function useCreateTrafficSource() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['traffic-sources'] });
       toast({
-        title: 'Sucesso',
-        description: 'Fonte de tráfego criada com sucesso',
+        title: 'Fonte criada',
       });
     },
     onError: (error) => {
       toast({
-        title: 'Erro',
-        description: 'Falha ao criar fonte de tráfego',
+        title: 'Não foi possível criar a fonte',
+        description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     },
@@ -334,8 +333,8 @@ export function useUpdateTrafficSource() {
     },
     onError: () => {
       toast({
-        title: 'Erro',
-        description: 'Falha ao atualizar fonte de tráfego',
+        title: 'Não foi possível salvar a fonte',
+        description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     },
@@ -423,14 +422,13 @@ export function useUpdateConversion() {
       queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
       queryClient.invalidateQueries({ queryKey: ['campaign-performance'] });
       toast({
-        title: 'Sucesso',
-        description: 'Conversão registrada com sucesso',
+        title: 'Conversão registrada',
       });
     },
     onError: (error) => {
       toast({
-        title: 'Erro',
-        description: 'Falha ao registrar conversão',
+        title: 'Não foi possível registrar a conversão',
+        description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     },

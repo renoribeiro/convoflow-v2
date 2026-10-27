@@ -23,12 +23,17 @@ import { FlowConnector } from './FlowConnector';
 import { StepConfigPanel } from './StepConfigPanel';
 import { BuilderHeader } from './BuilderHeader';
 import { EmptyBuilder } from './EmptyBuilder';
+import { logger } from '@/lib/logger';
 import { useAutomationStats } from './useAutomationStats';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   getCatalogEntry,
   UNKNOWN_ENTRY,
   TRIGGERS,
+  CONTACT_FIELD_OPTIONS,
+  OPERATOR_OPTIONS,
+  FOLLOWUP_TYPE_NAMES,
+  DELAY_TYPE_NAMES,
   type CatalogEntry,
   type StepCategory,
 } from './automationCatalog';
@@ -59,7 +64,11 @@ interface AutomationBuilderProps {
 
 const TRIGGER_SEL = '__trigger__';
 
-/** Resumo curto de uma etapa/gatilho para o subtítulo do card. */
+/** Nome em português de uma opção do catálogo (o banco guarda o código). */
+const nomeDaOpcao = (opcoes: readonly { id: string; name: string }[], id: unknown): string =>
+  opcoes.find((o) => o.id === id)?.name ?? (typeof id === 'string' ? id : '');
+
+/** Resumo curto de um passo/gatilho para o subtítulo do card. */
 function summarize(
   entry: CatalogEntry,
   config: Record<string, any>,
@@ -71,19 +80,19 @@ function summarize(
     case 'send_message':
       return config.custom_message?.trim() || (config.quick_reply_id ? `Resposta rápida: ${respostaName(config.quick_reply_id)}` : '');
     case 'add_tag':
-      return config.tag_name ? `Tag: ${config.tag_name}` : '';
+      return config.tag_name ? `Etiqueta: ${config.tag_name}` : '';
     case 'update_contact':
-      return config.value ? `${config.field === 'custom' ? config.custom_key : config.field || 'campo'} = ${config.value}` : '';
+      return config.value ? `${config.field === 'custom' ? config.custom_key : nomeDaOpcao(CONTACT_FIELD_OPTIONS, config.field) || 'campo'} = ${config.value}` : '';
     case 'change_funnel_stage':
       return config.stage_id ? `Para: ${stageName(config.stage_id)}` : '';
     case 'schedule_followup':
-      return config.delay_hours ? `${config.followup_type || 'whatsapp'} em ${config.delay_hours}h` : '';
+      return config.delay_hours ? `${nomeDaOpcao(FOLLOWUP_TYPE_NAMES, config.followup_type || 'whatsapp')} em ${config.delay_hours} h` : '';
     case 'delay':
-      return config.delay_value ? `Aguardar ${config.delay_value} ${config.delay_type || ''}` : '';
+      return config.delay_value ? `Aguardar ${config.delay_value} ${nomeDaOpcao(DELAY_TYPE_NAMES, config.delay_type || 'minutes').toLowerCase()}` : '';
     case 'variable_condition':
-      return config.variable ? `{${config.variable}} ${config.operator || ''} ${config.value || ''}`.trim() : '';
+      return config.variable ? `{${config.variable}} ${nomeDaOpcao(OPERATOR_OPTIONS, config.operator)} ${config.value || ''}`.trim() : '';
     case 'contact_has_tag':
-      return config.tag_name ? `Tem tag: ${config.tag_name}` : '';
+      return config.tag_name ? `Tem a etiqueta: ${config.tag_name}` : '';
     case 'contact_in_stage':
       return config.stage_id ? `Em: ${stageName(config.stage_id)}` : '';
     case 'message_contains':
@@ -150,7 +159,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
     table: 'automation_flows',
     operation: flowId ? 'update' : 'insert',
     invalidateQueries: [['automation-flows']],
-    successMessage: flowId ? 'Fluxo atualizado!' : 'Fluxo criado!',
+    successMessage: flowId ? 'Automação salva' : 'Automação criada',
   });
 
   // Carregar fluxo existente (ao editar) — tolera jsonb legado salvo como string.
@@ -232,13 +241,13 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
     try {
       setAttemptedSave(true);
       const missing: string[] = [];
-      if (!flow.name.trim()) missing.push('dê um nome ao fluxo');
+      if (!flow.name.trim()) missing.push('dê um nome à automação');
       if (!flow.trigger_type) missing.push('escolha um gatilho');
-      if (flow.steps.length === 0) missing.push('adicione pelo menos uma etapa');
+      if (flow.steps.length === 0) missing.push('adicione pelo menos um passo');
       // Automação ATIVA com etapa "Incompleto" rodaria pela metade (achado 86):
       // salvar como inativa continua permitido, para terminar depois.
       if (flow.active && flow.steps.some((s) => !validateStep(s).complete)) {
-        missing.push('complete as etapas marcadas como "Incompleto" ou deixe a automação inativa');
+        missing.push('complete os passos marcados como "Incompleto" ou deixe a automação inativa');
       }
       if (missing.length > 0) {
         toast({ title: 'Faltou preencher', description: `Para salvar: ${missing.join('; ')}.`, variant: 'destructive' });
@@ -261,7 +270,8 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
       }
       onClose();
     } catch (error: any) {
-      toast({ title: 'Erro', description: `Erro ao salvar fluxo: ${error?.message || 'desconhecido'}`, variant: 'destructive' });
+      logger.error('Erro ao salvar automação', { error: error?.message });
+      toast({ title: 'Não foi possível salvar a automação', description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.', variant: 'destructive' });
     }
   };
 
@@ -325,7 +335,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm text-muted-foreground">
         <MousePointerClick className="h-6 w-6 opacity-50" />
-        <p>Clique no gatilho ou em uma etapa para configurar.</p>
+        <p>Clique no gatilho ou num passo para configurar.</p>
       </div>
     );
   };
@@ -342,7 +352,7 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
         onSave={handleSave}
         saving={saveFlowMutation.isPending}
         onClose={fechar}
-        onHistory={() => (flowId ? setShowHistory(true) : toast({ title: 'Salve o fluxo primeiro', description: 'O histórico aparece depois que o fluxo é salvo.' }))}
+        onHistory={() => (flowId ? setShowHistory(true) : toast({ title: 'Salve a automação primeiro', description: 'O histórico aparece depois que a automação é salva.' }))}
       />
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden lg:flex-row">
@@ -448,10 +458,10 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
           const entrada = etapa ? getCatalogEntry((etapa.config as { type?: string })?.type ?? '') : null;
           return entrada?.label ?? 'desta automação';
         })()}"?`}
-        description='A etapa sai do fluxo, com o que estava configurado nela. Nada é gravado até você clicar em "Salvar".'
+        description='O passo sai da automação, com o que estava configurado nele. Nada é gravado até você clicar em "Salvar".'
         reversivel
         comoDesfazer="feche sem salvar, e a automação volta como estava salva."
-        confirmText="Excluir etapa"
+        confirmText="Excluir passo"
         variant="destructive"
       />
     </div>

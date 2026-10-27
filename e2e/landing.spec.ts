@@ -174,7 +174,7 @@ test.describe('Rotas públicas', () => {
   test('rota inexistente mostra o 404 e o botão volta para a home', async ({ page }) => {
     await page.goto('/rota-que-nao-existe-1234');
     await expect(page.getByText('Página não encontrada')).toBeVisible();
-    await page.getByRole('button', { name: /Ir para Home/ }).click();
+    await page.getByRole('button', { name: /Ir para o início/ }).click();
     await expect(page).toHaveURL(/\/$/);
   });
 

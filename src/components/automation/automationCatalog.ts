@@ -146,11 +146,23 @@ export const OPERATOR_OPTIONS = [
   { id: 'empty', name: 'está vazia' },
 ];
 
+/** Tipos de follow up e unidades de espera, com o nome que a tela mostra. */
+export const FOLLOWUP_TYPE_NAMES = [
+  { id: 'whatsapp', name: 'WhatsApp' },
+  { id: 'call', name: 'Ligação' },
+  { id: 'email', name: 'Email' },
+] as const;
+export const DELAY_TYPE_NAMES = [
+  { id: 'minutes', name: 'Minutos' },
+  { id: 'hours', name: 'Horas' },
+  { id: 'days', name: 'Dias' },
+] as const;
+
 export const CONTACT_FIELD_OPTIONS = [
   { id: 'name', name: 'Nome' },
-  { id: 'email', name: 'E-mail' },
+  { id: 'email', name: 'Email' },
   { id: 'phone', name: 'Telefone' },
-  { id: 'tag', name: 'Tag' },
+  { id: 'tag', name: 'Etiqueta' },
   { id: 'custom', name: 'Campo personalizado' },
 ];
 
@@ -162,11 +174,11 @@ export const TRIGGERS: CatalogEntry[] = [
     key: 'variable_captured',
     category: 'trigger',
     label: 'Variável Capturada',
-    description: 'Dispara quando o chatbot captura ou atualiza uma variável (ex.: o nome do lead).',
+    description: 'Dispara quando o chatbot captura ou atualiza uma variável (ex.: o nome do contato).',
     Icon: Variable,
     helpKey: 'trigger:variable_captured',
     fields: [
-      { key: 'variable_name', type: 'variable', label: 'Variável', required: true, help: 'A variável que o chatbot coletou e que dispara este fluxo.' },
+      { key: 'variable_name', type: 'variable', label: 'Variável', required: true, help: 'A variável que o chatbot coletou e que dispara esta automação.' },
       { key: 'operator', type: 'select', label: 'Condição (opcional)', optionsSource: undefined, options: OPERATOR_OPTIONS, advanced: true, help: 'Deixe em branco para disparar sempre que a variável for capturada.' },
       { key: 'value', type: 'text', label: 'Valor (apenas se "é igual a" / "contém")', advanced: true },
     ],
@@ -197,13 +209,13 @@ export const TRIGGERS: CatalogEntry[] = [
   {
     key: 'funnel_stage_changed',
     category: 'trigger',
-    label: 'Mudança de Estágio',
+    label: 'Mudança de etapa',
     description: 'Dispara quando o contato muda de etapa no funil.',
     Icon: ArrowRightLeft,
     helpKey: 'trigger:funnel_stage_changed',
     fields: [
-      { key: 'from_stage', type: 'select', label: 'Do estágio', optionsSource: 'funnelStages', advanced: true },
-      { key: 'to_stage', type: 'select', label: 'Para o estágio', optionsSource: 'funnelStages' },
+      { key: 'from_stage', type: 'select', label: 'Da etapa', optionsSource: 'funnelStages', advanced: true },
+      { key: 'to_stage', type: 'select', label: 'Para a etapa', optionsSource: 'funnelStages' },
     ],
   },
   {
@@ -252,43 +264,43 @@ export const ACTIONS: CatalogEntry[] = [
   {
     key: 'add_tag',
     category: 'action',
-    label: 'Adicionar Tag',
-    description: 'Aplica uma etiqueta (tag) ao contato. Útil para segmentar.',
+    label: 'Adicionar etiqueta',
+    description: 'Coloca uma etiqueta no contato. Útil para separar quem recebe cada campanha.',
     Icon: Tag,
     helpKey: 'action:add_tag',
     fields: [
-      { key: 'tag_name', type: 'text_with_vars', label: 'Nome da tag', required: true },
+      { key: 'tag_name', type: 'text_with_vars', label: 'Nome da etiqueta', required: true },
     ],
   },
   {
     key: 'change_funnel_stage',
     category: 'action',
-    label: 'Alterar Estágio',
+    label: 'Mudar de etapa',
     description: 'Move o contato para outra etapa do funil.',
     Icon: ArrowRightCircle,
     helpKey: 'action:change_funnel_stage',
     fields: [
-      { key: 'stage_id', type: 'select', label: 'Novo estágio', optionsSource: 'funnelStages', required: true },
+      { key: 'stage_id', type: 'select', label: 'Nova etapa', optionsSource: 'funnelStages', required: true },
     ],
   },
   {
     key: 'schedule_followup',
     category: 'action',
-    label: 'Agendar Follow-up',
-    description: 'Cria um follow-up automático (tarefa ou envio agendado).',
+    label: 'Agendar follow up',
+    description: 'Cria um follow up automático (tarefa ou envio agendado).',
     Icon: CalendarClock,
     helpKey: 'action:schedule_followup',
     fields: [
-      { key: 'delay_hours', type: 'number', label: 'Atraso (horas)' },
-      { key: 'followup_type', type: 'select', label: 'Tipo', options: [{ id: 'whatsapp', name: 'WhatsApp' }, { id: 'call', name: 'Ligação' }, { id: 'email', name: 'E-mail' }] },
+      { key: 'delay_hours', type: 'number', label: 'Daqui a quantas horas' },
+      { key: 'followup_type', type: 'select', label: 'Tipo', options: [...FOLLOWUP_TYPE_NAMES] },
       { key: 'message', type: 'textarea_with_vars', label: 'Mensagem' },
     ],
   },
   // --- Em breve (sem suporte no motor) ---
-  { key: 'send_email', category: 'action', label: 'Enviar E-mail', description: 'Envia e-mail via Resend.', Icon: Mail, comingSoon: true, fields: [] },
-  { key: 'remove_tag', category: 'action', label: 'Remover Tag', description: 'Remove uma etiqueta do contato.', Icon: Tag, comingSoon: true, fields: [] },
-  { key: 'notify_operator', category: 'action', label: 'Notificar Operador', description: 'Alerta o responsável.', Icon: Bell, comingSoon: true, fields: [] },
-  { key: 'http_request', category: 'action', label: 'Requisição HTTP', description: 'Chama uma URL externa (webhook).', Icon: Globe, comingSoon: true, fields: [] },
+  { key: 'send_email', category: 'action', label: 'Enviar email', description: 'Envia um email.', Icon: Mail, comingSoon: true, fields: [] },
+  { key: 'remove_tag', category: 'action', label: 'Tirar etiqueta', description: 'Tira uma etiqueta do contato.', Icon: Tag, comingSoon: true, fields: [] },
+  { key: 'notify_operator', category: 'action', label: 'Avisar o responsável', description: 'Avisa o responsável pela conversa.', Icon: Bell, comingSoon: true, fields: [] },
+  { key: 'http_request', category: 'action', label: 'Avisar outro sistema', description: 'Manda os dados para um endereço de outro sistema.', Icon: Globe, comingSoon: true, fields: [] },
 ];
 
 // --------------------------------------------------------------------------
@@ -299,7 +311,7 @@ export const CONDITIONS: CatalogEntry[] = [
     key: 'variable_condition',
     category: 'condition',
     label: 'Variável',
-    description: 'Continua o fluxo apenas se a variável satisfizer a condição (senão encerra).',
+    description: 'Continua a automação só se a variável atender à condição (senão encerra).',
     Icon: GitBranch,
     helpKey: 'condition:variable_condition',
     fields: [
@@ -311,23 +323,23 @@ export const CONDITIONS: CatalogEntry[] = [
   {
     key: 'contact_has_tag',
     category: 'condition',
-    label: 'Contato tem Tag',
-    description: 'Continua apenas se o contato tiver a tag indicada.',
+    label: 'Contato tem etiqueta',
+    description: 'Continua só se o contato tiver a etiqueta indicada.',
     Icon: Tag,
     helpKey: 'condition:contact_has_tag',
     fields: [
-      { key: 'tag_name', type: 'text', label: 'Nome da tag', required: true },
+      { key: 'tag_name', type: 'text', label: 'Nome da etiqueta', required: true },
     ],
   },
   {
     key: 'contact_in_stage',
     category: 'condition',
-    label: 'Contato no Estágio',
-    description: 'Continua apenas se o contato estiver no estágio indicado.',
+    label: 'Contato na etapa',
+    description: 'Continua só se o contato estiver na etapa indicada do funil.',
     Icon: ArrowRightCircle,
     helpKey: 'condition:contact_in_stage',
     fields: [
-      { key: 'stage_id', type: 'select', label: 'Estágio', optionsSource: 'funnelStages', required: true },
+      { key: 'stage_id', type: 'select', label: 'Etapa', optionsSource: 'funnelStages', required: true },
     ],
   },
   {
@@ -343,7 +355,7 @@ export const CONDITIONS: CatalogEntry[] = [
     ],
   },
   // --- Em breve ---
-  { key: 'ab_test', category: 'condition', label: 'Teste A/B', description: 'Divide o fluxo por porcentagem.', Icon: Shuffle, comingSoon: true, fields: [] },
+  { key: 'ab_test', category: 'condition', label: 'Teste A/B', description: 'Divide a automação por porcentagem.', Icon: Shuffle, comingSoon: true, fields: [] },
 ];
 
 // --------------------------------------------------------------------------
@@ -358,7 +370,7 @@ export const TIMINGS: CatalogEntry[] = [
     Icon: Clock,
     helpKey: 'action:delay',
     fields: [
-      { key: 'delay_type', type: 'select', label: 'Unidade', options: [{ id: 'minutes', name: 'Minutos' }, { id: 'hours', name: 'Horas' }, { id: 'days', name: 'Dias' }] },
+      { key: 'delay_type', type: 'select', label: 'Unidade', options: [...DELAY_TYPE_NAMES] },
       { key: 'delay_value', type: 'number', label: 'Valor', required: true },
     ],
   },
@@ -383,8 +395,8 @@ export function getCatalogEntry(key: string | undefined | null): CatalogEntry | 
 export const UNKNOWN_ENTRY: CatalogEntry = {
   key: 'unknown',
   category: 'action',
-  label: 'Configurar etapa',
-  description: 'Clique para escolher o tipo desta etapa.',
+  label: 'Configurar passo',
+  description: 'Clique para escolher o tipo deste passo.',
   Icon: Settings,
   fields: [],
 };

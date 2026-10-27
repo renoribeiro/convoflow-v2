@@ -88,9 +88,9 @@ export default defineConfig(({ mode }) => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
         manifest: {
-          name: 'ConvoFlow - WhatsApp Automation',
+          name: 'ConvoFlow: atendimento e vendas pelo WhatsApp',
           short_name: 'ConvoFlow',
-          description: 'Complete WhatsApp Business automation and management platform',
+          description: 'Atendimento, funil de vendas, chatbots e campanhas pelo WhatsApp, num lugar só.',
           theme_color: '#DAE27C',
           background_color: '#F9F9ED',
           display: 'standalone',

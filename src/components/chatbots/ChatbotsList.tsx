@@ -77,7 +77,7 @@ export const ChatbotsList = ({ onEdit, onTest }: ChatbotsListProps) => {
       URL.revokeObjectURL(url);
     } catch (error) {
       toast({
-        title: "Erro ao exportar",
+        title: "Não foi possível exportar",
         description: "Não foi possível exportar o chatbot.",
         variant: "destructive",
       });

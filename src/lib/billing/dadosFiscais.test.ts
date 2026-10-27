@@ -161,7 +161,7 @@ describe('validarDadosFiscais', () => {
     expect(erros.district).toMatch(/bairro/);
     expect(erros.city).toMatch(/cidade/);
     expect(erros.state).toMatch(/UF/);
-    expect(erros.invoice_email).toMatch(/e-mail/);
+    expect(erros.invoice_email).toMatch(/email/);
     expect(validarDadosFiscais({ ...FORMULARIO_VAZIO, person_type: 'cnpj' }).legal_name).toBe('Informe a razão social.');
   });
 
@@ -184,7 +184,7 @@ describe('validarDadosFiscais', () => {
     expect(validarDadosFiscais(formOk({ complement: 'x'.repeat(81) })).complement).toBe('Use até 80 caracteres.');
   });
 
-  it('e-mail', () => {
+  it('email', () => {
     expect(emailValido('nota@exemplo.com.br')).toBe(true);
     expect(emailValido('nota@exemplo')).toBe(false);
     expect(emailValido('nota exemplo@exemplo.com')).toBe(false);

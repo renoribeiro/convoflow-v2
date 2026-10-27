@@ -85,7 +85,7 @@ function SequenceBuilderModal({ onClose }: { onClose: () => void }) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova sequência de follow-up</DialogTitle>
+          <DialogTitle>Nova sequência de follow up</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -208,7 +208,7 @@ function SequenceBuilderModal({ onClose }: { onClose: () => void }) {
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs">Tarefa do operador</Label>
+                        <Label className="text-xs">Tarefa para o atendente</Label>
                         <Input
                           value={step.task_title}
                           onChange={(e) => updateStep(i, { task_title: e.target.value })}
@@ -267,7 +267,7 @@ export function SequencesManager() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <span>Cadências automáticas multi-passo (WhatsApp + tarefas). Pausam ao receber resposta.</span>
+          <span>Sequências de mensagens de WhatsApp e tarefas que seguem sozinhas, passo a passo. Elas param quando o cliente responde.</span>
           <FeatureHelp helpKey="page:followups-sequences" />
         </p>
         <Button size="sm" onClick={() => setShowBuilder(true)}>

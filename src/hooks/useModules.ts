@@ -70,7 +70,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao atualizar status do módulo:', error);
-      toast.error('Erro ao atualizar status do módulo');
+      toast.error('Não foi possível atualizar o módulo');
     },
   });
 
@@ -84,7 +84,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao atualizar múltiplos módulos:', error);
-      toast.error('Erro ao atualizar módulos');
+      toast.error('Não foi possível atualizar os módulos');
     },
   });
 
@@ -98,7 +98,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao atualizar ordem do módulo:', error);
-      toast.error('Erro ao atualizar ordem do módulo');
+      toast.error('Não foi possível atualizar a ordem do módulo');
     },
   });
 
@@ -112,7 +112,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao criar módulo:', error);
-      toast.error('Erro ao criar módulo');
+      toast.error('Não foi possível criar o módulo');
     },
   });
 
@@ -128,7 +128,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao atualizar módulo:', error);
-      toast.error('Erro ao atualizar módulo');
+      toast.error('Não foi possível atualizar o módulo');
     },
   });
 
@@ -141,7 +141,7 @@ export const useModules = () => {
     },
     onError: (error) => {
       console.error('Erro ao deletar módulo:', error);
-      toast.error('Erro ao deletar módulo');
+      toast.error('Não foi possível excluir o módulo');
     },
   });
 

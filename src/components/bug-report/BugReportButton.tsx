@@ -32,7 +32,7 @@ const formatBytes = (bytes: number): string => {
 };
 
 /**
- * Botão "Reportar bug" da Navbar (à esquerda do sino de notificações).
+ * Botão "Relatar problema" da Navbar (à esquerda do sino de notificações).
  *
  * Fluxo de envio, nesta ordem:
  *   1. sobe o anexo (se houver) em bug-reports/<tenant>/<user>/<ts>-<arquivo>
@@ -148,7 +148,7 @@ export const BugReportButton: React.FC = () => {
     }
     const userEmail = user.email ?? '';
     if (!userEmail) {
-      setError('Não foi possível identificar seu e-mail. Recarregue a página e tente novamente.');
+      setError('Não foi possível identificar seu email. Recarregue a página e tente novamente.');
       return;
     }
 
@@ -171,7 +171,8 @@ export const BugReportButton: React.FC = () => {
           upsert: false,
         });
         if (uploadError) {
-          throw new Error(`Falha ao enviar o anexo: ${uploadError.message}`);
+          logger.warn('[BugReportButton] Falha ao enviar o anexo', { error: uploadError.message });
+          throw new Error('Não foi possível enviar o anexo. Tente de novo ou envie o relato sem ele.');
         }
         uploadedPath = path;
 
@@ -205,7 +206,8 @@ export const BugReportButton: React.FC = () => {
         page_url: pageUrl,
       });
       if (insertError) {
-        throw new Error(`Falha ao registrar o relato: ${insertError.message}`);
+        logger.warn('[BugReportButton] Falha ao registrar o relato', { error: insertError.message });
+        throw new Error('Não foi possível registrar o relato. Tente de novo em instantes.');
       }
 
       // 4) Notificação por e-mail — best-effort e DEPOIS do commit.
@@ -229,7 +231,7 @@ export const BugReportButton: React.FC = () => {
         });
         if (fnError) throw fnError;
       } catch (notifyError) {
-        logger.warn('[BugReportButton] Relato gravado, mas o e-mail falhou', {
+        logger.warn('[BugReportButton] Relato gravado, mas o email falhou', {
           error: (notifyError as Error)?.message,
         });
       }
@@ -270,13 +272,13 @@ export const BugReportButton: React.FC = () => {
         variant="destructive"
         onClick={() => setOpen(true)}
         className="h-8 gap-1.5 px-2.5 text-xs font-bold shadow-sm"
-        title="Reportar bug"
-        aria-label="Reportar bug"
+        title="Relatar problema"
+        aria-label="Relatar problema"
       >
         <Bug className="h-4 w-4" />
         {/* Abaixo de lg só o ícone: o vermelho continua chamando atenção e a
             Navbar não tem largura para o texto no tablet e no celular. */}
-        <span className="hidden lg:inline">Reportar bug</span>
+        <span className="hidden lg:inline">Relatar problema</span>
       </Button>
 
       <Dialog open={open} onOpenChange={handleOpenChange}>

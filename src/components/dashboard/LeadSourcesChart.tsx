@@ -35,7 +35,7 @@ export const LeadSourcesChart = ({ period }: LeadSourcesChartProps) => {
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
           <PieChartIcon className="h-5 w-5 text-muted-foreground" />
-          Contatos por Fonte
+          Contatos por fonte
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -45,7 +45,7 @@ export const LeadSourcesChart = ({ period }: LeadSourcesChartProps) => {
           <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-center">
             <PieChartIcon className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm font-medium text-foreground">Sem contatos no período</p>
-            <p className="text-xs text-muted-foreground">As fontes de lead aparecerão aqui.</p>
+            <p className="text-xs text-muted-foreground">Quando os contatos chegarem por um link de Rastreamento, a fonte de cada um aparece aqui.</p>
           </div>
         ) : (
           <div className="flex flex-col items-center gap-4 sm:flex-row">

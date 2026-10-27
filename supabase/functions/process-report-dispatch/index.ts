@@ -62,7 +62,7 @@ serve(async (req) => {
       // marcando tudo como falha e queimando as janelas das agendas.
       logger.error('RESEND_API_KEY ou REPORT_FROM_EMAIL não configuradas')
       return new Response(
-        JSON.stringify({ success: false, error: 'E-mail não configurado no servidor' }),
+        JSON.stringify({ success: false, error: 'Email não configurado no servidor' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 },
       )
     }

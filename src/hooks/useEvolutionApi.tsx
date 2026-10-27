@@ -53,27 +53,27 @@ export const useEvolutionApi = (): UseEvolutionApiReturn => {
       // esconde o texto real no corpo da resposta. O helper da casa abre esse
       // corpo — sem ele o usuário volta a ver erro que não explica nada.
       if (error) {
-        throw new Error(await mensagemDaEdgeFunction(error, 'Não foi possível criar a instância.'));
+        throw new Error(await mensagemDaEdgeFunction(error, 'Não foi possível conectar o número. Tente de novo em instantes.'));
       }
       if (data && data.ok === false) {
-        throw new Error(data.error || 'Não foi possível criar a instância.');
+        throw new Error(data.error || 'Não foi possível conectar o número. Tente de novo em instantes.');
       }
 
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
 
       toast({
-        title: 'Sucesso',
+        title: 'Número criado',
         description: data?.webhook_configured
-          ? 'Instância criada com webhook configurado automaticamente!'
-          : 'Instância criada. Configure o webhook para receber mensagens em tempo real.',
+          ? 'Agora leia o QR Code com o celular do número.'
+          : 'Agora leia o QR Code com o celular do número. Se as mensagens não entrarem, fale com o suporte do ConvoFlow.',
       });
 
       return data;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao criar instância';
+      const errorMessage = err instanceof Error ? err.message : 'Não foi possível conectar o número.';
       logger.error('[useEvolutionApi] Erro ao criar instância', { error: errorMessage });
       toast({
-        title: 'Erro',
+        title: 'Número não conectado',
         description: errorMessage,
         variant: 'destructive',
       });

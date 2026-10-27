@@ -30,7 +30,7 @@ interface FollowupModalProps {
 
 const FOLLOWUP_TYPES = [
   { value: 'call', label: 'Ligação' },
-  { value: 'email', label: 'E-mail' },
+  { value: 'email', label: 'Email' },
   { value: 'meeting', label: 'Reunião' },
   { value: 'whatsapp', label: 'WhatsApp' },
   { value: 'visit', label: 'Visita' },
@@ -69,11 +69,11 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
         status: 'pending',
       });
 
-      toast.success('Follow-up agendado com sucesso!');
+      toast.success('Follow up agendado com sucesso!');
       handleClose();
     } catch (error) {
-      console.error('Erro ao criar follow-up:', error);
-      toast.error('Erro ao agendar follow-up. Tente novamente.');
+      console.error('Erro ao criar follow up:', error);
+      toast.error('Não foi possível agendar o follow up. Tente de novo.');
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +97,7 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Agendar Follow-up
+            Agendar Follow up
           </DialogTitle>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <User className="h-4 w-4" />
@@ -121,7 +121,7 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
             <Label htmlFor="type">Tipo *</Label>
             <Select value={type} onValueChange={setType} required>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo de follow-up" />
+                <SelectValue placeholder="Selecione o tipo de follow up" />
               </SelectTrigger>
               <SelectContent>
                 {FOLLOWUP_TYPES.map((followupType) => (
@@ -167,7 +167,7 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Adicione detalhes sobre o follow-up..."
+              placeholder="Adicione detalhes sobre o follow up..."
               rows={3}
             />
           </div>
@@ -182,7 +182,7 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Agendando...' : 'Agendar Follow-up'}
+              {isLoading ? 'Agendando...' : 'Agendar Follow up'}
             </Button>
           </DialogFooter>
         </form>

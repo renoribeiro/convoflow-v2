@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { VoltarParaOndeEstava } from '@/components/shared/VoltarParaOndeEstava';
 
 export default function TermsOfService() {
   return (
@@ -13,10 +14,7 @@ export default function TermsOfService() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-8">
-            <Link to="/auth" className="inline-flex items-center text-brand-primary hover:text-brand-secondary transition-colors mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
+            <VoltarParaOndeEstava />
             
             <div className="flex items-center justify-center mb-4">
               <MessageSquare className="w-8 h-8 text-brand-primary mr-3" />
@@ -28,7 +26,7 @@ export default function TermsOfService() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Termos de Uso</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 25 de outubro de 2026
+                Última atualização: 27 de outubro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -61,7 +59,7 @@ export default function TermsOfService() {
                 <section>
                   <h2 className="text-xl font-semibold mb-4">2. Descrição do Serviço</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    A ConvoFlow é uma plataforma de automação para WhatsApp que oferece soluções de chatbots, gestão de campanhas, 
+                    O ConvoFlow é uma plataforma de automação para WhatsApp que oferece soluções de chatbots, gestão de campanhas, 
                     análise de conversas e ferramentas de relacionamento com clientes. Nossos serviços incluem:
                   </p>
                   <ul className="list-disc pl-6 mt-2 text-muted-foreground">
@@ -94,10 +92,10 @@ export default function TermsOfService() {
                     Pendências que sustentam esta seção:
                       1. O reembolso do arrependimento (4.4) é processo manual no painel
                          do Stripe; não existe rotina automatizada. O mesmo vale para a
-                         devolução prometida em 4.5 ao pedido de cancelamento por e-mail
+                         devolução prometida em 4.5 ao pedido de cancelamento por email
                          feito no teste e processado depois da cobrança.
                       2. O botão de 4.5 é o "Cancelar assinatura" de
-                         SubscriptionSettings.tsx (função manage-subscription). O e-mail
+                         SubscriptionSettings.tsx (função manage-subscription). O email
                          continua valendo como segundo canal: é o único caminho do
                          arrependimento, e quem já era cliente não perde o canal que tinha.
 
@@ -130,7 +128,7 @@ export default function TermsOfService() {
                         Cada loja, inclusive as adicionais, comporta <strong>1 (um) gestor e até 2 (dois)
                         atendentes</strong>. Ocupam vaga de atendente os usuários ativos e os convites ainda não
                         aceitos; usuários suspensos não ocupam. Para ter mais atendentes em uma loja, o cliente
-                        deve entrar em contato com o ConvoFlow pelo e-mail contato@convoflow.com.br.
+                        deve entrar em contato com o ConvoFlow pelo email contato@convoflow.com.br.
                       </p>
                       <p className="text-muted-foreground mb-2">
                         Cada <strong>atendente adicional</strong> (vaga além das 2 da loja) é cobrado mensalmente,
@@ -223,10 +221,10 @@ export default function TermsOfService() {
                         confirmação, a tela informa a data até a qual o acesso permanece ativo.
                       </p>
                       <p className="text-muted-foreground mb-2">
-                        O cancelamento também pode ser solicitado pelo e-mail
-                        <strong> contato@convoflow.com.br</strong>, a partir do endereço de e-mail cadastrado na
-                        Conta. O pedido por e-mail é processado em até 2 (dois) dias úteis, e a confirmação é
-                        enviada por e-mail. Durante o teste grátis, vale a data de envio do pedido: se a cobrança
+                        O cancelamento também pode ser solicitado pelo email
+                        <strong> contato@convoflow.com.br</strong>, a partir do endereço de email cadastrado na
+                        Conta. O pedido por email é processado em até 2 (dois) dias úteis, e a confirmação é
+                        enviada por email. Durante o teste grátis, vale a data de envio do pedido: se a cobrança
                         do término do teste ocorrer antes do processamento, o valor é devolvido integralmente.
                       </p>
                       <p className="text-muted-foreground">
@@ -341,7 +339,7 @@ export default function TermsOfService() {
                       <p className="text-muted-foreground mb-2">Você reconhece que a Cloud API da Meta possui limitações inerentes, entre elas:</p>
                       <ul className="list-disc pl-6 text-muted-foreground">
                         <li>Indisponibilidade de histórico de mensagens anteriores à conexão do número.</li>
-                        <li>Não suporte a grupos do WhatsApp.</li>
+                        <li>Não funciona com grupos do WhatsApp.</li>
                         <li>Limites diários ("messaging tiers") definidos pela Meta com base em qualidade e volume.</li>
                         <li>Possibilidade de bloqueio ou rebaixamento de qualidade do número em caso de denúncias por destinatários.</li>
                       </ul>
@@ -393,6 +391,7 @@ export default function TermsOfService() {
 
                 <section>
                   <h2 className="text-xl font-semibold mb-4">8. Privacidade e Proteção de Dados</h2>
+                  <h3 className="font-medium mb-2">8.1. Política de Privacidade</h3>
                   <p className="text-muted-foreground leading-relaxed">
                     O tratamento de dados pessoais segue nossa{' '}
                     <Link to="/privacy-policy" className="text-primary underline">Política de Privacidade</Link>
@@ -400,7 +399,8 @@ export default function TermsOfService() {
                     Ao usar nossos serviços, você concorda com o tratamento de seus dados conforme descrito em
                     nossa política.
                   </p>
-                  <p className="text-muted-foreground leading-relaxed mt-3">
+                  <h3 className="font-medium mt-4 mb-2">8.2. Dados dos seus clientes</h3>
+                  <p className="text-muted-foreground leading-relaxed">
                     Você reconhece que, em relação aos dados dos seus próprios clientes tratados na plataforma
                     (contatos, mensagens e mídias), <strong>você é o controlador</strong> e o ConvoFlow atua como
                     <strong> operador</strong>, cabendo a você assegurar a base legal, o consentimento e o
@@ -447,7 +447,7 @@ export default function TermsOfService() {
                 <section>
                   <h2 className="text-xl font-semibold mb-4">9. Limitação de Responsabilidade</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    A ConvoFlow não será responsável por danos indiretos, incidentais, especiais ou consequenciais 
+                    O ConvoFlow não será responsável por danos indiretos, incidentais, especiais ou consequenciais 
                     decorrentes do uso de nossos serviços. Nossa responsabilidade total está limitada ao valor pago 
                     pelos serviços nos últimos 12 meses.
                   </p>

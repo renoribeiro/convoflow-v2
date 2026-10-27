@@ -1,5 +1,5 @@
 /**
- * Aba Configurações › Escala/Transferência.
+ * Aba Configurações › Distribuição e transferência.
  *
  * O que a tela precisa garantir:
  *  - grava as DUAS chaves soltas em tenants.settings, pelo updateTenantSettings

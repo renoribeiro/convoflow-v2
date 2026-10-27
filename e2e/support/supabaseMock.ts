@@ -76,7 +76,7 @@ const uid = (i: number, k = 'a') =>
   `${k.repeat(8)}-0000-4000-8000-${String(i).padStart(12, '0')}`;
 
 const PEOPLE = ['Ana Souza', 'Bruno Lima', 'Carla Dias', 'Diego Rocha', 'Elisa Melo', 'Fábio Nunes', 'Gabi Prado', 'Hugo Reis'];
-const STAGES = ['Novo Lead', 'Contato Feito', 'Proposta', 'Negociação', 'Fechado'];
+const STAGES = ['Novo contato', 'Contato Feito', 'Proposta', 'Negociação', 'Fechado'];
 const SOURCES = ['Instagram', 'Google Ads', 'Indicação', 'Site'];
 const TAGS = ['VIP', 'Quente', 'Frio', 'Retorno', 'Orçamento', 'Reclamação'];
 const MESSAGES = [

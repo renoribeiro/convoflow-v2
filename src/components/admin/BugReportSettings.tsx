@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /** Chave em public.system_settings. Lida pela Edge Function send-report. */
 const BUG_RECIPIENTS_KEY = 'bug_report_recipients';
@@ -82,22 +83,22 @@ export const BugReportSettings = () => {
       toast.success(
         emails.length
           ? `Destinatários salvos (${emails.length}).`
-          : 'Lista limpa. Os relatos voltam para o e-mail dos relatórios.',
+          : 'Lista limpa. Os relatos voltam para o email dos relatórios.',
       );
       queryClient.invalidateQueries({ queryKey: ['system-settings', BUG_RECIPIENTS_KEY] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro ao salvar.'),
+    onError: (e) => toast.error(`Não foi possível salvar. ${motivoDoErro(e)}`),
   });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Bug className="w-5 h-5" /> Destinatários dos relatos de bug
+          <Bug className="w-5 h-5" /> Quem recebe os relatos de problema
         </CardTitle>
         <CardDescription>
-          Define quem recebe por e-mail os relatos enviados pelo botão "Reportar bug". Apenas super
-          admins têm acesso.
+          Escolha quem recebe por email os relatos enviados pelo botão "Relatar problema". Só o
+          Superadmin vê esta tela.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -106,7 +107,7 @@ export const BugReportSettings = () => {
         ) : (
           <>
             <div className="space-y-2">
-              <Label htmlFor="bug-recipients">E-mails (um por linha)</Label>
+              <Label htmlFor="bug-recipients">Emails (um por linha)</Label>
               <Textarea
                 id="bug-recipients"
                 value={value}
@@ -117,7 +118,7 @@ export const BugReportSettings = () => {
               />
               <p className="text-xs text-muted-foreground">
                 {parsed.length === 0
-                  ? 'Nenhum e-mail definido. Será usado o remetente dos relatórios.'
+                  ? 'Nenhum email definido. Será usado o remetente dos relatórios.'
                   : `${parsed.length} destinatário(s).`}
               </p>
             </div>
@@ -126,7 +127,7 @@ export const BugReportSettings = () => {
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  E-mail inválido: <strong>{invalid.join(', ')}</strong>. Corrija antes de salvar.
+                  Email que não vale: <strong>{invalid.join(', ')}</strong>. Corrija antes de salvar.
                 </AlertDescription>
               </Alert>
             )}
@@ -134,10 +135,9 @@ export const BugReportSettings = () => {
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription className="text-xs">
-                O <strong>remetente</strong> continua sendo o mesmo dos relatórios
-                (<code>REPORT_FROM_EMAIL</code>); aqui se define apenas quem recebe. Deixar a lista
-                vazia faz os relatos voltarem para o próprio endereço dos relatórios. O registro
-                completo fica sempre na tabela <strong>bug_reports</strong>, mesmo que o e-mail falhe.
+                Quem <strong>envia</strong> é o mesmo endereço dos relatórios por email; aqui você
+                escolhe só quem recebe. Com a lista vazia, os relatos vão para o próprio endereço dos
+                relatórios. Todo relato fica guardado no ConvoFlow, mesmo que o email não chegue.
               </AlertDescription>
             </Alert>
 

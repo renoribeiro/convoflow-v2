@@ -50,9 +50,9 @@ export interface LeadSituation {
 }
 
 const MOTIVO: Record<LeadFailureCode, string> = {
-  email_quota: 'o envio de e-mail atingiu o limite por hora',
-  email_not_authorized: 'o envio de e-mail recusou o endereço',
-  email_exists: 'o e-mail já tinha login',
+  email_quota: 'o envio de email atingiu o limite por hora',
+  email_not_authorized: 'o envio de email recusou o endereço',
+  email_exists: 'o email já tinha login',
   invite_error: 'erro ao enviar o convite',
   processing_error: 'o processamento parou no meio',
 };
@@ -66,7 +66,7 @@ export function leadSituation(lead: Pick<SignupLead, 'status' | 'failure_code'>,
     case 'received':
       return { label: 'Processando', tone: 'neutral', needsContact: false };
     case 'email_exists':
-      return { label: 'E-mail já tinha login', tone: 'muted', needsContact: false };
+      return { label: 'Email já tinha login', tone: 'muted', needsContact: false };
     case 'invited': {
       const s = tenant?.subscription_status ?? null;
       if (s === 'active') return { label: 'Assinante', tone: 'ok', needsContact: false };
@@ -77,7 +77,7 @@ export function leadSituation(lead: Pick<SignupLead, 'status' | 'failure_code'>,
     }
     case 'invite_failed':
       return {
-        label: lead.failure_code === 'email_exists' ? 'E-mail já tinha login' : 'Convite não saiu',
+        label: lead.failure_code === 'email_exists' ? 'Email já tinha login' : 'Convite não saiu',
         tone: lead.failure_code === 'email_exists' ? 'muted' : 'attention',
         needsContact: lead.failure_code !== 'email_exists',
       };

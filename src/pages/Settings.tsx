@@ -98,7 +98,7 @@ const ABAS: AbaConfig[] = [
   // quarto assunto aqui pede aba própria, não um quarto cartão.
   {
     value: 'visibility',
-    label: 'Escala/Transferência',
+    label: 'Distribuição e transferência',
     icon: Users,
     render: () => (
       <div className="space-y-6">
@@ -144,7 +144,7 @@ const ABAS: AbaConfig[] = [
   // Loja cancela sozinho muda como o atendente planeja o proprio follow-up.
   {
     value: 'followups',
-    label: 'Follow-ups',
+    label: 'Follow ups',
     icon: CalendarClock,
     render: () => <FollowupSettings />,
   },
@@ -164,7 +164,7 @@ const ABAS: AbaConfig[] = [
   { value: 'security', label: 'Segurança', icon: Shield, render: () => <SecuritySettings /> },
   // Só quem tem store.admin: o servidor (RLS dos webhooks) recusa o resto, e o
   // atendente via um formulário que não salvava (achado 119 do checkup).
-  { value: 'integrations', label: 'Integrações', icon: Database, requer: 'store.admin', render: () => <IntegrationSettings /> },
+  { value: 'integrations', label: 'Avisos para sistemas', icon: Database, requer: 'store.admin', render: () => <IntegrationSettings /> },
   // Só o Gerente, e só com a API liberada para o público OU já ligada na Conta
   // dele (Conta de teste que o superadmin ligou). Gestor e Atendente nunca.
   {
@@ -217,7 +217,7 @@ export default function Settings() {
       <PageHeader
         title="Configurações"
         helpKey="page:settings"
-        description="Gerencie as configurações da sua conta e preferências do sistema"
+        description="Seu perfil e o jeito de trabalhar da Loja: atendimento, distribuição, respostas rápidas e mais"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Configurações' }
@@ -226,7 +226,7 @@ export default function Settings() {
 
       <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-6">
         {/* Quebra de linha em vez de grade de N colunas iguais: com nove abas
-            os rótulos ("Escala/Transferência", "Respostas rápidas") passavam
+            os rótulos ("Distribuição e transferência", "Respostas rápidas") passavam
             por cima dos vizinhos até 1440px. Quebrar mantém todas visíveis;
             rolar esconderia aba, que é o que se quer evitar numa tela de
             configuração. */}

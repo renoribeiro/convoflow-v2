@@ -1,5 +1,5 @@
 /**
- * Aba Configurações › Escala/Transferência — cartão "Distribuição de conversas
+ * Aba Configurações › Distribuição e transferência — cartão "Distribuição de conversas
  * novas" (migração 20260915000001).
  *
  * O que a tela precisa garantir:
@@ -104,7 +104,7 @@ describe('RotationSettings', () => {
   it('com um atendente só: uma linha explica por quê e não há controles', () => {
     estado.members = [ANA];
     abrir();
-    expect(screen.getByText(/O rodízio aparece quando a Loja tem pelo menos 2 atendentes ativos\. Hoje ela tem 1/)).toBeInTheDocument();
+    expect(screen.getByText(/A distribuição automática aparece quando a Loja tem pelo menos 2 atendentes ativos\. Hoje ela tem 1/)).toBeInTheDocument();
     expect(screen.queryByRole('switch', { name: /Distribuir conversas novas/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /salvar distribuição/i })).not.toBeInTheDocument();
   });
@@ -149,7 +149,7 @@ describe('RotationSettings', () => {
     await user.type(campo(/^Bruno$/), '0');
     await user.clear(campo(/Ana Lima/));
     await user.type(campo(/Ana Lima/), '100');
-    expect(screen.getByText('Fora do rodízio (0 %)')).toBeInTheDocument();
+    expect(screen.getByText('Fora da distribuição (0 %)')).toBeInTheDocument();
     expect(screen.getByText('Soma: 100 %.')).toBeInTheDocument();
     const lista = screen.getByRole('list', { name: /Fatia de cada pessoa/i });
     expect(within(lista).getAllByRole('listitem')).toHaveLength(2);

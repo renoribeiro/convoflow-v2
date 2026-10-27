@@ -11,6 +11,15 @@ import { FollowupEditModal } from '@/components/FollowupEditModal'
 import type { IndividualFollowup } from '@/lib/followups/types'
 import { toast } from 'sonner'
 
+/** Nome do filtro na frase do vazio (o código da aba é em inglês). */
+const NOME_DO_FILTRO: Record<string, string> = {
+  pending: 'pendente',
+  today: 'para hoje',
+  scheduled: 'agendado',
+  completed: 'concluído',
+  overdue: 'em atraso',
+};
+
 interface FollowupsListProps {
   status: 'pending' | 'today' | 'scheduled' | 'completed' | 'overdue'
   filters?: {
@@ -167,7 +176,7 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'call': return 'Ligação'
-      case 'email': return 'E-mail'
+      case 'email': return 'Email'
       case 'message': return 'Mensagem'
       case 'whatsapp': return 'WhatsApp'
       case 'meeting': return 'Reunião'
@@ -222,12 +231,12 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
     try {
       const success = await completeFollowup(followup.id)
       if (success) {
-        toast.success('Follow-up concluído com sucesso!')
+        toast.success('Follow up concluído com sucesso!')
       } else {
-        toast.error('Erro ao concluir follow-up')
+        toast.error('Não foi possível concluir o follow up')
       }
     } catch (error) {
-      toast.error('Erro ao concluir follow-up')
+      toast.error('Não foi possível concluir o follow up')
     } finally {
       setCompletingFollowupId(null)
     }
@@ -273,8 +282,8 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
     return (
       <EmptyState
         icon={<Clock className="w-full h-full" />}
-        title={`Nenhum follow-up ${status === 'pending' ? 'pendente' : status}`}
-        description="Quando houver tarefas neste status, elas aparecerão aqui"
+        title={`Nenhum follow up ${NOME_DO_FILTRO[status] ?? 'aqui'}`}
+        description='Quando houver follow ups assim, eles aparecem aqui. Para criar um, clique em "Novo Follow up".'
       />
     );
   }
@@ -289,12 +298,12 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
               <div className="flex items-center gap-3">
                 <Avatar className="w-10 h-10">
                   <AvatarFallback>
-                    {((followup as any).contacts?.name || 'N/A').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                    {((followup as any).contacts?.name || '?').split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <h4 className="font-semibold">{(followup as any).contacts?.name || 'Contato não encontrado'}</h4>
-                  <p className="text-sm text-muted-foreground">{(followup as any).contacts?.phone || 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">{(followup as any).contacts?.phone || 'sem telefone'}</p>
                 </div>
               </div>
               
@@ -361,7 +370,7 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-6">
           <div className="text-sm text-muted-foreground">
-            Mostrando {startIndex + 1}-{Math.min(endIndex, filteredFollowups.length)} de {filteredFollowups.length} follow-ups
+            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredFollowups.length)} de {filteredFollowups.length} follow-ups
           </div>
           <div className="flex items-center space-x-2">
             <Button

@@ -37,7 +37,7 @@ describe('validateWebhookForm', () => {
 
   it('exige nome', () => {
     expect(validateWebhookForm({ ...base, name: '  ' }).valid).toBe(false);
-    expect(validateWebhookForm({ ...base, name: undefined }).error).toMatch(/Nome/);
+    expect(validateWebhookForm({ ...base, name: undefined }).error).toMatch(/nome ao aviso/);
   });
 
   it('exige URL', () => {
@@ -67,7 +67,7 @@ describe('validateWebhookForm', () => {
   it('rejeita evento desconhecido', () => {
     const r = validateWebhookForm({ ...base, events: ['evento.fantasma'] });
     expect(r.valid).toBe(false);
-    expect(r.error).toMatch(/inválido/i);
+    expect(r.error).toMatch(/não existe mais/);
   });
 });
 

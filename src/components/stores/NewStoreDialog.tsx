@@ -75,7 +75,7 @@ export const NewStoreDialog = ({ open, onOpenChange, store = null }: Props) => {
           description: `Agora ela se chama ${loja.name}.`,
         });
       } catch (err) {
-        setErro(err instanceof Error ? err.message : 'Não foi possível renomear a loja.');
+        setErro(err instanceof Error ? err.message : 'Não foi possível renomear a Loja.');
       }
       return;
     }
@@ -86,12 +86,12 @@ export const NewStoreDialog = ({ open, onOpenChange, store = null }: Props) => {
       toast.success('Loja criada com sucesso.', {
         description: `${loja.name} já faz parte da sua Conta.`,
         action: {
-          label: 'Abrir a loja',
+          label: 'Abrir a Loja',
           onClick: () => setActiveTenant(loja.id),
         },
       });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : 'Não foi possível criar a loja.');
+      setErro(err instanceof Error ? err.message : 'Não foi possível criar a Loja.');
     }
   };
 
@@ -111,7 +111,7 @@ export const NewStoreDialog = ({ open, onOpenChange, store = null }: Props) => {
         </DialogHeader>
 
         <div className="space-y-2 py-2">
-          <Label htmlFor="nova-loja-nome">Nome da loja</Label>
+          <Label htmlFor="nova-loja-nome">Nome da Loja</Label>
           <Input
             id="nova-loja-nome"
             value={nome}

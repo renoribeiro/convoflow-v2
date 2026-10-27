@@ -65,7 +65,7 @@ const sourceOptions = [
 ];
 
 const statusOptions = [
-  'Novo Lead',
+  'Contato novo',
   'Qualificado',
   'Em Contato',
   'Proposta Enviada',
@@ -389,7 +389,7 @@ export const AdvancedFilters = ({
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <Users className="w-4 h-4" />
-                  Status do Lead
+                  Situação do contato
                 </Label>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {statusOptions.map(status => (
@@ -467,7 +467,7 @@ export const AdvancedFilters = ({
 
               {/* Score do lead */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Score do Lead</Label>
+                <Label className="text-sm font-medium">Pontuação do contato</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -504,7 +504,7 @@ export const AdvancedFilters = ({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  placeholder="Digite o nome da campanha, UTM source, medium..."
+                  placeholder="Digite o nome da campanha, a origem ou o meio"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"

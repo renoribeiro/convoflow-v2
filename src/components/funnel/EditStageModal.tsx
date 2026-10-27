@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 interface Stage {
   id: string;
@@ -51,8 +52,8 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
     },
     onError: (error) => {
       toast({ 
-        title: 'Erro', 
-        description: error.message || 'Erro ao atualizar estágio', 
+        title: 'Não deu certo', 
+        description: motivoDoErro(error), 
         variant: 'destructive' 
       });
     }
@@ -69,7 +70,7 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
   const handleSave = () => {
     if (!stage || !stageName.trim()) {
       toast({
-        title: 'Erro',
+        title: 'Não deu certo',
         description: 'Nome do estágio é obrigatório',
         variant: 'destructive'
       });

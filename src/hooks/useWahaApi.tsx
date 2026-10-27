@@ -49,14 +49,14 @@ export const useWahaApi = (): UseWahaApiReturn => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
 
       toast({
-        title: 'Instância WAHA criada',
+        title: 'Número WAHA criado',
         description:
           'A sessão foi criada no seu servidor WAHA com o endereço de entrega do ConvoFlow. Agora clique no QR Code do número para conectar.',
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       logger.error('useWahaApi.createInstance falhou', { message });
-      toast({ title: 'Erro', description: message, variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: message, variant: 'destructive' });
       throw err;
     } finally {
       setLoading(false);

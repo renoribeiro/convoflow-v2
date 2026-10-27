@@ -54,13 +54,13 @@ export const TELAS: readonly Tela[] = [
   // Consulta só de leitura dos templates aprovados na Meta: o atendente
   // precisa dela antes de responder fora da janela de 24 horas.
   { chave: 'templates', nome: 'Templates', grupo: 'marketing', modulo: null, capacidade: null },
-  { chave: 'followups', nome: 'Follow-ups', grupo: 'marketing', modulo: 'followups', capacidade: 'contacts.manage' },
+  { chave: 'followups', nome: 'Follow ups', grupo: 'marketing', modulo: 'followups', capacidade: 'contacts.manage' },
   { chave: 'automation', nome: 'Automação', grupo: 'marketing', modulo: 'automation', capacidade: 'automations.operate' },
 
   // Tudo nesta tela exige configurar o WhatsApp (o servidor recusa o resto:
   // policies whatsapp_instances_tenant_insert/update/delete). O atendente vê
   // a situação dos números no Dashboard.
-  { chave: 'whatsapp-numbers', nome: 'Instâncias e APIs', grupo: 'configuracao', modulo: 'whatsapp-numbers', capacidade: 'whatsapp.configure' },
+  { chave: 'whatsapp-numbers', nome: 'Números de WhatsApp', grupo: 'configuracao', modulo: 'whatsapp-numbers', capacidade: 'whatsapp.configure' },
   { chave: 'settings', nome: 'Configurações', grupo: 'configuracao', modulo: null, capacidade: null },
   { chave: 'help', nome: 'Ajuda', grupo: 'configuracao', modulo: null, capacidade: null },
 

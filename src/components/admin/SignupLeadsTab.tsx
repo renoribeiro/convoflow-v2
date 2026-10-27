@@ -227,14 +227,14 @@ export function SignupLeadsTab() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">E-mails de login barrados (7 dias)</CardTitle>
+            <CardTitle className="text-sm font-medium">Emails de login barrados (7 dias)</CardTitle>
             <MailWarning className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{limite7 + recusa7}</div>
             <p className="text-xs text-muted-foreground">
               {limite7} por limite por hora · {recusa7} por endereço recusado. Todos os e-mails de
-              login contam: convites, e-mails de nova senha e cadastro.
+              login contam: convites, emails de nova senha e cadastro.
             </p>
           </CardContent>
         </Card>

@@ -15,7 +15,7 @@ export const followupFormSchema = z
   .object({
     mode: followupModeEnum.default('manual'),
     contact_id: z.string().uuid('Selecione um contato'),
-    task: z.string().trim().min(1, 'Descreva a tarefa do follow-up').max(500),
+    task: z.string().trim().min(1, 'Descreva a tarefa do follow up').max(500),
     type: followupTypeEnum.default('whatsapp'),
     priority: followupPriorityEnum.default('medium'),
     due_date: z.string().min(1, 'Informe a data/hora'),

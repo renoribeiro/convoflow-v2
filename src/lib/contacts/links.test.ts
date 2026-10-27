@@ -49,7 +49,7 @@ describe('conflitos do vínculo', () => {
     expect(findLinkConflicts(wa(), ig())).toEqual([]);
   });
 
-  it('nome e e-mail só são conflito quando os DOIS lados têm valor diferente', () => {
+  it('nome e email só são conflito quando os DOIS lados têm valor diferente', () => {
     expect(findLinkConflicts(wa({ name: 'Maria' }), ig({ name: 'Maria S.' })).map((c) => c.field)).toEqual(['name']);
     expect(findLinkConflicts(wa({ name: '' }), ig({ name: 'Maria S.' }))).toEqual([]);
     expect(findLinkConflicts(wa({ email: 'a@exemplo.com.br' }), ig({ email: 'b@exemplo.com.br' })).map((c) => c.field)).toEqual(['email']);
@@ -116,7 +116,7 @@ describe('escolhas enviadas ao servidor', () => {
 });
 
 describe('o que acontece sozinho', () => {
-  it('lista etiquetas novas, notas, e-mail, campos, nome, opt-out e bloqueio', () => {
+  it('lista etiquetas novas, notas, email, campos, nome, opt-out e bloqueio', () => {
     const effects = automaticLinkEffects(
       wa({ name: '', tag_ids: ['t1'], notes: 'nota wa', custom_fields: {} }),
       ig({
@@ -133,7 +133,7 @@ describe('o que acontece sozinho', () => {
       'O nome do Instagram passa para o contato do WhatsApp, que não tinha nome.',
       '2 etiquetas do Instagram passam a valer também no WhatsApp.',
       'As notas do Instagram entram embaixo das do WhatsApp, marcadas "Do Instagram".',
-      'O e-mail do Instagram passa para o contato do WhatsApp.',
+      'O email do Instagram passa para o contato do WhatsApp.',
       '1 campo personalizado que só o Instagram tem passa para o WhatsApp.',
       'O contato pediu para sair das campanhas pelo Instagram: o WhatsApp também fica fora delas.',
       'O contato do Instagram está bloqueado: o do WhatsApp também fica bloqueado.',

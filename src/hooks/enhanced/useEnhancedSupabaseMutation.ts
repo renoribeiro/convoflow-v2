@@ -81,7 +81,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
     return {
       category: 'permission',
       isRetryable: false,
-      userMessage: 'Você não tem permissão para realizar esta ação.',
+      userMessage: 'Você não tem permissão para isso. Peça ao Gestor da Loja.',
       severity: 'high'
     };
   }
@@ -91,7 +91,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
     return {
       category: 'conflict',
       isRetryable: false,
-      userMessage: 'Este registro já existe.',
+      userMessage: 'Já existe um cadastro igual a este. Confira os dados e tente de novo.',
       severity: 'medium'
     };
   }
@@ -100,7 +100,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
     return {
       category: 'validation',
       isRetryable: false,
-      userMessage: 'Dados relacionados não encontrados.',
+      userMessage: 'Este item está ligado a outros dados e não pode ser alterado assim.',
       severity: 'medium'
     };
   }
@@ -109,7 +109,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
     return {
       category: 'validation',
       isRetryable: false,
-      userMessage: 'Dados fornecidos são inválidos.',
+      userMessage: 'Algum campo está vazio ou num formato que não vale. Confira os dados.',
       severity: 'medium'
     };
   }
@@ -119,7 +119,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
     return {
       category: 'server',
       isRetryable: true,
-      userMessage: 'Erro interno do servidor. Tentando novamente...',
+      userMessage: 'O servidor falhou. Tentando de novo...',
       severity: 'high'
     };
   }
@@ -127,7 +127,7 @@ function categorizeSupabaseMutationError(error: SupabaseError): {
   return {
     category: 'unknown',
     isRetryable: false,
-    userMessage: 'Erro inesperado. Tente novamente.',
+    userMessage: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
     severity: 'medium'
   };
 }
@@ -336,8 +336,7 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
       // Mostrar mensagem de sucesso
       if (showSuccessToast && successMessage) {
         toast({
-          title: "Sucesso",
-          description: successMessage,
+          title: successMessage,
         });
       }
 
@@ -360,7 +359,7 @@ export function useEnhancedSupabaseMutation(options: UseEnhancedSupabaseMutation
       if (!errorHandled && showErrorToast) {
         const message = errorMessage || errorInfo.userMessage;
         toast({
-          title: "Erro",
+          title: 'Não foi possível salvar',
           description: message,
           variant: "destructive",
         });

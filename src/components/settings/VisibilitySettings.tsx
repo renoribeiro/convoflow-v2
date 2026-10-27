@@ -17,9 +17,10 @@ import {
   useConversationVisibilityConfig,
   type AtendenteVisibility,
 } from '@/hooks/useConversationVisibilityConfig';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /**
- * Configurações › Escala/Transferência — o que um ATENDENTE da Loja enxerga na
+ * Configurações › Distribuição e transferência — o que um ATENDENTE da Loja enxerga na
  * caixa de entrada e se ele pode transferir conversa.
  *
  * Mesmo padrão do AttendanceSettings:
@@ -67,10 +68,9 @@ export const VisibilitySettings = () => {
         { atendente_visibility: visibility, atendente_can_transfer: canTransfer },
         { silent: true },
       );
-      toast.success('Configurações de escala salvas.');
+      toast.success('Configurações de distribuição e transferência salvas.');
     } catch (error) {
-      const detalhe = error instanceof Error ? error.message : 'tente novamente.';
-      toast.error(`Não foi possível salvar as configurações: ${detalhe}`);
+      toast.error(`Não foi possível salvar. ${motivoDoErro(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -180,7 +180,7 @@ export const VisibilitySettings = () => {
             <Label htmlFor="can-transfer">Atendente pode transferir conversas</Label>
             <p className="text-sm text-muted-foreground">
               Desligado, o atendente ainda assume conversas sem responsável, mas só Gestor ou Gerente
-              passam uma conversa para outra pessoa. A regra vale também no servidor, não só no botão.
+              passam uma conversa para outra pessoa. Vale em todo lugar, não só neste botão.
             </p>
           </div>
           <Switch

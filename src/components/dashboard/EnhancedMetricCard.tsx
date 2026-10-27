@@ -91,7 +91,8 @@ export const EnhancedMetricCard = ({
                 )}
               >
                 {positive ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
-                {Math.abs(delta!).toFixed(1)}%
+                {Math.abs(delta!).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+                <span className="ml-1 font-normal text-muted-foreground">vs período anterior</span>
               </div>
             )}
           </div>

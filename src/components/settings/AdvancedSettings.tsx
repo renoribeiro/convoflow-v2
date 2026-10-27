@@ -715,7 +715,7 @@ export const AdvancedSettings = () => {
     },
     onError: () => {
       toast({
-        title: "Erro ao salvar",
+        title: "Não foi possível salvar",
         description: "Ocorreu um erro ao salvar as configurações",
         variant: "destructive"
       });

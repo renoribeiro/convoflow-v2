@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, ArrowLeft } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { VoltarParaOndeEstava } from '@/components/shared/VoltarParaOndeEstava';
 
 /**
  * Instruções públicas de exclusão de dados. A Meta exige uma URL pública com
@@ -18,10 +18,7 @@ export default function DataDeletion() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-8">
-            <Link to="/auth" className="inline-flex items-center text-brand-primary hover:text-brand-secondary transition-colors mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
+            <VoltarParaOndeEstava />
             
             <div className="flex items-center justify-center mb-4">
               <MessageSquare className="w-8 h-8 text-brand-primary mr-3" />
@@ -33,7 +30,7 @@ export default function DataDeletion() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Instruções para Exclusão de Dados</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 12 de setembro de 2026
+                Última atualização: 27 de outubro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -50,10 +47,17 @@ export default function DataDeletion() {
                 <section>
                   <h2 className="text-xl font-semibold mb-4">2. Como solicitar a exclusão dos seus dados</h2>
                   <p className="text-muted-foreground leading-relaxed">
-                    A solicitação é feita por e-mail para <strong>contato@convoflow.com.br</strong>, com o assunto
-                    "Exclusão de dados". Informe o e-mail cadastrado na plataforma e, se houver, o número de
+                    A solicitação é feita por email para <strong>contato@convoflow.com.br</strong>, com o assunto
+                    "Exclusão de dados". Informe o email cadastrado na plataforma e, se houver, o número de
                     telefone conectado à plataforma. A plataforma não possui área de autoatendimento para
                     exclusão, por isso o pedido é processado manualmente pela nossa equipe.
+                  </p>
+                  <p className="text-muted-foreground leading-relaxed mt-3">
+                    <strong>Você só conversou com uma loja pelo WhatsApp ou pelo Instagram e não tem login no
+                    ConvoFlow?</strong> Quem guarda a sua conversa é essa loja, e é a ela que você pede a exclusão.
+                    Se preferir, escreva para <strong>contato@convoflow.com.br</strong> com o nome da loja e o
+                    número de telefone ou o perfil do Instagram que você usou: nós encaminhamos o pedido a ela e
+                    acompanhamos até a resposta.
                   </p>
                 </section>
 
@@ -62,7 +66,7 @@ export default function DataDeletion() {
                   <p className="text-muted-foreground leading-relaxed">
                     Confirmamos o recebimento do pedido em até 5 (cinco) dias úteis e concluímos a exclusão em
                     até 15 (quinze) dias corridos, contados da confirmação da sua identidade. Você recebe uma
-                    confirmação por e-mail quando a exclusão for concluída.
+                    confirmação por email quando a exclusão for concluída.
                   </p>
                 </section>
 

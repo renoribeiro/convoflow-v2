@@ -41,12 +41,12 @@ export interface RenameableInstance {
 /** Textos por canal. Os do WhatsApp são os de sempre, palavra por palavra. */
 export const RENAME_TEXTS = {
   whatsapp: {
-    title: 'Renomear instância',
+    title: 'Renomear número',
     description: 'Muda só o nome que aparece nas telas. A conexão, as conversas e o número continuam os mesmos.',
-    label: 'Nome da Instância',
-    duplicate: 'Já existe uma instância com esse nome nesta Conta.',
-    forbidden: 'Você não tem permissão para renomear esta instância.',
-    renamed: (name: string) => `Agora a instância se chama "${name}".`,
+    label: 'Nome do número',
+    duplicate: 'Já existe um número com esse nome nesta Conta. Escolha outro nome.',
+    forbidden: 'Você não pode renomear este número. Peça ao Gestor da Loja.',
+    renamed: (name: string) => `Agora o número se chama "${name}".`,
   },
   instagram: {
     title: 'Renomear conta do Instagram',
@@ -132,7 +132,7 @@ export const RenameInstanceModal = ({
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Não foi possível renomear.';
       logger.error('Falha ao renomear instância', { instanceId: instance.id, error: message });
-      toast({ title: 'Erro', description: message, variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }

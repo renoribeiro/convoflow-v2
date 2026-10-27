@@ -61,7 +61,7 @@ export const TYPE_LABELS: Record<string, string> = {
 export function rangeToSince(dateRange?: string): { since: Date; label: string } {
   const now = new Date();
   const map: Record<string, { days: number; label: string }> = {
-    today: { days: 1, label: 'Hoje' },
+    today: { days: 1, label: 'Últimas 24 horas' },
     '1day': { days: 1, label: 'Último dia' },
     '7days': { days: 7, label: 'Últimos 7 dias' },
     '14days': { days: 14, label: 'Últimos 14 dias' },
@@ -284,15 +284,16 @@ export function renderHtml(opts: { name: string; typeLabel: string; periodLabel:
       <table role="presentation" width="100%" style="border-collapse:collapse;">
         <tr>${metricCard('Contatos (total)', m.contactsTotal)}${metricCard('Novos contatos', m.contactsNew)}</tr>
         <tr>${metricCard('Conversas (total)', m.conversationsTotal)}${metricCard('Novas conversas', m.conversationsNew)}</tr>
-        <tr>${metricCard('Msgs enviadas', m.messagesSent)}${metricCard('Msgs recebidas', m.messagesReceived)}</tr>
+        <tr>${metricCard('Mensagens enviadas', m.messagesSent)}${metricCard('Mensagens recebidas', m.messagesReceived)}</tr>
       </table>
       <h2 style="font-size:15px;color:${EMAIL.ink};margin:24px 0 8px;">Resumo de mensagens</h2>
       <p style="font-size:13px;color:${EMAIL.olive};margin:0;">Total de mensagens no período: <strong>${m.messagesTotal}</strong> &middot; Conversas arquivadas: <strong>${m.conversationsArchived}</strong></p>
       <h2 style="font-size:15px;color:${EMAIL.ink};margin:24px 0 8px;">Atendimento (Loja inteira)</h2>
       ${attendanceHtml(m.attendance)}
-      <h2 style="font-size:15px;color:${EMAIL.ink};margin:24px 0 8px;">Leads por estágio do funil</h2>
+      <h2 style="font-size:15px;color:${EMAIL.ink};margin:24px 0 8px;">Contatos por etapa do funil</h2>
       <table role="presentation" width="100%" style="border-collapse:collapse;border:1px solid ${EMAIL.border};border-radius:8px;overflow:hidden;">${funnelRows}</table>
-      <p style="font-size:12px;color:${EMAIL.muted};margin:24px 0 0;border-top:1px solid ${EMAIL.border};padding-top:16px;">Este relatório foi gerado automaticamente pelo ConvoFlow com base nos dados reais da sua conta.</p>
+      <p style="font-size:12px;color:${EMAIL.muted};margin:24px 0 0;border-top:1px solid ${EMAIL.border};padding-top:16px;">Este relatório foi gerado automaticamente pelo ConvoFlow com os dados da sua Loja. <a href="https://convoflow.com.br/dashboard/reports" style="color:${EMAIL.ink};">Abrir o ConvoFlow</a>.</p>
+      <p style="font-size:12px;color:${EMAIL.muted};margin:8px 0 0;">Não quer mais receber? Peça a quem criou este envio para tirar o seu email em Relatórios, na aba Agendamentos.</p>
     </div>
   </div>
 </body></html>`;

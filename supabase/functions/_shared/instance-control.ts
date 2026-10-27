@@ -160,7 +160,7 @@ function providerFailure(provider: string, res: ProviderResponse): ControlResult
     return fail(502, 'provider_not_found',
       provider === 'waha'
         ? 'A sessão deste número não existe no seu servidor WAHA.'
-        : 'Esta instância não existe no servidor Evolution.');
+        : 'Este número não existe mais no servidor de WhatsApp do ConvoFlow. Exclua e conecte de novo.');
   }
   return fail(502, 'provider_error', `O servidor do WhatsApp respondeu ${res.status}. Tente de novo em instantes.`);
 }
@@ -173,13 +173,13 @@ const ok2xx = (r: ProviderResponse) => !r.blocked && !r.networkError && r.status
 export function gate(deps: Pick<ControlDeps, 'caller' | 'instance' | 'instanceTenant'>): ControlResult | null {
   const { caller, instance, instanceTenant } = deps;
   if (!caller || !caller.tenant_id) return fail(403, 'no_profile', 'Perfil sem Conta vinculada.');
-  if (!instance) return fail(404, 'not_found', 'Instância não encontrada.');
+  if (!instance) return fail(404, 'not_found', 'Número não encontrado. Recarregue a página.');
 
   const access = decideInstanceAccess(caller, instance, instanceTenant);
   if (!access.allowed) {
     if (access.reason === 'inactive') return fail(403, 'inactive', statusDenialMessage(caller.status ?? ''));
     // Outra Conta: a mesma resposta de "não existe".
-    return fail(404, 'not_found', 'Instância não encontrada.');
+    return fail(404, 'not_found', 'Número não encontrado. Recarregue a página.');
   }
   if (!can(caller.role, 'whatsapp.configure', caller.capabilities as Record<string, unknown> | null)) {
     return fail(403, 'forbidden', CAPABILITY_DENIAL_MESSAGES['whatsapp.configure']);
@@ -328,7 +328,7 @@ async function doReplaceKey(
   if (provider === 'evolution') {
     const global = (deps.env.evolutionGlobalKey || '').trim();
     if (global && newKey === global) {
-      return fail(400, 'global_key', 'Essa é a chave do servidor inteiro, não a deste número. Use a chave da instância.');
+      return fail(400, 'global_key', 'Essa é a chave do servidor inteiro, não a deste número. Use a chave do número.');
     }
     baseUrl = trimSlash(current?.baseUrl || deps.env.evolutionBaseUrl || '');
     if (!baseUrl) return fail(503, 'server_misconfigured', 'O servidor Evolution da plataforma não está configurado.');

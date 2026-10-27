@@ -57,12 +57,15 @@ export const emReais = (centavos: number): string =>
   (centavos / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }).replace(/\u00a0/g, ' ');
 
 /** O que o plano entrega. Usado no paywall do Gerente. */
+// A mesma lista na aba Assinatura e na tela de bloqueio (achado 117).
 export const PLAN_FEATURES = [
-  'Conversas e multi-atendimento',
+  'Conversas com toda a equipe atendendo',
   'Contatos e Funil de Vendas',
   'Chatbots e Automação',
-  'Campanhas e Follow-ups',
+  'Campanhas e Follow ups',
   'Relatórios e Rastreamento',
+  'Gestores e Atendentes em cada Loja',
+  'Troca e comparação entre Lojas',
 ] as const;
 
 // --------------------------------------------------------------- Suporte

@@ -179,7 +179,7 @@ export function BillingDashboard() {
             nota={
               overview
                 ? `Plano ${formatCents(overview.mrr.plan)} · Lojas extras ${formatCents(overview.mrr.extraStores)} · Atendentes extras ${formatCents(overview.mrr.extraAttendants ?? 0)} · Cupons −${formatCents(overview.mrr.discounts)}`
-                : 'Com lojas extras, atendentes extras e cupons'
+                : 'Com Lojas extras, atendentes extras e cupons'
             }
           />
           <Cartao
@@ -511,7 +511,7 @@ function ProximasCobrancas({ linhas, carregando }: { linhas: UpcomingCharge[]; c
       <CardHeader>
         <CardTitle className="text-base">Próximas cobranças</CardTitle>
         <CardDescription>
-          A próxima fatura de cada assinatura, já com lojas extras e cupons. Quem agendou o cancelamento não aparece: não
+          A próxima fatura de cada assinatura, já com Lojas extras e cupons. Quem agendou o cancelamento não aparece: não
           há próxima cobrança.
         </CardDescription>
       </CardHeader>

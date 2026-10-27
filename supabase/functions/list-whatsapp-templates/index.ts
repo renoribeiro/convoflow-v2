@@ -91,7 +91,7 @@ Deno.serve(async (req: Request) => {
   }
   if (instance.provider !== 'official') {
     return jsonResponse(
-      { ok: false, error: 'Esta função só atende instâncias Meta (provider=official).' },
+      { ok: false, error: 'Templates aprovados só existem em números da API Oficial.' },
       400,
     );
   }

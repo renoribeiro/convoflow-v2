@@ -515,7 +515,7 @@ export const ConversationsList = ({
                 {conversation.has_bot_session && <BotSessionBadge botName={null} size="sm" />}
                 {isNewLead && (
                   <Badge variant="outline" className="border-0 bg-accent/15 text-accent text-[10px] font-medium px-1.5">
-                    Novo Lead
+                    Contato novo
                   </Badge>
                 )}
                 {conversation.contact_source && (
@@ -559,7 +559,7 @@ export const ConversationsList = ({
       <div className="bg-card border border-border rounded-lg h-full p-4">
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Erro ao carregar conversas. Tente novamente.</AlertDescription>
+          <AlertDescription>Não foi possível carregar as conversas. Recarregue a página.</AlertDescription>
         </Alert>
       </div>
     );

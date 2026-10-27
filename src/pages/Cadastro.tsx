@@ -45,7 +45,7 @@ const VAZIO: PublicSignupInput = {
 };
 
 /** O texto único de "deu certo". Não muda com o destino do cadastro. */
-export const CADASTRO_ENVIADO_TITULO = 'Confira seu e-mail';
+export const CADASTRO_ENVIADO_TITULO = 'Confira seu email';
 
 interface CadastroProps {
   /** Só para teste: força a chave. Em produção vem de release.ts. */
@@ -148,7 +148,7 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
             {enviado ? (
               <div className="space-y-3 text-sm text-muted-foreground" data-testid="cadastro-enviado">
                 <p>
-                  Se este e-mail puder ser usado, você vai receber em alguns minutos uma mensagem do
+                  Se este email puder ser usado, você vai receber em alguns minutos uma mensagem do
                   ConvoFlow com o link para criar sua senha.
                 </p>
                 <p>Não chegou? Confira a caixa de spam e a aba Promoções.</p>
@@ -174,7 +174,7 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
                   <CampoTexto id="lastName" rotulo="Sobrenome" valor={valores.lastName} erro={erros.lastName}
                     autoComplete="family-name" onChange={(v) => mudar('lastName', v)} />
                 </div>
-                <CampoTexto id="email" rotulo="E-mail" tipo="email" valor={valores.email} erro={erros.email}
+                <CampoTexto id="email" rotulo="Email" tipo="email" valor={valores.email} erro={erros.email}
                   autoComplete="email" onChange={(v) => mudar('email', v)} />
                 <CampoTexto id="companyName" rotulo="Nome da empresa" valor={valores.companyName}
                   erro={erros.companyName} autoComplete="organization" onChange={(v) => mudar('companyName', v)} />

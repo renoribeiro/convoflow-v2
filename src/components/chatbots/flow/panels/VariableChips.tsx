@@ -49,9 +49,9 @@ const VariableChips: React.FC<Props> = ({ variables, textareaRef, onInsert, curr
             variant="outline"
             className="cursor-pointer text-[10px] hover:bg-primary/10 select-none"
             onClick={() => insert(v.token)}
-            title={v.label}
+            title={`Insere {${v.token}}`}
           >
-            {'{' + v.token + '}'}
+            {v.label}
           </Badge>
         ))}
       </div>

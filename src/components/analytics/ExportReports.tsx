@@ -107,7 +107,7 @@ const ExportReports: React.FC<ExportReportsProps> = ({ filters, data }) => {
       
       toast.success(`Relatório ${format.toUpperCase()} exportado com sucesso!`);
     } catch (error) {
-      toast.error('Erro ao exportar relatório');
+      toast.error('Não foi possível exportar o relatório. Tente de novo em instantes.');
       console.error('Export error:', error);
     } finally {
       setIsExporting(false);
@@ -143,7 +143,7 @@ const ExportReports: React.FC<ExportReportsProps> = ({ filters, data }) => {
       
       toast.success(`Relatório customizado exportado com sucesso!`);
     } catch (error) {
-      toast.error('Erro ao exportar relatório customizado');
+      toast.error('Não foi possível exportar o relatório personalizado. Tente de novo em instantes.');
       console.error('Custom export error:', error);
     } finally {
       setIsExporting(false);

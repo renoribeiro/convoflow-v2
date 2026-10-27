@@ -140,19 +140,19 @@ Deno.serve(async (req: Request) => {
 
   if (instanceError || !instance) {
     logger.warn('Instance not found', { instance_id: instanceId });
-    return jsonResponse({ success: false, error: 'Instância não encontrada' }, 404);
+    return jsonResponse({ success: false, error: 'Número não encontrado. Recarregue a página.' }, 404);
   }
 
   // Super admins can operate across tenants; regular users are restricted to their own.
   // Enum user_role usa 'superadmin'; 'super_admin' é legado aceito por compat.
   const isSuperAdmin = callerProfile.role === 'superadmin' || callerProfile.role === 'super_admin';
   if (!isSuperAdmin && instance.tenant_id !== callerProfile.tenant_id) {
-    return jsonResponse({ success: false, error: 'Acesso negado a esta instância' }, 403);
+    return jsonResponse({ success: false, error: 'Você não tem acesso a este número. Peça ao Gestor da Loja.' }, 403);
   }
 
   if (instance.provider !== 'official') {
     return jsonResponse(
-      { success: false, error: 'Esta instância não usa a API oficial da Meta' },
+      { success: false, error: 'Este número não é da API Oficial: o registro só vale para ela.' },
       400,
     );
   }
@@ -164,7 +164,7 @@ Deno.serve(async (req: Request) => {
 
   if (!phoneNumberId) {
     return jsonResponse(
-      { success: false, error: 'connection_config está incompleto: phoneNumberId ausente' },
+      { success: false, error: 'Falta o código do número na Meta. Conecte o número de novo pelo botão "Conectar com a Meta".' },
       400,
     );
   }
@@ -182,7 +182,7 @@ Deno.serve(async (req: Request) => {
       rpc_error: tokenError?.message,
     });
     return jsonResponse(
-      { success: false, error: 'Token de acesso Meta ausente. Reconfigure a instância' },
+      { success: false, error: 'A chave de acesso da Meta deste número sumiu. Conecte o número de novo pelo botão "Conectar com a Meta".' },
       400,
     );
   }
@@ -238,7 +238,7 @@ Deno.serve(async (req: Request) => {
   } catch (fetchErr: any) {
     logger.error('Network error calling Meta register endpoint', { error: fetchErr?.message });
     return jsonResponse(
-      { success: false, error: 'Erro de rede ao chamar a API da Meta: ' + (fetchErr?.message ?? '') },
+      { success: false, error: 'A Meta não respondeu. Tente de novo em instantes.' },
       502,
     );
   }
@@ -289,7 +289,8 @@ Deno.serve(async (req: Request) => {
       return jsonResponse(
         {
           success: false,
-          error: `Erro da API da Meta ao registrar o número: ${errMsg}`,
+          error: 'A Meta recusou o registro do número. Tente de novo em instantes; se continuar, fale com o suporte do ConvoFlow.',
+          meta_message: errMsg,
           meta_error_code: errCode,
           meta_fbtrace_id: metaError.fbtrace_id,
         },
@@ -303,7 +304,7 @@ Deno.serve(async (req: Request) => {
       http_status: registerHttpStatus,
     });
     return jsonResponse(
-      { success: false, error: 'Resposta inesperada da API da Meta' },
+      { success: false, error: 'A Meta respondeu de um jeito que o ConvoFlow não esperava. Tente de novo em instantes.' },
       502,
     );
   }

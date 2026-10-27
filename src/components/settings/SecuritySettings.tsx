@@ -73,7 +73,7 @@ export const SecuritySettings = () => {
     }
     const email = user?.email;
     if (!email) {
-      logger.warn('[SecuritySettings] usuário sem e-mail na sessão');
+      logger.warn('[SecuritySettings] usuário sem email na sessão');
       setErro(SENHA_ERRO_GENERICO);
       return;
     }

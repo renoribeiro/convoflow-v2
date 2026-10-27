@@ -73,7 +73,7 @@ describe('UserDetailsDialog', () => {
     render(<UserDetailsDialog row={row} activity={null} onClose={() => undefined} />);
     expect(valor('Último acesso')).toBe('Nunca entrou');
     expect(valor('Visto por último')).toBe('Nunca');
-    expect(valor('Última mensagem')).toBe('Nenhuma desde 21/09/2026');
+    expect(valor('Última mensagem')).toBe('Nenhuma registrada');
     expect(valor('IP do último login')).toBe('—');
   });
 

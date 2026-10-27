@@ -75,7 +75,7 @@ export const CONVERSATIONS_PAGE_DESCRIPTION: Record<ConversationChannel, string>
 
 /** "Todas" do seletor de instância/conta. */
 export const INSTANCE_SELECTOR_ALL_LABEL: Record<ConversationChannel, string> = {
-  whatsapp: 'Todas as instâncias',
+  whatsapp: 'Todos os números',
   instagram: 'Todas as contas do Instagram',
 };
 

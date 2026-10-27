@@ -43,8 +43,15 @@ export const FunnelMini = () => {
             <Filter className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm font-medium text-foreground">Funil vazio</p>
             <p className="text-xs text-muted-foreground">
-              Nenhum contato em estágios do funil ainda.
+              Nenhum contato numa etapa do funil ainda. Arraste os contatos para as etapas no Funil de Vendas.
             </p>
+            <button
+              type="button"
+              onClick={() => navigate('/dashboard/funnel')}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Abrir o Funil de Vendas
+            </button>
           </div>
         ) : (
           <div className="space-y-2.5">

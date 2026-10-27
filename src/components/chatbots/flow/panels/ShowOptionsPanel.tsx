@@ -50,13 +50,13 @@ const SortableOption: React.FC<SortableOptionProps> = ({ option, onUpdate, onRem
         <Input
           value={option.label}
           onChange={(e) => onUpdate(option.id, 'label', e.target.value)}
-          placeholder="Rótulo exibido"
+          placeholder="Texto que o cliente vê"
           className="h-7 text-xs"
         />
         <Input
           value={option.value}
           onChange={(e) => onUpdate(option.id, 'value', e.target.value)}
-          placeholder="Valor interno"
+          placeholder="Valor salvo na variável"
           className="h-7 text-xs"
         />
       </div>

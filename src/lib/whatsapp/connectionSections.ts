@@ -83,8 +83,8 @@ export function connectionSummary(rows: readonly ConnectionRow[], now: Date): Co
  * Instâncias"); com Instagram, "Total de conexões" e a divisão por canal.
  */
 export function totalCardTexts(summary: ConnectionSummary): { label: string; breakdown: string | null } {
-  if (summary.instagram === 0) return { label: 'Total de Instâncias', breakdown: null };
-  const wa = summary.whatsapp === 1 ? '1 instância de WhatsApp' : `${summary.whatsapp} instâncias de WhatsApp`;
+  if (summary.instagram === 0) return { label: 'Total de números', breakdown: null };
+  const wa = summary.whatsapp === 1 ? '1 número de WhatsApp' : `${summary.whatsapp} números de WhatsApp`;
   const ig = summary.instagram === 1 ? '1 conta do Instagram' : `${summary.instagram} contas do Instagram`;
   return { label: 'Total de conexões', breakdown: `${wa} · ${ig}` };
 }
@@ -101,4 +101,13 @@ export function instagramAccountHandle(row: ConnectionRow): string | null {
   const raw = typeof cfg.igUsername === 'string' && cfg.igUsername.trim() ? cfg.igUsername : row.profile_name;
   const clean = (raw ?? '').trim().replace(/^@+/, '');
   return clean ? `@${clean}` : null;
+}
+
+/** Estado do número em português (o banco guarda em inglês: open, close...). */
+export function estadoDoNumeroTexto(status: string | null | undefined): string {
+  const s = (status ?? '').toLowerCase();
+  if (s === 'open' || s === 'connected' || s === 'working') return 'Conectado';
+  if (s === 'connecting' || s === 'starting') return 'Conectando';
+  if (s === 'qrcode' || s === 'scan_qr_code') return 'Esperando o QR Code';
+  return 'Desconectado';
 }

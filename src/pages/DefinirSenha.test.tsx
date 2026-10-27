@@ -2,10 +2,10 @@
  * Tela de definir/redefinir senha, que é também o "Esqueci minha senha".
  *
  * Três jeitos de chegar (src/lib/auth/linkDoEmail.ts):
- *   - link NOVO do e-mail (?token_hash=...): só o clique em "Continuar" usa o
- *     acesso, porque robô de e-mail abre link mas não clica em botão;
+ *   - link NOVO do email (?token_hash=...): só o clique em "Continuar" usa o
+ *     acesso, porque robô de email abre link mas não clica em botão;
  *   - link ANTIGO (#access_token=...): o Supabase já usou o acesso no caminho;
- *   - visita comum: e-mail, código de 6 dígitos, senha nova.
+ *   - visita comum: email, código de 6 dígitos, senha nova.
  *
  * O alerta vermelho é só para quem chegou por um link que falhou. Até
  * 2026-10-11 ele aparecia em toda visita sem sessão e acusava um link "já
@@ -66,7 +66,7 @@ function renderTela(fim = '') {
 const alerta = () => screen.queryByText('Não deu para usar este link');
 
 async function irParaCodigo(email = 'alguem@exemplo.com') {
-  fireEvent.change(screen.getByLabelText(/seu e-mail/i), { target: { value: email } });
+  fireEvent.change(screen.getByLabelText(/seu email/i), { target: { value: email } });
   fireEvent.click(screen.getByRole('button', { name: /já tenho um código/i }));
   await screen.findByLabelText(/código recebido/i);
 }
@@ -80,6 +80,16 @@ beforeEach(() => {
   mockVerifyOtp.mockResolvedValue({ data: {}, error: null });
 });
 
+describe('link "Onde digitar" dos emails (?digitar=codigo)', () => {
+  it('abre direto no campo do código, com o email para preencher (achado 19)', () => {
+    renderTela('?digitar=codigo');
+    expect(screen.getByText('Digite o código')).toBeInTheDocument();
+    expect(screen.getByLabelText(/código recebido/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/seu email/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Enviar código' })).not.toBeInTheDocument();
+  });
+});
+
 describe('visita comum ("Esqueci minha senha")', () => {
   it('não mostra alerta de link nenhum', () => {
     renderTela();
@@ -88,16 +98,16 @@ describe('visita comum ("Esqueci minha senha")', () => {
     expect(screen.queryByText(/já foi aberto/i)).not.toBeInTheDocument();
   });
 
-  it('começa pelo e-mail, com "Enviar código" como botão principal', () => {
+  it('começa pelo email, com "Enviar código" como botão principal', () => {
     renderTela();
-    expect(screen.getByLabelText(/seu e-mail/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/seu email/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enviar código' })).toBeInTheDocument();
     expect(screen.queryByLabelText(/código recebido/i)).not.toBeInTheDocument();
   });
 
-  it('"Enviar código" manda o e-mail de nova senha para /definir-senha e pede o código', async () => {
+  it('"Enviar código" manda o email de nova senha para /definir-senha e pede o código', async () => {
     renderTela();
-    fireEvent.change(screen.getByLabelText(/seu e-mail/i), { target: { value: 'alguem@exemplo.com' } });
+    fireEvent.change(screen.getByLabelText(/seu email/i), { target: { value: 'alguem@exemplo.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
 
     await screen.findByLabelText(/código recebido/i);
@@ -107,16 +117,16 @@ describe('visita comum ("Esqueci minha senha")', () => {
     expect(screen.getByText(/Enviamos um código de 6 dígitos para alguem@exemplo.com/)).toBeInTheDocument();
   });
 
-  it('não confirma se o e-mail existe: com erro, a tela segue igual', async () => {
+  it('não confirma se o email existe: com erro, a tela segue igual', async () => {
     mockResetPasswordForEmail.mockResolvedValue({ error: { message: 'User not found' } });
     renderTela();
-    fireEvent.change(screen.getByLabelText(/seu e-mail/i), { target: { value: 'naoexiste@exemplo.com' } });
+    fireEvent.change(screen.getByLabelText(/seu email/i), { target: { value: 'naoexiste@exemplo.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
 
     await screen.findByText(/Enviamos um código de 6 dígitos para naoexiste@exemplo.com/);
   });
 
-  it('"Já tenho um código" abre o campo sem mandar e-mail', async () => {
+  it('"Já tenho um código" abre o campo sem mandar email', async () => {
     renderTela();
     await irParaCodigo();
     expect(mockResetPasswordForEmail).not.toHaveBeenCalled();
@@ -126,7 +136,7 @@ describe('visita comum ("Esqueci minha senha")', () => {
     authLoading = true;
     renderTela();
     expect(alerta()).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/seu e-mail/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/seu email/i)).not.toBeInTheDocument();
   });
 });
 
@@ -209,7 +219,7 @@ describe('código de 6 dígitos', () => {
   });
 });
 
-describe('link NOVO do e-mail (token_hash)', () => {
+describe('link NOVO do email (token_hash)', () => {
   it('abrir a página NÃO usa o acesso: nada de verifyOtp até o clique', () => {
     renderTela('?token_hash=hash-falso&type=recovery');
     expect(screen.getByRole('button', { name: 'Continuar' })).toBeInTheDocument();
@@ -268,7 +278,7 @@ describe('link NOVO do e-mail (token_hash)', () => {
   });
 });
 
-describe('link ANTIGO do e-mail (sessão no fragmento)', () => {
+describe('link ANTIGO do email (sessão no fragmento)', () => {
   it('com a sessão criada, vai direto para a senha, sem alerta', () => {
     session = { user: { id: 'u1' } };
     renderTela('#access_token=x&refresh_token=y&type=recovery');

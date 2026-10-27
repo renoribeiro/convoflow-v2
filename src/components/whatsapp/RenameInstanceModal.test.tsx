@@ -66,7 +66,7 @@ describe('RenameInstanceModal', () => {
   it('grava só o nome — nunca a instance_key', async () => {
     const { onOpenChange, onSuccess } = renderModal();
 
-    fireEvent.change(screen.getByLabelText('Nome da Instância'), { target: { value: 'Vendas' } });
+    fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'Vendas' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
@@ -88,7 +88,7 @@ describe('RenameInstanceModal', () => {
 
   it('aplica a mesma regra de nome da criação (mínimo 3 caracteres)', async () => {
     renderModal();
-    fireEvent.change(screen.getByLabelText('Nome da Instância'), { target: { value: 'ab' } });
+    fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'ab' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByText(/pelo menos 3 caracteres/i)).toBeInTheDocument();
@@ -97,10 +97,10 @@ describe('RenameInstanceModal', () => {
 
   it('barra nome repetido na mesma Conta, ignorando maiúsculas e espaços', async () => {
     renderModal({ siblingNames: ['Suporte'] });
-    fireEvent.change(screen.getByLabelText('Nome da Instância'), { target: { value: '  suporte ' } });
+    fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: '  suporte ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
-    expect(await screen.findByText(/Já existe uma instância com esse nome/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Já existe um número com esse nome/i)).toBeInTheDocument();
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
@@ -110,14 +110,14 @@ describe('RenameInstanceModal', () => {
     updateResult = { data: null, error: null };
     const { onSuccess } = renderModal();
 
-    fireEvent.change(screen.getByLabelText('Nome da Instância'), { target: { value: 'Vendas' } });
+    fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'Vendas' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() =>
       expect(mockToast).toHaveBeenCalledWith(
         expect.objectContaining({
           variant: 'destructive',
-          description: expect.stringMatching(/permissão/i),
+          description: expect.stringMatching(/não pode renomear/i),
         }),
       ),
     );

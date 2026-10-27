@@ -165,7 +165,7 @@ export function SendTemplateDialog({
       });
 
       if (res.status !== 'sent' && res.status !== 'pending') {
-        toast.error(`Template não enviado: ${res.error || 'Erro desconhecido.'}`);
+        toast.error(`O template não foi enviado. ${res.error || 'Tente de novo em instantes.'}`);
         return;
       }
 

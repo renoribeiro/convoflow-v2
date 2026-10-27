@@ -12,22 +12,22 @@ describe('RoleDescriptionCard', () => {
   it('gestor mostra a lista inteira, sem cortar', () => {
     render(<RoleDescriptionCard role="gestor" />);
     expect(
-      screen.getByText('Administra uma loja e a equipe de atendimento dela.'),
+      screen.getByText('Administra uma Loja e a equipe de atendimento dela.'),
     ).toBeTruthy();
     expect(screen.getByText('Pode')).toBeTruthy();
     expect(screen.getByText('Não pode')).toBeTruthy();
     // Os 5 itens de `can`, incluindo o último — com MAX_VISIBLE_ITEMS = 5
     // nenhum deles cai fora.
-    expect(screen.getByText('Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)')).toBeTruthy();
-    expect(screen.getByText('Configurar o WhatsApp da loja')).toBeTruthy();
+    expect(screen.getByText('Convidar os atendentes da Loja (2 por Loja; mais com o ConvoFlow)')).toBeTruthy();
+    expect(screen.getByText('Configurar o WhatsApp da Loja')).toBeTruthy();
     expect(screen.queryByText(OVERFLOW)).toBeNull();
   });
 
   it('gestor com hideStoreCaps omite a linha do limite por loja', () => {
     render(<RoleDescriptionCard role="gestor" hideStoreCaps />);
-    expect(screen.queryByText('Convidar os atendentes da loja (2 por loja; mais com o ConvoFlow)')).toBeNull();
+    expect(screen.queryByText('Convidar os atendentes da Loja (2 por Loja; mais com o ConvoFlow)')).toBeNull();
     // O resto da lista continua lá.
-    expect(screen.getByText('Configurar o WhatsApp da loja')).toBeTruthy();
+    expect(screen.getByText('Configurar o WhatsApp da Loja')).toBeTruthy();
     expect(screen.queryByText(OVERFLOW)).toBeNull();
   });
 

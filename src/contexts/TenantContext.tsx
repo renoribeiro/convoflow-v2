@@ -13,6 +13,7 @@ import {
   roleAtLeast,
 } from '@/types/userHierarchy';
 import { clearActiveTenant, readActiveTenant, writeActiveTenant } from '@/lib/activeTenant';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 type Tenant = Tables<'tenants'>;
 type Profile = Tables<'profiles'>;
@@ -261,17 +262,13 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       setTenant(prev => prev ? { ...prev, settings: merged as typeof prev.settings } : null);
 
       if (!options?.silent) {
-        toast({
-          title: 'Sucesso',
-          description: 'Configurações atualizadas com sucesso',
-        });
+        toast({ title: 'Configurações salvas' });
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao atualizar configurações';
       if (!options?.silent) {
         toast({
-          title: 'Erro',
-          description: errorMessage,
+          title: 'Não foi possível salvar',
+          description: motivoDoErro(err),
           variant: 'destructive',
         });
       }

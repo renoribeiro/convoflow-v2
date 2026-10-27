@@ -56,7 +56,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   // Nada aqui pode empurrar a página para o lado. O grupo da esquerda é quem
   // cede (min-w-0 flex-1): dentro dele o seletor de Conta/Loja encolhe e trunca
   // o nome; busca e ícones são shrink-0. O grupo da direita nunca encolhe, mas
-  // só carrega texto (nome do usuário, "Reportar bug") a partir de lg. Medido
+  // só carrega texto (nome do usuário, "Relatar problema") a partir de lg. Medido
   // antes: +197px a 390, +118 a 768, +38 a 1024 para o gerente — sino, tema e
   // menu do usuário saíam da tela.
   return (

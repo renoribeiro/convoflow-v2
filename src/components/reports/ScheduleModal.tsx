@@ -179,8 +179,8 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
     // seria aceito e depois ignorado pelo envio, sem ninguém avisar.
     if (!EMAIL_RE.test(value)) {
       toast({
-        title: 'E-mail inválido',
-        description: 'Digite um endereço de e-mail válido, como nome@empresa.com.br.',
+        title: 'Email inválido',
+        description: 'Digite um email completo, como nome@empresa.com.br.',
         variant: 'destructive',
       });
       return;
@@ -256,7 +256,7 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
 
     if (!formData.time) {
       toast({
-        title: 'Erro de Validação',
+        title: 'Confira o formulário',
         description: 'Por favor, defina um horário.',
         variant: 'destructive',
       });
@@ -265,8 +265,8 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
 
     if (recipients.length === 0) {
       toast({
-        title: 'Erro de Validação',
-        description: 'Adicione pelo menos um e-mail de destinatário.',
+        title: 'Confira o formulário',
+        description: 'Adicione pelo menos um email de quem vai receber.',
         variant: 'destructive',
       });
       return;
@@ -275,7 +275,7 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
     // Validação específica para frequência semanal
     if (formData.frequency === 'weekly' && !formData.dayOfWeek) {
       toast({
-        title: 'Erro de Validação',
+        title: 'Confira o formulário',
         description: 'Por favor, selecione o dia da semana.',
         variant: 'destructive',
       });
@@ -285,7 +285,7 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
     // Validação específica para frequência mensal
     if (formData.frequency === 'monthly' && !formData.dayOfMonth) {
       toast({
-        title: 'Erro de Validação',
+        title: 'Confira o formulário',
         description: 'Por favor, selecione o dia do mês.',
         variant: 'destructive',
       });
@@ -319,8 +319,8 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
     } catch (error) {
       console.error('Erro ao salvar agendamento:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao salvar agendamento. Tente novamente.',
+        title: 'Não foi possível salvar o agendamento',
+        description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     }
@@ -437,7 +437,7 @@ export const ScheduleModal = ({ open, onOpenChange, schedule, onSave }: Schedule
           <div className="space-y-2">
             <h3 className="font-medium">Entrega</h3>
             <p className="text-sm text-muted-foreground">
-              O relatório é enviado por e-mail para os destinatários abaixo.
+              O relatório é enviado por email para as pessoas abaixo.
             </p>
           </div>
 

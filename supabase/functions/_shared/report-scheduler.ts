@@ -295,7 +295,7 @@ export async function runDueSchedules(
 
       try {
         if (recipients.length === 0) {
-          throw new Error('A agenda não tem nenhum destinatário de e-mail válido.');
+          throw new Error('A agenda não tem nenhum email válido para receber.');
         }
 
         // tenant_id vem SEMPRE da agenda desta iteração.

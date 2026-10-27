@@ -80,7 +80,7 @@ export default function UsersPage() {
             }
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Função" />
+              <SelectValue placeholder="Cargo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as funções</SelectItem>

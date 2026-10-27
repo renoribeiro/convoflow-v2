@@ -126,12 +126,13 @@ Deno.serve(async (req: Request) => {
         {
           ok: false,
           reason: 'has_history',
-          error: 'Chegou uma mensagem nesta instância durante a exclusão. Nada foi apagado. Feche e abra de novo para ver o histórico.',
+          error: 'Chegou uma mensagem neste número durante a exclusão. Nada foi apagado. Feche e abra de novo para ver o histórico.',
         },
         409,
       );
     }
-    return jsonResponse({ ok: false, error: `Não foi possível excluir a instância: ${rpcError.message}` }, 500);
+    logger.error('delete_whatsapp_instance falhou', { instance_id: instanceId, error: rpcError.message });
+    return jsonResponse({ ok: false, error: 'Não foi possível excluir o número. Tente de novo em instantes.' }, 500);
   }
 
   const decision = (result ?? {}) as Record<string, unknown>;

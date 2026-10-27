@@ -6,10 +6,10 @@
  * telefone), o botão avisa ANTES de a pessoa falar.
  */
 export const MOTIVOS_AUDIO_BLOQUEADO = {
-  semInstancia: 'Nenhuma instância de WhatsApp disponível para enviar áudio.',
-  desconectada: (nome: string) => `A instância "${nome}" não está conectada. Reconecte antes de enviar áudio.`,
+  semInstancia: 'Esta conversa não tem um número de WhatsApp para enviar áudio. Peça ao Gestor da Loja para conectar um.',
+  desconectada: (nome: string) => `O número "${nome}" está desconectado. Peça ao Gestor da Loja para reconectar antes de enviar áudio.`,
   janelaFechada:
-    'Fora da janela de 24h: o cliente não escreve há mais de 24 horas. Envie um template aprovado para reabrir a conversa.',
+    'O cliente não escreve há mais de 24 horas. Envie um template aprovado (mensagem pronta que a Meta aprovou) para reabrir a conversa.',
   semTelefone: 'Este contato não tem número de WhatsApp para receber o áudio.',
 } as const;
 

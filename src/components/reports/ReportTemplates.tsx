@@ -43,17 +43,20 @@ const getColorByCategory = (category: string) => {
 };
 
 // Função para traduzir categorias para português
-const translateCategory = (category: string) => {
+const translateCategory = (category: string | null | undefined) => {
   const translations: Record<string, string> = {
-    'performance': 'Performance',
+    'performance': 'Desempenho',
     'financial': 'Financeiro',
+    'financeiro': 'Financeiro',
     'traffic': 'Tráfego',
+    'tráfego': 'Tráfego',
     'conversion': 'Conversão',
+    'conversão': 'Conversão',
     'marketing': 'Marketing',
-    'analytics': 'Analytics',
+    'analytics': 'Análises',
     'crm': 'CRM'
   };
-  return translations[category?.toLowerCase()] || category || 'Geral';
+  return translations[(category ?? '').toLowerCase()] || category || 'Geral';
 };
 
 export const ReportTemplates = () => {
@@ -78,21 +81,14 @@ export const ReportTemplates = () => {
   const deleteTemplateMutation = useDeleteReportTemplate();
   
   // Categorias disponíveis
-  const categories = ['Todos', 'Performance', 'Financeiro', 'Marketing', 'Tráfego', 'Conversão'];
+  const categories = ['Todos', 'Desempenho', 'Financeiro', 'Marketing', 'Tráfego', 'Conversão'];
   
-  // Mapeamento dos botões de filtro para o valor de `category` salvo no banco.
-  const categoryMapping: Record<string, string> = {
-    'Todos': 'all',
-    'Performance': 'Performance',
-    'Financeiro': 'Financeiro',
-    'Marketing': 'Marketing',
-    'Tráfego': 'Tráfego',
-    'Conversão': 'Conversão'
-  };
-  
+  // O construtor grava a categoria em inglês (`performance`) e os modelos
+  // antigos em português (`Performance`): o filtro compara pelo nome que a
+  // tela mostra, senão o modelo salvo some do próprio filtro (achado 74).
   const filteredTemplates = selectedCategory === 'Todos' 
     ? templates 
-    : templates.filter(t => t.category === categoryMapping[selectedCategory]);
+    : templates.filter(t => translateCategory(t.category) === selectedCategory);
 
   // Gerar a partir de um template: abre o modal de Novo Relatório pré-preenchido
   // com a config do template, para o usuário completar destinatários e enviar.
@@ -131,15 +127,15 @@ export const ReportTemplates = () => {
       deleteTemplateMutation.mutate(selectedTemplate.id, {
         onSuccess: () => {
           toast({
-            title: "Template excluído",
-            description: `O template "${selectedTemplate.name}" foi excluído com sucesso.`,
+            title: "Modelo excluído",
+            description: `O modelo "${selectedTemplate.name}" foi excluído.`,
           });
           resolve();
         },
         onError: (error) => {
           toast({
-            title: "Erro ao excluir",
-            description: "Não foi possível excluir o template.",
+            title: "Não foi possível excluir",
+            description: "Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.",
             variant: "destructive",
           });
           reject(error);
@@ -321,16 +317,18 @@ export const ReportTemplates = () => {
         <Card>
           <CardContent className="p-8 text-center">
             <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum template encontrado</h3>
+            <h3 className="text-lg font-semibold mb-2">Nenhum modelo de relatório encontrado</h3>
             <p className="text-muted-foreground mb-4">
               {selectedCategory === 'Todos' 
-                ? 'Não há templates de relatórios criados ainda.' 
-                : `Não há templates na categoria "${selectedCategory}".`
+                ? 'Um modelo guarda o relatório que você usa sempre, para gerar de novo com um clique. Crie o primeiro na aba Criar.' 
+                : `Nenhum modelo na categoria "${selectedCategory}".`
               }
             </p>
-            <Button onClick={() => setSelectedCategory('Todos')}>
-              Ver todos os templates
-            </Button>
+            {selectedCategory !== 'Todos' && (
+              <Button onClick={() => setSelectedCategory('Todos')}>
+                Ver todos os modelos
+              </Button>
+            )}
           </CardContent>
         </Card>
        )}

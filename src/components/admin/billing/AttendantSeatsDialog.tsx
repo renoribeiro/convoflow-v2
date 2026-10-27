@@ -282,7 +282,7 @@ export function AttendantSeatsDialog({ conta, onOpenChange }: AttendantSeatsDial
               value={nota}
               maxLength={500}
               onChange={(e) => setNota(e.target.value)}
-              placeholder="Ex.: combinado por e-mail em 10/10"
+              placeholder="Ex.: combinado por email em 10/10"
             />
           </div>
 

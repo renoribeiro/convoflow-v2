@@ -22,7 +22,7 @@ async function abrirMenu(props: Partial<Parameters<typeof DroppableStage>[0]>) {
 describe('menu da coluna', () => {
   it('Gestor e Gerente: os quatro itens', async () => {
     await abrirMenu({ onAddLead: vi.fn(), onEditStage: vi.fn(), onConfigureStage: vi.fn(), onDeleteStage: vi.fn() });
-    for (const item of ['Adicionar Lead', 'Editar Estágio', 'Configurar Estágio', 'Excluir Estágio']) {
+    for (const item of ['Adicionar lead', 'Editar etapa', 'Configurar etapa', 'Apagar etapa']) {
       expect(screen.getByRole('menuitem', { name: item })).toBeInTheDocument();
     }
   });
@@ -31,7 +31,7 @@ describe('menu da coluna', () => {
     const onAddLead = vi.fn();
     await abrirMenu({ onAddLead });
     expect(screen.getAllByRole('menuitem')).toHaveLength(1);
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Adicionar Lead' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Adicionar lead' }));
     expect(onAddLead).toHaveBeenCalledWith(ETAPA.id);
   });
 });

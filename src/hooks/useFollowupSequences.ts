@@ -8,6 +8,7 @@ import type {
 } from '@/lib/followups/types'
 import type { SequenceFormValues } from '@/lib/validations/followup'
 import { toast } from 'sonner'
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export interface SequenceWithSteps extends FollowupSequence {
   steps: FollowupSequenceStep[]
@@ -42,7 +43,7 @@ export function useFollowupSequences() {
       }))
       setSequences(mapped)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar sequências')
+      toast.error(`Não foi possível carregar as sequências. ${motivoDoErro(err)}`)
     } finally {
       setLoading(false)
     }
@@ -94,7 +95,7 @@ export function useFollowupSequences() {
       toast.success('Sequência criada com sucesso!')
       return seq as FollowupSequence
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao criar sequência')
+      toast.error(`Não foi possível criar a sequência. ${motivoDoErro(err)}`)
       return null
     }
   }
@@ -111,7 +112,7 @@ export function useFollowupSequences() {
       toast.success('Sequência excluída')
       return true
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao excluir sequência')
+      toast.error(`Não foi possível excluir a sequência. ${motivoDoErro(err)}`)
       return false
     }
   }
@@ -127,7 +128,7 @@ export function useFollowupSequences() {
       await fetchSequences()
       return true
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar sequência')
+      toast.error(`Não foi possível atualizar a sequência. ${motivoDoErro(err)}`)
       return false
     }
   }
@@ -165,7 +166,7 @@ export function useFollowupSequences() {
       toast.success('Contato inscrito na sequência!')
       return true
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao inscrever na sequência')
+      toast.error(`Não foi possível inscrever na sequência. ${motivoDoErro(err)}`)
       return false
     }
   }

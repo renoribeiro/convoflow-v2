@@ -3,10 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Home, ArrowLeft } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NotFound = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  // Quem está logado volta ao Dashboard; visitante, à página de vendas (achado 10).
+  const { user } = useAuth();
+  const inicio = user ? '/dashboard' : '/';
 
   useEffect(() => {
     logger.warn('404: rota não encontrada', { path: location.pathname });
@@ -28,9 +32,9 @@ const NotFound = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <Button size="sm" onClick={() => navigate('/')}>
+          <Button size="sm" onClick={() => navigate(inicio)}>
             <Home className="w-4 h-4 mr-2" />
-            Ir para Home
+            Ir para o início
           </Button>
         </div>
       </div>

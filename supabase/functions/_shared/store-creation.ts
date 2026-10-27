@@ -191,10 +191,10 @@ export const STORE_NAME_MIN = 2;
 export const STORE_NAME_MAX = 60;
 
 export const STORE_NAME_MESSAGES = {
-  required: 'Informe o nome da loja.',
-  tooShort: `O nome da loja precisa ter pelo menos ${STORE_NAME_MIN} caracteres.`,
-  tooLong: `O nome da loja pode ter no máximo ${STORE_NAME_MAX} caracteres.`,
-  noAlphanumeric: 'O nome da loja precisa ter ao menos uma letra ou um número.',
+  required: 'Informe o nome da Loja.',
+  tooShort: `O nome da Loja precisa ter pelo menos ${STORE_NAME_MIN} caracteres.`,
+  tooLong: `O nome da Loja pode ter no máximo ${STORE_NAME_MAX} caracteres.`,
+  noAlphanumeric: 'O nome da Loja precisa ter ao menos uma letra ou um número.',
 } as const;
 
 export type StoreNameCheck =

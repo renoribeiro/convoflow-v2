@@ -403,7 +403,7 @@ describe('App.tsx — TelaGuard: módulo desligado', () => {
     abrir('/dashboard/campaigns');
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Tela Campaigns' })).not.toBeInTheDocument());
     expect(window.location.pathname).toBe('/dashboard/campaigns');
-    expect(await screen.findByText('Exclusivo para lojas')).toBeInTheDocument();
+    expect(await screen.findByText('Exclusivo para Lojas')).toBeInTheDocument();
   });
 });
 

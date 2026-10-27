@@ -94,7 +94,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Erro ao carregar dados de tracking: {metricsError.message}
+          Não foi possível carregar os números do rastreamento. Recarregue a página. Se continuar, fale com o suporte do ConvoFlow.
         </AlertDescription>
       </Alert>
     );
@@ -123,7 +123,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total de Leads</p>
+                  <p className="text-sm font-medium text-muted-foreground">Total de contatos</p>
                   <p className="text-3xl font-bold">{totalLeads.toLocaleString()}</p>
                   <div className="flex items-center mt-1">
                     {leadsGrowth >= 0 ? (
@@ -134,7 +134,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className={`text-sm ${leadsGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(leadsGrowth).toFixed(1)}%
                     </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
+                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -163,7 +163,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className={`text-sm ${conversionsGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(conversionsGrowth).toFixed(1)}%
                     </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
+                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -181,7 +181,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Receita Gerada</p>
+                  <p className="text-sm font-medium text-muted-foreground">Receita gerada</p>
                   <p className="text-3xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   <div className="flex items-center mt-1">
                     {revenueGrowth >= 0 ? (
@@ -192,7 +192,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className={`text-sm ${revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(revenueGrowth).toFixed(1)}%
                     </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
+                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -210,7 +210,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Taxa de Conversão</p>
+                  <p className="text-sm font-medium text-muted-foreground">Taxa de conversão</p>
                   <p className="text-3xl font-bold">{conversionRate.toFixed(1)}%</p>
                   <div className="flex items-center mt-1">
                     {rateGrowth >= 0 ? (
@@ -221,7 +221,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className={`text-sm ${rateGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {Math.abs(rateGrowth).toFixed(1)}%
                     </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs mês anterior</span>
+                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -247,7 +247,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
         {/* Performance por Fonte */}
         <Card>
           <CardHeader>
-            <CardTitle>Performance por Fonte</CardTitle>
+            <CardTitle>Resultado por fonte</CardTitle>
           </CardHeader>
           <CardContent>
             {sourcesLoading ? (
@@ -286,7 +286,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                         <div>
                           <p className="font-medium text-sm">{source.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {totalLeads} leads • {totalConversions} conversões
+                            {totalLeads} contatos • {totalConversions} conversões
                           </p>
                         </div>
                       </div>
@@ -302,7 +302,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   <div className="text-center py-8 text-muted-foreground">
                     <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>Nenhuma fonte de tráfego configurada</p>
-                    <p className="text-sm">Configure suas fontes para ver os dados aqui</p>
+                    <p className="text-sm">Cadastre a primeira em "Adicionar fonte" para ver os números aqui.</p>
                   </div>
                 )}
               </div>

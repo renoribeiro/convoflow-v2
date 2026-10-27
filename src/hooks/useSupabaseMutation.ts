@@ -3,6 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { colunasPadrao } from '@/lib/db/colunasFechadas';
+import { motivoDoErro, tituloDoErro } from '@/lib/errors/mensagemDoErro';
+import { logger } from '@/lib/logger';
 
 interface UseSupabaseMutationOptions {
   table: string;
@@ -163,10 +165,7 @@ export function useSupabaseMutation(options: UseSupabaseMutationOptions) {
 
       // Mostrar mensagem de sucesso
       if (successMessage) {
-        toast({
-          title: "Sucesso",
-          description: successMessage,
-        });
+        toast({ title: successMessage });
       }
 
       // Callback personalizado
@@ -175,20 +174,22 @@ export function useSupabaseMutation(options: UseSupabaseMutationOptions) {
       }
     },
     onError: (error, variables, context) => {
-      // Mostrar mensagem de erro
-      const message = errorMessage || error?.message || error?.details || 'Ocorreu um erro inesperado';
-      toast({
-        title: "Erro na Mutação",
-        description: `${message} (Tabela: ${table})`,
-        variant: "destructive",
-      });
+      // O detalhe técnico (tabela, código, texto do servidor) fica só no log.
+      logger.error('Gravação recusada', { table, operation, code: (error as { code?: string } | null)?.code, error: error?.message });
+
+      // Quem tem aviso próprio (onError) avisa sozinho: um aviso só na tela.
+      if (!onError || errorMessage) {
+        toast({
+          title: tituloDoErro(operation === 'delete' ? 'excluir' : 'salvar'),
+          description: errorMessage || motivoDoErro(error),
+          variant: "destructive",
+        });
+      }
 
       // Callback personalizado
       if (onError) {
         onError(error, variables, context);
       }
-
-      console.error('Erro na mutação:', error);
     },
   });
 }

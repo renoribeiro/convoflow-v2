@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { mensagemDaEdgeFunction } from '@/lib/edgeFunctionError';
+import { logger } from '@/lib/logger';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/lib/queryClient';
 import { useTenant as useTenantCtx } from '@/contexts/TenantContext';
@@ -25,6 +26,7 @@ import { useTenant as useTenantCtx } from '@/contexts/TenantContext';
 import {
   criarSessaoDeCheckout,
   INCLUDED_SLOTS,
+  PLAN_FEATURES,
   PLAN_NAME,
   PLAN_PRICE_LABEL,
   SLOT_PRICE_LABEL,
@@ -203,10 +205,10 @@ export const SubscriptionSettings = () => {
       // configurada, capacidade negada) em vez da genérica "non-2xx".
       window.location.href = await criarSessaoDeCheckout(body);
     } catch (error: any) {
-      console.error('Checkout error:', error);
+      logger.error('Checkout error', { error: error?.message });
       toast({
-        title: 'Erro ao iniciar checkout',
-        description: error.message || 'Tente novamente mais tarde.',
+        title: 'Não foi possível abrir o pagamento',
+        description: error.message || 'Tente de novo em alguns minutos.',
         variant: 'destructive',
       });
     } finally {
@@ -253,7 +255,7 @@ export const SubscriptionSettings = () => {
       toast({
         title: 'Lojas adicionais contratadas',
         description: capacidade
-          ? `Sua Conta passa a ter ${capacidade} lojas. A diferença entra na próxima fatura.`
+          ? `Sua Conta passa a ter ${capacidade} Lojas. A diferença entra na próxima fatura.`
           : 'A diferença entra na próxima fatura.',
       });
 
@@ -263,8 +265,8 @@ export const SubscriptionSettings = () => {
       queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TENANT] });
     } catch (err: any) {
       toast({
-        title: 'Erro ao contratar Lojas',
-        description: err.message || 'Tente novamente mais tarde.',
+        title: 'Não foi possível contratar as Lojas',
+        description: err.message || 'Tente de novo em alguns minutos.',
         variant: 'destructive',
       });
     } finally {
@@ -381,14 +383,12 @@ export const SubscriptionSettings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>Seu Plano Atual</span>
+            <span>Seu plano</span>
             {situacao.badge ? (
               <Badge className={BADGE_CLASS[situacao.badge.tone]}>{situacao.badge.label}</Badge>
-            ) : (
-              <Badge variant="outline">{conta.plan_type?.toUpperCase() || 'BASIC'}</Badge>
-            )}
+            ) : null}
           </CardTitle>
-          <CardDescription>Gerencie sua assinatura e faturamento</CardDescription>
+          <CardDescription>A situação do pagamento da Conta e o que o plano inclui</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
@@ -420,17 +420,13 @@ export const SubscriptionSettings = () => {
             </div>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> {INCLUDED_SLOTS} lojas incluídas
+                <Check className="w-4 h-4 text-green-500" /> {INCLUDED_SLOTS} Lojas incluídas
               </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> Alternância e comparação entre lojas
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> Automação, Chatbots e Campanhas
-              </li>
-              <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> Gestores e Atendentes por loja
-              </li>
+              {PLAN_FEATURES.map((f) => (
+                <li key={f} className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-green-500" /> {f}
+                </li>
+              ))}
               <li className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-500" /> Loja adicional por {SLOT_PRICE_LABEL}/mês
               </li>
@@ -479,6 +475,12 @@ export const SubscriptionSettings = () => {
                 </span>
               ) : null}
             </>
+          ) : isSuperAdmin && !isGerente ? (
+            // O checkout é da Conta e quem paga é o Gerente dela: o do superadmin
+            // falharia no servidor (achado 116).
+            <span className="text-xs text-muted-foreground" data-testid="assinar-so-gerente">
+              Só o Gerente da Conta assina, entrando com o login dele.
+            </span>
           ) : (
             <>
               {!podeIrAoCheckout && !dadosFiscais.carregando ? (
@@ -492,7 +494,7 @@ export const SubscriptionSettings = () => {
                 className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
               >
                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                Assinar Agora por {PLAN_PRICE_LABEL}/mês
+                Assinar por {PLAN_PRICE_LABEL}/mês
               </Button>
             </>
           )}
@@ -545,10 +547,10 @@ export const SubscriptionSettings = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Store className="w-5 h-5" /> Lojas do seu grupo
+              <Store className="w-5 h-5" /> Lojas da sua Conta
             </CardTitle>
             <CardDescription>
-              Seu plano inclui {includedSlots} lojas. Contrate lojas extras por {SLOT_PRICE_LABEL}/mês cada.
+              Seu plano inclui {includedSlots} Lojas. Contrate Lojas extras por {SLOT_PRICE_LABEL}/mês cada.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -570,7 +572,7 @@ export const SubscriptionSettings = () => {
           <CardFooter className="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-end">
             <div className="flex items-center gap-2">
               <label htmlFor="extra-slots" className="text-sm text-muted-foreground">
-                Quantas lojas extras?
+                Quantas Lojas extras?
               </label>
               <Input
                 id="extra-slots"
@@ -588,7 +590,7 @@ export const SubscriptionSettings = () => {
               disabled={buyingSlots || (!temAssinatura && !podeIrAoCheckout)}
             >
               {buyingSlots ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Contratar {extraSlots} loja{extraSlots > 1 ? 's' : ''} por {SLOT_PRICE_LABEL}/mês cada
+              Contratar {extraSlots} Loja{extraSlots > 1 ? 's' : ''} por {SLOT_PRICE_LABEL}/mês cada
             </Button>
           </CardFooter>
         </Card>
@@ -601,18 +603,18 @@ export const SubscriptionSettings = () => {
         isOpen={confirmarLojas}
         onClose={() => setConfirmarLojas(false)}
         onConfirm={handleBuySlots}
-        title={`Contratar ${extraSlots} loja${extraSlots > 1 ? 's' : ''} extra${extraSlots > 1 ? 's' : ''}?`}
+        title={`Contratar ${extraSlots} Loja${extraSlots > 1 ? 's' : ''} extra${extraSlots > 1 ? 's' : ''}?`}
         description={
           <>
             <p>
-              Sua Conta passa de {totalSlots} para {totalSlots + extraSlots} lojas. Cada loja extra custa {SLOT_PRICE_LABEL} por
+              Sua Conta passa de {totalSlots} para {totalSlots + extraSlots} Lojas. Cada Loja extra custa {SLOT_PRICE_LABEL} por
               mês: são {emReais(extraSlots * SLOT_PRICE_CENTAVOS)} a mais por mês, no mesmo cartão da assinatura.
             </p>
             <p>A diferença proporcional deste mês entra na próxima fatura.</p>
-            <p>Para reduzir as lojas extras depois, escreva para contato@convoflow.com.br.</p>
+            <p>Para reduzir as Lojas extras depois, escreva para contato@convoflow.com.br.</p>
           </>
         }
-        confirmText={`Contratar ${extraSlots} loja${extraSlots > 1 ? 's' : ''} por ${emReais(extraSlots * SLOT_PRICE_CENTAVOS)}/mês`}
+        confirmText={`Contratar ${extraSlots} Loja${extraSlots > 1 ? 's' : ''} por ${emReais(extraSlots * SLOT_PRICE_CENTAVOS)}/mês`}
         isLoading={buyingSlots}
         icon={<Store className="h-5 w-5" />}
       />

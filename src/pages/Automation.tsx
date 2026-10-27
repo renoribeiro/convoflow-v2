@@ -74,9 +74,9 @@ const Automation = () => {
     select: 'id, name, description, active, trigger_type, trigger_config, steps, created_at, updated_at',
   });
 
-  const deleteFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'delete', invalidateQueries: [['automation-flows']], successMessage: 'Fluxo excluído com sucesso!' });
-  const toggleFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'update', invalidateQueries: [['automation-flows']], successMessage: 'Status do fluxo atualizado!' });
-  const duplicateFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'insert', invalidateQueries: [['automation-flows']], successMessage: 'Fluxo duplicado com sucesso!' });
+  const deleteFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'delete', invalidateQueries: [['automation-flows']], successMessage: 'Automação excluída com sucesso!' });
+  const toggleFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'update', invalidateQueries: [['automation-flows']], successMessage: 'Situação da automação atualizado!' });
+  const duplicateFlowMutation = useSupabaseMutation({ table: 'automation_flows', operation: 'insert', invalidateQueries: [['automation-flows']], successMessage: 'Automação duplicada com sucesso!' });
 
   const triggerTypesPresent = useMemo(
     () => Array.from(new Set(flows.map((f) => f.trigger_type).filter(Boolean))),
@@ -106,7 +106,7 @@ const Automation = () => {
       await deleteFlowMutation.mutateAsync({ data: deleteTarget.id, options: { filter: { column: 'id', operator: 'eq', value: deleteTarget.id } } } as any);
       setDeleteTarget(null);
     } catch {
-      toast({ title: 'Erro', description: 'Erro ao excluir fluxo', variant: 'destructive' });
+      toast({ title: 'Não foi possível excluir a automação', description: 'Tente de novo em instantes.', variant: 'destructive' });
     }
   };
 
@@ -114,7 +114,7 @@ const Automation = () => {
     try {
       await toggleFlowMutation.mutateAsync({ data: { active: !currentStatus }, options: { filter: { column: 'id', operator: 'eq', value: flowId } } });
     } catch {
-      toast({ title: 'Erro', description: 'Erro ao alterar status do fluxo', variant: 'destructive' });
+      toast({ title: 'Não foi possível ligar ou desligar a automação', description: 'Tente de novo em instantes.', variant: 'destructive' });
     }
   };
 
@@ -124,7 +124,7 @@ const Automation = () => {
         data: { name: `${flow.name} (Cópia)`, description: flow.description, active: false, trigger_type: flow.trigger_type, trigger_config: flow.trigger_config, steps: flow.steps },
       });
     } catch {
-      toast({ title: 'Erro', description: 'Erro ao duplicar fluxo', variant: 'destructive' });
+      toast({ title: 'Não foi possível duplicar a automação', description: 'Tente de novo em instantes.', variant: 'destructive' });
     }
   };
 
@@ -163,17 +163,17 @@ const Automation = () => {
       <PageHeader
         title="Automação"
         helpKey="page:automation"
-        description="Crie e gerencie fluxos de automação para otimizar seu atendimento"
+        description="Ações que o ConvoFlow faz sozinho quando algo acontece: mandar mensagem, mudar de etapa, agendar follow up"
         breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Automação' }]}
-        actions={<Button size="sm" onClick={() => setShowBuilder(true)}><Plus className="h-4 w-4 mr-2" />Novo Fluxo</Button>}
+        actions={<Button size="sm" onClick={() => setShowBuilder(true)}><Plus className="h-4 w-4 mr-2" />Nova automação</Button>}
       />
 
       {/* Métricas */}
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { title: 'Total de Fluxos', value: totalFlows, icon: Workflow, color: 'text-muted-foreground', hint: 'Fluxos criados' },
-          { title: 'Fluxos Ativos', value: activeFlows, icon: Play, color: 'text-emerald-600', hint: 'Executando automaticamente' },
-          { title: 'Fluxos Inativos', value: inactiveFlows, icon: Pause, color: 'text-amber-600', hint: 'Pausados ou em configuração' },
+          { title: 'Total de automações', value: totalFlows, icon: Workflow, color: 'text-muted-foreground', hint: 'Automações criadas' },
+          { title: 'Ativas', value: activeFlows, icon: Play, color: 'text-emerald-600', hint: 'Rodando sozinhas' },
+          { title: 'Inativas', value: inactiveFlows, icon: Pause, color: 'text-amber-600', hint: 'Pausadas ou em configuração' },
           { title: 'Taxa de Sucesso', value: overallSuccess, icon: TrendingUp, color: 'text-sky-600', hint: 'Execuções bem-sucedidas' },
         ].map((m) => (
           <Card key={m.title}>
@@ -182,7 +182,7 @@ const Automation = () => {
               <m.icon className={cn('h-4 w-4', m.color)} />
             </CardHeader>
             <CardContent>
-              <div className={cn('text-2xl font-bold', m.title !== 'Total de Fluxos' && m.color)}>{m.value}</div>
+              <div className={cn('text-2xl font-bold', m.title !== 'Total de automações' && m.color)}>{m.value}</div>
               <p className="text-xs text-muted-foreground">{m.hint}</p>
             </CardContent>
           </Card>
@@ -194,7 +194,7 @@ const Automation = () => {
         <CardContent className="flex flex-wrap items-center gap-3 p-4">
           <div className="relative min-w-[200px] flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input placeholder="Buscar fluxos..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input placeholder="Buscar automações..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
           </div>
 
           <div className="flex items-center gap-1 rounded-md border p-0.5">
@@ -243,9 +243,9 @@ const Automation = () => {
           <CardContent className="py-0">
             <EmptyState
               icon={<Workflow className="h-10 w-10" />}
-              title={searchTerm || filterStatus !== 'all' || filterTrigger !== 'all' ? 'Nenhum fluxo encontrado' : 'Nenhum fluxo de automação criado'}
-              description={searchTerm || filterStatus !== 'all' || filterTrigger !== 'all' ? 'Tente ajustar os filtros' : 'Crie seu primeiro fluxo para automatizar o atendimento'}
-              action={!searchTerm && filterStatus === 'all' && filterTrigger === 'all' ? { label: 'Criar Primeiro Fluxo', onClick: () => setShowBuilder(true), icon: <Plus className="h-4 w-4 mr-2" /> } : undefined}
+              title={searchTerm || filterStatus !== 'all' || filterTrigger !== 'all' ? 'Nenhuma automação encontrada' : 'Nenhuma automação criada ainda'}
+              description={searchTerm || filterStatus !== 'all' || filterTrigger !== 'all' ? 'Tente mudar os filtros' : 'Comece por um gatilho (por exemplo, mudança de etapa) e diga o que o ConvoFlow faz sozinho quando ele acontecer.'}
+              action={!searchTerm && filterStatus === 'all' && filterTrigger === 'all' ? { label: 'Criar a primeira automação', onClick: () => setShowBuilder(true), icon: <Plus className="h-4 w-4 mr-2" /> } : undefined}
             />
           </CardContent>
         </Card>
@@ -315,7 +315,7 @@ const Automation = () => {
             {/* Cartão no celular: nome + gatilho lideram, status vira chip,
                 as quatro métricas viram campos e as ações ficam no canto. */}
             <ResponsiveTable
-              ariaLabel="Fluxos de automação"
+              ariaLabel="Automações"
               rows={visibleFlows as unknown as AutomationFlow[]}
               rowKey={(flow) => flow.id}
               onRowClick={(flow) => openEdit(flow.id)}
@@ -323,7 +323,7 @@ const Automation = () => {
               columns={[
                 {
                   key: 'fluxo',
-                  header: 'Fluxo',
+                  header: 'Automação',
                   card: 'title',
                   cell: (flow) => {
                     const entry = getCatalogEntry(flow.trigger_type);
@@ -384,8 +384,8 @@ const Automation = () => {
         isOpen={deleteTarget !== null}
         onConfirm={handleDeleteFlow}
         onClose={() => setDeleteTarget(null)}
-        title="Excluir Fluxo"
-        description={`Tem certeza que deseja excluir o fluxo "${deleteTarget?.name}"? Esta ação não pode ser desfeita.`}
+        title="Excluir automação"
+        description={`A automação "${deleteTarget?.name}" para de rodar e é apagada. Isso não pode ser desfeito.`}
         confirmText="Excluir"
         cancelText="Cancelar"
         variant="destructive"

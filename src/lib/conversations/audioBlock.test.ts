@@ -16,13 +16,13 @@ describe('motivoAudioBloqueado: o microfone avisa antes de gravar', () => {
 
   it('janela de 24h fechada (número oficial): trava com o caminho do template', () => {
     expect(motivoAudioBloqueado({ ...liberado, foraDaJanela24h: true })).toBe(
-      'Fora da janela de 24h: o cliente não escreve há mais de 24 horas. Envie um template aprovado para reabrir a conversa.',
+      'O cliente não escreve há mais de 24 horas. Envie um template aprovado (mensagem pronta que a Meta aprovou) para reabrir a conversa.',
     );
   });
 
   it('número desconectado: trava dizendo qual instância', () => {
     expect(motivoAudioBloqueado({ ...liberado, conectada: false })).toBe(
-      'A instância "Principal" não está conectada. Reconecte antes de enviar áudio.',
+      'O número "Principal" está desconectado. Peça ao Gestor da Loja para reconectar antes de enviar áudio.',
     );
   });
 

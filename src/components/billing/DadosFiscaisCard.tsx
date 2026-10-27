@@ -50,7 +50,7 @@ export function DadosFiscaisCard({ contaId, podeEditar, obrigatorio = false, ema
     </span>
   );
   const descricao = podeEditar
-    ? 'A nota fiscal de cada cobrança sai com estes dados e chega neste e-mail. Só o Gerente da Conta vê e altera.'
+    ? 'A nota fiscal de cada cobrança sai com estes dados e chega neste email. Só o Gerente da Conta vê e altera.'
     : 'Os dados que a Conta informou para a nota fiscal. Só o Gerente da Conta altera.';
 
   const corpo = carregando ? (
@@ -95,7 +95,7 @@ export function DadosFiscaisCard({ contaId, podeEditar, obrigatorio = false, ema
           <dd className="break-words">{enderecoResumido(dados)}</dd>
         </div>
         <div className="sm:col-span-2">
-          <dt className="text-muted-foreground">E-mail da nota</dt>
+          <dt className="text-muted-foreground">Email da nota</dt>
           <dd className="break-all">{dados.invoice_email}</dd>
         </div>
       </dl>

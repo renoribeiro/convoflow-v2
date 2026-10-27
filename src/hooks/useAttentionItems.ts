@@ -4,6 +4,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { subHours, subDays } from 'date-fns';
 import { toast } from 'sonner';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /**
  * "Precisa de Atenção" — itens acionáveis do Dashboard, unificados e ordenados
@@ -208,11 +209,11 @@ export function useAttentionItems(): UseAttentionItemsResult {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Follow-up concluído!');
+      toast.success('Follow up concluído!');
       queryClient.invalidateQueries({ queryKey: ['dashboard-attention'] });
     },
     onError: (err: unknown) => {
-      toast.error(err instanceof Error ? err.message : 'Erro ao concluir follow-up');
+      toast.error(`Não foi possível concluir o follow up. ${motivoDoErro(err)}`);
     },
   });
 

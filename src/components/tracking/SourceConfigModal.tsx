@@ -78,16 +78,15 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: "Copiado!",
-      description: "Link copiado para a área de transferência.",
+      title: "Link copiado",
     });
   };
 
   const handleSave = () => {
     if (!formData.name.trim()) {
       toast({
-        title: "Erro",
-        description: "Nome da fonte é obrigatório.",
+        title: "Confira o formulário",
+        description: "Dê um nome à fonte.",
         variant: "destructive",
       });
       return;
@@ -162,7 +161,7 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="utmSource">UTM Source</Label>
+                  <Label htmlFor="utmSource">Origem (utm_source)</Label>
                   <Input
                     id="utmSource"
                     value={formData.utmSource}
@@ -172,7 +171,7 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="utmMedium">UTM Medium</Label>
+                  <Label htmlFor="utmMedium">Meio (utm_medium)</Label>
                   <Input
                     id="utmMedium"
                     value={formData.utmMedium}
@@ -182,7 +181,7 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="utmCampaign">UTM Campaign</Label>
+                  <Label htmlFor="utmCampaign">Campanha (utm_campaign)</Label>
                   <Input
                     id="utmCampaign"
                     value={formData.utmCampaign}

@@ -147,7 +147,7 @@ const TransferAgentPanel: React.FC<Props> = ({ data, onChange }) => {
         <p className="text-xs text-muted-foreground">
           {data.assign_to === 'specific_user'
             ? 'A conversa passa a ser dessa pessoa, se ela ainda não tiver responsável. Conversa que já tem responsável fica com quem está.'
-            : 'A conversa segue para o rodízio da Loja, se ele estiver ligado; senão fica sem responsável, na fila.'}
+            : 'A conversa segue para a distribuição automática da Loja, se ela estiver ligada; senão fica sem responsável, na fila.'}
         </p>
       </div>
 
@@ -189,8 +189,8 @@ const TransferAgentPanel: React.FC<Props> = ({ data, onChange }) => {
               <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
               <span>
                 Este bloco aponta para alguém que não pode mais receber conversas ({unavailableReason(stored, tenant?.id)}).
-                Enquanto ficar assim, a conversa vai para o rodízio da Loja, ou fica sem responsável, se ele
-                estiver desligado. Escolha outra pessoa.
+                Enquanto ficar assim, a conversa vai para a distribuição automática da Loja, ou fica sem responsável, se ela
+                estiver desligada. Escolha outra pessoa.
               </span>
             </p>
           )}

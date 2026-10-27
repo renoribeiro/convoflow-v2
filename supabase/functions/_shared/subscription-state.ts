@@ -293,7 +293,7 @@ export function checkoutBlockReason(status: string | null | undefined): string |
     case 'trialing':
       return 'Esta Conta já está no período de teste. A cobrança começa sozinha no fim do teste; não é preciso assinar de novo.';
     case 'past_due':
-      return 'Esta Conta já tem uma assinatura, com um pagamento pendente. Atualize o cartão pelo link do e-mail do Stripe em vez de assinar de novo.';
+      return 'Esta Conta já tem uma assinatura, com um pagamento pendente. Atualize o cartão pelo link do email do Stripe em vez de assinar de novo.';
     default:
       return null;
   }

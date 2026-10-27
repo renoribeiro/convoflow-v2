@@ -105,7 +105,7 @@ function renderSwitcher() {
 }
 
 async function abrirSeletor(user: ReturnType<typeof userEvent.setup>) {
-  const trigger = await screen.findByRole('combobox', { name: 'Selecionar loja' });
+  const trigger = await screen.findByRole('combobox', { name: 'Escolher Loja' });
   trigger.focus();
   await user.keyboard('{Enter}');
   return screen.findByRole('listbox');
@@ -116,7 +116,7 @@ describe('StoreSwitcher — voltar para a Conta', () => {
     const user = userEvent.setup();
     renderSwitcher();
     await waitFor(() => expect(screen.getByTestId('em-foco')).toHaveTextContent('Conta Teste Gerente'));
-    expect(screen.getByRole('combobox', { name: 'Selecionar loja' })).toHaveTextContent('Selecionar loja');
+    expect(screen.getByRole('combobox', { name: 'Escolher Loja' })).toHaveTextContent('Escolher Loja');
 
     await abrirSeletor(user);
     expect(screen.getByRole('option', { name: 'Loja Teste' })).toBeInTheDocument();
@@ -149,7 +149,7 @@ describe('StoreSwitcher — voltar para a Conta', () => {
     expect(localStorage.getItem(KEY)).toBeNull();
     // O seletor volta ao estado "nenhuma Loja" — e o item some de novo.
     await waitFor(() =>
-      expect(screen.getByRole('combobox', { name: 'Selecionar loja' })).toHaveTextContent('Selecionar loja'),
+      expect(screen.getByRole('combobox', { name: 'Escolher Loja' })).toHaveTextContent('Escolher Loja'),
     );
     await abrirSeletor(user);
     expect(screen.queryByRole('option', { name: /Voltar para a Conta/ })).not.toBeInTheDocument();

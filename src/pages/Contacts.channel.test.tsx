@@ -77,7 +77,7 @@ describe('Contatos — Loja sem Instagram (como a VagaCerta)', () => {
     render(<Contacts />);
     expect(screen.queryByRole('group', { name: 'Canal dos contatos' })).not.toBeInTheDocument();
     expect(seen.table!.channel).toBe('all');
-    expect(seen.selector!.allLabel).toBe('Todas as instâncias');
+    expect(seen.selector!.allLabel).toBe('Todos os números');
     expect(seen.selector!.instances.map((i) => i.row.id)).toEqual(['wa-inst']);
     expect(seen.filters!.searchByHandle).toBe(false);
   });
@@ -111,6 +111,6 @@ describe('Contatos — Loja com Instagram', () => {
     fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
     expect(seen.table!.channel).toBe('whatsapp');
     expect(seen.selector!.instances.map((i) => i.row.id)).toEqual(['wa-inst']);
-    expect(seen.selector!.allLabel).toBe('Todas as instâncias');
+    expect(seen.selector!.allLabel).toBe('Todos os números');
   });
 });

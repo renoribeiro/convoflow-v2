@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export interface Contact {
   id: string;
@@ -69,8 +70,8 @@ export function useContacts() {
       setContacts(formattedContacts);
     } catch (error: any) {
       toast({
-        title: 'Erro ao carregar contatos',
-        description: error.message,
+        title: 'Não foi possível carregar os contatos',
+        description: motivoDoErro(error),
         variant: 'destructive'
       });
     } finally {
@@ -97,8 +98,11 @@ export function useContacts() {
       return data;
     } catch (error: any) {
       toast({
-        title: 'Erro ao criar contato',
-        description: error.message,
+        title: 'Não foi possível criar o contato',
+        // Telefone repetido é o caso comum (achado 52): diz qual é o problema.
+        description: error?.code === '23505'
+          ? 'Já existe um contato com este telefone nesta Loja. Procure por ele na lista.'
+          : motivoDoErro(error),
         variant: 'destructive'
       });
       throw error;
@@ -122,8 +126,8 @@ export function useContacts() {
       await fetchContacts();
     } catch (error: any) {
       toast({
-        title: 'Erro ao atualizar contato',
-        description: error.message,
+        title: 'Não foi possível atualizar o contato',
+        description: motivoDoErro(error),
         variant: 'destructive'
       });
       throw error;
@@ -147,8 +151,8 @@ export function useContacts() {
       await fetchContacts();
     } catch (error: any) {
       toast({
-        title: 'Erro ao remover contato',
-        description: error.message,
+        title: 'Não foi possível excluir o contato',
+        description: motivoDoErro(error),
         variant: 'destructive'
       });
       throw error;

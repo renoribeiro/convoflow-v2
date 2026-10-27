@@ -78,7 +78,7 @@ export const CTASection = () => {
             </p>
           ) : null}
           <p className="text-xs sm:text-sm mt-4 sm:mt-6 opacity-75 px-4 sm:px-0">
-            ⚡ No ar no mesmo dia • 🛡️ Seguro e confiável • ✉️ Suporte brasileiro
+            ⚡ Cancele quando quiser • 🛡️ Seguro e confiável • ✉️ Suporte brasileiro
           </p>
         </motion.div>
       </div>

@@ -128,8 +128,8 @@ export const useChatbots = () => {
     onError: (error) => {
       logger.error('Failed to create chatbot:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao criar chatbot. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível criar o chatbot. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }
@@ -164,8 +164,8 @@ export const useChatbots = () => {
     onError: (error) => {
       logger.error('Failed to update chatbot:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao atualizar chatbot. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível salvar o chatbot. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }
@@ -196,8 +196,8 @@ export const useChatbots = () => {
     onError: (error) => {
       logger.error('Failed to delete chatbot:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao excluir chatbot. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível excluir o chatbot. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }
@@ -230,8 +230,8 @@ export const useChatbots = () => {
     onError: (error) => {
       logger.error('Failed to toggle chatbot status:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao alterar status do chatbot. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível ligar ou desligar o chatbot. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }
@@ -274,8 +274,8 @@ export const useChatbots = () => {
     onError: (error) => {
       logger.error('Failed to duplicate chatbot:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao duplicar chatbot. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível duplicar o chatbot. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }
@@ -439,8 +439,8 @@ export const useChatbotSettings = () => {
     onError: (error) => {
       logger.error('Failed to update chatbot settings:', error);
       toast({
-        title: 'Erro',
-        description: 'Falha ao atualizar configurações. Tente novamente.',
+        title: 'Não deu certo',
+        description: 'Não foi possível salvar as configurações. Tente de novo em instantes.',
         variant: 'destructive'
       });
     }

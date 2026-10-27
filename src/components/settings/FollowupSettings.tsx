@@ -9,6 +9,7 @@ import { Info, Loader2, Lock, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTenant, useCan } from '@/contexts/TenantContext';
 import { useFollowupReplyConfig } from '@/hooks/useFollowupReplyConfig';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 /**
  * Preferências de FOLLOW-UP da Loja — o que a resposta de um cliente cancela.
@@ -65,10 +66,9 @@ export const FollowupSettings = () => {
         // O retorno é dado aqui, com o texto desta tela.
         { silent: true },
       );
-      toast.success('Configurações de follow-up salvas.');
+      toast.success('Configurações de follow up salvas.');
     } catch (error) {
-      const detalhe = error instanceof Error ? error.message : 'tente novamente.';
-      toast.error(`Não foi possível salvar as configurações: ${detalhe}`);
+      toast.error(`Não foi possível salvar. ${motivoDoErro(error)}`);
     } finally {
       setIsSaving(false);
     }
@@ -179,9 +179,9 @@ export const FollowupSettings = () => {
           <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             Sequências têm a trava delas: cada sequência escolhe se para ao receber resposta, em
-            Follow-ups › Sequências. Uma tarefa que fazia parte de uma sequência interrompida é
-            encerrada junto, sem depender das opções acima: ela não tinha mais cadência a que
-            servir.
+            Follow ups › Sequências. Uma tarefa que fazia parte de uma sequência interrompida é
+            encerrada junto, sem depender das opções acima, porque a sequência
+            dela parou.
           </p>
         </div>
 

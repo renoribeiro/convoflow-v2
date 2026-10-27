@@ -121,11 +121,11 @@ describe('WhatsAppNumbers: ações de Evolution e WAHA pelo servidor', () => {
     state.canConfigure = true;
     renderPage();
     await screen.findByText('Suporte WAHA');
-    expect(screen.getAllByTitle('Conectar via QR Code')).toHaveLength(1);
+    expect(screen.getAllByTitle('Conectar pelo QR Code')).toHaveLength(1);
     expect(screen.getAllByTitle('Desconectar')).toHaveLength(1);
     expect(screen.getAllByTitle('Atualizar status')).toHaveLength(2);
     expect(screen.getAllByTitle('Detalhes e chave')).toHaveLength(2);
-    fireEvent.click(screen.getByTitle('Conectar via QR Code'));
+    fireEvent.click(screen.getByTitle('Conectar pelo QR Code'));
     expect(await screen.findByTestId('qr-modal')).toHaveTextContent('aaaaaaaa-0000-4000-8000-0000000000a2');
   });
 
@@ -160,7 +160,7 @@ describe('WhatsAppNumbers: ações de Evolution e WAHA pelo servidor', () => {
     state.canConfigure = false;
     renderPage();
     await screen.findByText('Comercial');
-    for (const t of ['Conectar via QR Code', 'Desconectar', 'Atualizar status', 'Detalhes e chave']) {
+    for (const t of ['Conectar pelo QR Code', 'Desconectar', 'Atualizar status', 'Detalhes e chave']) {
       expect(screen.queryByTitle(t)).toBeNull();
     }
   });

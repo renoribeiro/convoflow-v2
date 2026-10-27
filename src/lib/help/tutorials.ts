@@ -96,7 +96,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Separe os dados da empresa',
         body:
-          'Nome da empresa como está no CNPJ, endereço, site (se houver) e um e-mail de contato. Nem tudo é pedido na hora de conectar, mas é isso que a Meta pede quando quer confirmar que a empresa existe, e é mais rápido ter à mão do que procurar com a janela aberta.',
+          'Nome da empresa como está no CNPJ, endereço, site (se houver) e um email de contato. Nem tudo é pedido na hora de conectar, mas é isso que a Meta pede quando quer confirmar que a empresa existe, e é mais rápido ter à mão do que procurar com a janela aberta.',
       },
       {
         title: 'Escolha o nome que os clientes vão ver',
@@ -116,7 +116,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confira a lista e vá para a conexão',
         body:
-          'Número certo e fora do aplicativo; quem tem o login do Facebook e o celular, presentes; portfólio empresarial, ou a decisão de criar na hora; dados da empresa; nome escolhido; cartão cadastrado; primeira semana planejada. Com isso em mãos, a conexão é um clique em "Conectar com a Meta", em Instâncias e APIs. O passo-a-passo é o próximo tutorial, "Conectar seu WhatsApp".',
+          'Número certo e fora do aplicativo; quem tem o login do Facebook e o celular, presentes; portfólio empresarial, ou a decisão de criar na hora; dados da empresa; nome escolhido; cartão cadastrado; primeira semana planejada. Com isso em mãos, a conexão é um clique em "Conectar com a Meta", em Números de WhatsApp. O passo-a-passo é o próximo tutorial, "Conectar seu WhatsApp".',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },
@@ -139,23 +139,23 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Número certo, já fora do aplicativo do WhatsApp; o login do Facebook de quem administra a empresa na Meta; o celular com o chip, para receber o código; e um cartão no portfólio empresarial da Meta, porque é ela quem cobra as conversas. Sem forma de pagamento válida lá, as mensagens param de sair mesmo com o número "Conectado" aqui. Se algum item falta, volte a "Antes de conectar seu WhatsApp".',
       },
       {
-        title: 'Abra Instâncias e APIs e clique em "Nova Instância"',
+        title: 'Abra Números de WhatsApp e clique em "Conectar número"',
         body:
-          'Cada instância é uma linha de WhatsApp ligada ao sistema. Sem nenhuma conectada, não existe conversa, chatbot nem campanha. Na primeira vez, o botão se chama "Criar Primeira Instância".',
+          'Cada linha da lista é um número de WhatsApp ligado ao ConvoFlow. Sem nenhum conectado, não existe conversa, chatbot nem campanha. Na primeira vez, o botão se chama "Conectar o primeiro número".',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },
       {
         title: 'Escolha "API Oficial do WhatsApp" e clique em "Continuar"',
         body:
-          'São três opções de provedor. Escolha a primeira, "API Oficial do WhatsApp": é a que a produção usa e a única que dispara campanha dentro das regras da Meta.',
+          'São três jeitos de conectar. Escolha o primeiro, "API Oficial do WhatsApp": é o mais estável e o único que dispara campanha dentro das regras da Meta.',
       },
       {
-        title: 'Dê um nome à instância e clique em "Conectar com a Meta"',
+        title: 'Dê um nome ao número e clique em "Conectar com a Meta"',
         body:
-          'O nome é só o rótulo que aparece nas telas (ex.: "WhatsApp Vendas Oficial"). Se deixar vazio, o ConvoFlow usa o nome verificado que a Meta devolver para o número. O botão abre uma janela da própria Meta: é ela que faz a conexão, e você não copia código nem chave nenhuma. Gerente: a instância nasce na Conta ou Loja escolhida no seletor do topo; confira antes de clicar.',
+          'O nome é só o rótulo que aparece nas telas (ex.: "WhatsApp Vendas"). Se deixar vazio, o ConvoFlow usa o nome verificado que a Meta devolver para o número. O botão abre uma janela da própria Meta: é ela que faz a conexão, e você não copia código nem chave nenhuma. Gerente: o número nasce na Conta ou Loja escolhida no seletor do topo; confira antes de clicar.',
         note:
-          'Se o botão estiver cinza, esta instalação não tem a conexão automática configurada, e o caminho é o do último passo, com os campos manuais. Para RECONECTAR um número que já está na lista (trocar o app da Meta, renovar a conexão), o caminho é este mesmo botão: escolha o mesmo número na janela da Meta e deixe o nome em branco. O ConvoFlow reconhece o número e atualiza a instância no lugar, sem mexer no histórico.',
+          'Se o botão estiver cinza, a conexão automática com a Meta ainda não está ligada, e o caminho é o do último passo, com os campos manuais. Para RECONECTAR um número que já está na lista (trocar o app da Meta, renovar a conexão), o caminho é este mesmo botão: escolha o mesmo número na janela da Meta e deixe o nome em branco. O ConvoFlow reconhece o número e atualiza no lugar, sem mexer no histórico.',
       },
       {
         title: 'Siga a janela da Meta até o fim',
@@ -167,30 +167,30 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confira o que volta para o ConvoFlow',
         body:
-          'Quando a Meta termina, aparece o aviso "Conta Meta conectada", a janela fecha e a instância entra na lista com o selo "Oficial", o número e o status "Conectado". Nos bastidores o ConvoFlow já inscreveu o número na API e o registrou para envio. Numa reconexão o aviso é "Número reconectado": a instância continua a mesma na lista, com o histórico no lugar, e o registro do número não é refeito.',
+          'Quando a Meta termina, aparece o aviso "Conta Meta conectada", a janela fecha e o número entra na lista com o selo "API Oficial" e o estado "Conectado". Nos bastidores o ConvoFlow já inscreveu o número na API e o registrou para envio. Numa reconexão o aviso é "Número reconectado": o número continua o mesmo na lista, com o histórico no lugar, e o registro do número não é refeito.',
         note:
           'Se aparecer "Este número já está conectado em outra Conta ou Loja que você não administra", nada foi alterado e a Meta nem chegou a ser chamada: o número existe no ConvoFlow em uma Conta ou Loja fora do seu alcance. Se ele é seu, escreva para contato@convoflow.com.br.',
       },
       {
         title: 'Se o número já tinha verificação em duas etapas, digite o PIN',
         body:
-          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar número na Cloud API" na linha da instância. Abre a caixa "PIN necessário": digite o PIN de 6 dígitos que você já usava e clique em "Confirmar". O aviso "Número registrado!" fecha o assunto. Se o registro criar um PIN novo, ele aparece numa janela "Guarde o PIN deste número", com botão de copiar: anote antes de clicar em "Já guardei o PIN", porque ele não aparece outra vez.',
+          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar o número na API Oficial" na linha do número. Abre a caixa "Informe o PIN do número": digite o PIN de 6 dígitos que você já usava e clique em "Registrar número". O aviso "Número registrado" fecha o assunto. Se o registro criar um PIN novo, ele aparece numa janela "Guarde o PIN deste número", com botão de copiar: anote antes de clicar em "Já guardei o PIN", porque ele não aparece outra vez.',
       },
       {
         title: 'Faça um teste real',
         body:
-          'Mande uma mensagem de outro celular para o número conectado e confirme que ela aparece em Conversas. Depois responda por ali e veja chegar. Enquanto isso não acontecer, a conexão não está completa. "Testar conexão Meta", na linha da instância, ajuda a achar onde parou.',
+          'Mande uma mensagem de outro celular para o número conectado e confirme que ela aparece em Conversas. Depois responda por ali e veja chegar. Enquanto isso não acontecer, a conexão não está completa. "Testar a conexão com a Meta", na linha do número, ajuda a achar onde parou.',
         screen: '/dashboard/conversations',
         helpKey: 'page:conversations',
         note:
-          'Se algo travou, não exclua a instância para recomeçar: assim que a primeira conversa entra, a lixeira passa a recusar a exclusão, porque apagar a instância apagaria o histórico. Escreva para contato@convoflow.com.br e descreva onde parou.',
+          'Se algo travou, não exclua o número para recomeçar: assim que a primeira conversa entra, a lixeira passa a recusar a exclusão, porque apagar o número apagaria o histórico. Escreva para contato@convoflow.com.br e descreva onde parou.',
       },
       {
         title: 'Só se você já tem app próprio na Meta: preencha os campos manuais',
         body:
-          'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", cole o "Phone Number ID", o "WhatsApp Business Account ID" e o "Access Token" e clique em "Validar e conectar". O ConvoFlow confere as credenciais na Meta antes de gravar; se estiverem erradas, nada é salvo e você corrige sem duplicar instância.',
+          'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", cole o "Código do número na Meta (Phone Number ID)", o "Código da conta do WhatsApp Business (WABA ID)" e a "Chave de acesso permanente (Access Token)" e clique em "Validar e conectar". O ConvoFlow confere os dados na Meta antes de gravar; se estiverem errados, nada é salvo e você corrige sem duplicar o número.',
         note:
-          'Use um token de System User, de longa duração. Token de usuário comum expira em poucas horas e a conexão cai junto. O webhook da Meta é configurado uma vez por instalação, por quem opera a plataforma. Não é passo seu.',
+          'Use a chave de um usuário do sistema da Meta (System User), de longa duração. A chave de um usuário comum vence em poucas horas e a conexão cai junto. O endereço de entrega da Meta é configurado uma vez para o ConvoFlow inteiro, por quem opera a plataforma. Não é passo seu.',
       },
     ],
   },
@@ -219,9 +219,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'A conta do Instagram fica sempre numa Loja, nunca na Conta, do mesmo jeito que o WhatsApp de cada Loja. Gerente: escolha no seletor a Loja dona do Instagram antes de continuar. Gestor: você já está na sua Loja.',
       },
       {
-        title: 'Abra Instâncias e APIs e clique em "Conectar Instagram"',
+        title: 'Abra Números de WhatsApp e clique em "Conectar Instagram"',
         body:
-          'O botão fica na seção "Contas do Instagram", abaixo das instâncias de WhatsApp. Ao clicar, o ConvoFlow leva você para a página de login do próprio Instagram.',
+          'O botão fica na seção "Contas do Instagram", abaixo dos números de WhatsApp. Ao clicar, o ConvoFlow leva você para a página de login do próprio Instagram.',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
         note:
@@ -230,7 +230,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Entre com a conta da Loja e autorize o ConvoFlow',
         body:
-          'O Instagram pede usuário e senha mesmo que você já esteja logado no navegador. É de propósito: assim você escolhe a conta, em vez de o ConvoFlow pegar a que estiver aberta. Entre com a conta profissional da Loja e confirme as permissões de mensagens. Em seguida o Instagram devolve você para Instâncias e APIs.',
+          'O Instagram pede usuário e senha mesmo que você já esteja logado no navegador. É de propósito: assim você escolhe a conta, em vez de o ConvoFlow pegar a que estiver aberta. Entre com a conta profissional da Loja e confirme as permissões de mensagens. Em seguida o Instagram devolve você para Números de WhatsApp.',
         note:
           'O pedido vale 10 minutos. Se você cancelar no Instagram ou demorar mais do que isso, nada muda no ConvoFlow: é só clicar de novo em "Conectar Instagram".',
       },
@@ -290,7 +290,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'Use o seletor de Conta no topo da tela, ou "Abrir" na lista de Lojas, para entrar na Loja de destino. O convite usa a Loja que está em foco, então trocar antes evita convidar para o lugar errado. Como Gestor você não tem seletor: está sempre na sua Loja.',
         note:
-          'Acabou de criar a Loja? O aviso de sucesso traz o atalho "Abrir a loja", que já coloca ela em foco.',
+          'Acabou de criar a Loja? O aviso de sucesso traz o atalho "Abrir a Loja", que já coloca ela em foco.',
       },
       {
         title: 'Abra Equipe e clique em "Convidar"',
@@ -302,9 +302,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:team',
       },
       {
-        title: 'Preencha nome, sobrenome, e-mail e a Função',
+        title: 'Preencha nome, sobrenome, email e o Cargo',
         body:
-          'O e-mail é o login da pessoa. O telefone é opcional. Preencha o nome de verdade: é ele que o time vê quando uma conversa é transferida e é por ele que os relatórios separam quem atendeu o quê. Ao trocar a Função, o cartão logo abaixo lista o que aquele cargo pode e o que não pode fazer. Leia antes de enviar.',
+          'O email é o login da pessoa. O telefone é opcional. Preencha o nome de verdade: é ele que o time vê quando uma conversa é transferida e é por ele que os relatórios separam quem atendeu o quê. Ao trocar o Cargo, o cartão logo abaixo lista o que aquele cargo pode e o que não pode fazer. Leia antes de enviar.',
         note:
           'Cada Loja tem 1 Gestor e 2 vagas de Atendente; o convite pendente já ocupa a vaga. Com a Loja cheia, o convite de Atendente não sai: cancele um convite pendente ou suspenda alguém, ou fale com o ConvoFlow (contato@convoflow.com.br) para ter mais vagas.',
       },
@@ -318,24 +318,24 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confirme que a pessoa conseguiu entrar',
         body:
-          'Ela recebe um e-mail de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Volte em Equipe e veja se o nome aparece na lista. Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
+          'Ela recebe um email de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Volte em Equipe e veja se o nome aparece na lista. Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
         screen: '/dashboard/team',
         note:
-          'O convite vale por 24 horas e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa o rodízio de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
+          'O convite vale por 24 horas e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa a distribuição automática de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
       },
       {
         title: 'Divida as conversas novas entre a equipe',
         body:
-          'Com pelo menos 2 atendentes ativos na Loja, abra Configurações › Escala/Transferência e, no cartão "Distribuição de conversas novas", ligue "Distribuir conversas novas automaticamente". Decida se o Gestor também recebe e se a conversa ganha responsável na primeira mensagem ou só quando o chatbot terminar. Ajuste a fatia de cada pessoa até a soma dar 100 (0 tira alguém do rodízio sem tirar da Loja) e clique em "Salvar distribuição".',
+          'Com pelo menos 2 atendentes ativos na Loja, abra Configurações › Distribuição e transferência e, no cartão "Distribuição de conversas novas", ligue "Distribuir conversas novas automaticamente". Decida se o Gestor também recebe e se a conversa ganha responsável na primeira mensagem ou só quando o chatbot terminar. Ajuste a fatia de cada pessoa até a soma dar 100 (0 tira alguém da distribuição automática sem tirar da Loja) e clique em "Salvar distribuição".',
         screen: '/dashboard/settings',
         helpKey: 'page:settings-visibility',
         note:
-          'Com um atendente só, o cartão mostra uma linha explicando que o rodízio aparece a partir do segundo, porque não há com quem dividir. O rodízio nunca troca uma conversa que já tem responsável, e não toca o sino. Na mesma aba, o cartão "Transferência por tempo sem resposta" faz o oposto para quem já tem a conversa e não responde: em X minutos de funcionamento ela passa para o próximo do rodízio, com aviso no sino. Vem desligado; ligue quando o time já souber que isso vai acontecer.',
+          'Com um atendente só, o cartão mostra uma linha explicando que a distribuição automática aparece a partir do segundo, porque não há com quem dividir. A distribuição automática nunca troca uma conversa que já tem responsável, e não toca o sino. Na mesma aba, o cartão "Transferência por tempo sem resposta" faz o oposto para quem já tem a conversa e não responde: em X minutos de funcionamento ela passa para o próximo da distribuição automática, com aviso no sino. Vem desligado; ligue quando o time já souber que isso vai acontecer.',
       },
       {
         title: 'Remova o acesso de quem sair do time no mesmo dia',
         body:
-          'Ainda em Equipe, retire o acesso de quem saiu. Enquanto o acesso existe, a pessoa continua vendo as conversas e os contatos da Loja. Quem sai é removido do rodízio sozinho, mas FICA com as conversas que já tinha: abra Conversas, pílula "Responsável indisponível", e transfira cada uma para quem vai continuar o atendimento.',
+          'Ainda em Equipe, retire o acesso de quem saiu. Enquanto o acesso existe, a pessoa continua vendo as conversas e os contatos da Loja. Quem sai é removido da distribuição automática sozinho, mas FICA com as conversas que já tinha: abra Conversas, pílula "Responsável indisponível", e transfira cada uma para quem vai continuar o atendimento.',
         screen: '/dashboard/team',
       },
     ],
@@ -346,7 +346,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
     id: 'montar-funil',
     title: 'Montar seu funil de vendas',
     goal:
-      'No fim, seu funil terá as etapas do seu processo real e você saberá onde cada lead está parado.',
+      'No fim, seu funil terá as etapas do seu processo real e você saberá onde cada contato está parado.',
     forWhom:
       'Quem define o processo comercial da Loja: o Gestor, na Loja dele, ou o Gerente, em qualquer Loja da Conta. O Atendente vê as etapas e move os cards, mas não monta o funil.',
     moduleName: 'funnel',
@@ -358,9 +358,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Liste, na ordem, o que acontece de verdade entre o primeiro contato e a venda. Quatro a seis etapas costumam bastar. Nome específico funciona melhor: "Visita agendada" informa, "Em andamento" não.',
       },
       {
-        title: 'Abra o Funil de Vendas e clique em "Configurar Estágios"',
+        title: 'Abra o Funil de Vendas e clique em "Configurar etapas"',
         body:
-          'A janela mostra duas partes: "Estágios Atuais", com o que já existe, e "Adicionar Novo Estágio", para criar.',
+          'A janela mostra duas partes: "Etapas atuais", com o que já existe, e "Adicionar etapa", para criar.',
         note:
           'Gerente: o funil é de cada Loja. Com a Conta em foco no seletor do topo, o Funil pede para escolher a Loja antes; com uma Loja só, "Abrir a Loja" já entra nela.',
         screen: '/dashboard/funnel',
@@ -369,30 +369,30 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Ajuste ou remova as etapas que não servem para você',
         body:
-          'Em "Estágios Atuais", use o ícone de edição para renomear e o de lixeira para excluir. A lixeira pede confirmação em "Apagar etapa". Faça essa limpeza antes de criar as novas, para não ficar com dois conjuntos de etapas ao mesmo tempo.',
+          'Em "Etapas atuais", use o ícone de edição para renomear e o de lixeira para apagar. A lixeira pede confirmação em "Apagar etapa". Faça essa limpeza antes de criar as novas, para não ficar com dois conjuntos de etapas ao mesmo tempo.',
         note:
-          'Etapa com lead dentro, ou usada numa sequência de follow-up, não pode ser excluída: mova os cards para outra etapa antes.',
+          'Etapa com contato dentro, ou usada numa sequência de follow up, não pode ser apagada: mova os cartões para outra etapa antes.',
       },
       {
-        title: 'Crie cada etapa em "Adicionar Novo Estágio"',
+        title: 'Crie cada etapa em "Adicionar etapa"',
         body:
-          'Digite o nome em "Nome do Estágio" e escolha uma cor. Use as cores como semáforo do processo: frio no começo, quente perto do fechamento. Repita para cada etapa da sua lista.',
+          'Digite o nome em "Nome da etapa", escolha uma cor e clique em "Adicionar etapa". Use as cores como semáforo do processo: frio no começo, quente perto do fechamento. Repita para cada etapa da sua lista.',
         note:
           'Funil ainda vazio? "Usar etapas prontas", na própria tela do Funil, cria Novo contato, Em atendimento, Proposta, Fechado e Perdido de uma vez; depois é só ajustar aqui.',
       },
       {
         title: 'Arraste as etapas para a ordem do seu processo',
         body:
-          'Em "Estágios Atuais", arraste cada etapa para a posição certa. A ordem aqui é a ordem das colunas no quadro, e é ela que faz a leitura do funil ter sentido. Cada vez que você solta uma etapa, aparece "Ordem das etapas salva".',
+          'Em "Etapas atuais", arraste cada etapa para a posição certa. A ordem aqui é a ordem das colunas no quadro, e é ela que faz a leitura do funil ter sentido. Cada vez que você solta uma etapa, aparece "Ordem das etapas salva".',
       },
       {
-        title: 'Feche a configuração e mova um lead de verdade',
+        title: 'Feche a configuração e mova um contato de verdade',
         body:
           'No quadro do funil, arraste um card de uma coluna para outra. Mover o card é o que registra que a negociação andou. É assim que o time todo passa a ver a mesma situação.',
         screen: '/dashboard/funnel',
       },
       {
-        title: 'Cadastre um lead de teste pelo botão "Novo Lead"',
+        title: 'Cadastre um contato de teste pelo botão "Novo Lead"',
         body:
           'Preencha o nome e o telefone com DDD, escolha a etapa e clique em "Criar lead". O card aparece na coluna escolhida, e o contato entra em Contatos. Telefone que já é contato da Loja não é duplicado: o card desse contato vai para a etapa. O menu de cada coluna tem "Adicionar Lead", que já abre com aquela etapa escolhida.',
         note:
@@ -402,7 +402,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Ligue o funil às automações',
         body:
-          'Com as etapas prontas, use o gatilho "Mudança de Estágio" para disparar ação no momento em que o lead avança: agendar follow-up ao entrar em "Visita agendada", por exemplo.',
+          'Com as etapas prontas, use o gatilho "Mudança de etapa" (em Automação) para disparar ação no momento em que o contato avança: agendar follow up ao entrar em "Visita agendada", por exemplo.',
         screen: '/dashboard/automation',
         helpKey: 'trigger:funnel_stage_changed',
       },
@@ -414,7 +414,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
     id: 'primeiro-chatbot',
     title: 'Criar seu primeiro chatbot',
     goal:
-      'No fim, um chatbot publicado vai atender o primeiro contato, perguntar o que o lead procura e passar a conversa para um atendente.',
+      'No fim, um chatbot publicado vai atender o primeiro contato, perguntar o que o contato procura e passar a conversa para um atendente.',
     forWhom: 'Gestor ou Gerente. É o fluxo mínimo que funciona, não um tour por todos os blocos.',
     moduleName: 'chatbots',
     steps: [
@@ -426,14 +426,14 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:chatbots',
       },
       {
-        title: 'Dê um nome e escolha a instância de WhatsApp',
+        title: 'Dê um nome e escolha o número de WhatsApp',
         body:
-          'Preencha o Nome. Em "Instância WhatsApp", escolha o número em que o bot responde. Deixar em "Todas as instâncias" faz ele valer para qualquer linha conectada. A Prioridade só importa se houver mais de um bot no mesmo número.',
+          'Preencha o Nome. Em "Número de WhatsApp", escolha o número em que o bot responde. Deixar em "Todos os números" faz ele valer para qualquer número conectado. A Prioridade só importa se houver mais de um bot no mesmo número.',
       },
       {
         title: 'Marque o gatilho "Primeiro contato"',
         body:
-          'Em "Gatilhos", marque "Primeiro contato": o bot entra quando alguém fala com você pela primeira vez. É o gatilho com maior retorno, porque é onde o lead de anúncio chega.',
+          'Em "Gatilhos", marque "Primeiro contato": o bot entra quando alguém fala com você pela primeira vez. É o gatilho com maior retorno, porque é onde o contato de anúncio chega.',
         note:
           'Se escolher "Palavra-chave", você precisa cadastrar pelo menos uma palavra, senão o formulário não salva.',
       },
@@ -458,9 +458,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Feche o fluxo com "Transferir para Atendente"',
         body:
-          'Ligue um bloco "Transferir para Atendente" no fim. Ele encerra a parte automática, já com o bairro coletado. Em "Transferir para", deixe "Qualquer atendente disponível" para a conversa seguir o rodízio da Loja, ou ficar na fila, sem responsável, se o rodízio estiver desligado. Escolha "Atendente específico" só se uma pessoa certa deve ficar com ela: aí a conversa passa a ser dessa pessoa, que recebe um aviso no sino. Fluxo que só fala e não entrega deixa o lead sem resposta.',
+          'Ligue um bloco "Transferir para Atendente" no fim. Ele encerra a parte automática, já com o bairro coletado. Em "Transferir para", deixe "Qualquer atendente disponível" para a conversa seguir a distribuição automática da Loja, ou ficar na fila, sem responsável, se a distribuição automática estiver desligado. Escolha "Atendente específico" só se uma pessoa certa deve ficar com ela: aí a conversa passa a ser dessa pessoa, que recebe um aviso no sino. Fluxo que só fala e não entrega deixa o contato sem resposta.',
         note:
-          '"Atendente específico" só vale para conversa que ainda não tem responsável. Se a Loja usa o rodízio em "Na primeira mensagem", a conversa já chegou com dono antes de o bot rodar e o bloco não troca. Use "Quando o chatbot terminar" em Configurações › Escala/Transferência.',
+          '"Atendente específico" só vale para conversa que ainda não tem responsável. Se a Loja usa a distribuição automática em "Na primeira mensagem", a conversa já chegou com dono antes de o bot rodar e o bloco não troca. Use "Quando o chatbot terminar" em Configurações › Distribuição e transferência.',
         helpKey: 'transfer_agent',
       },
       {
@@ -518,14 +518,14 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:campaigns',
       },
       {
-        title: 'No passo Conteúdo, escolha a instância e o tipo de envio',
+        title: 'No passo Conteúdo, escolha o número e o tipo de envio',
         body:
-          'Dê um nome à campanha, escolha a Instância do WhatsApp e marque "Exigir opt-in" para enviar só a quem consentiu. Com instância da API Oficial, aparece a escolha entre template e texto livre: escolha template e digite o nome exato aprovado e o idioma.',
+          'Dê um nome à campanha, escolha o "Número de WhatsApp" e marque "Só para quem aceita campanhas" para enviar só a quem autorizou. Com número da API Oficial, aparece a escolha entre template e texto livre: escolha template e digite o nome exato aprovado e o idioma.',
       },
       {
-        title: 'No passo Público, escolha Tags, Contatos ou CSV',
+        title: 'No passo Público, escolha Etiquetas, Contatos ou Planilha',
         body:
-          'Selecione por Tags para usar a segmentação que você acabou de preparar. "Contatos" permite escolher um a um, e CSV serve para uma lista externa. Confira o total antes de avançar. Contato do Instagram não aparece em "Contatos" nem entra no total das Tags: campanha é disparo de WhatsApp, e ele não tem telefone.',
+          'Selecione por "Etiquetas" para usar a separação que você acabou de preparar. "Contatos" permite escolher um a um, e "Planilha" serve para uma lista de fora (arquivo CSV). Confira o total antes de avançar. Contato do Instagram não aparece em "Contatos" nem entra no total das etiquetas: campanha é disparo de WhatsApp, e ele não tem telefone.',
       },
       {
         title: 'No passo Agendamento, escolha "Enviar imediatamente" ou "Agendar"',
@@ -582,7 +582,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'Clique no responsável no cabeçalho, escolha "Transferir…" e a pessoa na lista. Ela recebe "Conversa transferida" no sino. Também dá para transferir para você mesmo uma conversa que está com outra pessoa.',
         note:
-          'Se o botão "Transferir…" não aparece para você, a Loja desligou a transferência para atendentes em Configurações › Escala/Transferência: só o Gestor e o Gerente passam conversas. "Assumir" continua funcionando.',
+          'Se o botão "Transferir…" não aparece para você, a Loja desligou a transferência para atendentes em Configurações › Distribuição e transferência: só o Gestor e o Gerente passam conversas. "Assumir" continua funcionando.',
         helpKey: 'page:settings-visibility',
       },
       {
@@ -590,25 +590,25 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'O selo na linha da lista e no cabeçalho quer dizer que um chatbot está conduzindo a conversa agora. Antes de escrever, abra o menu ⋮ e clique em "Encerrar sessão do bot": o bot para na hora e a conversa passa a ser sua para responder. Sem isso, você e o bot falam com o cliente ao mesmo tempo.',
         note:
-          'Sem selo, não há bot e o item fica desabilitado. Encerrar a sessão não muda o responsável nem chama o rodízio: é uma ação sua, e só.',
+          'Sem selo, não há bot e o item fica desabilitado. Encerrar a sessão não muda o responsável nem chama a distribuição automática: é uma ação sua, e só.',
         helpKey: 'page:conversations',
       },
       {
         title: 'Entenda o que muda se o Gestor restringir a visibilidade',
         body:
-          'Por padrão você vê todas as conversas da Loja. Se o Gestor escolher "Sem responsável + as dele" ou "Só as dele" em Escala/Transferência, a sua lista encolhe: só o que está com você, o que você já respondeu, o que você passou adiante e, na opção intermediária, a fila sem dono. Uma conversa que sumiu não foi apagada: está com um colega. Os números do Dashboard continuam da Loja inteira, com a etiqueta "Toda a Loja".',
+          'Por padrão você vê todas as conversas da Loja. Se o Gestor escolher "Sem responsável + as dele" ou "Só as dele" em Distribuição e transferência, a sua lista encolhe: só o que está com você, o que você já respondeu, o que você passou adiante e, na opção intermediária, a fila sem dono. Uma conversa que sumiu não foi apagada: está com um colega. Os números do Dashboard continuam da Loja inteira, com a etiqueta "Toda a Loja".',
         helpKey: 'page:settings-visibility',
       },
       {
-        title: 'Saiba como o rodízio entrega conversas novas',
+        title: 'Saiba como a distribuição automática entrega conversas novas',
         body:
-          'Com o rodízio ligado, a conversa nova já chega com responsável, na fatia que o Gestor definiu para cada pessoa, na primeira mensagem do cliente ou só quando o chatbot terminar. Ela entra em "Minhas" sem aviso no sino; o sino toca só quando alguém entrega de propósito. Cliente que volta cai com quem já o atendia: o rodízio nunca troca um responsável que existe.',
+          'Com a distribuição automática ligada, a conversa nova já chega com responsável, na fatia que o Gestor definiu para cada pessoa, na primeira mensagem do cliente ou só quando o chatbot terminar. Ela entra em "Minhas" sem aviso no sino; o sino toca só quando alguém entrega de propósito. Cliente que volta cai com quem já o atendia: a distribuição automática nunca troca um responsável que existe.',
         helpKey: 'concept:conversation-routing',
       },
       {
         title: 'Entenda por que uma conversa pode sair de "Minhas" sozinha',
         body:
-          'Se a Loja ligou a transferência por tempo sem resposta, uma conversa sua em que o cliente esperou resposta de pessoa por mais minutos de funcionamento do que o limite passa para o próximo do rodízio, e quem recebe ganha "Conversa transferida para você" no sino. Resposta do bot não segura a conversa; só a sua. Quando ela chega a você por esse caminho, o relógio começa do zero.',
+          'Se a Loja ligou a transferência por tempo sem resposta, uma conversa sua em que o cliente esperou resposta de pessoa por mais minutos de funcionamento do que o limite passa para o próximo da distribuição automática, e quem recebe ganha "Conversa transferida para você" no sino. Resposta do bot não segura a conversa; só a sua. Quando ela chega a você por esse caminho, o relógio começa do zero.',
         note:
           'Não é punição: é a Loja garantindo que o cliente não fique sem resposta. Para não perder conversas, responda dentro do limite ou peça ao Gestor para transferir antes.',
         helpKey: 'page:conversations',
@@ -639,22 +639,22 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Cadastre-se pela página do ConvoFlow',
         body:
-          'Na página de vendas, clique em "Começar teste grátis" e preencha nome, sobrenome, e-mail, o nome da empresa e um telefone com DDD. Marque o aceite dos Termos de Uso e da Política de Privacidade, espere a verificação "não sou um robô" e clique em "Criar minha conta".',
+          'Na página de vendas, clique em "Começar teste grátis" e preencha nome, sobrenome, email, o nome da empresa e um telefone com DDD. Marque o aceite dos Termos de Uso e da Política de Privacidade, espere a verificação "não sou um robô" e clique em "Criar minha conta".',
         helpKey: 'page:cadastro',
         note:
-          'A tela seguinte sempre diz "Confira seu e-mail", mesmo se o e-mail já tiver conta. Se você já é cliente, entre pelo login.',
+          'A tela seguinte sempre diz "Confira seu email", mesmo se o email já tiver conta. Se você já é cliente, entre pelo login.',
       },
       {
-        title: 'Crie sua senha pelo link do e-mail',
+        title: 'Crie sua senha pelo link do email',
         body:
-          'Abra o e-mail do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
+          'Abra o email do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
         note:
-          'O botão e o código de 6 dígitos do e-mail valem por 24 horas e por um acesso. Se o botão não abrir, vá em "Esqueci minha senha" na tela de login, clique em "Já tenho um código" e digite o código. Ou peça um código novo na mesma tela.',
+          'O botão e o código de 6 dígitos do email valem por 24 horas e por um acesso. Se o botão não abrir, clique no link do fim do email, logo depois de Onde digitar, e digite o seu email e o código. Ou peça um código novo na mesma tela, em "Esqueci minha senha".',
       },
       {
         title: 'Preencha os dados para a nota fiscal',
         body:
-          'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o e-mail que vai receber a nota e clique em "Salvar dados".',
+          'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o email que vai receber a nota e clique em "Salvar dados".',
         helpKey: 'page:paywall',
         note:
           'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito.',

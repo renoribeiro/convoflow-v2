@@ -155,7 +155,7 @@ describe('ContactModal — salvar', () => {
   it('campo apagado vira NULL, nunca string vazia', async () => {
     state.contact = { ...WHATSAPP_ROW, notes: 'antiga' };
     renderModal(WHATSAPP_ROW.id);
-    fireEvent.change(await screen.findByLabelText('E-mail'), { target: { value: '' } });
+    fireEvent.change(await screen.findByLabelText('Email'), { target: { value: '' } });
     fireEvent.change(screen.getByLabelText(/Observações/), { target: { value: '   ' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     await waitFor(() => expect(contactWrites()).toHaveLength(1));

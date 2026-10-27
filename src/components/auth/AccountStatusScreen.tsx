@@ -13,7 +13,7 @@ const COPY: Record<BlockedStatus, { title: string; message: string; hint: string
   pending: {
     title: 'Cadastro incompleto',
     message: 'Complete seu cadastro para acessar o sistema.',
-    hint: 'Abra o convite que enviamos por e-mail e defina sua senha. Se o link expirou, peça um novo ao administrador da sua Conta.',
+    hint: 'Abra o convite que enviamos por email e defina sua senha. Se o link expirou, peça um novo ao administrador da sua Conta.',
   },
   suspended: {
     title: 'Conta suspensa',

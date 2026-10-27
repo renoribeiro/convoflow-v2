@@ -19,21 +19,21 @@ const inst = (id: string, name: string, provider: string, status = 'open') =>
 const lista = [inst('wa-1', 'Plantão', 'official'), inst('wa-2', 'Comercial', 'evolution')];
 
 describe('InstanceSelector — opção "todas"', () => {
-  it('nada escolhido = "Todas as instâncias" (e não a primeira)', () => {
+  it('nada escolhido = "Todos os números" (e não o primeiro)', () => {
     render(<InstanceSelector instances={lista} selectedId={null} onChange={() => {}} />);
-    const trigger = screen.getByRole('combobox', { name: 'Filtrar por instância' });
-    expect(trigger).toHaveTextContent('Todas as instâncias');
+    const trigger = screen.getByRole('combobox', { name: 'Filtrar por número' });
+    expect(trigger).toHaveTextContent('Todos os números');
     expect(trigger).not.toHaveTextContent('Plantão');
   });
 
   it('id que não está na lista (instância do outro canal) = "todas"', () => {
     render(<InstanceSelector instances={lista} selectedId="ig-1" onChange={() => {}} />);
-    expect(screen.getByRole('combobox', { name: 'Filtrar por instância' })).toHaveTextContent('Todas as instâncias');
+    expect(screen.getByRole('combobox', { name: 'Filtrar por número' })).toHaveTextContent('Todos os números');
   });
 
-  it('instância escolhida aparece com o provedor e o status', () => {
+  it('número escolhido aparece com o estado em português', () => {
     render(<InstanceSelector instances={lista} selectedId="wa-2" onChange={() => {}} />);
-    const trigger = screen.getByRole('combobox', { name: 'Filtrar por instância' });
+    const trigger = screen.getByRole('combobox', { name: 'Filtrar por número' });
     expect(trigger).toHaveTextContent('Comercial');
     expect(screen.getAllByText('Conectada').length).toBeGreaterThan(0);
   });
@@ -47,7 +47,7 @@ describe('InstanceSelector — opção "todas"', () => {
         onChange={() => {}}
       />,
     );
-    expect(screen.getByRole('combobox', { name: 'Filtrar por instância' })).toHaveTextContent(
+    expect(screen.getByRole('combobox', { name: 'Filtrar por número' })).toHaveTextContent(
       'Todas as contas do Instagram',
     );
   });
@@ -58,6 +58,6 @@ describe('InstanceSelector — opção "todas"', () => {
     render(<InstanceSelector instances={lista} selectedId={null} onChange={onChange} />);
     // A opção existe no conteúdo do Select (renderizado ao abrir); o valor do
     // gatilho sem seleção é ela.
-    expect(screen.getByRole('combobox', { name: 'Filtrar por instância' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Filtrar por número' })).toBeInTheDocument();
   });
 });

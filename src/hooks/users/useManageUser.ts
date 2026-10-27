@@ -79,7 +79,7 @@ export function useInviteUser() {
     mutationFn: (payload: Omit<ManageUserPayload, 'action'>) =>
       invokeManageUser({ ...payload, action: 'create' }),
     onSuccess: () => {
-      toast.success('Convite enviado por e-mail.');
+      toast.success('Convite enviado por email.');
       invalidateUserLists(qc);
     },
     onError: (err: Error) => toast.error(`Falha ao convidar: ${err.message}`),
@@ -169,10 +169,10 @@ export function useResetUserPassword() {
         { soDoServidor: true, fallback: 'Tente de novo em alguns minutos.' },
       ),
     onSuccess: () => {
-      toast.success('E-mail de nova senha enviado.');
+      toast.success('Email de nova senha enviado.');
     },
     // A mensagem vem do manage-user, já em português (nunca o texto do Supabase).
-    onError: (err: Error) => toast.error(`Não foi possível enviar o e-mail de nova senha: ${err.message}`),
+    onError: (err: Error) => toast.error(`Não foi possível enviar o email de nova senha: ${err.message}`),
   });
 }
 

@@ -33,7 +33,7 @@ export function checkReportLimits(input: {
   if (input.emails.length > MAX_RECIPIENTS_PER_CHANNEL) {
     return {
       code: 'TOO_MANY_EMAILS',
-      message: `Envie para no máximo ${MAX_RECIPIENTS_PER_CHANNEL} e-mails de cada vez.`,
+      message: `Envie para no máximo ${MAX_RECIPIENTS_PER_CHANNEL} emails de cada vez.`,
     };
   }
   if (input.phones.length > MAX_RECIPIENTS_PER_CHANNEL) {

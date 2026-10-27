@@ -226,15 +226,15 @@ describe('dados para a nota fiscal (parte 1)', () => {
     renderizar();
     expect(await screen.findByRole('form', { name: 'Dados para a nota fiscal' })).toBeInTheDocument();
     expect(screen.getByText('Obrigatório para assinar')).toBeInTheDocument();
-    const assinar = botao(/Assinar Agora/)!;
+    const assinar = botao(/Assinar por/)!;
     expect(assinar).toBeDisabled();
     expect(screen.getByTestId('assinar-precisa-dados')).toHaveTextContent('Preencha e salve os dados');
     fireEvent.click(assinar);
     expect(mockInvoke).not.toHaveBeenCalled();
     // Loja extra antes de assinar também passa pelo checkout: travada igual.
-    expect(botao(/Contratar 1 loja/)).toBeDisabled();
-    // o e-mail do login já vem sugerido
-    expect(screen.getByLabelText('E-mail para receber a nota')).toHaveValue('eu@exemplo.com.br');
+    expect(botao(/Contratar 1 Loja/)).toBeDisabled();
+    // o email do login já vem sugerido
+    expect(screen.getByLabelText('Email para receber a nota')).toHaveValue('eu@exemplo.com.br');
   });
 
   it('com os dados: resumo com o documento mascarado e "Assinar" abre o checkout', async () => {
@@ -248,7 +248,7 @@ describe('dados para a nota fiscal (parte 1)', () => {
       expect(resumo).toHaveTextContent('Fulano Comércio Ltda');
       expect(resumo).toHaveTextContent('CNPJ ••.•••.•••/••••-81');
       expect(resumo).not.toHaveTextContent('11222333');
-      const assinar = botao(/Assinar Agora/)!;
+      const assinar = botao(/Assinar por/)!;
       await waitFor(() => expect(assinar).toBeEnabled());
       await act(async () => {
         fireEvent.click(assinar);

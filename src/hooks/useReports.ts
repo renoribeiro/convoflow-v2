@@ -167,7 +167,7 @@ export function useGenerateReport() {
     },
     onError: (error) => {
       toast({
-        title: 'Erro ao gerar relatório',
+        title: 'Não foi possível gerar o relatório',
         description: 'Ocorreu um erro ao gerar o relatório.',
         variant: 'destructive',
       });
@@ -198,7 +198,7 @@ export function useDeleteReportTemplate() {
     },
     onError: (error) => {
       toast({
-        title: 'Erro ao excluir template',
+        title: 'Não foi possível excluir o modelo',
         description: 'Ocorreu um erro ao excluir o template.',
         variant: 'destructive',
       });
@@ -240,8 +240,8 @@ export function useCreateReportTemplate() {
     onError: (error) => {
       console.error('Erro ao criar template:', error);
       toast({
-        title: 'Erro',
-        description: 'Erro ao criar template de relatório',
+        title: 'Não deu certo',
+        description: 'Não foi possível criar o modelo de relatório. Tente de novo em instantes.',
         variant: 'destructive',
       });
     },
@@ -310,7 +310,7 @@ export function useCreateReportSchedule() {
     },
     onError: (error) => {
       toast({
-        title: 'Erro ao criar agendamento',
+        title: 'Não foi possível criar o agendamento',
         description: 'Ocorreu um erro ao criar o agendamento.',
         variant: 'destructive',
       });
@@ -348,7 +348,7 @@ export function useUpdateReportSchedule() {
     },
     onError: (error) => {
       toast({
-        title: 'Erro ao atualizar agendamento',
+        title: 'Não foi possível atualizar o agendamento',
         description: 'Ocorreu um erro ao atualizar o agendamento.',
         variant: 'destructive',
       });
@@ -383,7 +383,7 @@ export function useDeleteReportSchedule() {
     },
     onError: (error) => {
       toast({
-        title: 'Erro ao excluir agendamento',
+        title: 'Não foi possível excluir o agendamento',
         description: 'Ocorreu um erro ao excluir o agendamento.',
         variant: 'destructive',
       });
@@ -429,7 +429,7 @@ export function useToggleReportSchedule() {
     onError: (error) => {
       console.error('Erro ao alterar status do agendamento:', error);
       toast({
-        title: "Erro",
+        title: "Não deu certo",
         description: "Erro ao alterar status do agendamento.",
         variant: "destructive",
       });

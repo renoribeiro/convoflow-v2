@@ -375,7 +375,7 @@ describe('falha registrada, nunca engolida', () => {
     expect(sendEmail).not.toHaveBeenCalled();
     expect(result.failed).toBe(1);
     expect(db.rows('report_executions')[0]!.status).toBe('failed');
-    expect(db.rows('report_executions')[0]!.error_message).toContain('destinatário');
+    expect(db.rows('report_executions')[0]!.error_message).toContain('email válido para receber');
   });
 
   it('agenda com cron inválido é pulada sem derrubar o tick', async () => {

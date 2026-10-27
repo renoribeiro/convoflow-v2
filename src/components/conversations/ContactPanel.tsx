@@ -378,11 +378,11 @@ function ContactPanelBody({
         </CollapsibleSection>
 
         {/* Follow-ups pendentes */}
-        <CollapsibleSection title="Follow-ups pendentes" icon={<CalendarClock className="w-4 h-4 text-muted-foreground" />}>
+        <CollapsibleSection title="Follow ups pendentes" icon={<CalendarClock className="w-4 h-4 text-muted-foreground" />}>
           {followupsLoading ? (
             <Skeleton className="h-12 w-full" />
           ) : followups.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Nenhum follow-up pendente</p>
+            <p className="text-xs text-muted-foreground">Nenhum follow up pendente</p>
           ) : (
             <ul className="space-y-2">
               {followups.map((f) => (

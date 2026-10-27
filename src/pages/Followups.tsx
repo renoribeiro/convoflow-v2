@@ -33,12 +33,12 @@ export default function Followups() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Follow-ups"
+        title="Follow ups"
         helpKey="page:followups"
-        description="Gerencie e acompanhe todas as suas tarefas de follow-up com clientes"
+        description="Gerencie e acompanhe todas as suas tarefas de follow up com clientes"
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
-          { label: 'Follow-ups' }
+          { label: 'Follow ups' }
         ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
@@ -60,7 +60,7 @@ export default function Followups() {
             </Button>
             <Button size="sm" onClick={() => setShowScheduler(true)}>
               <Plus className="w-4 h-4 mr-2" />
-              Novo Follow-up
+              Novo Follow up
             </Button>
           </div>
         }
@@ -72,7 +72,7 @@ export default function Followups() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Follow-ups</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de Follow ups</p>
                 {loading ? (
                   <div className="h-8 w-16 bg-muted rounded animate-pulse" />
                 ) : (

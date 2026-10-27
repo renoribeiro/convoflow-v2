@@ -218,7 +218,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
     operation: 'delete',
     invalidateQueries: [['contacts']],
     successMessage: 'Contato excluído com sucesso!',
-    errorMessage: 'Erro ao excluir contato. Tente novamente.'
+    errorMessage: 'Não foi possível excluir o contato. Tente de novo em instantes.'
   });
 
   const consentMutation = useSupabaseMutation({
@@ -226,7 +226,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
     operation: 'update',
     invalidateQueries: [['contacts']],
     successMessage: 'Consentimento atualizado!',
-    errorMessage: 'Erro ao atualizar consentimento.',
+    errorMessage: 'Não foi possível mudar a autorização de campanhas. Tente de novo.',
   });
 
   // Mudar o consentimento de campanha pede confirmação (achado 51 do
@@ -399,7 +399,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           className="w-fit"
         >
           <Badge className="bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer w-fit">
-            Opt-in
+            Aceita campanhas
           </Badge>
         </button>
       ) : contact.opt_out_mass_message ? (
@@ -411,7 +411,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           className="w-fit"
         >
           <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer w-fit">
-            Opt-out
+            Não quer campanhas
           </Badge>
         </button>
       ) : (
@@ -423,7 +423,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
             disabled={consentMutation.isPending}
           >
             <Badge variant="outline" className="hover:bg-green-50 cursor-pointer text-xs">
-              + Opt-in
+              + Aceita campanhas
             </Badge>
           </button>
           <button
@@ -433,7 +433,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
             disabled={consentMutation.isPending}
           >
             <Badge variant="outline" className="hover:bg-yellow-50 cursor-pointer text-xs">
-              Opt-out
+              Não quer campanhas
             </Badge>
           </button>
         </div>
@@ -451,7 +451,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
     },
     {
       key: 'estagio',
-      header: 'Estágio',
+      header: 'Etapa',
       card: 'badge',
       cell: (contact) =>
         contact.stage ? (
@@ -466,7 +466,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
             {contact.stage.name}
           </Badge>
         ) : (
-          <Badge variant="secondary">Sem estágio</Badge>
+          <Badge variant="secondary">Sem etapa</Badge>
         ),
     },
     {
@@ -554,7 +554,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Erro ao carregar contatos. Tente novamente.
+              Não foi possível carregar os contatos. Recarregue a página.
             </AlertDescription>
           </Alert>
         </div>

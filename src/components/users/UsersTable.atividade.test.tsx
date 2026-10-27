@@ -75,7 +75,7 @@ afterEach(() => vi.useRealTimers());
 describe('Equipe (sem atividade): nada muda', () => {
   it('colunas de sempre e "Nunca" para quem não entrou', () => {
     render(<UsersTable rows={[pessoa('p1', 'Ana')]} tenantNames={{ 'loja-1': 'Loja Centro' }} />);
-    expect(cabecalhos()).toEqual(['Nome', 'Função', 'Status', 'Loja', 'Último acesso', 'Acessos', 'Ações']);
+    expect(cabecalhos()).toEqual(['Nome', 'Cargo', 'Status', 'Loja', 'Último acesso', 'Acessos', 'Ações']);
     expect(celula('Ana Teste', 'Loja').textContent).toBe('Loja Centro');
     expect(celula('Ana Teste', 'Último acesso').textContent).toBe('Nunca');
     expect(celula('Ana Teste', 'Acessos').textContent).toBe('3');
@@ -90,7 +90,7 @@ describe('Superadmin (com atividade)', () => {
     renderSuper([pessoa('p1', 'Ana')], { p1: atividade('p1') });
     expect(cabecalhos()).toEqual([
       'Nome',
-      'Função',
+      'Cargo',
       'Status',
       'Loja',
       'Visto por último',

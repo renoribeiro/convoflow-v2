@@ -123,7 +123,7 @@ test('tela de bloqueio: sem os dados o botão trava; preenchidos (CEP preenche o
   await expect(page.getByLabel('Rua, avenida ou logradouro')).toHaveValue('Rua Exemplo');
   await expect(page.getByLabel('UF')).toHaveValue('CE');
   await page.getByLabel('Número').fill('100');
-  await page.getByLabel('E-mail para receber a nota').fill('nota@exemplo.com.br');
+  await page.getByLabel('Email para receber a nota').fill('nota@exemplo.com.br');
   await page.getByRole('button', { name: 'Salvar dados' }).click();
 
   await expect(page.getByTestId('dados-fiscais-resumo')).toContainText('CNPJ ••.•••.•••/••••-81');

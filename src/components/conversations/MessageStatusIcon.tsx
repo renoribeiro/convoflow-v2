@@ -9,7 +9,7 @@ const STATUS_LABEL: Record<NonNullable<MessageStatus>, string> = {
   sent: 'Enviada',
   delivered: 'Entregue',
   read: 'Lida',
-  failed: 'Falhou',
+  failed: 'Não foi enviada',
   deleted: 'Mensagem apagada',
 };
 

@@ -110,13 +110,13 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
     operation: 'insert',
     invalidateQueries: [['funnel_stages']],
     onSuccess: () => {
-      toast({ title: 'Sucesso!', description: 'Estágio criado com sucesso!' });
+      toast({ title: 'Etapa criada' });
       setNewStageName('');
       setNewStageColor('blue');
       refetch();
     },
     onError: () => {
-      toast({ title: 'Erro', description: 'Erro ao criar estágio', variant: 'destructive' });
+      toast({ title: 'Não foi possível criar a etapa', description: 'Confira se já não existe uma etapa com esse nome e tente de novo.', variant: 'destructive' });
     }
   });
 
@@ -126,12 +126,12 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
     operation: 'update',
     invalidateQueries: [['funnel_stages']],
     onSuccess: () => {
-      toast({ title: 'Sucesso!', description: 'Estágio atualizado com sucesso!' });
+      toast({ title: 'Etapa salva' });
       setEditingStage(null);
       refetch();
     },
     onError: () => {
-      toast({ title: 'Erro', description: 'Erro ao atualizar estágio', variant: 'destructive' });
+      toast({ title: 'Não foi possível salvar a etapa', description: 'Tente de novo em instantes.', variant: 'destructive' });
     }
   });
 
@@ -141,16 +141,16 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
     operation: 'delete',
     invalidateQueries: [['funnel_stages']],
     onSuccess: () => {
-      toast({ title: 'Sucesso!', description: 'Estágio excluído com sucesso!' });
+      toast({ title: 'Etapa apagada' });
       refetch();
     },
     onError: (error: { code?: string } | null) => {
       // 23503: etapa com lead dentro (contacts.current_stage_id) ou usada numa
       // sequência de follow-up. O banco recusa de propósito.
       const description = error?.code === '23503'
-        ? 'Esta etapa tem leads ou é usada numa sequência de follow-up. Mova os cards para outra etapa antes de excluir.'
-        : 'Erro ao excluir estágio';
-      toast({ title: 'Erro', description, variant: 'destructive' });
+        ? 'Esta etapa tem contatos ou é usada numa sequência de follow up. Mova os cartões para outra etapa antes de apagar.'
+        : 'Tente de novo em instantes.';
+      toast({ title: 'Não foi possível apagar a etapa', description, variant: 'destructive' });
     }
   });
 
@@ -244,13 +244,13 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Configurar Estágios do Funil</DialogTitle>
+          <DialogTitle>Configurar etapas do funil</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Lista de estágios com drag & drop */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Estágios Atuais</h3>
+            <h3 className="text-lg font-semibold mb-4">Etapas atuais</h3>
             {isLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -280,10 +280,10 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
           {/* Adicionar novo estágio */}
           <Card>
             <CardContent className="p-4">
-              <h3 className="text-lg font-semibold mb-4">Adicionar Novo Estágio</h3>
+              <h3 className="text-lg font-semibold mb-4">Adicionar etapa</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="stage-name">Nome do Estágio</Label>
+                  <Label htmlFor="stage-name">Nome da etapa</Label>
                   <Input
                     id="stage-name"
                     value={newStageName}
@@ -314,7 +314,7 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
                     disabled={createStageMutation.isPending || !newStageName.trim()}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {createStageMutation.isPending ? 'Adicionando...' : 'Adicionar'}
+                    {createStageMutation.isPending ? 'Adicionando...' : 'Adicionar etapa'}
                   </Button>
                 </div>
               </div>
@@ -357,7 +357,7 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
                       className="flex-1"
                       disabled={updateStageMutation.isPending}
                     >
-                      {updateStageMutation.isPending ? 'Salvando...' : 'Salvar'}
+                      {updateStageMutation.isPending ? 'Salvando...' : 'Salvar etapa'}
                     </Button>
                     <Button variant="outline" onClick={() => setEditingStage(null)}>
                       Cancelar
@@ -369,11 +369,9 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
           )}
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
+            {/* Cada mudança já é gravada na hora: o botão só fecha. */}
             <Button onClick={onClose}>
-              Salvar Configurações
+              Fechar
             </Button>
           </div>
         </div>

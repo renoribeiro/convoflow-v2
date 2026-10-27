@@ -77,14 +77,18 @@ const MESSAGE_TYPE_ICON: Record<string, React.ReactNode> = {
 // ─────────────────────────────────────────────
 
 function relativeDate(dateString?: string | null): string {
-  if (!dateString) return 'N/A';
+  if (!dateString) return '—';
   const diff = Date.now() - new Date(dateString).getTime();
   const days = Math.floor(diff / 86_400_000);
   if (days === 0) return 'Hoje';
   if (days === 1) return 'Ontem';
-  if (days < 7) return `${days} dias atrás`;
-  if (days < 30) return `${Math.floor(days / 7)} sem. atrás`;
-  return `${Math.floor(days / 30)} meses atrás`;
+  if (days < 7) return `Há ${days} dias`;
+  if (days < 30) {
+    const semanas = Math.floor(days / 7);
+    return semanas === 1 ? 'Há 1 semana' : `Há ${semanas} semanas`;
+  }
+  const meses = Math.floor(days / 30);
+  return meses === 1 ? 'Há 1 mês' : `Há ${meses} meses`;
 }
 
 function countdownLabel(dateString?: string | null): string {
@@ -363,7 +367,7 @@ function CampaignCard({
             )}
             {campaign.whatsapp_instance && (
               <p className="text-xs text-muted-foreground mt-1">
-                Instância: {campaign.whatsapp_instance.name}
+                Número: {campaign.whatsapp_instance.name}
               </p>
             )}
           </div>

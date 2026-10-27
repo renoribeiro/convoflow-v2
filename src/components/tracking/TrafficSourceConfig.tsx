@@ -79,7 +79,7 @@ const TYPE_LABEL: Record<string, string> = {
   social: 'Social',
   direct: 'Direta',
   referral: 'Indicação',
-  email: 'E-mail',
+  email: 'Email',
 };
 
 const getTypeColor = (type: string) => {
@@ -180,7 +180,7 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total de Leads</p>
+                <p className="text-sm font-medium text-muted-foreground">Total de contatos</p>
                 <p className="text-2xl font-bold">{totalLeads.toLocaleString('pt-BR')}</p>
               </div>
               <div className="w-8 h-8 bg-status-info/15 rounded-lg flex items-center justify-center">
@@ -214,7 +214,7 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
             <CardTitle>Fontes de Tráfego</CardTitle>
             <Button onClick={() => { setSelectedSource(null); setShowModal(true); }}>
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar Fonte
+              Adicionar fonte
             </Button>
           </div>
         </CardHeader>
@@ -225,7 +225,7 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
               <p className="font-medium">Nenhuma fonte de tráfego ainda</p>
               <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
                 Anúncios do Facebook e Instagram entram aqui sozinhos, assim que o
-                primeiro lead chegar por eles. Use “Adicionar Fonte” para cadastrar
+                primeiro contato chegar por eles. Use “Adicionar fonte” para cadastrar
                 uma origem que você controla por fora, como um link de bio.
               </p>
             </div>
@@ -264,7 +264,7 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
                   <div className="flex items-center space-x-6 shrink-0">
                     <div className="text-center">
                       <p className="text-2xl font-bold">{leadsOf(source)}</p>
-                      <p className="text-xs text-muted-foreground">Leads</p>
+                      <p className="text-xs text-muted-foreground">Contatos</p>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Button

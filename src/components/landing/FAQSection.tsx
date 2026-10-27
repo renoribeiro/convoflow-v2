@@ -21,7 +21,7 @@ export const FAQSection = () => {
     },
     {
       question: 'É possível integrar com meu CRM/ERP atual?',
-      answer: 'Sim, por webhooks: o ConvoFlow avisa a outra ferramenta no instante em que algo acontece aqui: mensagem recebida, contato criado ou atualizado, campanha iniciada ou concluída, follow-up agendado, chatbot acionado. É assim que ele se liga ao que você já usa, normalmente por uma ferramenta de automação como n8n ou Make, sem ninguém copiar lead na mão. Para o outro sistema LER os dados (contatos, conversas, funil, equipe e indicadores), há o complemento API e integrações, por R$ 99,90 por mês por Conta: o Gerente cria chaves de acesso só de leitura e liga n8n, Make, programas próprios e agentes de IA. Os webhooks continuam incluídos no plano.'
+      answer: 'Sim, por webhooks: o ConvoFlow avisa a outra ferramenta no instante em que algo acontece aqui: mensagem recebida, contato criado ou atualizado, campanha iniciada ou concluída, follow up agendado, chatbot acionado. É assim que ele se liga ao que você já usa, normalmente por uma ferramenta de automação como n8n ou Make, sem ninguém copiar contato na mão. Para o outro sistema LER os dados (contatos, conversas, funil, equipe e indicadores), há o complemento API e integrações, por R$ 99,90 por mês por Conta: o Gerente cria chaves de acesso só de leitura e liga n8n, Make, programas próprios e agentes de IA. Os webhooks continuam incluídos no plano.'
     },
     {
       question: 'Os chatbots funcionam em português?',
@@ -29,7 +29,7 @@ export const FAQSection = () => {
     },
     {
       question: 'Quantas mensagens posso enviar por mês?',
-      answer: 'O ConvoFlow não cobra por mensagem nem limita a quantidade: o plano é por loja, e as mensagens na plataforma são ilimitadas. O que existe é a cobrança da própria Meta pelas conversas na API oficial, feita direto no cartão do seu portfólio empresarial. Os valores atuais estão em developers.facebook.com/docs/whatsapp/pricing. A Meta também aplica um limite diário de quantas pessoas você pode abordar primeiro (responder quem te escreveu não conta), e ele cresce sozinho conforme o número é bem usado.'
+      answer: 'O ConvoFlow não cobra por mensagem nem limita a quantidade: o plano é por Conta, com 5 Lojas incluídas, e as mensagens na plataforma são ilimitadas. O que existe é a cobrança da própria Meta pelas conversas na API oficial, feita direto no cartão do seu portfólio empresarial. Os valores atuais estão em developers.facebook.com/docs/whatsapp/pricing. A Meta também aplica um limite diário de quantas pessoas você pode abordar primeiro (responder quem te escreveu não conta), e ele cresce sozinho conforme o número é bem usado.'
     },
     {
       question: 'Meus dados ficam seguros?',
@@ -37,7 +37,7 @@ export const FAQSection = () => {
     },
     {
       question: 'Como funciona o suporte técnico?',
-      answer: 'Por e-mail, em português, em horário comercial: contato@convoflow.com.br. Dentro do produto, a Ajuda tem tutoriais passo-a-passo e a documentação de cada tela, para a sua equipe aprender sozinha, e a gente responde o que ela não resolver.'
+      answer: 'Por email, em português, em horário comercial: contato@convoflow.com.br. Dentro do produto, a Ajuda tem tutoriais passo-a-passo e a documentação de cada tela, para a sua equipe aprender sozinha, e a gente responde o que ela não resolver.'
     },
     ...(comTeste
       ? [

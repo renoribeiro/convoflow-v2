@@ -59,7 +59,7 @@ export default function Funnel() {
                 data-tour="funil-configurar-estagios"
               >
                 <Settings className="w-4 h-4 mr-2" />
-                Configurar Estágios
+                Configurar etapas
               </Button>
             )}
             <Button size="sm" onClick={() => setShowNewLead(true)}>
@@ -88,7 +88,7 @@ export default function Funnel() {
         <Dialog open={showEscolherLoja} onOpenChange={setShowEscolherLoja}>
           <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Configurar Estágios</DialogTitle>
+              <DialogTitle>Configurar etapas</DialogTitle>
               <DialogDescription>O funil é de cada Loja.</DialogDescription>
             </DialogHeader>
             <EstadoVazioFunil situacao="conta" acaoDepoisDaLoja="configurar-etapas" />

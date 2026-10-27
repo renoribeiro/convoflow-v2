@@ -701,7 +701,7 @@ async function actionResetPassword(
     target.user_id,
   );
   if (getErr || !authUser?.user?.email) {
-    throw new SecureError('Não foi possível encontrar o e-mail deste usuário.', 'NOT_FOUND', 404);
+    throw new SecureError('Não foi possível encontrar o email desta pessoa.', 'NOT_FOUND', 404);
   }
 
   // `resetPasswordForEmail`, NÃO `admin.generateLink`.
@@ -734,7 +734,7 @@ async function actionResetPassword(
 
     if (ehLimite) {
       throw new SecureError(
-        'Limite de envio de e-mail atingido. O servidor de e-mail padrão libera poucos envios por hora. Espere cerca de uma hora e tente de novo, ou configure um SMTP próprio para não esbarrar nisso.',
+        'Limite de envio de email atingido. O servidor de email padrão libera poucos envios por hora. Espere cerca de uma hora e tente de novo, ou configure um SMTP próprio para não esbarrar nisso.',
         'EMAIL_RATE_LIMIT',
         429,
       );
@@ -748,7 +748,7 @@ async function actionResetPassword(
       message: resetErr.message,
     });
     throw new SecureError(
-      'O servidor de e-mail não respondeu. Tente de novo em alguns minutos.',
+      'O servidor de email não respondeu. Tente de novo em alguns minutos.',
       'RESET_FAILED',
       500,
     );

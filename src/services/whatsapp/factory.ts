@@ -46,16 +46,20 @@ export function adapterFor(instance: ProviderInstance): IWhatsAppProvider {
   }
 }
 
+/**
+ * Como a tela chama o tipo de conexão do número. Evolution e WAHA são "QR
+ * Code" para o cliente: o nome do provedor só aparece onde a pessoa escolhe
+ * como conectar (docs/GLOSSARIO_UX.md).
+ */
 export function providerLabel(provider: ProviderType): string {
   switch (provider) {
-    case 'waha':
-      return 'WAHA';
     case 'official':
-      return 'WhatsApp Cloud (Meta)';
+      return 'API Oficial';
     case 'instagram':
       return 'Instagram';
+    case 'waha':
     case 'evolution':
     default:
-      return 'Evolution API';
+      return 'QR Code';
   }
 }

@@ -229,10 +229,10 @@ export default function Templates() {
           icon={<Smartphone className="h-12 w-12" />}
           title="Nenhum número na API Oficial da Meta"
           description={
-            'Templates existem só na API Oficial (Meta Cloud API). Números conectados por ' +
+            'Templates existem só na API Oficial do WhatsApp. Números conectados por ' +
             'QR Code não têm templates: neles você envia texto livre dentro da janela de 24h. ' +
             (podeConfigurar
-              ? 'Para usar templates, conecte um número oficial em Instâncias e APIs.'
+              ? 'Para usar templates, conecte um número da API Oficial em Números de WhatsApp.'
               : 'Para usar templates, peça ao Gestor da sua Loja para conectar um número oficial.')
           }
         />
@@ -245,19 +245,19 @@ export default function Templates() {
       return (
         <Alert>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Falta o WABA ID na conexão</AlertTitle>
+          <AlertTitle>Falta o código da conta do WhatsApp Business</AlertTitle>
           <AlertDescription>
             {officialCount === 1
-              ? 'Seu número na API Oficial está sem o WABA ID (o identificador da conta do '
-              : 'Seus números na API Oficial estão sem o WABA ID (o identificador da conta do '}
-            WhatsApp Business). Sem ele não dá para consultar os templates.{' '}
+              ? 'Seu número na API Oficial está sem o código da conta do WhatsApp Business (WABA ID). '
+              : 'Seus números na API Oficial estão sem o código da conta do WhatsApp Business (WABA ID). '}
+            Sem ele não dá para consultar os templates.{' '}
             {podeConfigurar ? (
               <>
-                Preencha em{' '}
+                Reconecte o número em{' '}
                 <Link to="/dashboard/whatsapp-numbers" className="underline font-medium">
-                  Instâncias e APIs
+                  Números de WhatsApp
                 </Link>
-                .
+                {' '}pelo botão "Conectar com a Meta".
               </>
             ) : (
               'Peça ao Gestor da sua Loja para completar a conexão.'

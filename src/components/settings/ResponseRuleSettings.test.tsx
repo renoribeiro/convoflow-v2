@@ -1,5 +1,5 @@
 /**
- * Aba Configurações › Escala/Transferência — cartão "Transferência por tempo
+ * Aba Configurações › Distribuição e transferência — cartão "Transferência por tempo
  * sem resposta" (migração 20260916000001).
  *
  * O que a tela precisa garantir:

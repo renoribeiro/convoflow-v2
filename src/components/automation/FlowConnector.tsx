@@ -31,8 +31,8 @@ export const FlowConnector: React.FC<FlowConnectorProps> = ({ onInsert, active =
       <AddStepPopover onSelect={onInsert}>
         <button
           type="button"
-          aria-label="Inserir etapa aqui"
-          title="Inserir etapa"
+          aria-label="Inserir passo aqui"
+          title="Inserir passo"
           className={cn(
             'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2',
             'flex h-6 w-6 items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm',

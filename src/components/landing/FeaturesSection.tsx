@@ -17,7 +17,7 @@ export const FeaturesSection = () => {
     {
       icon: Bot,
       title: 'Chatbots Inteligentes',
-      description: 'Crie chatbots personalizados que respondem automaticamente e qualificam leads 24/7.',
+      description: 'Crie chatbots personalizados que respondem sozinhos e separam os contatos com interesse, 24 horas por dia.',
       color: 'bg-blue-500'
     },
     {
@@ -40,8 +40,8 @@ export const FeaturesSection = () => {
     },
     {
       icon: Zap,
-      title: 'Automação Completa',
-      description: 'Fluxos automáticos para captura, qualificação e nutrição de leads.',
+      title: 'Automação completa',
+      description: 'Automações que recebem cada contato novo, mostram quem tem interesse e mandam a mensagem certa na hora certa.',
       color: 'bg-yellow-500'
     },
     {

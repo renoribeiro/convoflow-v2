@@ -49,7 +49,7 @@ export function validateStep(step: { config?: Record<string, unknown> }): StepVa
   const entry = getCatalogEntry(cfg.type as string);
   if (!entry) {
     // etapa criada mas tipo ainda não escolhido
-    return { complete: false, missing: ['Tipo da etapa'], missingKeys: ['type'] };
+    return { complete: false, missing: ['Tipo do passo'], missingKeys: ['type'] };
   }
   return validateConfig(entry, cfg);
 }

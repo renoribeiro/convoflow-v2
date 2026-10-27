@@ -40,7 +40,7 @@ const PRIORITY_OPTIONS = [
 const TYPE_OPTIONS = [
   { value: 'call', label: 'Ligação' },
   { value: 'message', label: 'Mensagem' },
-  { value: 'email', label: 'E-mail' },
+  { value: 'email', label: 'Email' },
   { value: 'meeting', label: 'Reunião' },
   { value: 'task', label: 'Tarefa' },
   { value: 'other', label: 'Outro' }
@@ -120,7 +120,7 @@ export function FollowupEditModal({
         onClose()
       }
     } catch (error) {
-      toast.error('Erro ao salvar follow-up')
+      toast.error('Não foi possível salvar o follow up')
     } finally {
       setSaving(false)
     }
@@ -136,7 +136,7 @@ export function FollowupEditModal({
         onClose()
       }
     } catch (error) {
-      toast.error('Erro ao excluir follow-up')
+      toast.error('Não foi possível excluir o follow up')
     } finally {
       setDeleting(false)
     }
@@ -154,7 +154,7 @@ export function FollowupEditModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Editar Follow-up
+            Editar Follow up
           </DialogTitle>
         </DialogHeader>
 
@@ -163,10 +163,10 @@ export function FollowupEditModal({
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="font-medium text-gray-900 mb-2">Informações do Contato</h3>
             <p className="text-sm text-gray-600">
-              <span className="font-medium">Nome:</span> {(followup as any).contacts?.name || 'N/A'}
+              <span className="font-medium">Nome:</span> {(followup as any).contacts?.name || 'sem nome'}
             </p>
             <p className="text-sm text-gray-600">
-              <span className="font-medium">Telefone:</span> {(followup as any).contacts?.phone || 'N/A'}
+              <span className="font-medium">Telefone:</span> {(followup as any).contacts?.phone || 'sem telefone'}
             </p>
           </div>
 
@@ -177,7 +177,7 @@ export function FollowupEditModal({
               id="task"
               value={formData.task || ''}
               onChange={(e) => handleInputChange('task', e.target.value)}
-              placeholder="Descreva a tarefa do follow-up"
+              placeholder="Descreva a tarefa do follow up"
             />
           </div>
 
@@ -261,7 +261,7 @@ export function FollowupEditModal({
               id="notes"
               value={formData.notes || ''}
               onChange={(e) => handleInputChange('notes', e.target.value)}
-              placeholder="Adicione observações sobre este follow-up"
+              placeholder="Adicione observações sobre este follow up"
               rows={3}
             />
           </div>
@@ -274,7 +274,7 @@ export function FollowupEditModal({
                 checked={formData.recurring || false}
                 onCheckedChange={(checked) => handleInputChange('recurring', checked)}
               />
-              <Label htmlFor="recurring">Follow-up recorrente</Label>
+              <Label htmlFor="recurring">Follow up recorrente</Label>
             </div>
 
             {formData.recurring && (

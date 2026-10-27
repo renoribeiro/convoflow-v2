@@ -170,7 +170,9 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
     operation: contactId ? 'update' : 'insert',
     invalidateQueries: [['contacts'], ['contact', contactId]],
     successMessage: contactId ? 'Contato atualizado com sucesso!' : 'Contato criado com sucesso!',
-    errorMessage: contactId ? 'Erro ao atualizar contato' : 'Erro ao criar contato',
+    errorMessage: contactId
+      ? 'Não foi possível salvar o contato. Confira os dados e tente de novo.'
+      : 'Não foi possível criar o contato. Confira se já não existe um contato com este telefone.',
     enableLogging: true,
     showSuccessToast: true,
     showErrorToast: true,
@@ -247,11 +249,11 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
         addTag(data.id);
         setNewTagName('');
         queryClient.invalidateQueries({ queryKey: ['tags'] });
-        toast.success('Tag criada com sucesso!');
+        toast.success('Etiqueta criada.');
       }
     } catch (error) {
       logger.error('Erro ao criar tag', { error, name: newTagName.trim() });
-      toast.error('Erro ao criar tag');
+      toast.error('Não foi possível criar a etiqueta. Confira se já não existe uma com esse nome.');
     } finally {
       setIsSavingTag(false);
     }
@@ -282,7 +284,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
       }
     } catch (error) {
       logger.error('Erro ao gerenciar tags do contato', { error, contactId });
-      toast.error('Erro ao salvar as tags do contato');
+      toast.error('O contato foi salvo, mas as etiquetas não. Abra o contato e tente de novo.');
       throw error;
     }
   };
@@ -346,7 +348,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              Erro ao carregar dados do contato. Tente novamente.
+              Não foi possível carregar o contato. Feche e abra de novo.
             </AlertDescription>
           </Alert>
         </DialogContent>
@@ -382,7 +384,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
               </div>
             </div>
             <div>
-              <Label>E-mail</Label>
+              <Label>Email</Label>
               <Skeleton className="h-10 w-full" />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -449,7 +451,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
             </div>
 
             <div>
-              <Label htmlFor="email">E-mail</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -473,7 +475,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Estágio do Funil</Label>
+                <Label>Etapa do funil</Label>
                 {stagesLoading ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (
@@ -499,7 +501,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                 )}
               </div>
               <div>
-                <Label>Fonte do Lead</Label>
+                <Label>Fonte do contato</Label>
                 {leadSourcesLoading ? (
                   <Skeleton className="h-10 w-full" />
                 ) : (

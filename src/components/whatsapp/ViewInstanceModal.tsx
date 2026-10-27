@@ -104,7 +104,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
                 <Badge variant={conectado ? 'default' : 'secondary'}>{conectado ? 'Conectado' : 'Desconectado'}</Badge>
               </div>
               <p>
-                <span className="font-medium">Chave da instância:</span>{' '}
+                <span className="font-medium">Chave do número:</span>{' '}
                 <code className="bg-muted px-2 py-0.5 rounded text-xs">{instance.instance_key}</code>
               </p>
               {instance.profile_name && (
@@ -162,7 +162,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
                 A chave fica guardada no cofre do ConvoFlow e nenhuma tela a mostra, nem em parte.
                 {isWaha
                   ? ' É a API Key (X-Api-Key) do seu servidor WAHA.'
-                  : ' É a chave da instância no servidor Evolution, não a chave do servidor inteiro.'}
+                  : ' É a chave deste número no servidor Evolution, não a chave do servidor inteiro.'}
               </p>
 
               {!replacing ? (

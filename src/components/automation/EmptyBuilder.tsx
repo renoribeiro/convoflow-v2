@@ -21,7 +21,7 @@ export const EmptyBuilder: React.FC<EmptyBuilderProps> = ({ onPick }) => {
       </div>
       <h2 className="text-lg font-semibold">Comece escolhendo um gatilho</h2>
       <p className="mt-1 max-w-md text-sm text-muted-foreground">
-        O gatilho define o evento que inicia o fluxo automaticamente. Escolha um abaixo para começar.
+        O gatilho é o que faz a automação começar sozinha. Escolha um abaixo para começar.
       </p>
 
       <div className="mt-6 grid w-full gap-3 sm:grid-cols-2">

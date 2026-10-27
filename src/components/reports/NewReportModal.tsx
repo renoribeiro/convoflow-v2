@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { REPORT_CONTENTS, REPORT_CONTENT_IDS, REPORT_NOT_INCLUDED } from '@/lib/reports/reportContents';
+import { logger } from '@/lib/logger';
 
 /**
  * O envio é feito NA HORA, uma vez. Até 2026-10-25 a janela oferecia
@@ -110,7 +111,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
   }, [isOpen]);
 
   const reportTypes = [
-    { value: 'campaigns', label: 'Campanhas', icon: MessageSquare, description: 'Performance de campanhas de marketing' },
+    { value: 'campaigns', label: 'Campanhas', icon: MessageSquare, description: 'Resultado das campanhas' },
     { value: 'conversations', label: 'Conversas', icon: Users, description: 'Análise de conversas e atendimentos' },
     { value: 'funnel', label: 'Funil de Vendas', icon: BarChart3, description: 'Progresso e conversões no funil' },
     { value: 'general', label: 'Geral', icon: FileText, description: 'Relatório geral do sistema' }
@@ -155,11 +156,11 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
     const hasPhone = parts.some((r) => r.replace(/\D/g, '').length >= 10);
 
     if (!reportData.delivery.email && !reportData.delivery.whatsapp) {
-      toast.error('Selecione ao menos um canal de entrega (e-mail ou WhatsApp)');
+      toast.error('Escolha pelo menos um jeito de entregar: email ou WhatsApp.');
       return;
     }
     if (reportData.delivery.email && !hasEmail) {
-      toast.error('Informe ao menos um e-mail de destinatário válido');
+      toast.error('Informe pelo menos um email de quem vai receber.');
       return;
     }
     if (reportData.delivery.whatsapp && !hasPhone) {
@@ -189,20 +190,30 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
         throw new Error(message);
       }
       if (data && data.success === false) {
-        throw new Error(data?.error?.message || 'Falha ao gerar o relatório');
+        throw new Error(data?.error?.message || 'Não foi possível gerar o relatório. Tente de novo em instantes.');
       }
 
       const delivered: Array<{ channel: string }> = data?.delivered ?? [];
-      const channels = delivered.map((d) => (d.channel === 'email' ? 'e-mail' : 'WhatsApp'));
+      const channels = delivered.map((d) => (d.channel === 'email' ? 'email' : 'WhatsApp'));
       toast.success(channels.length ? `Relatório enviado por ${channels.join(' e ')}!` : 'Relatório enviado!');
       if (Array.isArray(data?.warnings) && data.warnings.length) {
-        toast.warning(data.warnings.join(' | '));
+        // O aviso do servidor traz o erro do provedor, em inglês: fica no log,
+        // a tela diz só por onde não chegou e o que fazer.
+        const avisos: string[] = data.warnings.map(String);
+        logger.warn('Relatório entregue em parte', { warnings: avisos });
+        const falhou = [
+          avisos.some((w) => /^e-?mail/i.test(w)) ? 'email' : null,
+          avisos.some((w) => /^whatsapp/i.test(w)) ? 'WhatsApp' : null,
+        ].filter(Boolean);
+        toast.warning(
+          `O relatório não chegou por ${falhou.length ? falhou.join(' e ') : 'um dos canais'}. Confira os destinatários e tente de novo. Se continuar, fale com o suporte do ConvoFlow.`,
+        );
       }
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao gerar relatório. Tente novamente.');
+      logger.error('Erro ao gerar relatório', { error: error instanceof Error ? error.message : String(error) });
+      toast.error(error instanceof Error ? error.message : 'Não foi possível gerar o relatório. Tente de novo em instantes.');
     } finally {
       setIsLoading(false);
     }
@@ -347,7 +358,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
               <div>
                 <h3 className="text-lg font-semibold mb-1">O que vai no relatório</h3>
                 <p className="text-muted-foreground mb-4">
-                  Todo relatório traz estes números da Loja inteira, no período escolhido. O tipo muda só o título do e-mail.
+                  Todo relatório traz estes números da Loja inteira, no período escolhido. O tipo muda só o título do email.
                 </p>
 
                 <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -406,7 +417,7 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
                       <Label htmlFor="recipients">Destinatários</Label>
                       <Input
                         id="recipients"
-                        placeholder="E-mails e/ou números com DDD, separados por vírgula"
+                        placeholder="Emails e/ou números com DDD, separados por vírgula"
                         value={recipientsRaw}
                         onChange={(e) => setRecipientsRaw(e.target.value)}
                         disabled={isLoading}

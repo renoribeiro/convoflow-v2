@@ -80,7 +80,7 @@ const AskQuestionPanel: React.FC<Props> = ({ data, variables, onChange }) => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Nenhuma</SelectItem>
-            <SelectItem value="email">E-mail</SelectItem>
+            <SelectItem value="email">Email</SelectItem>
             <SelectItem value="phone">Telefone</SelectItem>
             <SelectItem value="number">Número</SelectItem>
           </SelectContent>

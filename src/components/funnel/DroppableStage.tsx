@@ -90,19 +90,19 @@ export const DroppableStage = ({
                 {onAddLead && (
                   <DropdownMenuItem onClick={() => onAddLead(stage.id)}>
                     <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Lead
+                    Adicionar lead
                   </DropdownMenuItem>
                 )}
                 {onEditStage && (
                   <DropdownMenuItem onClick={() => onEditStage(stage.id)}>
                     <Edit className="h-4 w-4 mr-2" />
-                    Editar Estágio
+                    Editar etapa
                   </DropdownMenuItem>
                 )}
                 {onConfigureStage && (
                   <DropdownMenuItem onClick={() => onConfigureStage(stage.id)}>
                     <Settings className="h-4 w-4 mr-2" />
-                    Configurar Estágio
+                    Configurar etapa
                   </DropdownMenuItem>
                 )}
                 {onDeleteStage && (
@@ -111,7 +111,7 @@ export const DroppableStage = ({
                     className="text-red-600 hover:text-red-700"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir Estágio
+                    Apagar etapa
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
@@ -135,10 +135,10 @@ export const DroppableStage = ({
                   isOver && "border-primary/60 bg-primary/10 text-primary animate-bounce scale-105"
                 )}>
                   <p className="text-sm font-medium">
-                    {isOver ? "✨ Solte aqui!" : "📋 Arraste leads para cá"}
+                    {isOver ? 'Solte aqui' : 'Arraste os cartões para esta etapa'}
                   </p>
                   <p className="text-xs mt-1 opacity-70">
-                    {isOver ? "Pronto para receber" : "Zona de drop ativa"}
+                    {isOver ? 'O cartão muda para esta etapa' : 'Nenhum contato nesta etapa ainda'}
                   </p>
                 </div>
               )}

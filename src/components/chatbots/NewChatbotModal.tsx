@@ -41,7 +41,7 @@ const templates = [
     name: 'Personalizado',
     description: 'Crie do zero com suas próprias regras',
     icon: Bot,
-    features: ['Totalmente Customizável', 'Fluxos Próprios', 'Integrações Avançadas']
+    features: ['Você monta do seu jeito', 'Caminhos próprios', 'Liga com outros sistemas']
   }
 ];
 

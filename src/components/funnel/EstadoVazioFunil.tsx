@@ -39,7 +39,7 @@ interface EstadoVazioFunilProps {
 }
 
 export const TEXTO_ATENDENTE_SEM_ETAPAS =
-  'Este funil ainda não tem etapas. Peça ao Gestor ou ao Gerente para criar em "Configurar Estágios".';
+  'Este funil ainda não tem etapas. Peça ao Gestor ou ao Gerente para criar em "Configurar etapas".';
 
 export function EstadoVazioFunil({ situacao, acaoDepoisDaLoja, onConfigurarEtapas, className }: EstadoVazioFunilProps) {
   return (

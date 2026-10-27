@@ -235,7 +235,7 @@ describe('lista de Lojas', () => {
     currentRole = 'gestor';
     renderPage();
     // O texto aparece no título e no breadcrumb — miramos no cabeçalho.
-    expect(screen.getByRole('heading', { name: 'Minha Equipe' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Equipe' })).toBeInTheDocument();
     expect(screen.queryByText('Minhas Lojas')).not.toBeInTheDocument();
     expect(screen.getByTestId('users-table')).toBeInTheDocument();
   });
@@ -249,7 +249,7 @@ describe('lista de Lojas', () => {
   it('convida a criar a primeira quando a Conta não tem nenhuma Loja', () => {
     stores = [];
     renderPage();
-    expect(screen.getByText(/Nenhuma loja cadastrada ainda/)).toBeInTheDocument();
+    expect(screen.getByText(/Nenhuma Loja cadastrada ainda/)).toBeInTheDocument();
   });
 
   it('marca a Loja em foco e não oferece abrir de novo', () => {
@@ -258,7 +258,7 @@ describe('lista de Lojas', () => {
       { id: 'loja-2', name: 'Filial Norte', parent_tenant_id: CONTA },
     ];
     renderPage();
-    expect(screen.getByText('Em foco')).toBeInTheDocument();
+    expect(screen.getByText('Aberta agora')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Aberta' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Abrir' })).toBeEnabled();
   });
@@ -288,20 +288,20 @@ describe('"Nova Loja" e o limite do plano', () => {
   it('mostra o quanto do plano já foi usado', () => {
     capacity = 5;
     renderPage();
-    expect(screen.getByText('2 de 5 lojas')).toBeInTheDocument();
+    expect(screen.getByText('2 de 5 Lojas')).toBeInTheDocument();
   });
 
   it('concorda em número quando o plano tem uma vaga só', () => {
     stores = [{ id: 'loja-1', name: 'Matriz', parent_tenant_id: CONTA }];
     capacity = 1;
     renderPage();
-    expect(screen.getByText('1 de 1 loja')).toBeInTheDocument();
+    expect(screen.getByText('1 de 1 Loja')).toBeInTheDocument();
   });
 
   it('não mostra contador nem bloqueia enquanto os dados carregam', () => {
     slotsLoading = true;
     renderPage();
-    expect(screen.queryByText(/de 5 lojas/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/de 5 Lojas/)).not.toBeInTheDocument();
     expect(botaoNovaLoja()).toBeEnabled();
   });
 

@@ -66,7 +66,7 @@ const ConditionPanel: React.FC<Props> = ({ data, variables, onChange }) => {
       </div>
 
       <div className="space-y-1">
-        <Label>Operador</Label>
+        <Label>Comparação</Label>
         <Select value={data.operator} onValueChange={(v) => emit({ operator: v as any })}>
           <SelectTrigger>
             <SelectValue />

@@ -246,7 +246,7 @@ export function validarDadosFiscais(f: FormularioDadosFiscais): Partial<Record<C
     erros.city = 'A cidade não confere com o estado. Busque o CEP de novo ou confira a UF.';
   }
 
-  if (!emailValido(f.invoice_email)) erros.invoice_email = 'Confira o e-mail para receber a nota.';
+  if (!emailValido(f.invoice_email)) erros.invoice_email = 'Confira o email para receber a nota.';
 
   return erros;
 }

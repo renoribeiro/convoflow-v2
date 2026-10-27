@@ -56,7 +56,7 @@ export const HeroSection = () => {
 
               <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-6 sm:mb-8 max-w-3xl mx-auto leading-relaxed px-4 sm:px-0">
                 A única plataforma que você precisa para gerenciar conversas, 
-                automatizar respostas e converter mais leads no WhatsApp.
+                automatizar respostas e vender mais pelo WhatsApp.
               </p>
             </motion.div>
 

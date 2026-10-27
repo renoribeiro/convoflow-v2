@@ -997,7 +997,7 @@ export const useArchiveConversation = () => {
     onError: (error) => {
       console.error('Error archiving conversation:', error);
       toast({
-        title: 'Erro ao arquivar conversa',
+        title: 'Não foi possível arquivar a conversa',
         description: 'Ocorreu um erro ao arquivar a conversa. Tente novamente.',
         variant: 'destructive',
       });
@@ -1073,7 +1073,7 @@ export const useDeleteConversation = () => {
     onError: (error) => {
       console.error('Error deleting conversation:', error);
       toast({
-        title: 'Erro ao deletar conversa',
+        title: 'Não foi possível excluir a conversa',
         description: 'Ocorreu um erro ao deletar a conversa. Tente novamente.',
         variant: 'destructive',
       });
@@ -1294,7 +1294,7 @@ export const useCreateConversation = () => {
     onError: (error) => {
       console.error('Error creating conversation:', error);
       toast({
-        title: 'Erro ao criar conversa',
+        title: 'Não foi possível criar a conversa',
         description: 'Ocorreu um erro ao criar a conversa. Tente novamente.',
         variant: 'destructive',
       });

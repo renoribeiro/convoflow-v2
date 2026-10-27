@@ -39,7 +39,7 @@ const renderDialog = (props: Partial<React.ComponentProps<typeof NewStoreDialog>
   return { onOpenChange };
 };
 
-const campo = () => screen.getByLabelText('Nome da loja') as HTMLInputElement;
+const campo = () => screen.getByLabelText('Nome da Loja') as HTMLInputElement;
 
 beforeEach(() => {
   renomear.mockReset();
@@ -81,7 +81,7 @@ describe('NewStoreDialog — renomear', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Salvar nome' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'O nome da loja precisa ter ao menos uma letra ou um número.',
+      'O nome da Loja precisa ter ao menos uma letra ou um número.',
     );
     expect(renomear).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalled();

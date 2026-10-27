@@ -40,7 +40,7 @@ describe('contadores do topo', () => {
   it('só WhatsApp: os números e o rótulo de sempre', () => {
     const s = connectionSummary([waOpen, waClosed, waLegacy], NOW);
     expect(s).toEqual({ total: 3, connected: 2, disconnected: 1, whatsapp: 3, instagram: 0 });
-    expect(totalCardTexts(s)).toEqual({ label: 'Total de Instâncias', breakdown: null });
+    expect(totalCardTexts(s)).toEqual({ label: 'Total de números', breakdown: null });
   });
 
   it('com Instagram: soma as duas seções; Instagram conta pela validade, não pelo status', () => {
@@ -48,19 +48,19 @@ describe('contadores do topo', () => {
     expect(s).toEqual({ total: 4, connected: 2, disconnected: 2, whatsapp: 2, instagram: 2 });
     expect(totalCardTexts(s)).toEqual({
       label: 'Total de conexões',
-      breakdown: '2 instâncias de WhatsApp · 2 contas do Instagram',
+      breakdown: '2 números de WhatsApp · 2 contas do Instagram',
     });
   });
 
   it('singular', () => {
     const s = connectionSummary([waOpen, igValid], NOW);
-    expect(totalCardTexts(s).breakdown).toBe('1 instância de WhatsApp · 1 conta do Instagram');
+    expect(totalCardTexts(s).breakdown).toBe('1 número de WhatsApp · 1 conta do Instagram');
   });
 
   it('só Instagram', () => {
     const s = connectionSummary([igValid], NOW);
     expect(s).toEqual({ total: 1, connected: 1, disconnected: 0, whatsapp: 0, instagram: 1 });
-    expect(totalCardTexts(s).breakdown).toBe('0 instâncias de WhatsApp · 1 conta do Instagram');
+    expect(totalCardTexts(s).breakdown).toBe('0 números de WhatsApp · 1 conta do Instagram');
   });
 
   it('status "connected" do Instagram não o faz conectado se o acesso venceu', () => {

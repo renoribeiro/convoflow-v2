@@ -87,7 +87,7 @@ interface ConversationOwnerRow {
 
 const FIELD_LABEL: Record<LinkConflict['field'], string> = {
   name: 'Nome',
-  email: 'E-mail',
+  email: 'Email',
   stage: 'Etapa do funil',
   custom_field: 'Campo',
 };

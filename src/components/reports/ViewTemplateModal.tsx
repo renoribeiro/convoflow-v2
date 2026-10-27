@@ -45,16 +45,34 @@ const getColorByCategory = (category: string) => {
   return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
 };
 
-const translateCategory = (category: string) => {
-  const translations = {
-    performance: 'Performance',
+// O banco guarda a categoria em inglês (o construtor grava `performance`,
+// `financial`...) ou em português (modelos antigos): as duas viram o mesmo nome.
+const translateCategory = (category: string | null | undefined) => {
+  const chave = (category ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  const translations: Record<string, string> = {
+    performance: 'Desempenho',
     financeiro: 'Financeiro',
+    financial: 'Financeiro',
     marketing: 'Marketing',
     trafego: 'Tráfego',
+    traffic: 'Tráfego',
     conversao: 'Conversão',
+    conversion: 'Conversão',
   };
-  return translations[category as keyof typeof translations] || category;
+  return translations[chave] || category || 'Geral';
 };
+
+// Tipo gravado em inglês ("chart", "table"); a tela mostra o nome.
+const NOME_DO_TIPO: Record<string, string> = {
+  chart: 'Gráfico',
+  table: 'Tabela',
+  metric: 'Número',
+  dashboard: 'Painel',
+  financial: 'Financeiro',
+  user: 'Pessoas',
+  text: 'Texto',
+};
+const nomeDoTipo = (tipo: string | null | undefined) => (tipo && NOME_DO_TIPO[tipo]) || 'Relatório';
 
 export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateModalProps) {
   if (!template) return null;
@@ -67,7 +85,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconComponent className="h-5 w-5" />
-            Detalhes do Template
+            Detalhes do modelo
           </DialogTitle>
         </DialogHeader>
 
@@ -77,7 +95,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Settings className="h-5 w-5" />
-                Informações Básicas
+                Sobre o modelo
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -90,7 +108,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
                   <label className="text-sm font-medium text-gray-500">Tipo</label>
                   <div className="mt-1 flex items-center gap-2">
                     <IconComponent className="h-4 w-4" />
-                    <span className="capitalize">{template.type}</span>
+                    <span>{nomeDoTipo(template.type)}</span>
                   </div>
                 </div>
               </div>
@@ -128,14 +146,14 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <BarChart3 className="h-5 w-5" />
-                Estatísticas de Uso
+                Uso
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-blue-50 rounded-lg">
                   <div className="text-2xl font-bold text-blue-600">{template.usage_count || 0}</div>
-                  <div className="text-sm text-blue-600">Usos Totais</div>
+                  <div className="text-sm text-blue-600">Vezes usado</div>
                 </div>
                 <div className="text-center p-4 bg-green-50 rounded-lg">
                   <div className="text-2xl font-bold text-green-600">{template.sections?.length || 0}</div>
@@ -143,7 +161,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
                 </div>
                 <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600">
-                    {template.created_at ? format(new Date(template.created_at), 'dd/MM/yyyy', { locale: ptBR }) : 'N/A'}
+                    {template.created_at ? format(new Date(template.created_at), 'dd/MM/yyyy', { locale: ptBR }) : '—'}
                   </div>
                   <div className="text-sm text-purple-600">Criado em</div>
                 </div>
@@ -151,39 +169,13 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             </CardContent>
           </Card>
 
-          {/* Configurações do Template */}
-          {template.config && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Settings className="h-5 w-5" />
-                  Configurações
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {Object.entries(template.config).map(([key, value]) => (
-                    <div key={key} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                      <span className="text-sm font-medium text-gray-600 capitalize">
-                        {key.replace(/_/g, ' ')}
-                      </span>
-                      <span className="text-sm text-gray-800">
-                        {typeof value === 'boolean' ? (value ? 'Sim' : 'Não') : String(value)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Seções Configuradas */}
           {template.sections && template.sections.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <FileText className="h-5 w-5" />
-                  Seções Configuradas
+                  Seções
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -192,7 +184,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
                     <div key={index} className="p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="font-medium text-gray-800">{section.title || `Seção ${index + 1}`}</h4>
-                        <Badge variant="outline">{section.type || 'Padrão'}</Badge>
+                        <Badge variant="outline">{nomeDoTipo(section.type)}</Badge>
                       </div>
                       {section.description && (
                         <p className="text-sm text-gray-600">{section.description}</p>
@@ -204,44 +196,13 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             </Card>
           )}
 
-          {/* Informações de Sistema */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-5 w-5" />
-                Informações do Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <label className="font-medium text-gray-500">ID do Template</label>
-                  <p className="mt-1 font-mono text-gray-700">{template.id}</p>
-                </div>
-                <div>
-                  <label className="font-medium text-gray-500">Última Atualização</label>
-                  <p className="mt-1 text-gray-700">
-                    {template.updated_at 
-                      ? format(new Date(template.updated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })
-                      : 'N/A'
-                    }
-                  </p>
-                </div>
-                {template.created_by && (
-                  <div>
-                    <label className="font-medium text-gray-500">Criado por</label>
-                    <p className="mt-1 text-gray-700">{template.created_by}</p>
-                  </div>
-                )}
-                {template.template_type && (
-                  <div>
-                    <label className="font-medium text-gray-500">Tipo de Template</label>
-                    <p className="mt-1 text-gray-700 capitalize">{template.template_type}</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Só o que ajuda a pessoa: id, autor (um código) e tipo interno saíram (achado 74). */}
+          {template.updated_at && (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="h-4 w-4" />
+              Última atualização: {format(new Date(template.updated_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

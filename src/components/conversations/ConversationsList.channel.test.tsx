@@ -130,7 +130,7 @@ describe('ConversationsList — lado do WhatsApp (a tela de antes)', () => {
     expect(spies.useConversations.mock.calls.at(-1)?.[0]).toMatchObject({ channel: 'whatsapp' });
     const sel = spies.selector.mock.calls.at(-1)?.[0] as { instances: Array<{ row: { id: string } }>; allLabel: string };
     expect(sel.instances.map((i) => i.row.id)).toEqual(['wa-1', 'wa-2']);
-    expect(sel.allLabel).toBe('Todas as instâncias');
+    expect(sel.allLabel).toBe('Todos os números');
     expect(screen.queryByLabelText(SYNC)).toBeNull();
     expect(screen.getByTestId('nova-conversa')).toBeInTheDocument();
   });

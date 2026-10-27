@@ -103,16 +103,16 @@ describe('WhatsAppNumbers — lixeira segue a mesma regra do lápis', () => {
     state.canConfigure = true;
     renderPage();
     await screen.findByText('Vaga Certa');
-    expect(screen.getByTitle('Renomear instância')).toBeInTheDocument();
-    expect(screen.getByTitle('Excluir instância')).toBeInTheDocument();
+    expect(screen.getByTitle('Renomear número')).toBeInTheDocument();
+    expect(screen.getByTitle('Excluir número')).toBeInTheDocument();
   });
 
   it('sem whatsapp.configure (atendente): nem renomear, nem excluir', async () => {
     state.canConfigure = false;
     renderPage();
     await screen.findByText('Vaga Certa');
-    expect(screen.queryByTitle('Renomear instância')).toBeNull();
-    expect(screen.queryByTitle('Excluir instância')).toBeNull();
+    expect(screen.queryByTitle('Renomear número')).toBeNull();
+    expect(screen.queryByTitle('Excluir número')).toBeNull();
     expect(screen.queryByTestId('delete-modal')).toBeNull();
   });
 
@@ -120,7 +120,7 @@ describe('WhatsAppNumbers — lixeira segue a mesma regra do lápis', () => {
     state.canConfigure = true;
     renderPage();
     await screen.findByText('Vaga Certa');
-    fireEvent.click(screen.getByTitle('Excluir instância'));
+    fireEvent.click(screen.getByTitle('Excluir número'));
     await waitFor(() => expect(screen.getByTestId('delete-modal')).toBeInTheDocument());
   });
 });

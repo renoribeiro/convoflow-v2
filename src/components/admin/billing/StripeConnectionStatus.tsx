@@ -137,7 +137,7 @@ export function StripeConnectionStatus() {
                 <dd className="break-all font-mono text-xs">{status.account.id}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">E-mail</dt>
+                <dt className="text-muted-foreground">Email</dt>
                 <dd className="break-all">{status.account.email ?? '—'}</dd>
               </div>
             </dl>

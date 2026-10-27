@@ -66,7 +66,7 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
   // seta de +12% ao lado.
   const metricsData = metrics ? [
     {
-      title: 'Total de Leads',
+      title: 'Total de contatos',
       value: formatValue(metrics.totalLeads, 'number'),
       icon: Target,
       color: 'text-status-success'

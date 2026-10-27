@@ -18,30 +18,30 @@ const OPTIONS: ProviderOption[] = [
   {
     id: 'official',
     title: 'API Oficial do WhatsApp',
-    subtitle: 'Meta Cloud API',
+    subtitle: 'Direto com a Meta, a dona do WhatsApp',
     description:
-      'Integração direta com a Meta. Maior estabilidade, conformidade e limites oficiais. Requer conta WhatsApp Business e App configurado no Meta for Developers.',
+      'O caminho mais estável e o único dentro das regras da Meta para campanhas. Você entra com o login do Facebook da empresa e escolhe a conta do WhatsApp Business.',
     docsUrl: 'https://developers.facebook.com/docs/whatsapp/cloud-api/get-started',
     recommended: true,
     icon: ShieldCheck,
   },
   {
-    id: 'waha',
-    title: 'WAHA API',
-    subtitle: 'Auto-hospedada / self-hosted',
-    description:
-      'Servidor WAHA próprio (Docker). Boa opção para quem já mantém uma instância WAHA dedicada com sessões controladas.',
-    docsUrl: 'https://waha.devlike.pro/',
-    icon: ServerCog,
-  },
-  {
     id: 'evolution',
-    title: 'Evolution API',
-    subtitle: 'Multi-instância via servidor Evolution',
+    title: 'QR Code pelo ConvoFlow (Evolution)',
+    subtitle: 'Conexão não oficial, no servidor do ConvoFlow',
     description:
-      'Provedor já em uso no ConvoFlow. Espelhamento, QR Code e gerenciamento de instâncias funcionam como hoje.',
+      'Você lê o QR Code com o celular do número, como no WhatsApp Web. Não precisa configurar servidor nenhum.',
     docsUrl: 'https://doc.evolution-api.com/',
     icon: Smartphone,
+  },
+  {
+    id: 'waha',
+    title: 'QR Code no seu servidor (WAHA)',
+    subtitle: 'Conexão não oficial, num servidor WAHA seu',
+    description:
+      'Para quem já tem um servidor WAHA. Você informa o endereço e a chave dele e conecta o número lendo o QR Code com o celular.',
+    docsUrl: 'https://waha.devlike.pro/',
+    icon: ServerCog,
   },
 ];
 
@@ -116,7 +116,7 @@ export const ProviderSelector = ({ value, onChange, disabled }: ProviderSelector
                 onClick={(e) => e.stopPropagation()}
                 className="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
               >
-                Documentação <ExternalLink className="h-3 w-3" />
+                Saiba mais <ExternalLink className="h-3 w-3" />
               </a>
             </CardContent>
           </Card>

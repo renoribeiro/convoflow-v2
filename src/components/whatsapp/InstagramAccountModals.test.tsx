@@ -76,7 +76,7 @@ describe('Excluir conta do Instagram', () => {
     }
     expect(dialogText()).toContain('No Instagram, nada muda');
     expect(dialogText()).toContain('acesso guardado no cofre');
-    expect(dialogText()).not.toMatch(/servidor WhatsApp da plataforma|sessão é encerrada/);
+    expect(dialogText()).not.toMatch(/servidor de WhatsApp do ConvoFlow|sessão é encerrada/);
   });
 
   it('com histórico continua RECUSADA: números reais, sem botão de excluir, e o caminho é reconectar', async () => {
@@ -89,7 +89,7 @@ describe('Excluir conta do Instagram', () => {
     expect(screen.queryByRole('button', { name: /Excluir/ })).toBeNull();
     expect(screen.getByTestId('delete-counts')).toHaveTextContent('Mensagens9');
     expect(dialogText()).toContain('reconectar');
-    expect(dialogText()).not.toMatch(/QR Code|Desconectar|Nova Instância/);
+    expect(dialogText()).not.toMatch(/QR Code|Desconectar|Conectar número/);
     expect(dialogText()).not.toMatch(/inst[aâ]ncia/i);
   });
 
@@ -135,8 +135,8 @@ describe('Renomear conta do Instagram', () => {
         />
       </QueryClientProvider>,
     );
-    expect(screen.getByText('Renomear instância')).toBeInTheDocument();
-    expect(screen.getByLabelText('Nome da Instância')).toBeInTheDocument();
+    expect(screen.getByText('Renomear número')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nome do número')).toBeInTheDocument();
     expect(dialogText()).toContain('Chave técnica:');
   });
 });

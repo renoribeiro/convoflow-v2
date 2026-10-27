@@ -260,7 +260,7 @@ export const SetVariableNode: React.FC<NodeProps> = ({ id, data, selected }) => 
 // ---------------------------------------------------------------------------
 const FIELD_LABELS: Record<string, string> = {
   name: 'Nome',
-  email: 'E-mail',
+  email: 'Email',
   phone: 'Telefone',
   tag: 'Tag',
 };

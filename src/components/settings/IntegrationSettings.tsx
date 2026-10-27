@@ -58,7 +58,7 @@ export const IntegrationSettings = () => {
     table: 'webhooks',
     operation: isEditingWebhook ? 'update' : 'insert',
     invalidateQueries: [['webhooks']],
-    successMessage: isEditingWebhook ? 'Webhook atualizado!' : 'Webhook criado!'
+    successMessage: isEditingWebhook ? 'Aviso salvo' : 'Aviso criado'
   });
   
   // Mutation para deletar webhook
@@ -66,7 +66,7 @@ export const IntegrationSettings = () => {
     table: 'webhooks',
     operation: 'delete',
     invalidateQueries: [['webhooks']],
-    successMessage: 'Webhook removido!'
+    successMessage: 'Aviso removido'
   });
   
   const eventTypes = WEBHOOK_EVENT_TYPES;
@@ -74,7 +74,7 @@ export const IntegrationSettings = () => {
   const handleSaveWebhook = async () => {
     const validation = validateWebhookForm(webhookForm);
     if (!validation.valid) {
-      toast({ title: 'Erro', description: validation.error, variant: 'destructive' });
+      toast({ title: 'Confira o formulário', description: validation.error, variant: 'destructive' });
       return;
     }
 
@@ -129,8 +129,7 @@ export const IntegrationSettings = () => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
-      title: 'Copiado!',
-      description: 'URL copiada para a área de transferência'
+      title: 'Endereço copiado'
     });
   };
   
@@ -139,20 +138,22 @@ export const IntegrationSettings = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="h-5 w-5" />
-          Integrações
+          Avisos para outros sistemas
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
             <div className="text-sm text-muted-foreground">
-              Configure webhooks para receber notificações em tempo real sobre eventos do sistema.
+              O ConvoFlow avisa um sistema seu (um CRM, uma planilha, o n8n) no instante em que algo
+              acontece aqui, como um contato novo. Esse aviso automático se chama webhook: você
+              informa o endereço do outro sistema e escolhe quais acontecimentos ele recebe.
             </div>
             
             {/* Formulário de Webhook */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">
-                  {isEditingWebhook ? 'Editar Webhook' : 'Novo Webhook'}
+                  {isEditingWebhook ? 'Editar aviso' : 'Novo aviso'}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -168,7 +169,7 @@ export const IntegrationSettings = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="webhook-url">URL do Endpoint *</Label>
+                    <Label htmlFor="webhook-url">Endereço do outro sistema *</Label>
                     <Input
                       id="webhook-url"
                       value={webhookForm.url || ''}
@@ -179,7 +180,7 @@ export const IntegrationSettings = () => {
                 </div>
                 
                 <div>
-                  <Label>Eventos</Label>
+                  <Label>Avisar quando</Label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                     {eventTypes.map((event) => (
                       <div key={event.id} className="flex items-center space-x-2">
@@ -212,12 +213,12 @@ export const IntegrationSettings = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="webhook-secret">Secret (Opcional)</Label>
+                  <Label htmlFor="webhook-secret">Senha de conferência (opcional)</Label>
                   <Input
                     id="webhook-secret"
                     value={webhookForm.secret || ''}
                     onChange={(e) => setWebhookForm(prev => ({ ...prev, secret: e.target.value }))}
-                    placeholder="Chave secreta para validação"
+                    placeholder="O outro sistema usa para conferir que o aviso veio do ConvoFlow"
                     type="password"
                   />
                 </div>
@@ -227,7 +228,7 @@ export const IntegrationSettings = () => {
                     checked={webhookForm.active || false}
                     onCheckedChange={(checked) => setWebhookForm(prev => ({ ...prev, active: checked }))}
                   />
-                  <Label>Webhook ativo</Label>
+                  <Label>Aviso ligado</Label>
                 </div>
                 
                 <div className="flex gap-2">
@@ -235,7 +236,7 @@ export const IntegrationSettings = () => {
                     onClick={handleSaveWebhook}
                     disabled={saveWebhookMutation.isPending}
                   >
-                    {saveWebhookMutation.isPending ? 'Salvando...' : (isEditingWebhook ? 'Atualizar' : 'Criar Webhook')}
+                    {saveWebhookMutation.isPending ? 'Salvando...' : (isEditingWebhook ? 'Salvar aviso' : 'Criar aviso')}
                   </Button>
                   {isEditingWebhook && (
                     <Button 
@@ -254,12 +255,12 @@ export const IntegrationSettings = () => {
             
             {/* Lista de Webhooks */}
             <div>
-              <h3 className="text-lg font-semibold mb-3">Webhooks Configurados</h3>
+              <h3 className="text-lg font-semibold mb-3">Avisos cadastrados</h3>
               {webhooks.length === 0 ? (
                 <Card>
                   <CardContent className="p-6 text-center">
                     <Webhook className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Nenhum webhook configurado</p>
+                    <p className="text-muted-foreground">Nenhum aviso cadastrado ainda. Preencha o formulário acima para criar o primeiro.</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -274,9 +275,9 @@ export const IntegrationSettings = () => {
                             <div className="flex items-center gap-3 mb-2">
                               <h4 className="font-medium">{webhook.name}</h4>
                               {webhook.is_active ? (
-                                <Badge variant="default" className="bg-green-500">Ativo</Badge>
+                                <Badge variant="default" className="bg-green-500">Ligado</Badge>
                               ) : (
-                                <Badge variant="secondary">Inativo</Badge>
+                                <Badge variant="secondary">Desligado</Badge>
                               )}
                             </div>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -323,12 +324,12 @@ export const IntegrationSettings = () => {
             </div>
             
             <div className="bg-muted/50 p-4 rounded-lg">
-              <h4 className="font-medium mb-2">Documentação de Webhooks</h4>
+              <h4 className="font-medium mb-2">Como o aviso chega</h4>
               {/* O botão "Ver Documentação" ("em breve") saiu em 2026-10-25
                   (achado 120 do checkup): não existe página com o formato dos
                   avisos, e o texto mandava a pessoa consultá-la. */}
               <p className="text-sm text-muted-foreground">
-                Cada aviso é enviado ao endereço cadastrado no formato JSON, pelo método POST. Ainda não há uma página que descreva o conteúdo de cada evento: para montar a integração, cadastre um endereço de teste e veja um aviso de verdade chegar.
+                Cada aviso chega ao endereço cadastrado como um envio do tipo POST, com os dados em JSON (o formato que os sistemas de integração entendem). Para montar a integração, cadastre um endereço de teste e veja um aviso de verdade chegar.
               </p>
             </div>
         </div>
@@ -340,10 +341,10 @@ export const IntegrationSettings = () => {
         onConfirm={async () => {
           if (removerAlvo) await handleDeleteWebhook(removerAlvo.id);
         }}
-        title={`Remover o webhook "${removerAlvo?.name ?? ''}"?`}
+        title={`Remover o aviso "${removerAlvo?.name ?? ''}"?`}
         description={`O endereço ${removerAlvo?.url ?? ''} para de receber os avisos do ConvoFlow agora. Se outro sistema depende deles (um CRM, uma automação), ele deixa de ser avisado.`}
         reversivel={false}
-        confirmText="Remover webhook"
+        confirmText="Remover aviso"
         variant="destructive"
         isLoading={deleteWebhookMutation.isPending}
       />

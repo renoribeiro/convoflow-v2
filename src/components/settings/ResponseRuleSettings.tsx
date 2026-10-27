@@ -31,7 +31,7 @@ import {
 } from '@/lib/conversations/responseRule';
 
 /**
- * Configurações › Escala/Transferência — "Transferência por tempo sem
+ * Configurações › Distribuição e transferência — "Transferência por tempo sem
  * resposta" (migração 20260916000001).
  *
  * Quatro chaves em `tenants.settings` (response_rule_enabled,
@@ -50,7 +50,7 @@ import {
  *   - o exemplo "sexta 17:50 → segunda 09:50" é calculado aqui com o mesmo
  *     algoritmo do banco (`businessMinutesBetween`), só para o gestor entender
  *     o efeito do horário;
- *   - a sinalização de SLA (aba Atendimento) é outra coisa: só marca cor,
+ *   - a sinalização de conversas não respondidas (aba Atendimento) é outra coisa: só marca cor,
  *     em horas corridas desde a última mensagem. A tela diz isso.
  */
 
@@ -226,7 +226,7 @@ export const ResponseRuleSettings = () => {
         <CardTitle>{TITLE}</CardTitle>
         <CardDescription>
           Ligada, a regra conta os minutos de funcionamento desde que o cliente começou a esperar. Se o
-          responsável não responder nesse prazo, a conversa passa para o próximo do rodízio e o sino avisa
+          responsável não responder nesse prazo, a conversa passa para o próximo da distribuição automática e o sino avisa
           quem recebeu. Resposta do chatbot não conta como resposta.
         </CardDescription>
       </CardHeader>
@@ -439,7 +439,7 @@ export const ResponseRuleSettings = () => {
             <div className="flex items-start gap-2">
               <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
               <p className="text-xs text-muted-foreground">
-                Diferente da sinalização de SLA (aba Atendimento), que só colore a lista e conta horas corridas
+                Diferente da sinalização de conversas não respondidas (aba Atendimento), que só colore a lista e conta horas corridas
                 desde a última mensagem do cliente, esta regra age: conta minutos de funcionamento desde o
                 início da espera e transfere. As duas podem ficar ligadas; não se atrapalham.
               </p>

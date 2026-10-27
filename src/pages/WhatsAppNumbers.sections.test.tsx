@@ -121,8 +121,9 @@ function metric(label: string): string {
 
 /** O cartão (Card) de uma seção, pelo título. */
 function section(title: string): HTMLElement {
-  const heading = screen.getByText(title);
-  const card = heading.closest('div.rounded-lg.border');
+  // O título da página também diz "Números de WhatsApp": a seção é o cartão.
+  const heading = screen.getAllByText(title).find((el) => el.closest('div.rounded-lg.border'));
+  const card = heading?.closest('div.rounded-lg.border');
   if (!card) throw new Error(`seção ${title} não encontrada`);
   return card as HTMLElement;
 }
@@ -139,18 +140,19 @@ describe('Instâncias e APIs — Loja sem Instagram (VagaCerta)', () => {
   it('uma seção só, os contadores e o rótulo de sempre', () => {
     state.rows = [vagaCerta, evolutionClosed];
     renderPage();
-    expect(screen.getByText('Instâncias WhatsApp')).toBeInTheDocument();
+    expect(section('Números de WhatsApp')).toBeInTheDocument();
     expect(screen.queryByText('Contas do Instagram')).toBeNull();
-    expect(metric('Total de Instâncias')).toBe('2');
+    expect(metric('Total de números')).toBe('2');
     expect(metric('Conectados')).toBe('1');
     expect(metric('Desconectados')).toBe('1');
     expect(screen.queryByTestId('total-breakdown')).toBeNull();
-    // a linha do WhatsApp continua com a chave, o número e os botões de sempre
-    expect(screen.getByText('Chave: 100000000000099')).toBeInTheDocument();
+    // a linha do WhatsApp mostra o número e os botões; o código interno (a
+    // "chave") não aparece mais para o cliente (lote 3, achado 107)
+    expect(screen.queryByText(/Chave:/)).toBeNull();
     expect(screen.getByText('Número: 5585999990000')).toBeInTheDocument();
-    expect(screen.getAllByTitle('Renomear instância')).toHaveLength(2);
-    expect(screen.getAllByTitle('Excluir instância')).toHaveLength(2);
-    expect(screen.getByTitle('Conectar via QR Code')).toBeInTheDocument();
+    expect(screen.getAllByTitle('Renomear número')).toHaveLength(2);
+    expect(screen.getAllByTitle('Excluir número')).toHaveLength(2);
+    expect(screen.getByTitle('Conectar pelo QR Code')).toBeInTheDocument();
   });
 });
 
@@ -161,7 +163,7 @@ describe('Instâncias e APIs — Loja com Instagram', () => {
 
   it('duas seções: o Instagram só na dele, o WhatsApp só na dele', () => {
     renderPage();
-    const wa = section('Instâncias WhatsApp');
+    const wa = section('Números de WhatsApp');
     const ig = section('Contas do Instagram');
     expect(within(wa).getByText('Vaga Certa')).toBeInTheDocument();
     expect(within(wa).queryByText('Instagram Teste')).toBeNull();
@@ -194,7 +196,7 @@ describe('Instâncias e APIs — Loja com Instagram', () => {
   it('contadores somam as duas seções, com a divisão por canal', () => {
     renderPage();
     expect(metric('Total de conexões')).toBe('2');
-    expect(screen.getByTestId('total-breakdown')).toHaveTextContent('1 instância de WhatsApp · 1 conta do Instagram');
+    expect(screen.getByTestId('total-breakdown')).toHaveTextContent('1 número de WhatsApp · 1 conta do Instagram');
     expect(metric('Conectados')).toBe('2');
     expect(metric('Desconectados')).toBe('0');
   });
@@ -220,7 +222,7 @@ describe('Instâncias e APIs — só Instagram', () => {
   it('a seção do WhatsApp diz que não há instância, e o Instagram aparece na dele', () => {
     state.rows = [instagramTeste];
     renderPage();
-    expect(screen.getByTestId('no-whatsapp-instances')).toHaveTextContent('Nenhuma instância de WhatsApp cadastrada.');
+    expect(screen.getByTestId('no-whatsapp-instances')).toHaveTextContent('Nenhum número de WhatsApp conectado.');
     expect(within(section('Contas do Instagram')).getByText('Instagram Teste')).toBeInTheDocument();
     expect(metric('Total de conexões')).toBe('1');
   });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { telaDoCaminho } from '@/lib/access/telas';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
@@ -30,8 +31,8 @@ export const DashboardLayout = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const location = useLocation();
   const role = useRole();
-  const pageName = (location.pathname.split('/').filter(Boolean).pop() || 'página')
-    .replace(/-/g, ' ');
+  // O nome em português da tela (o mesmo do menu), nunca o pedaço do endereço.
+  const pageName = telaDoCaminho(location.pathname)?.nome ?? 'esta tela';
 
   // Bloqueio "Exclusivo para lojas" para o superadmin nas telas operacionais.
   const firstSegment = location.pathname.replace(/^\/dashboard\/?/, '').split('/')[0] ?? '';

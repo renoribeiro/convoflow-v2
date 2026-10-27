@@ -67,6 +67,7 @@ import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { FlowEdgeContext, EDGE_TYPES } from '@/components/chatbots/flow/edges/DeletableEdge';
 import type { ChatbotNodeType, ChatbotNodeData, ChatbotVariableRow } from '@/types/chatbot-flow.types';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 // ---------------------------------------------------------------------------
 // History stack
@@ -391,7 +392,7 @@ const ChatbotFlowBuilder: React.FC = () => {
       // Check singleton constraint for 'start'
       const block = BLOCK_DEFINITIONS.find((b) => b.type === nodeType);
       if (block?.singleton && nodes.some((n) => n.type === nodeType)) {
-        toast.error(`Só é permitido um nó do tipo "${block.label}"`);
+        toast.error(`O fluxo só pode ter um bloco "${block.label}".`);
         return;
       }
 
@@ -528,7 +529,8 @@ const ChatbotFlowBuilder: React.FC = () => {
       setIsDirty(false);
       toast.success('Fluxo salvo com sucesso');
     } catch (err: any) {
-      toast.error('Erro ao salvar fluxo', { description: err?.message });
+      // Error = validação do fluxo (frase nossa); objeto do banco = frase padrão.
+      toast.error('Não foi possível salvar o chatbot', { description: err instanceof Error ? err.message : motivoDoErro(err) });
     }
   };
 
@@ -560,7 +562,7 @@ const ChatbotFlowBuilder: React.FC = () => {
       setIsDirty(false);
       toast.success('Chatbot publicado com sucesso!');
     } catch (err: any) {
-      toast.error('Erro ao publicar chatbot', { description: err?.message });
+      toast.error('Não foi possível publicar o chatbot', { description: err instanceof Error ? err.message : motivoDoErro(err) });
     }
   };
 

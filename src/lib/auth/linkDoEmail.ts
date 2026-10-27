@@ -41,8 +41,12 @@ export type ChegadaPorLink =
   | { tipo: 'link_antigo' }
   /** O Supabase (ou um link mal copiado) devolveu um erro. */
   | { tipo: 'erro'; mensagem: string }
-  /** Ninguém trouxe link: é o "Esqueci minha senha". */
-  | { tipo: 'visita' };
+  /**
+   * Ninguém trouxe link: é o "Esqueci minha senha". `digitarCodigo` vem do
+   * link "Onde digitar" dos emails (?digitar=codigo): abre direto no campo do
+   * código, sem passar por "Esqueci minha senha" (achado 19).
+   */
+  | { tipo: 'visita'; digitarCodigo?: boolean };
 
 /**
  * Traduz o erro que o Supabase devolve no endereço.
@@ -87,6 +91,7 @@ export function lerChegada(search: string, hash: string): ChegadaPorLink {
   }
 
   if (fragmento.get('access_token')) return { tipo: 'link_antigo' };
+  if (busca.get('digitar') === 'codigo') return { tipo: 'visita', digitarCodigo: true };
   return { tipo: 'visita' };
 }
 

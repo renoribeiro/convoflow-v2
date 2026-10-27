@@ -44,7 +44,7 @@ export const AppearanceSettings = () => {
       
       toast.success('Preferências de aparência salvas com sucesso!');
     } catch (error) {
-      toast.error('Erro ao salvar preferências. Tente novamente.');
+      toast.error('Não foi possível salvar as preferências. Tente de novo.');
     } finally {
       setIsSaving(false);
     }

@@ -302,7 +302,7 @@ export async function enviarEmail(p: Portas, nota: Nota, cobranca?: Cobranca | n
     await p.banco.atualizarNota(nota.id, { email_tentativas: nota.email_tentativas + 1 });
     p.log('nfse: e-mail falhou', { nota: nota.id, erro: (e as Error).message });
     if (nota.email_tentativas + 1 >= 3) {
-      await p.avisos.superadmin(`email:${nota.id}`, 'E-mail da nota fiscal não saiu', `A nota ${nota.numero_nfse ?? ''} foi emitida, mas o e-mail ao cliente falhou 3 vezes. Baixe o PDF em Faturamento e mande à mão.`);
+      await p.avisos.superadmin(`email:${nota.id}`, 'Email da nota fiscal não saiu', `A nota ${nota.numero_nfse ?? ''} foi emitida, mas o e-mail ao cliente falhou 3 vezes. Baixe o PDF em Faturamento e mande à mão.`);
     }
     return false;
   }

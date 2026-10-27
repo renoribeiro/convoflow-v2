@@ -44,7 +44,7 @@ export const SlaMuteButton = ({ conversationId, isMuted }: SlaMuteButtonProps) =
     setConfirmOpen(true);
   };
 
-  const label = isMuted ? 'Voltar a sinalizar' : 'Marcar como não respondido pelo cliente';
+  const label = isMuted ? 'Voltar a sinalizar esta conversa' : 'Parar de sinalizar esta conversa';
   const Icon = isMuted ? Bell : BellOff;
 
   return (
@@ -74,10 +74,10 @@ export const SlaMuteButton = ({ conversationId, isMuted }: SlaMuteButtonProps) =
         {/* Renderizado em portal — os cliques daqui não voltam para a linha. */}
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Marcar como não respondido?</AlertDialogTitle>
+            <AlertDialogTitle>Parar de sinalizar esta conversa?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta conversa deixará de ser sinalizada como pendente. Você pode reverter a qualquer
-              momento.
+              O aviso de atraso desta conversa some, e ela deixa de contar como sem resposta. Você
+              pode voltar a sinalizar quando quiser.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -85,7 +85,7 @@ export const SlaMuteButton = ({ conversationId, isMuted }: SlaMuteButtonProps) =
             <AlertDialogAction
               onClick={() => toggleMute.mutate({ conversationId, muted: true })}
             >
-              Marcar
+              Parar de sinalizar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -28,30 +28,30 @@ const officialSchema = z.object({
   phoneNumberId: z
     .string()
     .trim()
-    .regex(/^\d{6,30}$/, 'Phone Number ID deve conter apenas dígitos'),
+    .regex(/^\d{6,30}$/, 'O código do número na Meta tem só números.'),
   wabaId: z
     .string()
     .trim()
-    .regex(/^\d{6,30}$/, 'WABA ID deve conter apenas dígitos'),
+    .regex(/^\d{6,30}$/, 'O código da conta do WhatsApp Business tem só números.'),
   accessToken: z
     .string()
     .trim()
-    .min(40, 'Access Token muito curto'),
+    .min(40, 'A chave de acesso parece incompleta. Cole a chave inteira.'),
   graphApiVersion: z
     .string()
-    .regex(/^v\d{1,2}\.\d{1,2}$/, 'Versão da Graph API inválida')
+    .regex(/^v\d{1,2}\.\d{1,2}$/, 'Versão da API da Meta inválida (ex.: v20.0).')
     .optional(),
 });
 
 const wahaSchema = z.object({
   provider: z.literal('waha'),
   name: nameField,
-  serverUrl: z.string().trim().url('URL do servidor WAHA inválida'),
+  serverUrl: z.string().trim().url('Endereço do servidor WAHA inválido. Comece com https://'),
   apiKey: z.string().trim().optional(),
   sessionName: z
     .string()
     .trim()
-    .min(1, 'Nome da sessão é obrigatório')
+    .min(1, 'Informe o nome da sessão.')
     .max(50, 'Nome da sessão muito longo')
     .regex(/^[A-Za-z0-9_-]+$/, 'Use apenas letras, números, _ e -'),
 });
@@ -62,8 +62,8 @@ const evolutionSchema = z.object({
   instance_key: z
     .string()
     .trim()
-    .min(3, 'Chave da instância deve ter pelo menos 3 caracteres')
-    .max(100, 'Chave muito longa')
+    .min(3, 'O código interno precisa de pelo menos 3 caracteres.')
+    .max(100, 'O código interno pode ter no máximo 100 caracteres.')
     .regex(/^[A-Za-z0-9_-]+$/, 'Use apenas letras, números, _ e -'),
   // Sem serverUrl/apiKey de propósito: o servidor Evolution é da plataforma, e
   // a chave global dele é chave-mestra de TODAS as instâncias — inclusive as de

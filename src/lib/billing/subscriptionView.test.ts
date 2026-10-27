@@ -79,6 +79,13 @@ describe('tela de Assinatura', () => {
     expect(v.alert?.title).toBe('Nenhuma assinatura');
   });
 
+  it('Conta liberada à mão sem assinatura não aparece em vermelho (achado 116)', () => {
+    const v = describeSubscription({ subscription_status: null, manual_access_granted: true });
+    expect(v.title).toBe('Acesso liberado pelo ConvoFlow');
+    expect(v.badge).toEqual({ tone: 'ativo', label: 'LIBERADO' });
+    expect(v.alert).toBeNull();
+  });
+
   it('cancelamento com a data faltando não inventa data', () => {
     const v = describeSubscription({ subscription_status: 'trialing', subscription_will_cancel: true });
     expect(v.alert?.title).not.toBe('Cancelamento agendado');

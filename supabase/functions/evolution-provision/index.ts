@@ -140,7 +140,7 @@ Deno.serve(async (req: Request) => {
     return jsonResponse(
       {
         ok: false,
-        error: 'Chave da instância inválida. Use de 3 a 100 caracteres, apenas letras, números, _ e -.',
+        error: 'Código interno inválido. Use de 3 a 100 caracteres, só letras, números, _ e -.',
       },
       400,
     );
@@ -162,7 +162,7 @@ Deno.serve(async (req: Request) => {
 
   if (existing) {
     return jsonResponse(
-      { ok: false, error: 'Já existe uma instância com essa chave. Escolha outra.' },
+      { ok: false, error: 'Já existe um número com esse código interno. Clique em Gerar para criar outro.' },
       409,
     );
   }
@@ -225,7 +225,7 @@ Deno.serve(async (req: Request) => {
       error: err instanceof Error ? err.message : String(err),
     });
     return jsonResponse(
-      { ok: false, error: 'Não foi possível alcançar o servidor Evolution.' },
+      { ok: false, error: 'O servidor de WhatsApp do ConvoFlow não respondeu. Tente de novo em instantes.' },
       502,
     );
   }
@@ -284,8 +284,8 @@ Deno.serve(async (req: Request) => {
       {
         ok: false,
         error:
-          'A Evolution criou a instância mas não devolveu a chave dela. ' +
-          'A instância foi desfeita para não ficar pela metade. Tente de novo.',
+          'O servidor de WhatsApp criou o número mas não devolveu a chave dele. ' +
+          'O número foi desfeito para não ficar pela metade. Tente de novo.',
       },
       502,
     );
@@ -358,7 +358,7 @@ Deno.serve(async (req: Request) => {
     });
     await rollback('insert falhou');
     return jsonResponse(
-      { ok: false, error: `Não foi possível salvar a instância: ${insertError?.message ?? 'sem resposta do banco'}` },
+      { ok: false, error: 'Não foi possível salvar o número. Tente de novo em instantes.' },
       500,
     );
   }
@@ -373,7 +373,7 @@ Deno.serve(async (req: Request) => {
     await supabaseAdmin.from('whatsapp_instances').delete().eq('id', inserted.id);
     await rollback('cofre recusou');
     return jsonResponse(
-      { ok: false, error: 'Não foi possível guardar a chave da instância. Nada foi criado. Tente de novo.' },
+      { ok: false, error: 'Não foi possível guardar a chave do número. Nada foi criado. Tente de novo.' },
       500,
     );
   }

@@ -195,7 +195,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <p className="text-sm text-gray-600">
-                {preparing ? 'Preparando o QR Code...' : 'Conectando instância...'}
+                {preparing ? 'Preparando o QR Code...' : 'Conectando o número...'}
               </p>
             </div>
           )}
@@ -203,7 +203,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
           {error && !connected && !loading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
               <div className="text-red-500 text-center">
-                <p className="font-medium">Erro ao conectar instância</p>
+                <p className="font-medium">Não foi possível conectar o número</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
               <Button onClick={fetchConnectionData} variant="outline" size="sm">

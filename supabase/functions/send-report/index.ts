@@ -160,7 +160,7 @@ async function loadSystemWhatsAppInstance(admin: SupabaseClient): Promise<any> {
     .select('id, provider, instance_key, connection_config, evolution_api_url, evolution_api_key, status')
     .eq('id', instanceId)
     .maybeSingle();
-  if (!instance) throw new SecureError('Instância de envio do sistema não encontrada.', 'SYSTEM_WHATSAPP_NOT_FOUND', 400);
+  if (!instance) throw new SecureError('O número de envio do sistema não foi encontrado. Fale com o suporte do ConvoFlow.', 'SYSTEM_WHATSAPP_NOT_FOUND', 400);
   return instance;
 }
 
@@ -467,10 +467,10 @@ Deno.serve(async (req) => {
     const wantsEmail = body.delivery?.email === true;
     const wantsWhatsapp = body.delivery?.whatsapp === true;
     if (!wantsEmail && !wantsWhatsapp) {
-      throw new SecureError('Selecione ao menos um canal de entrega (e-mail ou WhatsApp).', 'NO_CHANNEL', 400);
+      throw new SecureError('Escolha pelo menos um jeito de entregar: email ou WhatsApp.', 'NO_CHANNEL', 400);
     }
     if (wantsEmail && emails.length === 0) {
-      throw new SecureError('Informe ao menos um e-mail de destinatário válido.', 'NO_EMAIL_RECIPIENTS', 400);
+      throw new SecureError('Informe pelo menos um email de quem vai receber.', 'NO_EMAIL_RECIPIENTS', 400);
     }
     if (wantsWhatsapp && phones.length === 0) {
       throw new SecureError('Informe ao menos um número de WhatsApp válido (com DDD).', 'NO_PHONE_RECIPIENTS', 400);
@@ -528,7 +528,7 @@ Deno.serve(async (req) => {
         });
         delivered.push({ channel: 'email', to: emails });
       } catch (e) {
-        warnings.push(`E-mail: ${(e as Error).message}`);
+        warnings.push(`Email: ${(e as Error).message}`);
       }
     }
 

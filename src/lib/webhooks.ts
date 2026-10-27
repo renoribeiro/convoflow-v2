@@ -13,14 +13,14 @@ export interface WebhookEventType {
 
 /** Eventos que o usuário pode assinar ao criar um webhook. */
 export const WEBHOOK_EVENT_TYPES: WebhookEventType[] = [
-  { id: 'message.received', label: 'Mensagem Recebida' },
-  { id: 'message.sent', label: 'Mensagem Enviada' },
-  { id: 'contact.created', label: 'Contato Criado' },
-  { id: 'contact.updated', label: 'Contato Atualizado' },
-  { id: 'campaign.started', label: 'Campanha Iniciada' },
-  { id: 'campaign.completed', label: 'Campanha Finalizada' },
-  { id: 'followup.scheduled', label: 'Follow-up Agendado' },
-  { id: 'chatbot.triggered', label: 'Chatbot Acionado' },
+  { id: 'message.received', label: 'Chega uma mensagem' },
+  { id: 'message.sent', label: 'Sai uma mensagem' },
+  { id: 'contact.created', label: 'Entra um contato novo' },
+  { id: 'contact.updated', label: 'Um contato muda' },
+  { id: 'campaign.started', label: 'Uma campanha começa' },
+  { id: 'campaign.completed', label: 'Uma campanha termina' },
+  { id: 'followup.scheduled', label: 'Um follow up é agendado' },
+  { id: 'chatbot.triggered', label: 'Um chatbot começa a atender' },
 ];
 
 export const WEBHOOK_EVENT_IDS = WEBHOOK_EVENT_TYPES.map((e) => e.id);
@@ -44,26 +44,26 @@ export interface ValidationResult {
  */
 export function validateWebhookForm(form: WebhookFormValues): ValidationResult {
   if (!form.name || !form.name.trim()) {
-    return { valid: false, error: 'Nome é obrigatório' };
+    return { valid: false, error: 'Dê um nome ao aviso.' };
   }
   if (!form.url || !form.url.trim()) {
-    return { valid: false, error: 'URL é obrigatória' };
+    return { valid: false, error: 'Informe o endereço do outro sistema.' };
   }
   let parsed: URL;
   try {
     parsed = new URL(form.url.trim());
   } catch {
-    return { valid: false, error: 'URL inválida' };
+    return { valid: false, error: 'Esse endereço não é válido. Confira se está completo.' };
   }
   if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    return { valid: false, error: 'A URL deve começar com http:// ou https://' };
+    return { valid: false, error: 'O endereço precisa começar com http:// ou https://' };
   }
   if (!form.events || form.events.length === 0) {
-    return { valid: false, error: 'Selecione ao menos um evento' };
+    return { valid: false, error: 'Escolha pelo menos um acontecimento para avisar.' };
   }
   const unknown = form.events.filter((e) => !WEBHOOK_EVENT_IDS.includes(e));
   if (unknown.length > 0) {
-    return { valid: false, error: `Evento(s) inválido(s): ${unknown.join(', ')}` };
+    return { valid: false, error: 'Um dos acontecimentos marcados não existe mais. Recarregue a página e marque de novo.' };
   }
   return { valid: true };
 }

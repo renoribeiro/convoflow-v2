@@ -123,15 +123,16 @@ export default function TeamPage() {
    */
   const semVaga = dadosDeVagaProntos && capacity > 0 && lojasUsadas >= capacity;
   const contadorLojas = dadosDeVagaProntos
-    ? `${lojasUsadas} de ${capacity} ${capacity === 1 ? 'loja' : 'lojas'}`
+    ? `${lojasUsadas} de ${capacity} ${capacity === 1 ? 'Loja' : 'Lojas'}`
     : null;
 
-  const heading = isGerente ? 'Minhas Lojas' : 'Minha Equipe';
+  // O mesmo nome do menu ("Equipe"), para todo cargo.
+  const heading = 'Equipe';
   const description = isGerente
     ? 'Lojas da sua Conta e quem tem acesso a elas.'
     : tenant?.name
-      ? `Usuários da Conta ${tenant.name}.`
-      : 'Selecione uma Conta para gerenciar a equipe.';
+      ? `Pessoas da Loja ${tenant.name}.`
+      : 'Escolha uma Loja no seletor do topo para ver a equipe.';
 
   return (
     <div className="space-y-6">
@@ -176,7 +177,7 @@ export default function TeamPage() {
                       </TooltipTrigger>
                       <TooltipContent>
                         {semVaga
-                          ? `Sua Conta já usa as ${capacity} lojas do plano. Contrate lojas adicionais em Configurações › Assinatura para criar mais.`
+                          ? `Sua Conta já usa as ${capacity} Lojas do plano. Contrate Lojas adicionais em Configurações › Assinatura para criar mais.`
                           : 'Cria uma Loja nova dentro da sua Conta.'}
                       </TooltipContent>
                     </Tooltip>
@@ -207,7 +208,7 @@ export default function TeamPage() {
             ) : cartaoDeLojas.lojas.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {isGerente
-                  ? 'Nenhuma loja cadastrada ainda. Use "Nova Loja" para criar a primeira.'
+                  ? 'Nenhuma Loja cadastrada ainda. Use "Nova Loja" para criar a primeira.'
                   : 'Esta Conta ainda não tem Lojas.'}
               </p>
             ) : (
@@ -228,7 +229,7 @@ export default function TeamPage() {
                             <span className="truncate text-sm">{loja.name}</span>
                             {emFoco && cartaoDeLojas.lista && (
                               <Badge variant="secondary" className="flex-shrink-0">
-                                Em foco
+                                Aberta agora
                               </Badge>
                             )}
                           </span>
@@ -263,6 +264,7 @@ export default function TeamPage() {
                             size="sm"
                             disabled={emFoco}
                             onClick={() => setActiveTenant(loja.id)}
+                            title={emFoco ? 'Esta Loja já está aberta no sistema' : 'Abre esta Loja no sistema inteiro: o seletor do topo muda junto'}
                           >
                             {emFoco ? 'Aberta' : 'Abrir'}
                           </Button>

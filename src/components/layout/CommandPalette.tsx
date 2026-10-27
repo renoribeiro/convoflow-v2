@@ -41,6 +41,7 @@ import { channelOfProvider } from '@/lib/conversations/channel';
 import { contactIdentifier, contactLabel, contactSearchOrFilter } from '@/lib/contacts/identity';
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
+import { estadoDoNumeroTexto } from '@/lib/whatsapp/connectionSections';
 
 type PageItem = {
   label: string;
@@ -198,14 +199,14 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
           tela — mesmo padrao ja usado no MessageBubble. */}
       <DialogTitle className="sr-only">Busca rápida</DialogTitle>
       <CommandInput
-        placeholder="Buscar páginas, contatos e sessões..."
+        placeholder="Buscar telas, contatos e números..."
         value={search}
         onValueChange={setSearch}
       />
       <CommandList>
         <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
 
-        <CommandGroup heading="Páginas">
+        <CommandGroup heading="Telas">
           {accessiblePages.map((page) => {
             const Icon = page.icon;
             // cmdk filtra por value + keywords; concatenamos pra suportar busca
@@ -227,7 +228,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
         {whatsappInstances.length > 0 && (
           <>
             <CommandSeparator />
-            <CommandGroup heading="Sessões WhatsApp">
+            <CommandGroup heading="Números de WhatsApp">
               {whatsappInstances.map((instance) => (
                 <CommandItem
                   key={instance.id}
@@ -239,7 +240,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
                     <span>{instance.name}</span>
                     {instance.number && (
                       <span className="text-xs text-muted-foreground">
-                        {instance.number} · {instance.status}
+                        {instance.number} · {estadoDoNumeroTexto(instance.status)}
                       </span>
                     )}
                   </div>

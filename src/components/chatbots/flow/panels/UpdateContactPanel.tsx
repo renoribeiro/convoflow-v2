@@ -12,7 +12,7 @@ interface Props {
 
 const FIELD_OPTIONS = [
   { value: 'name', label: 'Nome' },
-  { value: 'email', label: 'E-mail' },
+  { value: 'email', label: 'Email' },
   { value: 'phone', label: 'Telefone' },
   { value: 'tag', label: 'Tag' },
 ];

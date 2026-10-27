@@ -79,7 +79,7 @@ export const LeadTagsDialog = ({
       onOpenChange(false);
     } catch (error) {
       logger.error('Erro ao etiquetar lead', { error, contactId });
-      toast.error('Erro ao atualizar etiquetas do lead');
+      toast.error('Não foi possível atualizar as etiquetas do contato');
     } finally {
       setIsSaving(false);
     }

@@ -16,7 +16,7 @@ const PageErrorFallback: React.FC<{
   pageName?: string;
   showBackButton?: boolean;
   onReset?: () => void;
-}> = ({ pageName = 'página', showBackButton = true, onReset }) => {
+}> = ({ pageName = 'esta tela', showBackButton = true, onReset }) => {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
@@ -39,13 +39,13 @@ const PageErrorFallback: React.FC<{
             <AlertTriangle className="h-8 w-8 text-red-600" />
           </div>
           <CardTitle className="text-xl text-gray-900">
-            Erro na {pageName}
+            Não foi possível abrir {pageName}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-gray-600 text-center">
-            Ocorreu um erro inesperado ao carregar esta {pageName}. 
-            Tente uma das opções abaixo para continuar.
+            Algo deu errado ao carregar a tela. Recarregue a página; se continuar,
+            volte e tente de novo ou fale com o suporte do ConvoFlow.
           </p>
           
           <div className="space-y-2">
@@ -55,7 +55,7 @@ const PageErrorFallback: React.FC<{
               variant="default"
             >
               <RefreshCw className="h-4 w-4 mr-2" />
-              Recarregar Página
+              Recarregar a página
             </Button>
             
             {showBackButton && (
@@ -75,7 +75,7 @@ const PageErrorFallback: React.FC<{
               className="w-full"
             >
               <Home className="h-4 w-4 mr-2" />
-              Ir para Dashboard
+              Ir para o Dashboard
             </Button>
             
             {onReset && (
@@ -84,7 +84,7 @@ const PageErrorFallback: React.FC<{
                 variant="ghost"
                 className="w-full"
               >
-                Tentar Novamente
+                Tentar de novo
               </Button>
             )}
           </div>

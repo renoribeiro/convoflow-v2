@@ -45,7 +45,7 @@ export const SourceBreakdown = ({ data, isLoading }: SourceBreakdownProps) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distribuição de Leads por Fonte</CardTitle>
+        <CardTitle>Contatos por fonte</CardTitle>
       </CardHeader>
       <CardContent>
         {isLoading ? (

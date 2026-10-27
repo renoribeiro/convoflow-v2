@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Smartphone, Save, AlertTriangle, Info } from 'lucide-react';
 import { toast } from 'sonner';
-import { onlyWhatsApp } from '@/lib/whatsapp/connectionSections';
+import { estadoDoNumeroTexto, onlyWhatsApp } from '@/lib/whatsapp/connectionSections';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 const REPORT_WA_KEY = 'report_whatsapp_instance_id';
 
@@ -71,17 +72,17 @@ export const SystemSettings = () => {
       toast.success('Número de envio do sistema salvo.');
       queryClient.invalidateQueries({ queryKey: ['system-settings', REPORT_WA_KEY] });
     },
-    onError: (e) => toast.error(e instanceof Error ? e.message : 'Erro ao salvar.'),
+    onError: (e) => toast.error(`Não foi possível salvar. ${motivoDoErro(e)}`),
   });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Smartphone className="w-5 h-5" /> Envio do Sistema (WhatsApp)
+          <Smartphone className="w-5 h-5" /> Envio do sistema (WhatsApp)
         </CardTitle>
         <CardDescription>
-          Define qual número de WhatsApp o sistema usa para enviar relatórios. Apenas super admins têm acesso.
+          Escolha o número de WhatsApp que o ConvoFlow usa para enviar os relatórios. Só o Superadmin vê esta tela.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -91,7 +92,7 @@ export const SystemSettings = () => {
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Nenhuma instância de WhatsApp conectada. Conecte um número em <strong>Números WhatsApp</strong> antes
+              Nenhum número de WhatsApp conectado. Conecte um em <strong>Números de WhatsApp</strong> antes
               de configurar o envio do sistema.
             </AlertDescription>
           </Alert>
@@ -101,13 +102,13 @@ export const SystemSettings = () => {
               <Label>Número de envio dos relatórios</Label>
               <Select value={selected} onValueChange={setSelected}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma instância" />
+                  <SelectValue placeholder="Escolha o número" />
                 </SelectTrigger>
                 <SelectContent>
                   {instances.map((i: any) => (
                     <SelectItem key={i.id} value={i.id}>
                       {(i.name || i.phone_number || i.id.slice(0, 8))} · {providerLabel(i.provider)}
-                      {i.status ? ` (${i.status})` : ''}
+                      {i.status ? ` (${estadoDoNumeroTexto(i.status)})` : ''}
                     </SelectItem>
                   ))}
                 </SelectContent>

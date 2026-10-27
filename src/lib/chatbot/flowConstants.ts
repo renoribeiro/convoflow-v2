@@ -93,7 +93,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     label: 'Condição (Se/Senão)',
     emoji: '🔀',
     category: 'interacao',
-    description: 'Desvio condicional baseado em variável',
+    description: 'Segue por um caminho ou outro conforme uma variável',
     headerClass: 'bg-purple-600',
   },
   {

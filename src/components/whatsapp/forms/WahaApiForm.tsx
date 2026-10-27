@@ -28,20 +28,20 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
     <div className="space-y-4">
       <Alert className="border-sky-200 bg-sky-50/60">
         <ServerCog className="h-4 w-4 text-sky-700" />
-        <AlertTitle>WAHA (servidor self-hosted)</AlertTitle>
+        <AlertTitle>QR Code no seu servidor WAHA</AlertTitle>
         <AlertDescription className="text-xs">
           Ao salvar, o servidor do ConvoFlow confere o endereço, cria (ou atualiza) a sessão no seu
           servidor WAHA e registra lá o endereço de entrega, com uma senha só deste número. O
-          endereço e a API Key ficam guardados no cofre do ConvoFlow e não aparecem mais em nenhuma
+          endereço e a chave ficam guardados no cofre do ConvoFlow e não aparecem mais em nenhuma
           tela. Depois é só clicar no QR Code do número na lista e ler com o celular.
         </AlertDescription>
       </Alert>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-name">Nome da Instância *</Label>
+        <Label htmlFor="waha-name">Nome do número *</Label>
         <Input
           id="waha-name"
-          placeholder="Ex: WhatsApp Suporte WAHA"
+          placeholder="Ex: WhatsApp Suporte"
           value={values.name}
           onChange={(e) => onChange({ name: e.target.value })}
           disabled={loading}
@@ -49,10 +49,10 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-url">URL base do servidor WAHA *</Label>
+        <Label htmlFor="waha-url">Endereço do seu servidor WAHA *</Label>
         <Input
           id="waha-url"
-          placeholder="https://waha.memudecore.com.br"
+          placeholder="https://waha.suaempresa.com.br"
           value={values.serverUrl}
           onChange={(e) => onChange({ serverUrl: e.target.value })}
           disabled={loading}
@@ -64,7 +64,7 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="waha-key">API Key (X-Api-Key)</Label>
+        <Label htmlFor="waha-key">Chave do servidor WAHA (X-Api-Key)</Label>
         <Input
           id="waha-key"
           type="password"
@@ -86,23 +86,18 @@ export const WahaApiForm = ({ values, onChange, loading }: Props) => {
           disabled={loading}
         />
         <p className="text-xs text-muted-foreground">
-          Se o servidor WAHA já é compartilhado com outras integrações (ex.: n8n),{' '}
-          escolha um nome único por Conta para evitar conflito de pareamento.
+          Se o servidor WAHA também atende outros sistemas (por exemplo, n8n),{' '}
+          use um nome que só este número usa, para um não desconectar o outro.
         </p>
       </div>
 
       <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle className="text-sm">Endereço de entrega que será registrado</AlertTitle>
+        <AlertTitle className="text-sm">Como as mensagens chegam</AlertTitle>
         <AlertDescription className="text-xs space-y-1">
           <p>
-            Eventos: <code className="px-1">message</code>,{' '}
-            <code className="px-1">message.ack</code>,{' '}
-            <code className="px-1">session.status</code>.
-          </p>
-          <p>
-            O endereço é o do ConvoFlow, próprio deste número, e cada evento vai assinado com a senha
-            dele. Evento sem a assinatura certa é recusado.
+            O ConvoFlow registra no seu servidor WAHA um endereço de entrega só deste número,
+            protegido por senha. É por ele que as mensagens e as confirmações de leitura chegam.
           </p>
         </AlertDescription>
       </Alert>

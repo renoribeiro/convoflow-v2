@@ -129,12 +129,12 @@ export const META_SIGNUP_SUCCESS_TOAST: Record<
 > = {
   connect: {
     title: 'Conta Meta conectada',
-    description: 'Instância criada com sucesso via Embedded Signup.',
+    description: 'Número da API Oficial conectado.',
   },
   reconnect: {
     title: 'Número reconectado',
     description:
-      'O ConvoFlow reconheceu este número: a instância foi atualizada no lugar e o histórico continua onde estava.',
+      'O ConvoFlow reconheceu este número: ele foi atualizado no lugar e o histórico continua onde estava.',
   },
 };
 
@@ -268,7 +268,7 @@ export const useMetaEmbeddedSignup = (): UseMetaEmbeddedSignupReturn => {
           err instanceof Error ? err.message : 'Erro desconhecido no Embedded Signup';
 
         if (message !== 'Login cancelado') {
-          toast({ title: 'Erro', description: message, variant: 'destructive' });
+          toast({ title: 'Não deu certo', description: message, variant: 'destructive' });
         } else {
           toast({
             title: 'Cadastro cancelado',

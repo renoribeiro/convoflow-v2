@@ -367,10 +367,10 @@ export const NewConversationModal = ({ onConversationCreated }: NewConversationM
 
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="instance">Instância do WhatsApp</Label>
+            <Label htmlFor="instance">Número da Loja</Label>
             <Select value={selectedInstance} onValueChange={handleSelectInstance} disabled={instancesLoading}>
               <SelectTrigger id="instance">
-                <SelectValue placeholder={instancesLoading ? 'Carregando instâncias...' : 'Selecione uma instância'} />
+                <SelectValue placeholder={instancesLoading ? 'Carregando os números...' : 'Escolha o número que vai enviar'} />
               </SelectTrigger>
               <SelectContent>
                 {disponiveis.map(({ row, providerLabel }) => (
@@ -388,10 +388,10 @@ export const NewConversationModal = ({ onConversationCreated }: NewConversationM
               </SelectContent>
             </Select>
             {instancesError && (
-              <p className="text-sm text-destructive">Erro ao carregar instâncias do WhatsApp. Tente novamente.</p>
+              <p className="text-sm text-destructive">Não foi possível carregar os números de WhatsApp. Feche e abra de novo.</p>
             )}
             {!instancesLoading && !instancesError && disponiveis.length === 0 && (
-              <p className="text-sm text-muted-foreground">Nenhuma instância do WhatsApp conectada encontrada.</p>
+              <p className="text-sm text-muted-foreground">Nenhum número de WhatsApp conectado. Peça ao Gestor da Loja para conectar um em Números de WhatsApp.</p>
             )}
           </div>
 

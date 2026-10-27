@@ -9,7 +9,7 @@
  *
  * LEITURA (migração 20260914000001): por padrão todo mundo da Loja continua
  * vendo todas as conversas; a Loja pode restringir o que um ATENDENTE vê
- * (Configurações › Escala/Transferência). Quem faz valer é o RLS, não este
+ * (Configurações › Distribuição e transferência). Quem faz valer é o RLS, não este
  * arquivo. Duas consequências aparecem aqui: (1) o re-read de `assumeConversation`
  * pode voltar vazio porque a conversa SAIU do alcance de quem tentou, não só
  * porque sumiu; (2) o servidor pode RECUSAR uma transferência (trigger

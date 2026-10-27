@@ -25,6 +25,7 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useCampaignById, useCampaignExecutions } from '@/hooks/useCampaigns';
+import { motivoDaFalhaGravada } from '@/lib/whatsapp/metaErrors';
 
 // ─────────────────────────────────────────────
 // Status helpers
@@ -105,7 +106,7 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
     if (failed.length === 0) return null;
     const freq: Record<string, number> = {};
     failed.forEach((e) => {
-      const msg = e.error_message!;
+      const msg = motivoDaFalhaGravada(e.error_message);
       freq[msg] = (freq[msg] ?? 0) + 1;
     });
     const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]);
@@ -130,11 +131,11 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
     const cfg = campaign.audience_config as Record<string, unknown> | null;
     if (type === 'csv_import') {
       const n = (cfg?.total_contacts as number | null) ?? campaign.total_recipients ?? '?';
-      return `CSV: ${n} contatos`;
+      return `Planilha: ${n} contatos`;
     }
     if (type === 'tags') {
       const tags = campaign.target_tags ?? [];
-      return `Tags (${tags.length})`;
+      return `Etiquetas (${tags.length})`;
     }
     if (type === 'contact_list') {
       const ids = (cfg?.contact_ids as string[] | null) ?? [];
@@ -225,7 +226,7 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                     label="Limite diário"
                     value={campaign.daily_send_limit != null ? String(campaign.daily_send_limit) : 'Sem limite'}
                   />
-                  <InfoCell label="Fuso horário" value={campaign.timezone ?? '—'} />
+                  <InfoCell label="Fuso horário" value={campaign.timezone === 'America/Sao_Paulo' || !campaign.timezone ? 'Horário de Brasília' : campaign.timezone} />
                 </div>
 
                 {campaign.message_type === 'text' && campaign.message_template && (
@@ -397,8 +398,8 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                                   {EXEC_STATUS_LABEL[ex.status] ?? ex.status}
                                 </Badge>
                                 {ex.status === 'failed' && ex.error_message && (
-                                  <p className="text-[10px] text-red-600 max-w-[200px] truncate" title={ex.error_message}>
-                                    {ex.error_message}
+                                  <p className="text-[10px] text-red-600 max-w-[200px] truncate" title={motivoDaFalhaGravada(ex.error_message)}>
+                                    {motivoDaFalhaGravada(ex.error_message)}
                                   </p>
                                 )}
                               </div>

@@ -185,7 +185,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-xl font-bold">Análises Avançadas</CardTitle>
+            <CardTitle className="text-xl font-bold">Análises avançadas</CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
               Visualizações detalhadas dos seus dados de conversão
               {lastUpdated && (
@@ -198,7 +198,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <div className="flex items-center space-x-2">
             {error && (
               <Badge variant="destructive" className="text-xs">
-                Erro nos dados
+                Não foi possível carregar os dados
               </Badge>
             )}
             {isLoading && (
@@ -226,7 +226,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total de Leads</p>
+                <p className="text-sm text-muted-foreground">Total de contatos</p>
                 <p className="text-2xl font-bold">{metrics.totalLeads.toLocaleString('pt-BR')}</p>
               </div>
               <Users className="w-8 h-8 text-blue-500" />
@@ -250,7 +250,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
+                <p className="text-sm text-muted-foreground">Receita total</p>
                 <p className="text-2xl font-bold">R$ {metrics.totalRevenue.toLocaleString('pt-BR')}</p>
               </div>
               <DollarSign className="w-8 h-8 text-yellow-500" />
@@ -262,7 +262,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Taxa de Conversão</p>
+                <p className="text-sm text-muted-foreground">Taxa de conversão</p>
                 <p className="text-2xl font-bold">{metrics.avgConversionRate.toFixed(1)}%</p>
               </div>
               <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -274,7 +274,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Ticket Médio</p>
+                <p className="text-sm text-muted-foreground">Valor médio por venda</p>
                 <p className="text-2xl font-bold">R$ {metrics.avgTicket.toFixed(0)}</p>
               </div>
               <Activity className="w-8 h-8 text-red-500" />
@@ -289,7 +289,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <TabsTrigger value="trends">Tendências</TabsTrigger>
           <TabsTrigger value="funnel">Funil</TabsTrigger>
           <TabsTrigger value="sources">Fontes</TabsTrigger>
-          <TabsTrigger value="performance">Performance</TabsTrigger>
+          <TabsTrigger value="performance">Resultado</TabsTrigger>
         </TabsList>
 
         {/* Aba de Tendências */}
@@ -307,10 +307,10 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="leads">Leads</SelectItem>
+                      <SelectItem value="leads">Contatos</SelectItem>
                       <SelectItem value="conversions">Conversões</SelectItem>
                       <SelectItem value="revenue">Receita</SelectItem>
-                      <SelectItem value="conversionRate">Taxa de Conversão</SelectItem>
+                      <SelectItem value="conversionRate">Taxa de conversão</SelectItem>
                     </SelectContent>
                   </Select>
 
@@ -361,7 +361,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 </div>
 
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Detalhes do Funil</h3>
+                  <h3 className="font-semibold text-lg">Detalhes do funil</h3>
                   {funnelData.map((item, index) => (
                     <div key={item.name} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                       <div className="flex items-center gap-3">
@@ -417,7 +417,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 </div>
 
                 <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">Performance por Fonte</h3>
+                  <h3 className="font-semibold text-lg">Resultado por fonte</h3>
                   <div className="space-y-2">
                     {sourceData.map((source, index) => (
                       <div key={source.source} className="p-3 border rounded-lg">
@@ -440,7 +440,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-sm">
                           <div>
-                            <p className="text-muted-foreground">Leads</p>
+                            <p className="text-muted-foreground">Contatos</p>
                             <p className="font-semibold">{source.leads}</p>
                           </div>
                           <div>
@@ -466,13 +466,13 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle>Correlação Leads vs Conversões</CardTitle>
+                <CardTitle>Contatos e conversões</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <ScatterChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="leads" name="Leads" />
+                    <XAxis dataKey="leads" name="Contatos" />
                     <YAxis dataKey="conversions" name="Conversões" />
                     <Tooltip cursor={{ strokeDasharray: '3 3' }} />
                     <Scatter name="Dados" data={chartData} fill={BRAND_CHART.primary} />
@@ -483,7 +483,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Evolução da Taxa de Conversão</CardTitle>
+                <CardTitle>Taxa de conversão ao longo do tempo</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>

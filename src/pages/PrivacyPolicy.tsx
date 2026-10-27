@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, ArrowLeft, Shield, Eye, Database, Users } from 'lucide-react';
+import { MessageSquare, Shield, Eye, Database, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { VoltarParaOndeEstava } from '@/components/shared/VoltarParaOndeEstava';
 
 export default function PrivacyPolicy() {
   return (
@@ -13,10 +14,7 @@ export default function PrivacyPolicy() {
           transition={{ duration: 0.6 }}
         >
           <div className="text-center mb-8">
-            <Link to="/auth" className="inline-flex items-center text-brand-primary hover:text-brand-secondary transition-colors mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
-            </Link>
+            <VoltarParaOndeEstava />
             
             <div className="flex items-center justify-center mb-4">
               <MessageSquare className="w-8 h-8 text-brand-primary mr-3" />
@@ -28,7 +26,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 26 de outubro de 2026 • Conforme LGPD
+                Última atualização: 27 de outubro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -133,7 +131,7 @@ export default function PrivacyPolicy() {
                     <div>
                       <h3 className="font-medium mb-2">Dados Fornecidos Diretamente:</h3>
                       <ul className="list-disc pl-6 text-muted-foreground">
-                        <li><strong>Cadastro:</strong> Nome, e-mail, telefone, empresa</li>
+                        <li><strong>Cadastro:</strong> Nome, email, telefone, empresa</li>
                         <li><strong>Perfil:</strong> Informações profissionais, preferências</li>
                         <li><strong>Pagamento:</strong> Dados de faturamento (processados por terceiros seguros)</li>
                         <li><strong>Suporte:</strong> Histórico de conversas e solicitações</li>
@@ -216,7 +214,7 @@ export default function PrivacyPolicy() {
                     </div>
                     <div className="p-3 border-l-4 border-slate-500 bg-slate-50 dark:bg-slate-900/40">
                       <strong className="text-slate-700 dark:text-slate-300">Nota Fiscal:</strong>
-                      <span className="text-muted-foreground"> Para emitir a nota fiscal de serviço, enviamos à Receita Federal e à Prefeitura de Fortaleza, pelo Sistema Nacional da NFS-e, o CPF ou CNPJ, o nome ou razão social, o endereço e o e-mail informados para a nota, junto com o valor e a descrição do serviço. Guardamos a nota e o seu arquivo pelo prazo exigido pela legislação fiscal (5 anos).</span>
+                      <span className="text-muted-foreground"> Para emitir a nota fiscal de serviço, enviamos à Receita Federal e à Prefeitura de Fortaleza, pelo Sistema Nacional da NFS-e, o CPF ou CNPJ, o nome ou razão social, o endereço e o email informados para a nota, junto com o valor e a descrição do serviço. Guardamos a nota e o seu arquivo pelo prazo exigido pela legislação fiscal (5 anos).</span>
                     </div>
                     <div className="p-3 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-950/20">
                       <strong className="text-purple-700 dark:text-purple-400">Por instrução da loja cliente:</strong>
@@ -303,7 +301,7 @@ export default function PrivacyPolicy() {
                         <li>O conteúdo das mensagens e as mídias correspondentes são armazenados em nossa infraestrutura enquanto a Conta da loja cliente permanecer ativa, por serem parte do histórico de atendimento que constitui o próprio objeto do serviço contratado.</li>
                         <li>Encerrada a Conta, os dados são mantidos pelos prazos legais aplicáveis e eliminados mediante solicitação da loja cliente, ressalvadas as hipóteses de guarda obrigatória previstas em lei.</li>
                         <li>O wamid e os metadados de status seguem o mesmo tratamento, para fins de auditoria e suporte.</li>
-                        <li>A loja cliente, na condição de controladora, pode solicitar a qualquer momento a exclusão de contatos, de conversas específicas ou da totalidade do histórico, pelo e-mail contato@convoflow.com.br.</li>
+                        <li>A loja cliente, na condição de controladora, pode solicitar a qualquer momento a exclusão de contatos, de conversas específicas ou da totalidade do histórico, pelo email contato@convoflow.com.br.</li>
                         <li>A Meta mantém os dados conforme seus próprios prazos, descritos na política de privacidade da Meta; a exclusão junto à Meta deve ser solicitada diretamente a ela.</li>
                       </ul>
                       <p className="text-muted-foreground mt-3">
@@ -357,7 +355,7 @@ export default function PrivacyPolicy() {
                       <p className="text-muted-foreground mt-2">
                         Esses servidores recebem os números de telefone, o conteúdo das mensagens e das mídias e os dados
                         de entrega e leitura, para levar as mensagens entre o WhatsApp e o ConvoFlow. Quando o número é
-                        excluído no ConvoFlow, a sessão é encerrada e a instância é apagada do servidor de conexão.
+                        excluído no ConvoFlow, a conexão é encerrada e apagada do servidor de conexão.
                       </p>
                       <p className="text-muted-foreground mt-2">
                         Essas conexões não são aprovadas pela Meta e seguem os riscos descritos no item 6.6 dos{' '}
@@ -456,8 +454,9 @@ export default function PrivacyPolicy() {
                   
                   <div className="mt-4 p-4 bg-background rounded border space-y-3">
                     <p className="text-sm text-muted-foreground mb-0">
-                      <strong>Como exercer seus direitos:</strong> Entre em contato através do e-mail
-                      contato@convoflow.com.br. Responderemos em até 15 dias úteis. O atendimento às
+                      <strong>Como exercer seus direitos:</strong> Entre em contato através do email
+                      contato@convoflow.com.br. Confirmamos o recebimento em até 5 (cinco) dias úteis e respondemos em até
+                      15 (quinze) dias corridos, contados da confirmação da sua identidade. O atendimento às
                       solicitações é feito por esse canal. A loja cliente também pode exportar os dados dos
                       clientes dela pela própria plataforma (exportação de contatos, webhooks e, com o complemento
                       contratado, a API); a exclusão é feita pelo nosso atendimento.
@@ -540,7 +539,7 @@ export default function PrivacyPolicy() {
                   <h2 className="text-xl font-semibold mb-4">10. Alterações na Política</h2>
                   <p className="text-muted-foreground leading-relaxed">
                     Esta política pode ser atualizada periodicamente. Notificaremos sobre mudanças significativas 
-                    por e-mail e através da plataforma. Recomendamos revisar esta política regularmente.
+                    por email e através da plataforma. Recomendamos revisar esta política regularmente.
                   </p>
                 </section>
 

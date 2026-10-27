@@ -199,7 +199,7 @@ test.describe('confirmação antes de agir', () => {
 
   test('Apagar etapa com contatos: explica para onde levar os contatos e não apaga', async ({ context }) => {
     const page = await abrir(context, 'gestor', '/dashboard/funnel');
-    await page.getByRole('button', { name: 'Configurar Estágios' }).click();
+    await page.getByRole('button', { name: 'Configurar etapas' }).click();
     const g = gravacoes(page);
     await page.getByRole('button', { name: /^Apagar a etapa / }).first().click();
     await expect(janela(page)).toBeVisible();
@@ -216,9 +216,9 @@ test.describe('confirmação antes de agir', () => {
 
   test('Contratar lojas extras: mostra o total por mês, e Cancelar não cobra', async ({ context }) => {
     const page = await abrir(context, 'gerente', '/dashboard/settings?tab=subscription');
-    await page.getByRole('button', { name: /^Contratar 1 loja por/ }).click();
+    await page.getByRole('button', { name: /^Contratar 1 Loja por/ }).click();
     await expect(janela(page)).toBeVisible();
-    await expect(janela(page).getByRole('button', { name: 'Contratar 1 loja por R$ 99,90/mês' })).toBeVisible();
+    await expect(janela(page).getByRole('button', { name: 'Contratar 1 Loja por R$ 99,90/mês' })).toBeVisible();
     const g = gravacoes(page);
     await janela(page).getByRole('button', { name: 'Cancelar' }).click();
     await expect(janela(page)).toBeHidden();

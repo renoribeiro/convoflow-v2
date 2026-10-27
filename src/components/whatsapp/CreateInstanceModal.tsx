@@ -110,7 +110,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
   const handleSubmit = async () => {
     const payload = buildPayload();
     if (!payload) {
-      toast({ title: 'Erro', description: 'Selecione um provider', variant: 'destructive' });
+      toast({ title: 'Não deu certo', description: 'Escolha como conectar o número.', variant: 'destructive' });
       return;
     }
 
@@ -147,7 +147,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
           // pela palavra era o que deixava a tela travada em "Configurando"
           // quando o problema era outro — credencial ausente, por exemplo.
           setEvolutionWebhookStatus('error');
-          setEvolutionWebhookError(err?.message || 'Não foi possível criar a instância.');
+          setEvolutionWebhookError(err?.message || 'Não foi possível conectar o número. Tente de novo em instantes.');
           throw err;
         }
 
@@ -221,12 +221,12 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
         <DialogContent className="sm:max-w-[640px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {step === 'select-provider' ? 'Nova Instância de WhatsApp' : 'Configurar API'}
+              {step === 'select-provider' ? 'Conectar número de WhatsApp' : 'Dados do número'}
             </DialogTitle>
             <DialogDescription className="text-xs">
               {step === 'select-provider'
-                ? 'Escolha qual API o ConvoFlow vai usar para esta instância.'
-                : 'Preencha os dados de acesso. Os campos sensíveis serão protegidos.'}
+                ? 'Escolha como o ConvoFlow vai se conectar a este número.'
+                : 'Preencha os dados abaixo. Chaves e senhas ficam guardadas com proteção e não aparecem mais.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -263,7 +263,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
                       Criar e abrir QR Code
                     </>
                   )}
-                  {provider === 'waha' && 'Salvar instância'}
+                  {provider === 'waha' && 'Salvar número'}
                   {provider === 'official' && 'Validar e conectar'}
                 </Button>
               </>

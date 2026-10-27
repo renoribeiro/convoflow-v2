@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { colunasPadrao } from '@/lib/db/colunasFechadas';
+import { motivoDoErro, tituloDoErro } from '@/lib/errors/mensagemDoErro';
 import { useToast } from '@/hooks/use-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
@@ -167,8 +168,8 @@ export function useSupabaseQuery(options: UseSupabaseQueryOptions) {
         logger.error(`Erro ao executar query na tabela ${table}`, { error });
         if (!silent) {
           toast({
-            title: 'Erro ao carregar dados',
-            description: `Falha ao carregar dados da tabela ${table}`,
+            title: tituloDoErro('carregar'),
+            description: motivoDoErro(error),
             variant: 'destructive',
           });
         }
@@ -252,8 +253,8 @@ export function useSupabaseQuerySingle(options: UseSupabaseQueryOptions) {
 
       if (error) {
         toast({
-          title: 'Erro ao buscar registro',
-          description: error.message,
+          title: tituloDoErro('carregar'),
+          description: motivoDoErro(error),
           variant: 'destructive',
         });
         throw error;
@@ -335,8 +336,8 @@ export function useSupabaseCount(
         logger.error(`Erro ao contar registros na tabela ${table}`, { error });
         if (!options?.silent) {
           toast({
-            title: 'Erro ao contar registros',
-            description: error.message,
+            title: tituloDoErro('carregar'),
+            description: motivoDoErro(error),
             variant: 'destructive',
           });
         }

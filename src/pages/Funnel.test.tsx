@@ -58,14 +58,14 @@ beforeEach(() => {
 describe('Funil por cargo', () => {
   it('Atendente: sem "Configurar Estágios", com "Novo Lead"', () => {
     montar();
-    expect(screen.queryByRole('button', { name: /Configurar Estágios/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /Configurar etapas/ })).toBeNull();
     expect(screen.getByRole('button', { name: /Novo Lead/ })).toBeInTheDocument();
   });
 
   it.each(['gestor', 'gerente'])('%s numa Loja: "Configurar Estágios" abre a janela de etapas', async (p) => {
     papel = p;
     montar();
-    await userEvent.click(screen.getByRole('button', { name: /Configurar Estágios/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Configurar etapas/ }));
     expect(screen.getByText('janela de etapas aberta')).toBeInTheDocument();
   });
 
@@ -73,7 +73,7 @@ describe('Funil por cargo', () => {
     papel = 'gerente';
     kind = 'account';
     montar();
-    await userEvent.click(screen.getByRole('button', { name: /Configurar Estágios/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Configurar etapas/ }));
     expect(screen.getByText('escolher loja: conta / configurar-etapas')).toBeInTheDocument();
     expect(screen.queryByText('janela de etapas aberta')).toBeNull();
   });

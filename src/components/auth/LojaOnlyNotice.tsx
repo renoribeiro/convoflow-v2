@@ -21,7 +21,7 @@ export const LojaOnlyNotice = () => {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
             <Store className="h-7 w-7 text-muted-foreground" />
           </div>
-          <CardTitle className="text-2xl">Exclusivo para lojas</CardTitle>
+          <CardTitle className="text-2xl">Exclusivo para Lojas</CardTitle>
           <CardDescription>
             Esta área contém dados operacionais das Contas e é exclusiva das Lojas.
           </CardDescription>

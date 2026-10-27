@@ -938,7 +938,7 @@ async function scheduleFollowup(
     // task é NOT NULL — usa título explícito, senão um rótulo derivado.
     const task =
       substituteVariables(stepConfig.followup_task || '', varCtx).trim() ||
-      (message ? `Follow-up automático: ${message.slice(0, 80)}` : 'Follow-up automático');
+      (message ? `Follow up automático: ${message.slice(0, 80)}` : 'Follow up automático');
 
     const row: Record<string, unknown> = {
       tenant_id: contact.tenant_id,
