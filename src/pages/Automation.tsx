@@ -182,7 +182,11 @@ const Automation = () => {
               <m.icon className={cn('h-4 w-4', m.color)} />
             </CardHeader>
             <CardContent>
-              <div className={cn('text-2xl font-bold', m.title !== 'Total de automações' && m.color)}>{m.value}</div>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <div className={cn('text-2xl font-bold', m.title !== 'Total de automações' && m.color)}>{m.value}</div>
+              )}
               <p className="text-xs text-muted-foreground">{m.hint}</p>
             </CardContent>
           </Card>
@@ -206,7 +210,7 @@ const Automation = () => {
           </div>
 
           <Select value={filterTrigger} onValueChange={setFilterTrigger}>
-            <SelectTrigger className="w-44"><SelectValue placeholder="Gatilho" /></SelectTrigger>
+            <SelectTrigger className="w-44" aria-label="Filtrar por gatilho"><SelectValue placeholder="Gatilho" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os gatilhos</SelectItem>
               {triggerTypesPresent.map((t) => (
@@ -216,10 +220,10 @@ const Automation = () => {
           </Select>
 
           <Select value={sortKey} onValueChange={(v) => setSortKey(v as SortKey)}>
-            <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-44" aria-label="Ordenar"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="updated">Mais recentes</SelectItem>
-              <SelectItem value="name">Nome (A–Z)</SelectItem>
+              <SelectItem value="name">Nome (A a Z)</SelectItem>
               <SelectItem value="executions">Mais execuções</SelectItem>
             </SelectContent>
           </Select>

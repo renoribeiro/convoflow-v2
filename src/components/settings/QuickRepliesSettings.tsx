@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -170,21 +171,12 @@ export const QuickRepliesSettings = () => {
             <Skeleton className="h-20 w-full" />
           </div>
         ) : quickReplies.length === 0 ? (
-          <div className="text-center py-10 space-y-3">
-            <Zap className="w-8 h-8 mx-auto text-muted-foreground" />
-            <div className="space-y-1">
-              <p className="font-medium">Nenhuma resposta rápida ainda</p>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                Comece pelas mensagens que o time mais repete: saudação, horário de
-                funcionamento, dados para pagamento. Você também pode salvar uma mensagem já
-                enviada direto da conversa, pelo raio que aparece ao passar o mouse nela.
-              </p>
-            </div>
-            <Button onClick={abrirNova} variant="outline">
-              <Plus className="w-4 h-4 mr-2" />
-              Criar a primeira
-            </Button>
-          </div>
+          <EmptyState
+            icon={<Zap />}
+            title="Nenhuma resposta rápida ainda"
+            description="Comece pelas mensagens que o time mais repete: saudação, horário de funcionamento, dados para pagamento. Você também pode salvar uma mensagem já enviada direto da conversa, pelo raio que aparece ao passar o mouse nela."
+            action={{ label: 'Criar a primeira', onClick: abrirNova, icon: <Plus className="w-4 h-4 mr-2" /> }}
+          />
         ) : filtradas.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
             Nenhuma resposta encontrada para &quot;{busca}&quot;.

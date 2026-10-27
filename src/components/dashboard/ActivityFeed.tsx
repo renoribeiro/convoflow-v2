@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { MessageCircle, UserPlus, Megaphone, Bot, Target, Inbox } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -43,11 +44,12 @@ export const ActivityFeed = () => {
             ))}
           </div>
         ) : activities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
-            <Inbox className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium text-foreground">Sem atividades recentes</p>
-            <p className="text-xs text-muted-foreground">As ações dos últimos 7 dias aparecerão aqui.</p>
-          </div>
+          <EmptyState
+            compacto
+            icon={<Inbox />}
+            title="Sem atividades recentes"
+            description="As ações dos últimos 7 dias aparecerão aqui."
+          />
         ) : (
           <ScrollArea className="h-[340px] pr-3">
             <ul className="space-y-1">
@@ -62,7 +64,7 @@ export const ActivityFeed = () => {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{a.title}</p>
                       <p className="truncate text-xs text-muted-foreground">{a.description}</p>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground/80">
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">
                         há {formatDistanceToNowStrict(new Date(a.timestamp), { locale: ptBR })}
                       </p>
                     </div>

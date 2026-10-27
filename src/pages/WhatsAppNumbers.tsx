@@ -580,7 +580,7 @@ export default function WhatsAppNumbers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">{totalCard.label}</p>
-                <p className="text-2xl font-bold">{summary.total}</p>
+                {isLoading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold">{summary.total}</p>}
                 {totalCard.breakdown && (
                   <p className="text-xs text-muted-foreground" data-testid="total-breakdown">{totalCard.breakdown}</p>
                 )}
@@ -595,9 +595,9 @@ export default function WhatsAppNumbers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Conectados</p>
-                <p className="text-2xl font-bold text-green-600">{summary.connected}</p>
+                {isLoading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold text-success">{summary.connected}</p>}
               </div>
-              <Wifi className="h-8 w-8 text-green-500" />
+              <Wifi className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -607,9 +607,9 @@ export default function WhatsAppNumbers() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Desconectados</p>
-                <p className="text-2xl font-bold text-red-600">{summary.disconnected}</p>
+                {isLoading ? <Skeleton className="h-8 w-12" /> : <p className="text-2xl font-bold text-destructive">{summary.disconnected}</p>}
               </div>
-              <WifiOff className="h-8 w-8 text-red-500" />
+              <WifiOff className="h-8 w-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -628,25 +628,25 @@ export default function WhatsAppNumbers() {
               ))}
             </div>
           ) : instances.length === 0 ? (
-            <div className="text-center py-8">
-              <Smartphone className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Nenhum número conectado ainda</h3>
-              <p className="text-muted-foreground mb-4">
-                Conecte o número de WhatsApp da Loja para receber e responder as mensagens aqui.
-              </p>
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Conectar o primeiro número
-              </Button>
-            </div>
+            <EmptyState
+              icon={<Smartphone />}
+              title="Nenhum número conectado ainda"
+              description="Conecte o número de WhatsApp da Loja para receber e responder as mensagens aqui."
+              action={canConfigure ? { label: 'Conectar o primeiro número', onClick: () => setShowCreateModal(true), icon: <Plus className="h-4 w-4 mr-2" /> } : undefined}
+            />
           ) : (
             // flex-wrap + min-w-0 em cada linha: no celular o grupo de ações
             // (status, QR, webhook, desconectar) desce para a linha de baixo em
             // vez de empurrar a página para o lado.
             sections.whatsapp.length === 0 ? (
-              <p className="text-sm text-muted-foreground" data-testid="no-whatsapp-instances">
-                Nenhum número de WhatsApp conectado.
-              </p>
+              <div data-testid="no-whatsapp-instances">
+                <EmptyState
+                  compacto
+                  icon={<Smartphone />}
+                  title="Nenhum número de WhatsApp conectado."
+                  action={canConfigure ? { label: 'Conectar número', onClick: () => setShowCreateModal(true), icon: <Plus className="h-4 w-4 mr-2" /> } : undefined}
+                />
+              </div>
             ) : (
             <div className="space-y-4">
               {sections.whatsapp.map((instance) => {
@@ -845,10 +845,21 @@ export default function WhatsAppNumbers() {
                     <Loader2 className="h-4 w-4 animate-spin" /> Concluindo a conexão com o Instagram…
                   </p>
                 )}
-                {sections.instagram.length === 0 && (
-                  <p className="text-sm text-muted-foreground" data-testid="no-instagram-accounts">
-                    Nenhuma conta do Instagram conectada nesta Loja. Clique em Conectar Instagram e entre com a conta profissional da Loja.
-                  </p>
+                {isLoading && sections.instagram.length === 0 && (
+                  <div className="space-y-3">
+                    <Skeleton className="h-20 w-full rounded-md" />
+                  </div>
+                )}
+                {!isLoading && sections.instagram.length === 0 && (
+                  <div data-testid="no-instagram-accounts">
+                    <EmptyState
+                      compacto
+                      icon={<Instagram />}
+                      title="Nenhuma conta do Instagram conectada nesta Loja."
+                      description="Clique em Conectar Instagram e entre com a conta profissional da Loja."
+                      action={igActions.showConnect ? { label: 'Conectar Instagram', onClick: () => handleInstagramStart(null), icon: <Plus className="h-4 w-4 mr-2" /> } : undefined}
+                    />
+                  </div>
                 )}
                 <div className="space-y-4">
                   {sections.instagram.map((account) => {

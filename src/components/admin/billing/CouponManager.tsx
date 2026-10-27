@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Archive, Loader2, Plus, TicketPercent } from 'lucide-react';
@@ -260,10 +261,12 @@ export function CouponManager() {
             loading={isLoading}
             error={isError ? ((listError as Error)?.message || 'Não foi possível carregar os cupons.') : undefined}
             empty={
-              <>
-                <TicketPercent className="mx-auto mb-2 h-8 w-8 opacity-40" />
-                Nenhum cupom cadastrado ainda.
-              </>
+              <EmptyState
+                compacto
+                icon={<TicketPercent />}
+                title="Nenhum cupom cadastrado ainda."
+                action={{ label: 'Novo Cupom', onClick: openBlankDialog, icon: <Plus className="mr-2 h-4 w-4" /> }}
+              />
             }
             actionsHeader="Ações"
             columns={[

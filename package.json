@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:responsive": "playwright test e2e/responsive.spec.ts --workers=4",
+    "test:visual": "playwright test e2e/visual.spec.ts --workers=4",
     "security:check": "node scripts/security-check.cjs",
     "security:setup": "node scripts/setup-security.cjs",
     "security:audit": "npm audit --audit-level moderate",
@@ -91,6 +92,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.2",
     "@eslint/js": "^9.9.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/typography": "^0.5.15",

@@ -33,6 +33,9 @@ const formatBytes = (bytes: number): string => {
 
 /**
  * Botão "Relatar problema" da Navbar (à esquerda do sino de notificações).
+ * No celular o botão some e a mesma janela abre pelo item "Relatar problema"
+ * do menu do usuário (a Navbar controla `open`; lote 5 do checkup, achados 25
+ * e 29: o botão vermelho tomava o espaço do seletor de Loja e sugeria erro).
  *
  * Fluxo de envio, nesta ordem:
  *   1. sobe o anexo (se houver) em bug-reports/<tenant>/<user>/<ts>-<arquivo>
@@ -47,21 +50,12 @@ const formatBytes = (bytes: number): string => {
  * migrações 20260810000001/3 e ainda não estão em `types.ts` (mesmo padrão já
  * usado com `profiles.capabilities` no TenantContext).
  */
-export const BugReportButton: React.FC = () => {
-  const { tenant, tenantId, profile } = useTenant();
-  const { user } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [open, setOpen] = useState(false);
-  const [description, setDescription] = useState('');
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  /** Troca o conteúdo do dialog pela tela de agradecimento após o envio. */
-  const [submitted, setSubmitted] = useState(false);
-
+/**
+ * O relato está ligado para a Conta ativa? Mesmo cache do botão: a Navbar usa
+ * para decidir se mostra o item do menu no celular.
+ */
+export function useRelatoDeProblemaLigado(): boolean {
+  const { tenantId } = useTenant();
   // Feature flag por Conta. Primeiro segmento 'tenant' cai no tier estático
   // (30 min) do createQueryClient.
   const { data: featureEnabled = true } = useQuery({
@@ -84,6 +78,45 @@ export const BugReportButton: React.FC = () => {
       return (data as { bug_report_enabled?: boolean } | null)?.bug_report_enabled ?? true;
     },
   });
+  // Sem Conta ativa não há como atribuir o relato (tenant_id é NOT NULL).
+  return featureEnabled && !!tenantId;
+}
+
+interface BugReportButtonProps {
+  /** Janela controlada por fora (o item do menu do usuário, no celular). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Classes do botão da Navbar (ex.: esconder no celular). */
+  className?: string;
+}
+
+export const BugReportButton: React.FC<BugReportButtonProps> = ({
+  open: openControlado,
+  onOpenChange,
+  className,
+}) => {
+  const { tenant, tenantId, profile } = useTenant();
+  const { user } = useAuth();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const ligado = useRelatoDeProblemaLigado();
+
+  const [openInterno, setOpenInterno] = useState(false);
+  const open = openControlado ?? openInterno;
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (openControlado === undefined) setOpenInterno(next);
+      onOpenChange?.(next);
+    },
+    [openControlado, onOpenChange],
+  );
+  const [description, setDescription] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  /** Troca o conteúdo do dialog pela tela de agradecimento após o envio. */
+  const [submitted, setSubmitted] = useState(false);
 
   // Preview só faz sentido para imagem; vídeo mostra o nome do arquivo.
   useEffect(() => {
@@ -132,7 +165,7 @@ export const BugReportButton: React.FC = () => {
       setOpen(next);
       if (!next) resetForm();
     },
-    [isSubmitting, resetForm],
+    [isSubmitting, resetForm, setOpen],
   );
 
   const handleSubmit = useCallback(async () => {
@@ -259,25 +292,24 @@ export const BugReportButton: React.FC = () => {
     }
   }, [description, tenantId, user, file, profile, tenant]);
 
-  // Sem Conta ativa não há como atribuir o relato (tenant_id é NOT NULL).
-  if (!featureEnabled || !tenantId) return null;
+  if (!ligado) return null;
 
   const charCount = description.trim().length;
 
   return (
     <>
-      {/* Destacado de propósito: vermelho + texto branco em negrito. Só o ícone
-          passava despercebido no meio dos controles ghost da Navbar. */}
+      {/* Neutro, como os outros controles da Navbar: vermelho sugeria erro
+          ou alerta (achado 29). Com contorno e, no computador, com o texto,
+          continua fácil de achar. */}
       <Button
-        variant="destructive"
+        variant="outline"
         onClick={() => setOpen(true)}
-        className="h-8 gap-1.5 px-2.5 text-xs font-bold shadow-sm"
+        className={cn('h-8 gap-1.5 px-2.5 text-xs font-medium', className)}
         title="Relatar problema"
         aria-label="Relatar problema"
       >
         <Bug className="h-4 w-4" />
-        {/* Abaixo de lg só o ícone: o vermelho continua chamando atenção e a
-            Navbar não tem largura para o texto no tablet e no celular. */}
+        {/* Abaixo de lg só o ícone: a Navbar não tem largura para o texto. */}
         <span className="hidden lg:inline">Relatar problema</span>
       </Button>
 

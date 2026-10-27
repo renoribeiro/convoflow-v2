@@ -79,7 +79,7 @@ export default function UsersPage() {
               setFilters((f) => ({ ...f, role: v === 'all' ? undefined : (v as UserRole) }))
             }
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label="Filtrar por cargo">
               <SelectValue placeholder="Cargo" />
             </SelectTrigger>
             <SelectContent>
@@ -100,8 +100,8 @@ export default function UsersPage() {
               }))
             }
           >
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Status" />
+            <SelectTrigger className="w-[180px]" aria-label="Filtrar por situação">
+              <SelectValue placeholder="Situação" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos os status</SelectItem>

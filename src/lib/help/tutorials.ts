@@ -843,7 +843,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Pegue no outro sistema o endereço que vai receber os avisos',
         body:
-          'No n8n, por exemplo, é o endereço do nó Webhook. Ele precisa começar com http:// ou https:// e aceitar um POST com os dados em JSON.',
+          'No n8n, por exemplo, é o endereço do bloco que o n8n chama de Webhook. Ele precisa começar com http:// ou https://. O ConvoFlow manda os dados no formato que o n8n, o Make e o Zapier recebem sem configuração extra.',
       },
       {
         title: 'Abra Configurações › Avisos para sistemas',

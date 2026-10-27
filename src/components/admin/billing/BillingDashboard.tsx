@@ -16,6 +16,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResponsiveTable } from '@/components/shared/ResponsiveTable';
@@ -102,7 +103,7 @@ export function BillingDashboard() {
   const mesAtual = currentMonthRevenue(overview);
   const carregandoContas = contasQuery.isLoading;
   const carregandoStripe = stripeQuery.isLoading;
-  const valorStripe = (v: string) => (carregandoStripe ? <Loader2 className="h-5 w-5 animate-spin" /> : overview ? v : '—');
+  const valorStripe = (v: string) => (carregandoStripe ? <Skeleton className="h-8 w-20" /> : overview ? v : '—');
 
   return (
     <div className="space-y-6">
@@ -123,9 +124,11 @@ export function BillingDashboard() {
             icone={<FlaskConical className="h-4 w-4 text-muted-foreground" />}
             valor={carregandoContas ? null : resumo.emTeste.length}
             nota={
-              resumo.emTeste[0]?.trial_ends_at
-                ? `O próximo termina em ${formatDate(resumo.emTeste[0].trial_ends_at)}`
-                : 'Nenhum teste em andamento'
+              carregandoContas
+                ? ''
+                : resumo.emTeste[0]?.trial_ends_at
+                  ? `O próximo termina em ${formatDate(resumo.emTeste[0].trial_ends_at)}`
+                  : 'Nenhum teste em andamento'
             }
           />
           <Cartao
@@ -167,7 +170,7 @@ export function BillingDashboard() {
             disabled={stripeQuery.isFetching}
             className="gap-2"
           >
-            {stripeQuery.isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            {stripeQuery.isFetching && !stripeQuery.isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Atualizar
           </Button>
         </div>
@@ -320,7 +323,7 @@ function Cartao({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold" data-testid="valor">
-          {valor === null ? <Loader2 className="h-5 w-5 animate-spin" /> : valor}
+          {valor === null ? <Skeleton className="h-8 w-20" /> : valor}
         </div>
         <p className="text-xs text-muted-foreground">{nota}</p>
       </CardContent>

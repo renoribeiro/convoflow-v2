@@ -265,12 +265,14 @@ export function SequencesManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+      {/* No celular o botão desce para baixo do texto: lado a lado, ele saía
+          da tela (lote 5 do checkup). */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
           <span>Sequências de mensagens de WhatsApp e tarefas que seguem sozinhas, passo a passo. Com "Parar ao receber resposta", elas param quando o cliente responde.</span>
           <FeatureHelp helpKey="page:followups-sequences" />
         </p>
-        <Button size="sm" onClick={() => setShowBuilder(true)}>
+        <Button size="sm" className="shrink-0 self-start sm:self-auto" onClick={() => setShowBuilder(true)}>
           <Plus className="w-4 h-4 mr-2" /> Nova sequência
         </Button>
       </div>
@@ -284,6 +286,7 @@ export function SequencesManager() {
           icon={<Workflow className="w-full h-full" />}
           title="Nenhuma sequência criada"
           description="Crie uma cadência para acompanhar contatos automaticamente."
+          action={{ label: 'Nova sequência', onClick: () => setShowBuilder(true), icon: <Plus className="w-4 h-4 mr-2" /> }}
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

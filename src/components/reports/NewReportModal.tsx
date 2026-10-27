@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { FileText, BarChart3, Users, MessageSquare, X, Send } from 'lucide-react';
+import { FileText, BarChart3, Users, MessageSquare, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
@@ -243,15 +243,11 @@ export const NewReportModal = ({ isOpen, onClose, initialData }: NewReportModalP
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Novo Relatório
-            </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={handleClose} disabled={isLoading}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          {/* Fecha pelo "X" da própria janela: aqui havia um segundo "X". */}
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Novo Relatório
+          </DialogTitle>
           <div className="flex items-center gap-2 mt-2">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center">

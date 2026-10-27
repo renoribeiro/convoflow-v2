@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { PieChart as PieChartIcon } from 'lucide-react';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,11 +43,13 @@ export const LeadSourcesChart = ({ period }: LeadSourcesChartProps) => {
         {isLoading ? (
           <Skeleton className="h-[220px] w-full rounded-lg" />
         ) : total === 0 ? (
-          <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-center">
-            <PieChartIcon className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium text-foreground">Sem contatos no período</p>
-            <p className="text-xs text-muted-foreground">Quando os contatos chegarem por um link de Rastreamento, a fonte de cada um aparece aqui.</p>
-          </div>
+          <EmptyState
+            compacto
+            icon={<PieChartIcon />}
+            title="Sem contatos no período"
+            description="Quando os contatos chegarem por um link de Rastreamento, a fonte de cada um aparece aqui."
+            className="h-[220px]"
+          />
         ) : (
           <div className="flex flex-col items-center gap-4 sm:flex-row">
             <div className="h-[180px] w-[180px] shrink-0">

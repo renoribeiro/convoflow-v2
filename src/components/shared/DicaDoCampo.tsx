@@ -34,6 +34,7 @@ export function DicaDoCampo({ texto, rotulo, className }: Props) {
           type="button"
           aria-label={`O que é: ${rotulo}`}
           data-dica-do-campo=""
+          data-alvo-expandido=""
           className={cn(
             'inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full align-middle text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             className,

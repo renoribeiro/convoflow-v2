@@ -64,6 +64,7 @@ export const DashboardHeader = ({ period }: DashboardHeaderProps) => {
                   size="sm"
                   variant={preset === 'custom' ? 'default' : 'ghost'}
                   className={cn('h-8 px-3 gap-1.5')}
+                  aria-label={`Período personalizado: ${customLabel}`}
                 >
                   <CalendarIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{customLabel}</span>

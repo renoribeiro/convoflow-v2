@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -55,13 +56,12 @@ export const AttentionPanel = () => {
         {isLoading ? (
           Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-            <CheckCircle2 className="h-10 w-10 text-status-success" />
-            <p className="text-sm font-medium text-foreground">Tudo em dia!</p>
-            <p className="text-xs text-muted-foreground">
-              Nenhuma conversa, follow up ou contato precisa de atenção agora.
-            </p>
-          </div>
+          <EmptyState
+            compacto
+            icon={<CheckCircle2 />}
+            title="Tudo em dia!"
+            description="Nenhuma conversa, follow up ou contato precisa de atenção agora."
+          />
         ) : (
           items.map((item) => {
             const meta = TYPE_META[item.type];

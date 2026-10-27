@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Bell, Search, User, ChevronDown, Menu, LogOut, Settings } from 'lucide-react';
+import { Bell, Search, User, ChevronDown, Menu, LogOut, Settings, Bug, Sun, Moon, Monitor } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { BugReportButton } from '@/components/bug-report/BugReportButton';
+import { BugReportButton, useRelatoDeProblemaLigado } from '@/components/bug-report/BugReportButton';
 import { ThemeToggle } from '@/components/shared/ThemeToggle';
 import { useTenant, useIsSuperAdmin } from '@/contexts/TenantContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +32,13 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
   const { logout } = useAuth();
   const isSuperAdmin = useIsSuperAdmin();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [relatoAberto, setRelatoAberto] = useState(false);
+  const relatoLigado = useRelatoDeProblemaLigado();
+  const { theme, setTheme } = useTheme();
+
+  // A tecla do atalho como ela aparece no teclado da pessoa (achado 27: o
+  // topo mostrava "⌘K", tecla de Mac, também no Windows).
+  const teclaDoAtalho = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘ K' : 'Ctrl K';
 
   // Atalho global ⌘K / Ctrl+K para abrir a busca.
   useEffect(() => {
@@ -82,7 +90,7 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5" />
           <span className="pl-8 pr-12">Buscar...</span>
           <kbd className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
-            ⌘K
+            {teclaDoAtalho}
           </kbd>
         </button>
 
@@ -103,10 +111,15 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
       </div>
 
       {/* Right */}
+      {/* No celular, "Relatar problema" e o tema ficam no menu do usuário: os
+          dois botões tomavam o espaço do seletor de Loja, que mostrava só
+          "Cont..." (achado 25). */}
       <div className="flex items-center gap-1 shrink-0">
-        <BugReportButton />
+        <BugReportButton open={relatoAberto} onOpenChange={setRelatoAberto} className="hidden sm:inline-flex" />
         <NotificationCenter />
-        <ThemeToggle />
+        <div className="hidden sm:block">
+          <ThemeToggle />
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -162,6 +175,25 @@ export const Navbar = ({ onMenuClick }: NavbarProps) => {
                 Configurações
               </Link>
             </DropdownMenuItem>
+            {relatoLigado && (
+              <DropdownMenuItem className="flex items-center gap-2 sm:hidden" onSelect={() => setRelatoAberto(true)}>
+                <Bug className="h-4 w-4" />
+                Relatar problema
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator className="sm:hidden" />
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground sm:hidden">Tema</DropdownMenuLabel>
+            {([
+              ['light', 'Claro', Sun],
+              ['dark', 'Escuro', Moon],
+              ['system', 'Sistema', Monitor],
+            ] as const).map(([valor, nome, Icone]) => (
+              <DropdownMenuItem key={valor} className="flex items-center gap-2 sm:hidden" onSelect={() => setTheme(valor)}>
+                <Icone className="h-4 w-4" />
+                {nome}
+                {theme === valor && <span className="ml-auto text-xs text-muted-foreground">✓</span>}
+              </DropdownMenuItem>
+            ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="text-destructive focus:text-destructive gap-2"

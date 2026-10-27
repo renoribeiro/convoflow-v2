@@ -113,7 +113,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O bot pergunta "Qual seu nome?" e salva em {nome}. Uma automação com gatilho "Variável Capturada = nome" atualiza o Nome do contato com {nome} automaticamente.',
     tips: [
       'Variáveis de sistema sempre existem: {name}, {first_name}, {phone}, {email}, {date}, {time}, {datetime}.',
-      'Tokens desconhecidos ficam como estão: se escrever {xyz} sem essa variável, o texto sai literal.',
+      'Nome entre chaves que não é variável fica como está: se escrever {xyz} sem essa variável, o texto sai assim mesmo, com as chaves.',
     ],
     category: 'conceito',
   },
@@ -508,7 +508,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Para mandar mensagem de voz, deixe o campo vazio e clique no microfone ao lado dele. Na primeira vez o navegador pede para usar o microfone: permita. Fale, clique no quadrado para parar, ouça o áudio e clique em enviar, ou na lixeira para descartar e gravar de novo. A gravação para sozinha em 5 minutos e espera você ouvir.',
       'Para mandar um áudio que já está no computador ou no celular, clique no clipe e escolha um arquivo MP3, M4A, AAC ou OGG de até 16 MB. Ele chega para o cliente como arquivo de áudio, não como mensagem de voz. Áudio não leva legenda: se você escreveu algo no campo, o áudio vai sozinho e o texto fica no campo para você enviar em seguida.',
       'Para mandar um documento (PDF, Word, Excel ou texto), clique no clipe e escolha o arquivo. Num número Evolution ou WAHA o documento vai até 30 MB: maior que isso, a tela avisa na hora, antes de subir, "Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.", e nada é enviado. No número da API Oficial vale o limite da Meta.',
-      'Para responder citando uma mensagem, dê dois cliques nela. Aparece "Respondendo:" acima do campo; o que você mandar a seguir (texto ou áudio) chega para o cliente com a citação.',
+      'Para responder citando uma mensagem, clique na seta de responder no canto de baixo dela (no computador ela aparece quando você passa o mouse) ou dê dois cliques na mensagem. Aparece "Respondendo:" acima do campo; o que você mandar a seguir (texto ou áudio) chega para o cliente com a citação.',
       'Use as pílulas acima da lista ("Não lidas", "Aguardando"...) para trabalhar uma fila de cada vez; o número em cada uma diz o tamanho dela. Não cabem todas na coluna: a seta na ponta (ou arrastar de lado) mostra as demais.',
       'O botão "Filtros" abre os recortes que se somam às pílulas: só não lidas, só arquivadas (as ativas somem da lista), um período pela data da última mensagem (o dia "Até" entra inteiro) e as etiquetas do contato. Gestor e Gerente veem um recorte a mais, "Responsável pela conversa". Cada um vale na hora, assim que você marca; "Fechar" só fecha a janela e "Limpar" desliga todos.',
       'Para ver só as conversas de quem tem uma etiqueta, abra "Filtros" e marque a etiqueta em "Etiquetas do contato". Marque várias para ver quem tem qualquer uma delas. As marcadas aparecem acima das pílulas, cada uma com um "x" para tirar; a lista e o número da pílula passam a contar só essas conversas.',
@@ -1040,7 +1040,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Você ativa a sinalização de conversas não respondidas em Atendimento e, a partir daí, todo o time passa a ver o aviso de atraso na tela de Conversas.',
     tips: [
-      'A aba escolhida fica na URL, então você pode salvar o link direto (ex.: /dashboard/settings?tab=integrations).',
+      'A aba escolhida fica no endereço da página, então você pode guardar o link direto (ex.: /dashboard/settings?tab=integrations).',
       'Trocar senha é em Segurança. Dar ou tirar acesso de outra pessoa é em Equipe, não aqui.',
     ],
     category: 'tela',
@@ -1095,7 +1095,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Clique em "Nova resposta" e dê um nome curto. É por ele que você encontra o trecho na busca.',
       'Escreva a mensagem e troque o que muda de pessoa para pessoa por {first_name}, {name}, {phone} ou {date}.',
       'Abra uma conversa e teste: clique no raio ao lado do campo de mensagem, ou digite "/" com o campo vazio.',
-      'Para transformar algo que você acabou de mandar em resposta rápida, passe o mouse sobre a mensagem enviada e clique no raio dela.',
+      'Para transformar algo que você acabou de mandar em resposta rápida, clique no raio da mensagem enviada (no computador ele aparece quando você passa o mouse; no celular fica sempre à vista).',
     ],
     example:
       '"Horário" com o texto "Olá {first_name}! Atendemos de segunda a sexta, das 9h às 18h." Na conversa com a Helena, o campo já aparece escrito "Olá Helena!", e você ainda pode ajustar antes de enviar.',
@@ -1310,7 +1310,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     tips: [
       'Remover um aviso pede confirmação: o endereço para de receber na hora, e o sistema que dependia dele deixa de ser avisado.',
       'Sem senha de conferência, qualquer um que descobrir o endereço pode se passar pelo ConvoFlow. Use sempre que o outro sistema aceitar.',
-      'Os avisos saem em até 5 minutos depois do acontecimento, como um POST com os dados em JSON. Se o outro sistema responder com erro ou demorar mais de 10 segundos, o ConvoFlow tenta de novo, até 5 vezes, esperando mais a cada vez. Endereço errado só acumula tentativas: confira o endereço.',
+      'Os avisos saem em até 5 minutos depois do acontecimento, no formato que o n8n, o Make e o Zapier recebem sem configuração extra. Se o outro sistema responder com erro ou demorar mais de 10 segundos, o ConvoFlow tenta de novo, até 5 vezes, esperando mais a cada vez. Endereço errado só acumula tentativas: confira o endereço.',
       'Cada aviso é da Loja escolhida no seletor do topo e só recebe o que acontece nela. Gerente: escolha a Loja antes de criar.',
       'Isto é saída de dados. Receber mensagem do WhatsApp é a outra ponta, em Números de WhatsApp.',
       'Só o Gestor e o Gerente cadastram, alteram e veem os avisos. O Atendente não vê esta aba: um aviso pode levar as mensagens da Loja inteira, inclusive as que o atendente não enxerga.',

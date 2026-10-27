@@ -181,7 +181,7 @@ const RealTimeStatus: React.FC<RealTimeStatusProps> = ({
                 <RefreshCw 
                   className={cn(
                     "h-3 w-3",
-                    isLoading && "animate-spin"
+                    isLoading && status !== 'loading' && "animate-spin"
                   )} 
                 />
               </Button>

@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { corDaEtapa } from '@/lib/funnel/corDaEtapa';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Button } from '@/components/ui/button';
@@ -304,8 +305,8 @@ function ContactPanelBody({
             {profileContact?.stage?.name ? (
               <Badge
                 variant="outline"
-                className="text-xs"
-                style={stageColor ? { backgroundColor: `${stageColor}20`, color: stageColor, borderColor: stageColor } : undefined}
+                className={`text-xs ${corDaEtapa(stageColor).className}`}
+                style={corDaEtapa(stageColor).style}
               >
                 {profileContact.stage.name}
               </Badge>

@@ -2,25 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Activity,
-  Bell,
-  Bot,
   FileText,
-  Filter,
-  GaugeCircle,
   Instagram,
-  LayoutDashboard,
-  MessageCircle,
-  Megaphone,
   Phone,
-  Send,
-  Settings,
-  ShieldCheck,
-  Smartphone,
-  UserCog,
   Users,
-  UsersRound,
-  Workflow,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -36,6 +21,7 @@ import {
 import { DialogTitle } from '@/components/ui/dialog';
 import { useAcessoTelas } from '@/hooks/useAcessoTelas';
 import { TELAS, acessoATela, caminhoDaTela } from '@/lib/access/telas';
+import { ICONES_DAS_TELAS } from '@/lib/access/iconesDasTelas';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { channelOfProvider } from '@/lib/conversations/channel';
 import { contactIdentifier, contactLabel, contactSearchOrFilter } from '@/lib/contacts/identity';
@@ -56,29 +42,8 @@ type PageItem = {
  * a pessoa costuma digitar. Até 2026-10-26 a lista tinha regras próprias: o
  * Gestor não achava "Equipe", e apareciam rótulos como "Tracking" (achado 26).
  */
-const ICONES: Record<string, LucideIcon> = {
-  '': LayoutDashboard,
-  conversations: MessageCircle,
-  contacts: Users,
-  funnel: Filter,
-  tracking: Activity,
-  reports: FileText,
-  chatbots: Bot,
-  campaigns: Megaphone,
-  templates: FileText,
-  followups: Send,
-  automation: Workflow,
-  'whatsapp-numbers': Smartphone,
-  settings: Settings,
-  help: FileText,
-  team: UsersRound,
-  'store-comparison': GaugeCircle,
-  admin: ShieldCheck,
-  'admin/users': UsersRound,
-  'admin/usage-limits': GaugeCircle,
-  profile: UserCog,
-  notifications: Bell,
-};
+// Ícones: os mesmos do menu lateral (src/lib/access/iconesDasTelas.ts).
+const ICONES = ICONES_DAS_TELAS;
 
 const PALAVRAS: Record<string, string[]> = {
   '': ['inicio', 'home'],

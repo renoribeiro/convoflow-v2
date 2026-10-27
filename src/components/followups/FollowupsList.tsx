@@ -10,6 +10,7 @@ import { useFollowups } from '@/hooks/useFollowups'
 import { FollowupEditModal } from '@/components/FollowupEditModal'
 import type { IndividualFollowup } from '@/lib/followups/types'
 import { toast } from 'sonner'
+import { CLASSES_DE_SITUACAO } from '@/components/shared/StatusBadge'
 
 /** Nome do filtro na frase do vazio (o código da aba é em inglês). */
 const NOME_DO_FILTRO: Record<string, string> = {
@@ -157,10 +158,10 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'high': return CLASSES_DE_SITUACAO.danger
+      case 'medium': return CLASSES_DE_SITUACAO.warning
+      case 'low': return CLASSES_DE_SITUACAO.success
+      default: return CLASSES_DE_SITUACAO.neutral
     }
   }
 
@@ -189,10 +190,11 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'overdue': return 'border-l-red-500 bg-red-50'
-      case 'today': return 'border-l-blue-500 bg-blue-50'
-      case 'completed': return 'border-l-green-500 bg-green-50'
-      default: return 'border-l-gray-300'
+      // Cores do tema (achado 100): as fixas ficavam ruins no modo escuro.
+      case 'overdue': return 'border-l-destructive bg-destructive/5'
+      case 'today': return 'border-l-accent bg-accent/5'
+      case 'completed': return 'border-l-success bg-success/5'
+      default: return 'border-l-border'
     }
   }
 
@@ -308,7 +310,7 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Badge className={getPriorityColor(followup.priority)}>
+                <Badge variant="outline" className={getPriorityColor(followup.priority)}>
                   {getPriorityLabel(followup.priority)}
                 </Badge>
                 <Badge variant="outline" className="flex items-center gap-1">

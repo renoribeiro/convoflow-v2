@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -145,16 +146,13 @@ const Chatbots: React.FC = () => {
       <div className="grid gap-4">
         {chatbots.length === 0 ? (
           <Card>
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <Bot className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum chatbot configurado</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Crie seu primeiro chatbot de fluxo visual para automatizar o atendimento no WhatsApp
-              </p>
-              <Button onClick={() => setShowNewModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Chatbot
-              </Button>
+            <CardContent>
+              <EmptyState
+                icon={<Bot />}
+                title="Nenhum chatbot configurado"
+                description="Crie seu primeiro chatbot de fluxo visual para automatizar o atendimento no WhatsApp"
+                action={{ label: 'Criar Primeiro Chatbot', onClick: () => setShowNewModal(true), icon: <Plus className="h-4 w-4 mr-2" /> }}
+              />
             </CardContent>
           </Card>
         ) : (
@@ -196,6 +194,7 @@ const Chatbots: React.FC = () => {
                     {/* Inline active toggle */}
                     <div className="flex items-center gap-1.5">
                       <Switch
+                        aria-label={`Chatbot ${chatbot.name} ativo`}
                         checked={!!chatbot.is_active}
                         onCheckedChange={() => handleToggle(chatbot)}
                         disabled={toggleActive.isPending}
@@ -220,6 +219,7 @@ const Chatbots: React.FC = () => {
                       variant="outline"
                       size="icon"
                       className="text-destructive hover:text-destructive"
+                      aria-label={`Excluir o chatbot ${chatbot.name}`}
                       onClick={() => setDeleteTarget(chatbot)}
                     >
                       <Trash2 className="h-4 w-4" />

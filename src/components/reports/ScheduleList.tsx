@@ -1,4 +1,5 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -386,16 +387,13 @@ export const ScheduleList = () => {
       {/* Empty State */}
       {!isLoading && schedules.length === 0 && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum agendamento encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              Crie seu primeiro agendamento para automatizar o envio de relatórios.
-            </p>
-            <Button onClick={abrirNovo}>
-              <Plus className="w-4 h-4 mr-2" />
-              Criar Agendamento
-            </Button>
+          <CardContent className="p-2">
+            <EmptyState
+              icon={<Calendar />}
+              title="Nenhum agendamento encontrado"
+              description="Crie seu primeiro agendamento para automatizar o envio de relatórios."
+              action={{ label: 'Criar Agendamento', onClick: abrirNovo, icon: <Plus className="w-4 h-4 mr-2" /> }}
+            />
           </CardContent>
         </Card>
       )}

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { BarChart3 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
@@ -54,9 +55,11 @@ const StoreComparison = () => {
               ))}
             </div>
           ) : metrics.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              Nenhuma Loja na sua Conta ainda. Crie a primeira em Equipe, no botão "Nova Loja", e ela aparece aqui.
-            </p>
+            <EmptyState
+              icon={<BarChart3 />}
+              title="Nenhuma Loja na sua Conta ainda."
+              description='Crie a primeira em Equipe, no botão "Nova Loja", e ela aparece aqui.'
+            />
           ) : (
             // A linha "Total" é uma linha comum com id próprio, em negrito —
             // a ResponsiveTable não tem rodapé, e no cartão o total precisa

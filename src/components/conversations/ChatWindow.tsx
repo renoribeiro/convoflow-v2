@@ -1222,7 +1222,7 @@ export const ChatWindow = ({
                 </div>
               )}
               {!isContactTyping && seenLabel && (
-                <span className="text-[11px] text-muted-foreground/80">{seenLabel}</span>
+                <span className="text-[11px] text-muted-foreground">{seenLabel}</span>
               )}
             </div>
           </div>

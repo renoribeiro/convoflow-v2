@@ -1,4 +1,5 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -425,15 +426,15 @@ export const DeliveryLog = () => {
 
           {/* Empty State */}
           {!isLoading && filteredExecutions.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <h3 className="text-lg font-semibold mb-2">Nenhuma execução encontrada</h3>
-              <p>
-                {executions.length === 0 
-                  ? 'Ainda não há execuções de relatórios registradas.' 
-                  : 'Nenhuma execução encontrada com os filtros aplicados.'}
-              </p>
-            </div>
+            <EmptyState
+              icon={<FileText />}
+              title="Nenhuma execução encontrada"
+              description={
+                executions.length === 0
+                  ? 'Ainda não há execuções de relatórios registradas.'
+                  : 'Nenhuma execução encontrada com os filtros aplicados.'
+              }
+            />
           )}
         </CardContent>
       </Card>

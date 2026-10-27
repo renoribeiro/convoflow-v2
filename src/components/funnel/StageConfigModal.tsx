@@ -19,6 +19,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { useQueryClient } from '@tanstack/react-query';
+import { CORES_DE_ETAPA } from '@/lib/funnel/corDaEtapa';
 
 interface Stage {
   id: string;
@@ -32,14 +33,8 @@ interface StageConfigModalProps {
   onClose: () => void;
 }
 
-const colorOptions = [
-  { name: 'Azul', class: 'bg-blue-100 text-blue-800', value: 'blue' },
-  { name: 'Verde', class: 'bg-green-100 text-green-800', value: 'green' },
-  { name: 'Amarelo', class: 'bg-yellow-100 text-yellow-800', value: 'yellow' },
-  { name: 'Laranja', class: 'bg-orange-100 text-orange-800', value: 'orange' },
-  { name: 'Roxo', class: 'bg-purple-100 text-purple-800', value: 'purple' },
-  { name: 'Rosa', class: 'bg-pink-100 text-pink-800', value: 'pink' },
-];
+// Uma lista só de cores de etapa (src/lib/funnel/corDaEtapa.ts, achado 54).
+const colorOptions = CORES_DE_ETAPA;
 
 const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: (stage: Stage) => void; onDelete: (stage: Stage) => void }) => {
   const {

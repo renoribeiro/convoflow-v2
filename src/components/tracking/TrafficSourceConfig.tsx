@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -220,15 +221,12 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
         </CardHeader>
         <CardContent>
           {sources.length === 0 ? (
-            <div className="text-center py-10">
-              <Globe className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="font-medium">Nenhuma fonte de tráfego ainda</p>
-              <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-                Anúncios do Facebook e Instagram entram aqui sozinhos, assim que o
-                primeiro contato chegar por eles. Use “Adicionar fonte” para cadastrar
-                uma origem que você controla por fora, como um link de bio.
-              </p>
-            </div>
+            <EmptyState
+              icon={<Globe />}
+              title="Nenhuma fonte de tráfego ainda"
+              description="Anúncios do Facebook e Instagram entram aqui sozinhos, assim que o primeiro contato chegar por eles. Use “Adicionar fonte” para cadastrar uma origem que você controla por fora, como um link de bio."
+              action={{ label: 'Adicionar fonte', onClick: () => { setSelectedSource(null); setShowModal(true); }, icon: <Plus className="w-4 h-4 mr-2" /> }}
+            />
           ) : (
             <div className="space-y-4">
               {sources.map((source) => (

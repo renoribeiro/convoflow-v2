@@ -87,7 +87,7 @@ export const PricingSection = () => {
                 <div className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
                   Um plano por Conta, com 5 Lojas incluídas
                 </div>
-                <div className="text-xs sm:text-sm text-muted-foreground/80 px-4 sm:px-0 mt-1">
+                <div className="text-xs sm:text-sm text-muted-foreground px-4 sm:px-0 mt-1">
                   Loja adicional por R$ 99,90/mês · API e integrações por R$ 99,90/mês
                 </div>
               </div>

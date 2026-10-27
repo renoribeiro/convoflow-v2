@@ -1,6 +1,8 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
 import { Badge } from '@/components/ui/badge';
+import { corDaEtapa } from '@/lib/funnel/corDaEtapa';
 import { TagBadge } from '@/components/etiquetas/TagBadge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -457,11 +459,8 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
       cell: (contact) =>
         contact.stage ? (
           <Badge
-            style={{
-              backgroundColor: `${contact.stage.color}20`,
-              color: contact.stage.color,
-              borderColor: contact.stage.color
-            }}
+            className={corDaEtapa(contact.stage.color).className}
+            style={corDaEtapa(contact.stage.color).style}
             variant="outline"
           >
             {contact.stage.name}
@@ -579,15 +578,15 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         </div>
 
         {filteredContacts.length === 0 ? (
-          <div className="text-center py-12">
-            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">Nenhum contato encontrado</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              {filters.search || filters.stage || filters.source || channel !== 'all'
+          <EmptyState
+            icon={<Users />}
+            title="Nenhum contato encontrado"
+            description={
+              filters.search || filters.stage || filters.source || channel !== 'all'
                 ? 'Tente ajustar os filtros de busca'
-                : 'Adicione seu primeiro contato para começar'}
-            </p>
-          </div>
+                : 'Adicione seu primeiro contato para começar'
+            }
+          />
         ) : (
           // Uma coluna, dois modos (ver ResponsiveTable). No cartão: nome/telefone
           // lideram, etapa e etiquetas vêm como chips, fonte e última interação

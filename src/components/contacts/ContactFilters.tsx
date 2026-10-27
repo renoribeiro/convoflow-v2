@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { CLASSE_DA_TINTA, estiloDaTinta } from '@/lib/cores/tintaLegivel';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { X, Search } from 'lucide-react';
@@ -105,7 +106,7 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
             <Skeleton className="h-10 w-full" />
           ) : (
             <Select value={filters.stage || 'all'} onValueChange={(value) => updateFilters('stage', value === 'all' ? '' : value)}>
-                <SelectTrigger>
+                <SelectTrigger aria-label="Filtrar por etapa">
                   <SelectValue placeholder="Todas as etapas" />
                 </SelectTrigger>
                 <SelectContent>
@@ -126,7 +127,7 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
             <Skeleton className="h-10 w-full" />
           ) : (
             <Select value={filters.source || 'all'} onValueChange={(value) => updateFilters('source', value === 'all' ? '' : value)}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filtrar por fonte">
                 <SelectValue placeholder="Todas as fontes" />
               </SelectTrigger>
               <SelectContent>
@@ -172,9 +173,9 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
                   <Badge
                     key={tag.id}
                     variant="outline"
-                    className="text-xs cursor-pointer hover:bg-accent"
+                    className={`text-xs cursor-pointer hover:bg-muted ${CLASSE_DA_TINTA}`}
                     onClick={() => addTag(tag.id)}
-                    style={{ borderColor: tag.color, color: tag.color }}
+                    style={{ borderColor: tag.color, ...estiloDaTinta(tag.color) }}
                   >
                     {tag.name}
                   </Badge>

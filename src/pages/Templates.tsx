@@ -313,6 +313,7 @@ export default function Templates() {
           icon={<Search className="h-12 w-12" />}
           title="Nenhum template encontrado"
           description={`Nada casa com "${busca}". Tente outro termo ou limpe a busca.`}
+          action={{ label: 'Limpar busca', onClick: () => setBusca('') }}
         />
       );
     }

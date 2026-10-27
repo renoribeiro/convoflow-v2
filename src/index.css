@@ -82,10 +82,20 @@
     --business-light: 60 40% 95%;     /* Creme claro */
 
     /* Status Colors (harmonizados com a nova paleta) */
-    --success: 84 46% 40%;            /* Verde-lima */
+    --success: 84 46% 32%;            /* Verde-lima (escurecido no lote 5: texto e fundo com branco passam no AA) */
     --warning: 38 92% 48%;            /* Âmbar */
-    --error: 0 75% 55%;               /* Vermelho */
+    --error: 0 72% 45%;               /* Vermelho (lote 5: era 55%, branco em cima dava 4,3) */
     --info: 240 55% 62%;              /* Lilás-azul (alinhado ao accent) */
+
+    /* Tinta de TEXTO (lote 5 do checkup, contraste AA). A lima, o lilás e o
+       âmbar são cores de fundo: como texto sobre branco ou creme dão 1,4 a 3,8.
+       `text-primary`, `text-accent`, `text-warning`, `text-info` e
+       `text-brand-*` usam estas (tailwind.config.ts, textColor); `bg-*` e
+       `border-*` continuam com a cor da marca. */
+    --primary-ink: 69 47% 26%;        /* Oliva, 7:1 no branco */
+    --accent-ink: 240 45% 48%;        /* Lilás escuro, 7:1 no branco */
+    --warning-ink: 32 90% 30%;        /* Âmbar escuro, 6:1 no branco */
+    --info-ink: 240 45% 48%;
 
     /* Light Theme Variables */
     --background: 60 50% 95%;         /* #F9F9ED */
@@ -109,12 +119,13 @@
     --accent: 240 55% 66%;            /* #7777D8 */
     --accent-foreground: 60 50% 96%;  /* creme sobre lilás */
 
-    --destructive: 0 75% 55%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 60 16% 84%;             /* cinza quente neutro */
     --input: 60 16% 84%;
-    --ring: 65 64% 69%;               /* #DAE27C */
+    /* Anel de foco: lilás escuro. A lima no branco não aparecia (1,4:1). */
+    --ring: 240 45% 48%;
 
     /* Custom Business Variables */
     --dashboard-bg: 60 44% 97%;
@@ -153,7 +164,7 @@
     --sidebar-accent: 65 42% 90%;
     --sidebar-accent-foreground: 69 47% 22%;
     --sidebar-border: 60 20% 87%;
-    --sidebar-ring: 65 64% 69%;
+    --sidebar-ring: 240 45% 48%;
   }
 
   .dark {
@@ -172,6 +183,12 @@
     --warning: 38 92% 55%;
     --error: 0 72% 58%;
     --info: 240 60% 70%;
+
+    /* Tinta de texto no escuro: a própria cor clara já passa. */
+    --primary-ink: 65 64% 69%;
+    --accent-ink: 240 60% 78%;
+    --warning-ink: 38 92% 60%;
+    --info-ink: 240 60% 78%;
 
     /* Dark Theme Variables */
     --background: 60 22% 7%;          /* carvão esverdeado */
@@ -247,6 +264,47 @@
 
   h1, h2, h3, h4 {
     font-family: 'NewBlack Typeface', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Foco visível para quem usa o teclado (lote 5 do checkup). Os componentes
+     do shadcn já desenham o anel deles e tiram este contorno com
+     focus-visible:outline-none; o que não desenha nada ganha este. */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  /*
+   * Alvos de toque de 44 pixels no celular (lote 5 do checkup, WCAG 2.5.5).
+   * Tudo em :where(), especificidade zero: qualquer classe do componente
+   * ganha. Duas regras:
+   *   1. botão, aba, campo, item de menu e link com cara de botão ganham
+   *      altura mínima de 44 (e largura mínima, quando não é campo);
+   *   2. interruptor, caixa de marcar, botão de opção e o que tiver
+   *      data-alvo-expandido (o "?" das dicas, o botão de ajuda, o link da
+   *      trilha) continuam do tamanho que se vê, mas a área que recebe o toque
+   *      cresce até 44 por um ::after transparente. O desenho não muda.
+   * O teste e2e/visual.spec.ts mede os dois casos em toda tela, a 375 px.
+   */
+  @media (max-width: 767px) {
+    :where(button, [role="button"], [role="tab"], [role="combobox"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], a[href], select, textarea, input:not([type="checkbox"], [type="radio"], [type="range"], [type="hidden"], [type="file"], [type="color"])):not([role="switch"], [role="checkbox"], [role="radio"], [data-alvo-expandido]) {
+      min-height: 44px;
+    }
+    :where(button, [role="button"], [role="tab"], a[href]):not([role="switch"], [role="checkbox"], [role="radio"], [data-alvo-expandido]) {
+      min-width: 44px;
+    }
+    :where([role="switch"], [role="checkbox"], [role="radio"], [data-alvo-expandido]) {
+      position: relative;
+    }
+    :where([role="switch"], [role="checkbox"], [role="radio"], [data-alvo-expandido])::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: max(100%, 44px);
+      height: max(100%, 44px);
+      transform: translate(-50%, -50%);
+    }
   }
 }
 

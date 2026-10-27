@@ -24,6 +24,7 @@ import { RoleDescriptionCard } from '@/components/admin/RoleDescriptionCard';
 import { SystemSettings } from '@/components/settings/SystemSettings';
 import { SignupLeadsTab } from '@/components/admin/SignupLeadsTab';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users,
   CreditCard,
@@ -805,7 +806,7 @@ const AdminDashboard = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{usersWithEmails.length}</div>
+                {usersLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{usersWithEmails.length}</div>}
                 <p className="text-xs text-muted-foreground">
                   Todas as pessoas com login
                 </p>
@@ -894,7 +895,7 @@ const AdminDashboard = () => {
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{usersWithEmails.length}</div>
+                {usersLoading ? <Skeleton className="h-8 w-12" /> : <div className="text-2xl font-bold">{usersWithEmails.length}</div>}
                 <p className="text-xs text-muted-foreground">Cadastrados na plataforma</p>
               </CardContent>
             </Card>
@@ -904,9 +905,13 @@ const AdminDashboard = () => {
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {usersWithEmails.filter((u: any) => u.is_active).length}
-                </div>
+                {usersLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <div className="text-2xl font-bold">
+                    {usersWithEmails.filter((u: any) => u.is_active).length}
+                  </div>
+                )}
                 <p className="text-xs text-muted-foreground">Com conta ativa</p>
               </CardContent>
             </Card>
@@ -920,6 +925,8 @@ const AdminDashboard = () => {
             <CardContent>
               <ResponsiveTable
                 ariaLabel="Resumo do Sistema"
+                loading={usersLoading}
+                loadingRows={4}
                 rows={[
                   { id: 'usuarios', metrica: 'Usuários Cadastrados', valor: usersWithEmails.length, descricao: 'Total de contas na plataforma' },
                   { id: 'superadmins', metrica: 'Superadmins', valor: usersWithEmails.filter((u: any) => u.role === 'superadmin').length, descricao: 'Administradores com acesso total' },

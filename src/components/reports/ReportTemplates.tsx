@@ -1,4 +1,5 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -286,6 +287,7 @@ export const ReportTemplates = () => {
                           variant="outline" 
                           size="sm"
                           disabled={deleteTemplateMutation.isPending}
+                          aria-label={`Ações do modelo ${template.name}`}
                         >
                           <MoreVertical className="w-4 h-4" />
                         </Button>
@@ -315,20 +317,17 @@ export const ReportTemplates = () => {
       {/* Empty State */}
       {!isLoadingData && filteredTemplates.length === 0 && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum modelo de relatório encontrado</h3>
-            <p className="text-muted-foreground mb-4">
-              {selectedCategory === 'Todos' 
-                ? 'Um modelo guarda o relatório que você usa sempre, para gerar de novo com um clique. Crie o primeiro na aba Criar.' 
-                : `Nenhum modelo na categoria "${selectedCategory}".`
+          <CardContent className="p-2">
+            <EmptyState
+              icon={<FileText />}
+              title="Nenhum modelo de relatório encontrado"
+              description={
+                selectedCategory === 'Todos'
+                  ? 'Um modelo guarda o relatório que você usa sempre, para gerar de novo com um clique. Crie o primeiro na aba Criar.'
+                  : `Nenhum modelo na categoria "${selectedCategory}".`
               }
-            </p>
-            {selectedCategory !== 'Todos' && (
-              <Button onClick={() => setSelectedCategory('Todos')}>
-                Ver todos os modelos
-              </Button>
-            )}
+              action={selectedCategory !== 'Todos' ? { label: 'Ver todos os modelos', onClick: () => setSelectedCategory('Todos') } : undefined}
+            />
           </CardContent>
         </Card>
        )}

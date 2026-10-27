@@ -81,7 +81,7 @@ export const TrackingFilters = ({
               }
             }
           }}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px]" aria-label="Período">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

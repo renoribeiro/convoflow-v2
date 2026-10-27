@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { Receipt } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -69,7 +70,7 @@ export function CobrancasDaPlataforma() {
           rowKey={(c) => c.id}
           loading={consulta.isLoading}
           error={consulta.error ? (consulta.error as Error).message : undefined}
-          empty={<p className="py-6 text-center text-sm text-muted-foreground">Nenhuma cobrança registrada ainda.</p>}
+          empty={<EmptyState compacto icon={<Receipt />} title="Nenhuma cobrança registrada ainda." />}
           columns={colunasDeCobranca({ comConta: true, notaVisivel, ehSuperadmin })}
         />
       </CardContent>

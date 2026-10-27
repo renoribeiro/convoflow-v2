@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -257,7 +258,12 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
               <AlertDescription>Não foi possível carregar as chaves agora.</AlertDescription>
             </Alert>
           ) : chaves.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma chave ainda. Clique em "Nova chave" para criar a primeira.</p>
+            <EmptyState
+              compacto
+              icon={<KeyRound />}
+              title="Nenhuma chave ainda."
+              description='Clique em "Nova chave" para criar a primeira.'
+            />
           ) : (
             <ul className="divide-y rounded-md border" aria-label="Chaves de API">
               {chaves.map((c) => {

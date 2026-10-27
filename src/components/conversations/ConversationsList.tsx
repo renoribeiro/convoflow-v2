@@ -6,7 +6,8 @@ import { format, isToday, isYesterday, differenceInMinutes, differenceInHours } 
 import { ptBR } from 'date-fns/locale';
 import { useConversations, getAllConversations } from '@/hooks/useConversations';
 import { useInView } from 'react-intersection-observer';
-import { AlertCircle, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { AlertCircle, ChevronDown, ChevronRight, MessageSquare, Users } from 'lucide-react';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { NewConversationModal } from './NewConversationModal';
@@ -594,8 +595,13 @@ export const ConversationsList = ({
         {/* A contagem sozinha deixava a linha quase vazia — é onde o seletor de
             exibição cabe sem apertar o cabeçalho. */}
         <div className="flex items-center justify-between gap-2">
+          {/* Conta o que já carregou; com mais páginas por vir sai "8+", como
+              nas pílulas (achado 46: dizia "8 conversas" com 37 na fila). O
+              esqueleto da lista já diz que está carregando: aqui nada. */}
           <p className="text-xs text-muted-foreground truncate">
-            {isLoading ? 'Carregando...' : `${visibleConversations.length} conversas`}
+            {isLoading
+              ? ''
+              : `${visibleConversations.length}${allLoaded ? '' : '+'} ${visibleConversations.length === 1 && allLoaded ? 'conversa' : 'conversas'}`}
           </p>
           <ConversationViewToggle
             grouped={groupByAttendanceEnabled}
@@ -613,9 +619,11 @@ export const ConversationsList = ({
               ))}
             </div>
           ) : visibleConversations.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground">Nenhuma conversa encontrada</p>
-            </div>
+            <EmptyState
+              icon={<MessageSquare className="h-10 w-10" />}
+              title="Nenhuma conversa encontrada"
+              description="Confira os filtros acima. Conversa nova aparece aqui sozinha assim que o cliente escreve."
+            />
           ) : !groupByAttendanceEnabled ? (
             visibleConversations.map(renderConversation)
           ) : (
@@ -659,7 +667,7 @@ export const ConversationsList = ({
               {conversationsQuery.isFetchingNextPage ? (
                 <div className="text-sm text-muted-foreground">Carregando mais conversas...</div>
               ) : (
-                <div className="text-sm text-muted-foreground/60">Role para carregar mais</div>
+                <div className="text-sm text-muted-foreground">Role para carregar mais</div>
               )}
             </div>
           )}

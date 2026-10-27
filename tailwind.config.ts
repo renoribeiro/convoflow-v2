@@ -1,5 +1,26 @@
 import type { Config } from "tailwindcss";
 
+/**
+ * Cinza quente da marca no lugar dos cinzas frios do Tailwind (gray, slate,
+ * zinc, neutral, stone), passo a passo com a MESMA luminosidade do original:
+ * todo par de texto e fundo que passava no contraste continua passando. Lote 5
+ * do checkup de usabilidade: telas antigas com `text-gray-500` destoavam do
+ * creme e do carvão da marca.
+ */
+const cinzaQuente = {
+	50: 'hsl(60 10% 97.8%)',
+	100: 'hsl(60 10% 95.3%)',
+	200: 'hsl(60 10% 89.6%)',
+	300: 'hsl(60 10% 81.8%)',
+	400: 'hsl(60 10% 60.3%)',
+	500: 'hsl(60 10% 41%)',
+	600: 'hsl(60 10% 30.4%)',
+	700: 'hsl(60 10% 23.2%)',
+	800: 'hsl(60 10% 14.6%)',
+	900: 'hsl(60 10% 8.7%)',
+	950: 'hsl(60 10% 2.6%)',
+};
+
 export default {
 	darkMode: ["class"],
 	content: [
@@ -18,7 +39,32 @@ export default {
 			}
 		},
 		extend: {
+			/*
+			 * Cor de TEXTO separada da cor de fundo (lote 5, contraste AA): a lima,
+			 * o lilás e o âmbar são fundos. `text-primary` sobre branco dava 1,4:1.
+			 * As tintas moram em index.css (--*-ink); no tema escuro voltam a ser a
+			 * cor clara. `bg-primary`, `border-primary` etc. não mudam.
+			 */
+			textColor: {
+				primary: { DEFAULT: 'hsl(var(--primary-ink))' },
+				accent: { DEFAULT: 'hsl(var(--accent-ink))' },
+				warning: { DEFAULT: 'hsl(var(--warning-ink))' },
+				info: 'hsl(var(--info-ink))',
+				brand: {
+					primary: 'hsl(var(--primary-ink))',
+					secondary: 'hsl(var(--accent-ink))',
+				},
+				status: {
+					warning: 'hsl(var(--warning-ink))',
+					info: 'hsl(var(--info-ink))',
+				},
+			},
 			colors: {
+				gray: cinzaQuente,
+				slate: cinzaQuente,
+				zinc: cinzaQuente,
+				neutral: cinzaQuente,
+				stone: cinzaQuente,
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',

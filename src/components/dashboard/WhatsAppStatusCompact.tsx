@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import { Smartphone, Settings } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,22 +61,13 @@ export const WhatsAppStatusCompact = () => {
             Não foi possível carregar os números. Recarregue a página.
           </p>
         ) : instances.length === 0 ? (
-          <div className="flex flex-col items-center gap-1 py-5 text-center">
-            <Smartphone className="h-8 w-8 text-muted-foreground/50" />
-            <p className="text-xs text-muted-foreground">Nenhum número conectado</p>
-            {podeConfigurar ? (
-              <Button
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => navigate('/dashboard/whatsapp-numbers')}
-              >
-                Conectar WhatsApp
-              </Button>
-            ) : (
-              <p className="text-xs text-muted-foreground">Quem conecta o número é o Gestor da sua Loja.</p>
-            )}
-          </div>
+          <EmptyState
+            compacto
+            icon={<Smartphone />}
+            title="Nenhum número conectado"
+            description={podeConfigurar ? undefined : 'Quem conecta o número é o Gestor da sua Loja.'}
+            action={podeConfigurar ? { label: 'Conectar WhatsApp', onClick: () => navigate('/dashboard/whatsapp-numbers') } : undefined}
+          />
         ) : (
           instances.map((instance) => {
             const status = normalize(instance.status);

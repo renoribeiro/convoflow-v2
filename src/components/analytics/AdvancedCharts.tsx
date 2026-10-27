@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   LineChart,
@@ -41,7 +42,6 @@ import {
 } from 'lucide-react';
 import { AnalyticsFilters } from './AdvancedFilters';
 import { useRealTimeChartData } from '@/hooks/useRealTimeAnalytics';
-import { cn } from '@/lib/utils';
 import { CHART_SERIES, BRAND_CHART } from '@/lib/chartColors';
 
 // Interfaces
@@ -97,6 +97,9 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
   const chartData = useMemo(() => realTimeChartData, [realTimeChartData]);
   const funnelData = useMemo(() => realTimeFunnelData, [realTimeFunnelData]);
   const sourceData = useMemo(() => realTimeSourceData, [realTimeSourceData]);
+
+  // Primeira carga: sem dados ainda, os números seriam zeros que parecem resultado.
+  const carregandoValores = isLoading && chartData.length === 0;
 
   // Métricas calculadas
   const metrics = useMemo(() => {
@@ -213,7 +216,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
               onClick={refresh}
               disabled={isLoading}
             >
-              <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+              <RefreshCw className="h-4 w-4 mr-2" />
               Atualizar
             </Button>
           </div>
@@ -227,7 +230,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total de contatos</p>
-                <p className="text-2xl font-bold">{metrics.totalLeads.toLocaleString('pt-BR')}</p>
+                {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.totalLeads.toLocaleString('pt-BR')}</p>}
               </div>
               <Users className="w-8 h-8 text-blue-500" />
             </div>
@@ -239,7 +242,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Conversões</p>
-                <p className="text-2xl font-bold">{metrics.totalConversions.toLocaleString('pt-BR')}</p>
+                {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.totalConversions.toLocaleString('pt-BR')}</p>}
               </div>
               <Target className="w-8 h-8 text-green-500" />
             </div>
@@ -251,7 +254,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Receita total</p>
-                <p className="text-2xl font-bold">R$ {metrics.totalRevenue.toLocaleString('pt-BR')}</p>
+                {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">R$ {metrics.totalRevenue.toLocaleString('pt-BR')}</p>}
               </div>
               <DollarSign className="w-8 h-8 text-yellow-500" />
             </div>
@@ -263,7 +266,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Taxa de conversão</p>
-                <p className="text-2xl font-bold">{metrics.avgConversionRate.toFixed(1)}%</p>
+                {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.avgConversionRate.toFixed(1)}%</p>}
               </div>
               <TrendingUp className="w-8 h-8 text-purple-500" />
             </div>
@@ -275,7 +278,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Valor médio por venda</p>
-                <p className="text-2xl font-bold">R$ {metrics.avgTicket.toFixed(0)}</p>
+                {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">R$ {metrics.avgTicket.toFixed(0)}</p>}
               </div>
               <Activity className="w-8 h-8 text-red-500" />
             </div>

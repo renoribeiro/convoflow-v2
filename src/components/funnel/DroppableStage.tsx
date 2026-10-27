@@ -3,6 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { corDaEtapa } from '@/lib/funnel/corDaEtapa';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { MoreHorizontal, Settings, Plus, Edit, Trash2 } from 'lucide-react';
@@ -70,17 +71,21 @@ export const DroppableStage = ({
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
               {stage.name}
-              <Badge className={cn(
-                stage.color,
-                "transition-all duration-200",
-                isOver && "animate-pulse scale-110"
-              )}>
+              <Badge
+                variant="outline"
+                style={corDaEtapa(stage.color).style}
+                className={cn(
+                  corDaEtapa(stage.color).className,
+                  "transition-all duration-200",
+                  isOver && "animate-pulse scale-110"
+                )}
+              >
                 {leadCount}
               </Badge>
             </CardTitle>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Ações da etapa ${stage.name}`}>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -137,7 +142,7 @@ export const DroppableStage = ({
                   <p className="text-sm font-medium">
                     {isOver ? 'Solte aqui' : 'Arraste os cartões para esta etapa'}
                   </p>
-                  <p className="text-xs mt-1 opacity-70">
+                  <p className="text-xs mt-1">
                     {isOver ? 'O cartão muda para esta etapa' : 'Nenhum contato nesta etapa ainda'}
                   </p>
                 </div>

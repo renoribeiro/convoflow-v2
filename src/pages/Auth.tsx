@@ -13,9 +13,13 @@ import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 
 export const Auth = () => {
-  const { login, isLoading, session } = useAuth();
+  const { login, session } = useAuth();
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  // Estado próprio do envio (achado 15): o isLoading do AuthContext também
+  // vale enquanto a sessão é lida ao abrir a página, e o botão já nascia
+  // "Entrando..." desativado, antes de a pessoa clicar.
+  const [entrando, setEntrando] = useState(false);
 
   // Redirect if already authenticated
   if (session) {
@@ -24,10 +28,13 @@ export const Auth = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEntrando(true);
     try {
       await login(loginData.email, loginData.password);
     } catch (error) {
       // Error is handled in AuthContext with toast
+    } finally {
+      setEntrando(false);
     }
   };
 
@@ -72,6 +79,7 @@ export const Auth = () => {
                         value={loginData.email}
                         onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                         className="pl-10"
+                        autoComplete="email"
                         required
                       />
                     </div>
@@ -101,6 +109,7 @@ export const Auth = () => {
                         value={loginData.password}
                         onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                         className="pl-10 pr-10"
+                        autoComplete="current-password"
                         required
                       />
                       <button
@@ -108,15 +117,15 @@ export const Auth = () => {
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
                         aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
-                        tabIndex={-1}
+                        data-alvo-expandido=""
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Entrando..." : "Entrar"}
+                  <Button type="submit" className="w-full" disabled={entrando}>
+                    {entrando ? "Entrando..." : "Entrar"}
                   </Button>
             </form>
           </CardContent>

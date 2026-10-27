@@ -47,7 +47,9 @@ export const PageHeader = ({
                 <BreadcrumbItem>
                   {crumb.href ? (
                     <BreadcrumbLink asChild>
-                      <Link to={crumb.href}>{crumb.label}</Link>
+                      {/* inline-flex: no celular o link cresce para 44 px de toque e o
+                      texto continua no meio, alinhado com o resto da trilha. */}
+                      <Link to={crumb.href} className="inline-flex items-center">{crumb.label}</Link>
                     </BreadcrumbLink>
                   ) : (
                     <BreadcrumbPage>{crumb.label}</BreadcrumbPage>

@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { getCatalogEntry } from './automationCatalog';
 import {
   BarChart,
@@ -45,7 +47,7 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
   const [selectedMetric, setSelectedMetric] = useState('executions');
   
   // Query para buscar execuções de automação
-  const { data: executions = [] } = useSupabaseQuery({
+  const { data: executions = [], isLoading: carregandoExecucoes } = useSupabaseQuery({
     table: 'automation_executions',
     queryKey: ['automation-executions', flowId, timeRange],
     select: `
@@ -221,7 +223,7 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalExecutions}</div>
+            {carregandoExecucoes ? <Skeleton className="h-8 w-16" /> : <div className="text-2xl font-bold">{totalExecutions}</div>}
             <p className="text-xs text-muted-foreground">
               {timeRange === '7d' ? 'Últimos 7 dias' : 'Período selecionado'}
             </p>
@@ -234,10 +236,16 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
             <TrendingUp className="h-4 w-4 text-status-success" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-status-success">
-              {successRate.toFixed(1)}%
-            </div>
-            <Progress value={successRate} className="mt-2" />
+            {carregandoExecucoes ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-status-success">
+                  {successRate.toFixed(1)}%
+                </div>
+                <Progress value={successRate} className="mt-2" />
+              </>
+            )}
           </CardContent>
         </Card>
         
@@ -247,9 +255,13 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
             <Clock className="h-4 w-4 text-status-info" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-status-info">
-              {formatDuration(averageExecutionTime)}
-            </div>
+            {carregandoExecucoes ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <div className="text-2xl font-bold text-status-info">
+                {formatDuration(averageExecutionTime)}
+              </div>
+            )}
             <p className="text-xs text-muted-foreground">
               Por execução completa
             </p>
@@ -262,10 +274,16 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
             <TrendingDown className="h-4 w-4 text-status-error" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-status-error">
-              {failureRate.toFixed(1)}%
-            </div>
-            <Progress value={failureRate} className="mt-2" />
+            {carregandoExecucoes ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-status-error">
+                  {failureRate.toFixed(1)}%
+                </div>
+                <Progress value={failureRate} className="mt-2" />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -356,6 +374,13 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            {carregandoExecucoes && (
+              <>
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+              </>
+            )}
             {executions.slice(0, 10).map((execution) => {
               const getStatusIcon = (status: string) => {
                 switch (status) {
@@ -416,11 +441,12 @@ export const AutomationAnalytics = ({ flowId }: AutomationAnalyticsProps) => {
               );
             })}
             
-            {executions.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma execução encontrada no período selecionado</p>
-              </div>
+            {!carregandoExecucoes && executions.length === 0 && (
+              <EmptyState
+                compacto
+                icon={<Activity />}
+                title="Nenhuma execução encontrada no período selecionado"
+              />
             )}
           </div>
         </CardContent>

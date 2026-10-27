@@ -3,25 +3,8 @@ import { NavLink, useMatch } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAcessoTelas } from '@/hooks/useAcessoTelas';
 import { TELAS, caminhoDaTela, telaNoMenu, type GrupoDoMenu } from '@/lib/access/telas';
-import {
-  MessageSquare,
-  BarChart3,
-  Users,
-  Settings,
-  Bot,
-  Megaphone,
-  Target,
-  UserCheck,
-  ChevronLeft,
-  TrendingUp,
-  FileText,
-  Workflow,
-  Shield,
-  Smartphone,
-  UsersRound,
-  HelpCircle,
-  X,
-} from 'lucide-react';
+import { ChevronLeft, FileText, X } from 'lucide-react';
+import { ICONES_DAS_TELAS } from '@/lib/access/iconesDasTelas';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -66,25 +49,7 @@ type SidebarMode = 'drawer' | 'expanded' | 'collapsed';
  * Até 2026-10-26 o menu tinha listas próprias e olhava só o módulo; o
  * atendente via Campanhas, Instâncias e outras telas que não podia usar.
  */
-const ICONES: Record<string, React.ElementType> = {
-  '': BarChart3,
-  conversations: MessageSquare,
-  contacts: Users,
-  funnel: Target,
-  tracking: TrendingUp,
-  reports: FileText,
-  chatbots: Bot,
-  campaigns: Megaphone,
-  templates: FileText,
-  followups: UserCheck,
-  automation: Workflow,
-  'whatsapp-numbers': Smartphone,
-  settings: Settings,
-  help: HelpCircle,
-  team: UsersRound,
-  'store-comparison': BarChart3,
-  admin: Shield,
-};
+// O ícone de cada tela é o mesmo do menu e da busca rápida (src/lib/access/iconesDasTelas.ts).
 
 // Escrito como `dataTour: '...'` para a varredura de src/lib/onboarding/tours.test.ts achar a marca.
 const MARCAS_DE_TOUR: Record<string, { dataTour: string }> = { help: { dataTour: 'menu-ajuda' } };
@@ -93,7 +58,7 @@ const itensDoGrupo = (grupo: GrupoDoMenu, visivel: (chave: string) => boolean): 
   TELAS.filter((t) => t.grupo === grupo && visivel(t.chave)).map((t) => ({
     name: t.nome,
     href: caminhoDaTela(t),
-    icon: ICONES[t.chave] ?? FileText,
+    icon: ICONES_DAS_TELAS[t.chave] ?? FileText,
     dataTour: MARCAS_DE_TOUR[t.chave]?.dataTour,
   }));
 
@@ -123,6 +88,9 @@ const NavItemLink = ({
       to={item.href}
       end={item.href === '/dashboard'}
       onClick={onNavigate}
+      // No tablet e com a barra recolhida só o ícone aparece: o nome vai para
+      // o leitor de tela por aqui (antes o link ficava sem nome nenhum).
+      aria-label={item.name}
       data-tour={item.dataTour}
       className={cn(
         'relative flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 group',
@@ -173,7 +141,7 @@ const SectionLabel = ({ label, mode }: { label: string; mode: SidebarMode }) => 
       {mode === 'expanded' && <div className="my-1 lg:hidden" />}
       <p
         className={cn(
-          'px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/60',
+          'px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground',
           mode === 'expanded' && 'hidden lg:block',
         )}
       >

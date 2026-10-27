@@ -64,6 +64,8 @@ export const LandingNavbar = () => {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={isOpen ? 'Fechar menu' : 'Abrir menu'}
+              aria-expanded={isOpen}
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

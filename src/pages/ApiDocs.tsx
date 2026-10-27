@@ -213,7 +213,10 @@ function Endpoint({ caminho }: { caminho: string }) {
 export default function ApiDocs() {
   return (
     <div className="min-h-screen bg-background px-4 py-6">
-      <div className="mx-auto max-w-4xl space-y-10">
+      {/* Endereço e chave em <code> no meio do texto não têm espaço para
+          quebrar: no celular empurravam a página para o lado (396 px numa
+          tela de 375, lote 5 do checkup). Fora do bloco de código, quebram. */}
+      <div className="mx-auto max-w-4xl space-y-10 [&_:not(pre)>code]:[overflow-wrap:anywhere]">
         <header className="space-y-4">
           <VoltarParaOndeEstava />
           <div className="flex items-center gap-3">

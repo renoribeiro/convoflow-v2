@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
@@ -36,7 +38,7 @@ export const IntegrationSettings = () => {
   const { toast } = useToast();
 
   // Webhooks de saída configurados pela Conta (tabela `webhooks`, tenant-scoped).
-  const { data: webhooksRaw = [] } = useSupabaseQuery({
+  const { data: webhooksRaw = [], isLoading: webhooksLoading } = useSupabaseQuery({
     table: 'webhooks',
     queryKey: ['webhooks'],
     select: '*',
@@ -172,7 +174,7 @@ export const IntegrationSettings = () => {
                   <div>
                     <div className="flex items-center gap-1.5">
                       <Label htmlFor="webhook-url">Endereço do outro sistema *</Label>
-                      <DicaDoCampo rotulo="Endereço do outro sistema" texto="Recebe um POST com os dados em JSON, em até 5 minutos. Se responder com erro, o ConvoFlow tenta de novo, até 5 vezes." />
+                      <DicaDoCampo rotulo="Endereço do outro sistema" texto="O ConvoFlow manda os dados para este endereço em até 5 minutos, sempre que acontecer o que você marcou em Avisar quando. Se der erro, ele tenta de novo, até 5 vezes." />
                     </div>
                     <Input
                       id="webhook-url"
@@ -190,7 +192,9 @@ export const IntegrationSettings = () => {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2">
                     {eventTypes.map((event) => (
-                      <div key={event.id} className="flex items-center space-x-2">
+                      // A linha inteira é o alvo do toque (lote 5 do checkup): a
+                      // caixinha sozinha tinha 13 px.
+                      <label key={event.id} htmlFor={event.id} className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium md:min-h-0">
                         <input
                           type="checkbox"
                           id={event.id}
@@ -209,12 +213,10 @@ export const IntegrationSettings = () => {
                               }));
                             }
                           }}
-                          className="rounded"
+                          className="h-4 w-4 rounded"
                         />
-                        <Label htmlFor={event.id} className="text-sm">
-                          {event.label}
-                        </Label>
-                      </div>
+                        {event.label}
+                      </label>
                     ))}
                   </div>
                 </div>
@@ -235,10 +237,11 @@ export const IntegrationSettings = () => {
                 
                 <div className="flex items-center space-x-2">
                   <Switch
+                    id="aviso-ligado"
                     checked={webhookForm.active || false}
                     onCheckedChange={(checked) => setWebhookForm(prev => ({ ...prev, active: checked }))}
                   />
-                  <Label>Aviso ligado</Label>
+                  <Label htmlFor="aviso-ligado">Aviso ligado</Label>
                   <DicaDoCampo rotulo="Aviso ligado" texto="Desligado, o cadastro fica salvo, mas nada é enviado ao outro sistema enquanto estiver assim." />
                 </div>
                 
@@ -267,11 +270,20 @@ export const IntegrationSettings = () => {
             {/* Lista de Webhooks */}
             <div>
               <h3 className="text-lg font-semibold mb-3">Avisos cadastrados</h3>
-              {webhooks.length === 0 ? (
+              {webhooksLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-20 w-full rounded-md" />
+                  <Skeleton className="h-20 w-full rounded-md" />
+                </div>
+              ) : webhooks.length === 0 ? (
                 <Card>
-                  <CardContent className="p-6 text-center">
-                    <Webhook className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">Nenhum aviso cadastrado ainda. Preencha o formulário acima para criar o primeiro.</p>
+                  <CardContent className="p-2">
+                    <EmptyState
+                      compacto
+                      icon={<Webhook />}
+                      title="Nenhum aviso cadastrado ainda."
+                      description="Preencha o formulário acima para criar o primeiro."
+                    />
                   </CardContent>
                 </Card>
               ) : (
@@ -298,6 +310,7 @@ export const IntegrationSettings = () => {
                                 variant="ghost" 
                                 onClick={() => copyToClipboard(webhook.url)}
                                 className="h-6 w-6 p-0"
+                                aria-label="Copiar endereço"
                               >
                                 <Copy className="h-3 w-3" />
                               </Button>
@@ -340,7 +353,7 @@ export const IntegrationSettings = () => {
                   (achado 120 do checkup): não existe página com o formato dos
                   avisos, e o texto mandava a pessoa consultá-la. */}
               <p className="text-sm text-muted-foreground">
-                Cada aviso chega ao endereço cadastrado como um envio do tipo POST, com os dados em JSON (o formato que os sistemas de integração entendem). Para montar a integração, cadastre um endereço de teste e veja um aviso de verdade chegar.
+                Cada aviso chega ao endereço cadastrado no formato que o n8n, o Make e o Zapier recebem sem configuração extra (para quem programa: um POST com os dados em JSON). Para montar a integração, cadastre um endereço de teste e veja um aviso de verdade chegar.
               </p>
             </div>
         </div>

@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -207,11 +208,17 @@ export default function TeamPage() {
                 ))}
               </div>
             ) : cartaoDeLojas.lojas.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {isGerente
-                  ? 'Nenhuma Loja cadastrada ainda. Use "Nova Loja" para criar a primeira.'
-                  : 'Esta Conta ainda não tem Lojas.'}
-              </p>
+              <EmptyState
+                compacto
+                icon={<Store />}
+                title={isGerente ? 'Nenhuma Loja cadastrada ainda.' : 'Esta Conta ainda não tem Lojas.'}
+                description={isGerente ? 'Use "Nova Loja" para criar a primeira.' : undefined}
+                action={
+                  isGerente && !semVaga
+                    ? { label: 'Nova Loja', onClick: () => setNovaLojaOpen(true), icon: <Store className="h-4 w-4 mr-2" /> }
+                    : undefined
+                }
+              />
             ) : (
               <ul className="space-y-2">
                 {cartaoDeLojas.lojas.map((loja) => {
@@ -226,8 +233,10 @@ export default function TeamPage() {
                       <span className="flex items-center gap-2 min-w-0">
                         <Store className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         <span className="min-w-0">
-                          <span className="flex items-center gap-2 min-w-0">
-                            <span className="truncate text-sm">{loja.name}</span>
+                          {/* O selo desce para a linha de baixo quando não cabe: antes o
+                              nome virava "Con..." no celular (lote 5 do checkup). */}
+                          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                            <span className="text-sm [overflow-wrap:anywhere]">{loja.name}</span>
                             {emFoco && cartaoDeLojas.lista && (
                               <Badge variant="secondary" className="flex-shrink-0">
                                 Aberta agora

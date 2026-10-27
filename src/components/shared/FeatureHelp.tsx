@@ -63,6 +63,7 @@ export const FeatureHelp: React.FC<Props> = ({ helpKey, className, docsLink = tr
         <button
           type="button"
           aria-label={`Ajuda: ${entry.title}`}
+          data-alvo-expandido=""
           title={`Como funciona: ${entry.title}`}
           className={cn(
             'inline-flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors',

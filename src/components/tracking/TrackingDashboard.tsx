@@ -1,4 +1,5 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -127,11 +128,11 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   <p className="text-3xl font-bold">{totalLeads.toLocaleString()}</p>
                   <div className="flex items-center mt-1">
                     {leadsGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-success mr-1" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
                     )}
-                    <span className={`text-sm ${leadsGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm ${leadsGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {Math.abs(leadsGrowth).toFixed(1)}%
                     </span>
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
@@ -156,18 +157,18 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   <p className="text-3xl font-bold">{totalConversions.toLocaleString()}</p>
                   <div className="flex items-center mt-1">
                     {conversionsGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-success mr-1" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
                     )}
-                    <span className={`text-sm ${conversionsGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm ${conversionsGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {Math.abs(conversionsGrowth).toFixed(1)}%
                     </span>
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Target className="w-6 h-6 text-green-600" />
+                  <Target className="w-6 h-6 text-success" />
                 </div>
               </div>
             </CardContent>
@@ -185,11 +186,11 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   <p className="text-3xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                   <div className="flex items-center mt-1">
                     {revenueGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-success mr-1" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
                     )}
-                    <span className={`text-sm ${revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm ${revenueGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {Math.abs(revenueGrowth).toFixed(1)}%
                     </span>
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
@@ -214,11 +215,11 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   <p className="text-3xl font-bold">{conversionRate.toFixed(1)}%</p>
                   <div className="flex items-center mt-1">
                     {rateGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                      <TrendingUp className="w-4 h-4 text-success mr-1" />
                     ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
                     )}
-                    <span className={`text-sm ${rateGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm ${rateGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
                       {Math.abs(rateGrowth).toFixed(1)}%
                     </span>
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
@@ -299,11 +300,11 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                   );
                 })}
                 {(!trafficSources || trafficSources.length === 0) && (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Nenhuma fonte de tráfego configurada</p>
-                    <p className="text-sm">Cadastre a primeira em "Adicionar fonte" para ver os números aqui.</p>
-                  </div>
+                  <EmptyState
+                    icon={<Globe />}
+                    title="Nenhuma fonte de tráfego configurada"
+                    description='Cadastre a primeira em "Adicionar fonte" para ver os números aqui.'
+                  />
                 )}
               </div>
             )}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useRealTimeMetrics } from '@/hooks/useRealTimeAnalytics';
 import { AnalyticsFilters } from './AdvancedFilters';
 import {
@@ -129,6 +130,14 @@ export function RealTimeMetrics({ className, filters }: RealTimeMetricsProps) {
 
       {/* Métricas principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {isLoading && !metrics && ['Total de contatos', 'Conversões', 'Receita Total', 'Taxa de Conversão'].map((titulo) => (
+          <Card key={titulo}>
+            <CardContent className="p-6">
+              <p className="text-sm font-medium text-muted-foreground">{titulo}</p>
+              <Skeleton className="mt-1 h-8 w-20" />
+            </CardContent>
+          </Card>
+        ))}
         {metricsData.map((metric, index) => {
           const Icon = metric.icon;
 

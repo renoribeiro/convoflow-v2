@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Activity } from 'lucide-react';
 import {
   Area,
@@ -65,13 +66,13 @@ export const ActivityChart = ({ period }: ActivityChartProps) => {
         {isLoading ? (
           <Skeleton className="h-[280px] w-full rounded-lg" />
         ) : !hasData ? (
-          <div className="flex h-[280px] flex-col items-center justify-center gap-2 text-center">
-            <Activity className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium text-foreground">Sem mensagens no período</p>
-            <p className="text-xs text-muted-foreground">
-              As mensagens enviadas e recebidas aparecerão aqui.
-            </p>
-          </div>
+          <EmptyState
+            compacto
+            icon={<Activity />}
+            title="Sem mensagens no período"
+            description="As mensagens enviadas e recebidas aparecerão aqui."
+            className="h-[280px]"
+          />
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: -16 }}>

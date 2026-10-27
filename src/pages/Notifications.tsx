@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -153,13 +154,11 @@ export default function Notifications() {
               </Button>
             </div>
           ) : avisos.length === 0 ? (
-            <div className="py-8 text-center">
-              <Bell className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="text-sm font-medium">Nenhum aviso por enquanto</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Quando o sistema avisar você de algo, o aviso aparece aqui e no sino do topo.
-              </p>
-            </div>
+            <EmptyState
+              icon={<Bell />}
+              title="Nenhum aviso por enquanto"
+              description="Quando o sistema avisar você de algo, o aviso aparece aqui e no sino do topo."
+            />
           ) : (
             avisos.map((aviso) => (
               <div

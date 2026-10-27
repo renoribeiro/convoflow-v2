@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { CLASSE_DA_TINTA, estiloDaTinta } from '@/lib/cores/tintaLegivel';
 import { AlertCircle, Loader2, X, Plus } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useEnhancedSupabaseMutation } from '@/hooks/enhanced/useEnhancedSupabaseMutation';
@@ -546,8 +547,8 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                           <Badge
                             key={tagId}
                             variant="secondary"
-                            className="flex items-center gap-1 px-2 py-1"
-                            style={{ backgroundColor: tag.color + '20', color: tag.color, borderColor: tag.color }}
+                            className={`flex items-center gap-1 px-2 py-1 ${CLASSE_DA_TINTA}`}
+                            style={{ backgroundColor: tag.color + '20', borderColor: tag.color, ...estiloDaTinta(tag.color) }}
                           >
                             {tag.name}
                             <X

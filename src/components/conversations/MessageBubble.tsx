@@ -14,6 +14,7 @@ import {
   MapPin,
   Megaphone,
   Mic,
+  Reply,
   Trash2,
   Zap,
 } from 'lucide-react';
@@ -509,12 +510,33 @@ export function MessageBubble({
 
         <div className="flex items-center justify-between gap-3 mt-2">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] text-muted-foreground/70">
+            <span className="text-[10px] text-muted-foreground">
               {format(new Date(message.created_at), 'dd/MM HH:mm', { locale: ptBR })}
             </span>
             <OriginBadge message={message} />
           </div>
           <span className="flex items-center gap-1">
+            {/* Responder citando: antes só existia o duplo clique na bolha, que
+                no celular ninguém acha (achado 45). No celular o botão fica
+                sempre à vista; no computador aparece ao passar o mouse. */}
+            {onReply && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    data-alvo-expandido=""
+                    className="md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-background/30"
+                    aria-label="Responder esta mensagem"
+                    onClick={() => onReply(message)}
+                  >
+                    <Reply className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  Responder esta mensagem
+                </TooltipContent>
+              </Tooltip>
+            )}
             {podeSalvarComoResposta && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -523,7 +545,8 @@ export function MessageBubble({
                     // A bolha já tinha a classe `group`; aqui ela finalmente
                     // serve para alguma coisa. `focus-visible` mantém o botão
                     // alcançável por teclado, onde não existe hover.
-                    className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-background/30"
+                    data-alvo-expandido=""
+                    className="md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-background/30"
                     aria-label="Salvar como resposta rápida"
                     onClick={() => onSaveAsQuickReply?.(message.content ?? '')}
                   >

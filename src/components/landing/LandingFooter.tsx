@@ -33,8 +33,8 @@ export const LandingFooter = () => {
           <div>
             <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Produto</h3>
             <ul className="space-y-2">
-              <li><a href="#features" className="text-sm sm:text-base text-gray-300 hover:text-brand-primary transition-colors">Funcionalidades</a></li>
-              <li><a href="#pricing" className="text-sm sm:text-base text-gray-300 hover:text-brand-primary transition-colors">Preços</a></li>
+              <li><a href="#features" className="inline-flex items-center text-sm sm:text-base text-gray-300 hover:text-[hsl(var(--brand-primary))] transition-colors">Funcionalidades</a></li>
+              <li><a href="#pricing" className="inline-flex items-center text-sm sm:text-base text-gray-300 hover:text-[hsl(var(--brand-primary))] transition-colors">Preços</a></li>
             </ul>
           </div>
 
@@ -42,8 +42,8 @@ export const LandingFooter = () => {
           <div>
             <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Acesso</h3>
             <ul className="space-y-2">
-              <li><Link to="/login" className="text-sm sm:text-base text-gray-300 hover:text-brand-primary transition-colors">Entrar</Link></li>
-              <li><Link to="/dashboard" className="text-sm sm:text-base text-gray-300 hover:text-brand-primary transition-colors">Painel</Link></li>
+              <li><Link to="/login" className="inline-flex items-center text-sm sm:text-base text-gray-300 hover:text-[hsl(var(--brand-primary))] transition-colors">Entrar</Link></li>
+              <li><Link to="/dashboard" className="inline-flex items-center text-sm sm:text-base text-gray-300 hover:text-[hsl(var(--brand-primary))] transition-colors">Painel</Link></li>
             </ul>
           </div>
         </div>
@@ -53,13 +53,13 @@ export const LandingFooter = () => {
             &copy; {new Date().getFullYear()} ConvoFlow. Todos os direitos reservados.
           </p>
           <nav className="flex items-center gap-4 sm:gap-6">
-            <Link to="/terms-of-service" className="text-xs sm:text-sm hover:text-brand-primary transition-colors">
+            <Link to="/terms-of-service" className="text-xs sm:text-sm hover:text-[hsl(var(--brand-primary))] transition-colors">
               Termos de Uso
             </Link>
-            <Link to="/privacy-policy" className="text-xs sm:text-sm hover:text-brand-primary transition-colors">
+            <Link to="/privacy-policy" className="text-xs sm:text-sm hover:text-[hsl(var(--brand-primary))] transition-colors">
               Política de Privacidade
             </Link>
-            <Link to="/exclusao-de-dados" className="text-xs sm:text-sm hover:text-brand-primary transition-colors">
+            <Link to="/exclusao-de-dados" className="text-xs sm:text-sm hover:text-[hsl(var(--brand-primary))] transition-colors">
               Exclusão de Dados
             </Link>
           </nav>

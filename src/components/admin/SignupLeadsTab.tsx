@@ -11,6 +11,7 @@
  *
  * Só o superadmin lê as duas tabelas (RLS, migração 20260926000002).
  */
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { Mail, Phone, UserPlus, AlertTriangle, MailWarning } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -252,7 +253,7 @@ export function SignupLeadsTab() {
             rowKey={(f) => f.id}
             loading={fichas.isLoading}
             error={fichas.isError ? 'Não foi possível carregar os cadastros.' : undefined}
-            empty="Nenhum cadastro pelo site ainda."
+            empty={<EmptyState compacto icon={<UserPlus />} title="Nenhum cadastro pelo site ainda." />}
             columns={colunas}
           />
         </CardContent>

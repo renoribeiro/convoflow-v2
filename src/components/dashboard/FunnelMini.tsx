@@ -1,3 +1,4 @@
+import { EmptyState } from '@/components/shared/EmptyState';
 import { useNavigate } from 'react-router-dom';
 import { Filter, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,20 +40,13 @@ export const FunnelMini = () => {
             ))}
           </div>
         ) : populated.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
-            <Filter className="h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-medium text-foreground">Funil vazio</p>
-            <p className="text-xs text-muted-foreground">
-              Nenhum contato numa etapa do funil ainda. Arraste os contatos para as etapas no Funil de Vendas.
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate('/dashboard/funnel')}
-              className="text-xs font-medium text-primary hover:underline"
-            >
-              Abrir o Funil de Vendas
-            </button>
-          </div>
+          <EmptyState
+            compacto
+            icon={<Filter />}
+            title="Funil vazio"
+            description="Nenhum contato numa etapa do funil ainda. Arraste os contatos para as etapas no Funil de Vendas."
+            action={{ label: 'Abrir o Funil de Vendas', onClick: () => navigate('/dashboard/funnel') }}
+          />
         ) : (
           <div className="space-y-2.5">
             {stages.map((stage) => (

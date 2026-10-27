@@ -97,7 +97,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             value={itemsPerPage.toString()}
             onValueChange={(value) => onItemsPerPageChange(Number(value))}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-8 w-[70px]" aria-label="Itens por página">
               <SelectValue />
             </SelectTrigger>
             <SelectContent side="top">

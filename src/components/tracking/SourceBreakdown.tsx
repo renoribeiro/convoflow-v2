@@ -1,5 +1,7 @@
 
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { DashboardCardSkeleton } from '@/components/shared/Skeleton';
 import { CHART_SERIES } from '@/lib/chartColors';
@@ -74,9 +76,12 @@ export const SourceBreakdown = ({ data, isLoading }: SourceBreakdownProps) => {
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="text-center py-8 text-muted-foreground h-[300px] flex flex-col items-center justify-center">
-            <p>Nenhuma distribuição disponível</p>
-          </div>
+          <EmptyState
+            compacto
+            icon={<PieChartIcon />}
+            title="Nenhuma distribuição disponível"
+            className="h-[300px] flex flex-col items-center justify-center"
+          />
         )}
       </CardContent>
     </Card>

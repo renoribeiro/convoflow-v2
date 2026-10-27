@@ -214,7 +214,7 @@ const Help = () => {
               {section.groups.map((group) => (
                 <div key={group.area ?? '__sem-area__'}>
                   {group.area && (
-                    <p className="px-1 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
+                    <p className="px-1 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                       {group.area}
                     </p>
                   )}
