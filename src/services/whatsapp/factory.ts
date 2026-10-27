@@ -1,4 +1,4 @@
-import type { Tables } from '@/integrations/supabase/types';
+import type { SafeInstanceRow } from '@/lib/whatsapp/safeInstanceColumns';
 import { EvolutionAdapter } from './evolution.adapter';
 import { MetaAdapter } from './meta.adapter';
 import { InstagramAdapter } from './instagram.adapter';
@@ -6,8 +6,12 @@ import { WahaAdapter } from './waha.adapter';
 import type { IWhatsAppProvider } from './provider.interface';
 import { type ProviderInstance, type ProviderType } from './types';
 
-/** Aceita o registro completo da tabela `whatsapp_instances` e produz o adapter certo. */
-export function adapterForInstance(row: Tables<'whatsapp_instances'>): IWhatsAppProvider {
+/**
+ * Aceita a linha de `whatsapp_instances` só com as colunas seguras
+ * (`SAFE_INSTANCE_SELECT`) e produz o adapter certo. Nenhum adapter precisa
+ * de chave: todos enviam pelo servidor.
+ */
+export function adapterForInstance(row: SafeInstanceRow): IWhatsAppProvider {
   const provider = ((row.provider as ProviderType | null) ?? 'evolution') as ProviderType;
   const instance: ProviderInstance = {
     id: row.id,
@@ -20,8 +24,6 @@ export function adapterForInstance(row: Tables<'whatsapp_instances'>): IWhatsApp
     profileName: row.profile_name,
     profilePictureUrl: row.profile_picture_url,
     connectionConfig: (row.connection_config as Record<string, unknown> | null) ?? {},
-    legacyEvolutionApiUrl: row.evolution_api_url,
-    legacyEvolutionApiKey: row.evolution_api_key,
   };
   return adapterFor(instance);
 }

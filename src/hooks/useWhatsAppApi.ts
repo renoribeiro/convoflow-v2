@@ -3,8 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { adapterForInstance, providerLabel, type IWhatsAppProvider, type ProviderType } from '@/services/whatsapp';
-import { ServerKeyPendingAdapter } from '@/services/whatsapp/serverKeyPending.adapter';
-import type { Tables } from '@/integrations/supabase/types';
 import { logger } from '@/lib/logger';
 import {
   SAFE_INSTANCE_SELECT,
@@ -13,7 +11,8 @@ import {
 } from '@/lib/whatsapp/safeInstanceColumns';
 
 export interface ActiveInstanceWithAdapter {
-  row: Tables<'whatsapp_instances'>;
+  /** Só as colunas sem segredo: nenhum adapter precisa de chave. */
+  row: SafeInstanceRow;
   adapter: IWhatsAppProvider;
   providerLabel: string;
 }
@@ -28,9 +27,8 @@ export interface InstanceListItem {
  * As instâncias da Loja só com as colunas seguras (`SAFE_INSTANCE_SELECT`).
  *
  * Para quem só mostra ou filtra: lista de conversas, Contatos, vínculo de
- * contato. Quem ENVIA continua em `useWhatsAppInstancesWithAdapter` até o envio
- * de Evolution e WAHA ir para o servidor (sessão 2 do
- * docs/RUNBOOK_segredos_das_instancias.md).
+ * contato. Quem ENVIA usa `useWhatsAppInstancesWithAdapter`, que lê as mesmas
+ * colunas (desde a sessão 2 do docs/RUNBOOK_segredos_das_instancias.md).
  */
 export function useWhatsAppInstancesSafe() {
   const { tenant } = useTenant();
@@ -68,10 +66,11 @@ export function useWhatsAppInstancesSafe() {
 }
 
 /**
- * O item da lista para uma linha: adapter do provider, ou o de espera para
- * Evolution/WAHA sem chave no navegador, ou null (instância que não monta).
+ * O item da lista para uma linha: o adapter do provider, ou null quando a
+ * instância não monta (Meta sem phoneNumberId, Instagram sem igAccountId).
+ * Evolution e WAHA sempre montam: enviam pelo servidor, sem chave na tela.
  */
-export function instanceWithAdapter(row: Tables<'whatsapp_instances'>): ActiveInstanceWithAdapter | null {
+export function instanceWithAdapter(row: SafeInstanceRow): ActiveInstanceWithAdapter | null {
   try {
     const adapter = adapterForInstance(row);
     return {
@@ -80,28 +79,6 @@ export function instanceWithAdapter(row: Tables<'whatsapp_instances'>): ActiveIn
       providerLabel: providerLabel((row.provider as ProviderType | null) ?? 'evolution'),
     };
   } catch (e) {
-    const provider = ((row.provider as ProviderType | null) ?? 'evolution') as ProviderType;
-    // Evolution/WAHA sem chave no navegador: a chave mora no servidor
-    // desde 2026-10-26. A instância FICA na lista, não pronta, para a
-    // conversa dela não cair noutro número (pickActiveInstance).
-    if (provider === 'evolution' || provider === 'waha') {
-      return {
-        row,
-        adapter: new ServerKeyPendingAdapter({
-          id: row.id,
-          tenantId: row.tenant_id,
-          name: row.name,
-          instanceKey: row.instance_key,
-          provider,
-          status: row.status ?? 'disconnected',
-          phoneNumber: row.phone_number,
-          profileName: row.profile_name,
-          profilePictureUrl: row.profile_picture_url,
-          connectionConfig: {},
-        }),
-        providerLabel: providerLabel(provider),
-      };
-    }
     logger.warn('[useWhatsAppApi] adapter ausente para instância', {
       instanceKey: row.instance_key,
       provider: row.provider,
@@ -129,10 +106,10 @@ export function useWhatsAppInstancesWithAdapter() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('whatsapp_instances')
-        .select('*')
+        .select(SAFE_INSTANCE_SELECT)
         .eq('tenant_id', tenant!.id);
       if (error) throw error;
-      return (data ?? []) as Tables<'whatsapp_instances'>[];
+      return ((data ?? []) as unknown as Record<string, unknown>[]).map(rebuildSafeInstanceRow);
     },
   });
 

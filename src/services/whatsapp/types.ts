@@ -20,14 +20,13 @@ export interface ProviderInstance {
   profileName?: string | null;
   profilePictureUrl?: string | null;
   /**
-   * Configuração específica do provider. Forma esperada por tipo:
-   *  - evolution: { baseUrl, apiKey }                       (com fallback para evolutionApiUrl/Key legados)
-   *  - waha:      { baseUrl, apiKey, sessionName }
+   * Só as chaves sem segredo de `connection_config`
+   * (`src/lib/whatsapp/safeInstanceColumns.ts`). Forma por tipo:
+   *  - evolution: {}                                        (chave e servidor no cofre)
+   *  - waha:      { sessionName, engine }                   (chave e servidor no cofre)
    *  - official:  { phoneNumberId, wabaId, graphApiVersion } (token fica no Vault)
    */
   connectionConfig: Record<string, unknown>;
-  legacyEvolutionApiUrl?: string | null;
-  legacyEvolutionApiKey?: string | null;
 }
 
 export interface ProviderCapabilities {
@@ -49,9 +48,9 @@ export interface ProviderCapabilities {
    */
   requiresTemplateOutsideWindow: boolean;
   /**
-   * Quando false, o provider expõe envio direto a partir do navegador.
-   * Quando true, o envio precisa passar por edge function porque o token é
-   * sensível (caso da Meta — token vive no Vault).
+   * Quando true, o envio passa por edge function porque a chave é sensível.
+   * Desde 2026-10-26 vale para todos: Meta e Instagram (token no Vault),
+   * Evolution e WAHA (chave e servidor no cofre).
    */
   serverSideOnlySend: boolean;
 }
@@ -95,9 +94,9 @@ export interface SendMediaPayload {
   /** Endereço que o provedor baixa. Do anexo do chat, é o link temporário (1 h). */
   mediaUrl: string;
   /**
-   * Caminho no bucket `whatsapp-media` quando o arquivo é anexo do chat. A Meta
-   * usa este (o servidor assina com o token de quem envia); Evolution e WAHA
-   * usam `mediaUrl`.
+   * Caminho no bucket `whatsapp-media` quando o arquivo é anexo do chat. Todos
+   * usam este: a Meta recebe o link que o servidor assina com o token de quem
+   * envia; para Evolution e WAHA o servidor lê o arquivo e manda os bytes.
    */
   mediaPath?: string;
   mediaType: 'image' | 'video' | 'audio' | 'document' | 'sticker';
@@ -119,6 +118,8 @@ export interface SendLocationPayload {
 export interface SendReactionPayload {
   messageId: string;
   emoji: string;
+  /** A mensagem reagida é nossa (enviada). O Evolution pede isso na chave. */
+  fromMe?: boolean;
 }
 
 /** Formato do cabeçalho de um template Meta. */

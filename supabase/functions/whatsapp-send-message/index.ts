@@ -4,13 +4,21 @@ import { createLogger } from '../_shared/logger.ts';
 import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { camposDaFalhaMeta } from '../_shared/meta-error-fields.ts';
-import { montarAudioMeta } from './audio.ts';
+import { montarCorpoMeta } from './meta-body.ts';
 import { caminhoDeEnvioValido, MEDIA_LINK_TTL_S, WHATSAPP_MEDIA_BUCKET } from '../_shared/media-links.ts';
+import { rotaDoEnvio, runProviderSend, type ProviderSendBody } from '../_shared/message-send.ts';
+import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
+import { bytesToBase64, callProvider } from '../_shared/provider-call.ts';
 
 /**
  * whatsapp-send-message
  *
- * Edge function que envia mensagens para a Meta Cloud API a partir do frontend.
+ * Edge function que envia as mensagens das Conversas. Número Evolution ou WAHA
+ * (desde a sessão 2 do docs/RUNBOOK_segredos_das_instancias.md) vai por
+ * `_shared/message-send.ts`, com a chave do cofre; o resto deste arquivo é o
+ * caminho da Meta, que segue igual.
+ *
+ * Meta: envia para a Meta Cloud API a partir do frontend.
  * O token Meta vive no Vault (criado por whatsapp-meta-setup) e é recuperado
  * via RPC `get_instance_meta_token` (SECURITY DEFINER).
  *
@@ -117,7 +125,7 @@ Deno.serve(async (req: Request) => {
   // Resolve instância e checa tenant + provider=official
   const { data: instance, error: instanceError } = await supabaseAdmin
     .from('whatsapp_instances')
-    .select('id, tenant_id, provider, connection_config, status')
+    .select('id, tenant_id, provider, connection_config, status, instance_key, evolution_api_key')
     .eq('id', body.instance_id)
     .single();
   if (instanceError || !instance) return jsonResponse({ ok: false, error: 'Instance not found' }, 404);
@@ -131,6 +139,46 @@ Deno.serve(async (req: Request) => {
     .select('id, kind, parent_tenant_id')
     .eq('id', instance.tenant_id)
     .maybeSingle();
+
+  // Evolution e WAHA (sessão 2 do docs/RUNBOOK_segredos_das_instancias.md):
+  // a chave e o endereço vêm do cofre, o anexo é lido com a chave do servidor
+  // depois de a regra do Storage liberar quem envia. Quem decide e como:
+  // `_shared/message-send.ts`. Daqui para baixo o caminho é só o da Meta.
+  if (rotaDoEnvio(instance.provider) === 'provider') {
+    const comoUsuario = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false },
+    });
+    const env = { evolutionBaseUrl: Deno.env.get('EVOLUTION_API_URL') };
+    const result = await runProviderSend(body as ProviderSendBody, {
+      caller: callerProfile,
+      instance,
+      instanceTenant,
+      loadCredentials: () => loadProviderCredentials(supabaseAdmin, instance, env),
+      canReadMedia: async (caminho) => {
+        // Só a permissão: o link sai e é descartado, nunca vai ao provedor.
+        const { data, error } = await comoUsuario.storage.from(WHATSAPP_MEDIA_BUCKET).createSignedUrl(caminho, 60);
+        return !error && !!data?.signedUrl;
+      },
+      readMedia: async (caminho, maxBytes) => {
+        const { data, error } = await supabaseAdmin.storage.from(WHATSAPP_MEDIA_BUCKET).download(caminho);
+        if (error || !data) return null;
+        if (data.size > maxBytes) return 'too_large';
+        return { base64: bytesToBase64(new Uint8Array(await data.arrayBuffer())), contentType: data.type, size: data.size };
+      },
+      callProvider,
+    });
+    // Nunca o texto nem a mídia: só o tipo e o desfecho.
+    logger.info('whatsapp-send-message (provider)', {
+      instance_id: instance.id,
+      provider: instance.provider || 'evolution',
+      type: typeof body.type === 'string' ? body.type : null,
+      httpStatus: result.status,
+      reason: result.body.reason ?? null,
+    });
+    return jsonResponse(result.body, result.status);
+  }
+
   const access = decideInstanceAccess(callerProfile, instance, instanceTenant);
   if (!access.allowed) {
     return jsonResponse({ ok: false, error: 'Forbidden' }, 403);
@@ -209,116 +257,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: false, error: 'Token Meta não encontrado no Vault.' }, 500);
   }
 
-  // Monta payload da Graph API conforme o tipo
-  const normalizedTo = body.to.startsWith('+')
-    ? body.to
-    : `+${body.to.replace(/\D/g, '')}`;
-
-  const metaBody: Record<string, any> = {
-    messaging_product: 'whatsapp',
-    recipient_type: 'individual',
-    to: normalizedTo,
-  };
-
-  if (body.quoted_message_id) {
-    metaBody.context = { message_id: body.quoted_message_id };
-  }
-
-  switch (body.type) {
-    case 'text':
-      if (!body.text) return jsonResponse({ ok: false, error: 'text obrigatório' }, 400);
-      metaBody.type = 'text';
-      metaBody.text = { body: body.text, preview_url: body.preview_url ?? true };
-      break;
-
-    case 'image':
-      if (!body.media_url) return jsonResponse({ ok: false, error: 'media_url obrigatório' }, 400);
-      metaBody.type = 'image';
-      metaBody.image = { link: body.media_url, ...(body.caption ? { caption: body.caption } : {}) };
-      break;
-
-    case 'video':
-      if (!body.media_url) return jsonResponse({ ok: false, error: 'media_url obrigatório' }, 400);
-      metaBody.type = 'video';
-      metaBody.video = { link: body.media_url, ...(body.caption ? { caption: body.caption } : {}) };
-      break;
-
-    case 'audio': {
-      // ptt + OGG/Opus → `voice: true` (mensagem de voz). Sem legenda nem
-      // nome de arquivo: o objeto audio da Meta não tem esses campos.
-      const audio = montarAudioMeta(body);
-      if (!audio.ok) return jsonResponse({ ok: false, error: audio.error }, 400);
-      metaBody.type = 'audio';
-      metaBody.audio = audio.audio;
-      break;
-    }
-
-    case 'document':
-      if (!body.media_url) return jsonResponse({ ok: false, error: 'media_url obrigatório' }, 400);
-      metaBody.type = 'document';
-      metaBody.document = {
-        link: body.media_url,
-        ...(body.file_name ? { filename: body.file_name } : {}),
-        ...(body.caption ? { caption: body.caption } : {}),
-      };
-      break;
-
-    case 'location':
-      if (typeof body.latitude !== 'number' || typeof body.longitude !== 'number') {
-        return jsonResponse({ ok: false, error: 'latitude/longitude numéricos obrigatórios' }, 400);
-      }
-      metaBody.type = 'location';
-      metaBody.location = {
-        latitude: body.latitude,
-        longitude: body.longitude,
-        ...(body.name ? { name: body.name } : {}),
-        ...(body.address ? { address: body.address } : {}),
-      };
-      break;
-
-    case 'reaction':
-      if (!body.message_id) return jsonResponse({ ok: false, error: 'message_id obrigatório' }, 400);
-      metaBody.type = 'reaction';
-      metaBody.reaction = { message_id: body.message_id, emoji: body.emoji ?? '' };
-      break;
-
-    case 'template': {
-      // Template messages — SKILL.md §2.12.
-      // Bypass the 24h window check (handled above by exclusion from the gate).
-      // The template must be APPROVED on the WABA before sending.
-      if (!body.template_name) {
-        return jsonResponse({ ok: false, error: 'template_name obrigatório para type=template' }, 400);
-      }
-      const tplLanguage = body.template_language || 'pt_BR';
-
-      let tplComponents: Record<string, any>[];
-      if (Array.isArray(body.template_components) && body.template_components.length > 0) {
-        // Caller supplied a full components array (header, body, buttons, etc.)
-        tplComponents = body.template_components;
-      } else if (Array.isArray(body.template_body_params) && body.template_body_params.length > 0) {
-        // Shorthand: build a body component from the ordered param strings
-        tplComponents = [
-          {
-            type: 'body',
-            parameters: body.template_body_params.map((t: string) => ({ type: 'text', text: t })),
-          },
-        ];
-      } else {
-        tplComponents = [];
-      }
-
-      metaBody.type = 'template';
-      metaBody.template = {
-        name: body.template_name,
-        language: { code: tplLanguage },
-        components: tplComponents,
-      };
-      break;
-    }
-
-    default:
-      return jsonResponse({ ok: false, error: `Tipo "${body.type}" não suportado` }, 501);
-  }
+  // Monta payload da Graph API conforme o tipo (meta-body.ts)
+  const corpo = montarCorpoMeta(body);
+  if (!corpo.ok) return jsonResponse(corpo.resposta, corpo.status);
+  const metaBody = corpo.metaBody;
 
   // Chama a Graph API
   const url = `https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`;

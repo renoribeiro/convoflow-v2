@@ -97,7 +97,8 @@ export const NewConversationModal = ({ onConversationCreated }: NewConversationM
   const queryClient = useQueryClient();
 
   // O mesmo caminho da tela da conversa: um adapter por número, escolhido pelo
-  // `provider` da instância (Meta pelo servidor, QR Code pela própria Evolution).
+  // `provider` da instância. Todos enviam pelo servidor (whatsapp-send-message):
+  // a tela lê só as colunas sem segredo e nunca fala com Evolution ou WAHA.
   const { instances, isLoading: instancesLoading, error: instancesError } =
     useWhatsAppInstancesWithAdapter();
   const disponiveis = useMemo(

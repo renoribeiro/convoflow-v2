@@ -4,32 +4,18 @@
  *
  *  - Meta (oficial): edge function `whatsapp-send-message` monta
  *    `audio: { link, voice: true }` só para OGG/Opus gravado; nada de legenda.
- *  - Evolution: voz → /message/sendWhatsAppAudio (encoding); arquivo →
- *    /message/sendMedia com mediatype 'audio'.
- *  - WAHA: voz → /api/sendVoice (convert só se não for OGG/Opus); arquivo →
- *    /api/sendFile. /api/sendAudio não existe no WAHA.
+ *  - Evolution e WAHA: desde 2026-10-26 a tela manda o pedido ao servidor
+ *    (`whatsapp-send-message`) com `ptt` e o caminho do anexo; quem escolhe a
+ *    rota do provedor é o servidor (voz → sendWhatsAppAudio / sendVoice;
+ *    arquivo → sendMedia / sendFile), coberto em
+ *    src/lib/whatsapp/messageSend.test.ts.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ---- Meta: invoke da edge function -------------------------------------------
 const invoke = vi.fn(async () => ({ data: { ok: true, messageId: 'wamid.FAKE_SAIDA' }, error: null }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { functions: { invoke: (...a: unknown[]) => invoke(...(a as [])) } },
-}));
-
-// ---- Evolution: serviço falso --------------------------------------------------
-const evo = {
-  sendMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_SAIDA' } })),
-  sendAudioMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_VOZ' } })),
-  sendAudioFileMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_ARQ' } })),
-  sendImageMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_IMG' } })),
-  sendVideoMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_VID' } })),
-  sendDocumentMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_DOC' } })),
-  sendStickerMessage: vi.fn(async () => ({ key: { id: 'EVO_FAKE_STK' } })),
-};
-vi.mock('@/services/evolutionApi', () => ({
-  EvolutionApiService: class {},
-  createEvolutionApiService: () => evo,
 }));
 
 import { MetaAdapter } from './meta.adapter';
@@ -57,7 +43,6 @@ const instancia = (provider: ProviderInstance['provider'], connectionConfig: Rec
 
 beforeEach(() => {
   invoke.mockClear();
-  Object.values(evo).forEach((f) => f.mockClear());
 });
 
 // =============================================================================
@@ -141,92 +126,35 @@ describe('Meta (oficial): o adapter repassa voz, tipo e citação', () => {
 });
 
 // =============================================================================
-describe('Evolution', () => {
-  const evolution = () => new EvolutionAdapter(instancia('evolution', { baseUrl: 'https://evo.exemplo.com.br', apiKey: 'chave-falsa' }));
+describe.each([
+  ['evolution', () => new EvolutionAdapter(instancia('evolution', {}))],
+  ['waha', () => new WahaAdapter(instancia('waha', { sessionName: 'default' }))],
+] as const)('%s: a tela pede ao servidor', (_nome, adapter) => {
+  const CAMINHO = 't/1-voz-1.webm';
+  const corpo = () => (invoke.mock.calls[0] as unknown as [string, { body: Record<string, unknown> }])[1].body;
 
-  it('gravação vai como mensagem de voz (sendWhatsAppAudio com encoding)', async () => {
-    const r = await evolution().sendMedia(FONE, { mediaUrl: URL_VOZ, mediaType: 'audio', mimeType: 'audio/ogg', ptt: true });
-    expect(evo.sendAudioMessage).toHaveBeenCalledWith('teste', FONE, URL_VOZ, { encoding: true });
-    expect(evo.sendAudioFileMessage).not.toHaveBeenCalled();
-    expect(r).toEqual({ providerMessageId: 'EVO_FAKE_VOZ', status: 'sent' });
+  it('gravação vai marcada como voz (ptt), sem legenda', async () => {
+    await adapter().sendMedia(FONE, { mediaUrl: URL_VOZ, mediaPath: CAMINHO, mediaType: 'audio', mimeType: 'audio/webm', ptt: true });
+    expect(invoke).toHaveBeenCalledWith('whatsapp-send-message', {
+      body: expect.objectContaining({ type: 'audio', ptt: true, media_path: CAMINHO, mime_type: 'audio/webm' }),
+    });
+    expect(corpo().caption).toBeUndefined();
   });
 
-  it('arquivo anexado vai como ARQUIVO de áudio (sendMedia mediatype audio), com citação', async () => {
-    await evolution().sendMedia(FONE, {
+  it('arquivo anexado vai sem ptt, com a citação', async () => {
+    await adapter().sendMedia(FONE, {
       mediaUrl: URL_MP3,
+      mediaPath: 't/1-recado.mp3',
       mediaType: 'audio',
       mimeType: 'audio/mpeg',
       fileName: 'recado.mp3',
-      quotedMessageId: 'EVO_FAKE_CLIENTE',
+      quotedMessageId: 'FAKE_CLIENTE',
     });
-    expect(evo.sendAudioMessage).not.toHaveBeenCalled();
-    expect(evo.sendAudioFileMessage).toHaveBeenCalledWith('teste', FONE, URL_MP3, {
-      mimetype: 'audio/mpeg',
-      fileName: 'recado.mp3',
-      quoted: { key: { id: 'EVO_FAKE_CLIENTE' } },
-    });
+    expect(corpo()).toMatchObject({ type: 'audio', ptt: undefined, file_name: 'recado.mp3', quoted_message_id: 'FAKE_CLIENTE' });
   });
 
-  it('texto respondendo cita pelo key.id do WhatsApp', async () => {
-    await evolution().sendText(FONE, 'resposta', { quotedMessageId: 'EVO_FAKE_CLIENTE' });
-    expect(evo.sendMessage).toHaveBeenCalledWith('teste', FONE, 'resposta', {
-      quoted: { key: { id: 'EVO_FAKE_CLIENTE' } },
-      linkPreview: undefined,
-    });
-  });
-
-  it('texto sem resposta não manda quoted', async () => {
-    await evolution().sendText(FONE, 'oi');
-    expect(evo.sendMessage).toHaveBeenCalledWith('teste', FONE, 'oi', { quoted: undefined, linkPreview: undefined });
-  });
-});
-
-// =============================================================================
-describe('WAHA', () => {
-  const fetchMock = vi.fn(async () => new Response(JSON.stringify({ id: 'true_5511999990000@c.us_FAKE' }), { status: 200 }));
-  beforeEach(() => {
-    fetchMock.mockClear();
-    vi.stubGlobal('fetch', fetchMock);
-  });
-  afterEach(() => vi.unstubAllGlobals());
-
-  const waha = () =>
-    new WahaAdapter(instancia('waha', { baseUrl: 'https://waha.exemplo.com.br', apiKey: 'chave-falsa', sessionName: 'default' }));
-  const chamada = (i = 0) => {
-    const [url, init] = fetchMock.mock.calls[i] as unknown as [string, RequestInit];
-    return { url, body: JSON.parse(String(init.body)) };
-  };
-
-  it('gravação OGG/Opus vai por /api/sendVoice sem conversão', async () => {
-    await waha().sendMedia(FONE, { mediaUrl: URL_VOZ, mediaType: 'audio', mimeType: 'audio/ogg', ptt: true });
-    const { url, body } = chamada();
-    expect(url).toBe('https://waha.exemplo.com.br/api/sendVoice');
-    expect(body.file).toEqual({ url: URL_VOZ, mimetype: 'audio/ogg; codecs=opus' });
-    expect(body.convert).toBe(false);
-    expect(body.caption).toBeUndefined();
-  });
-
-  it('voz em outro formato pede conversão ao WAHA (convert: true)', async () => {
-    await waha().sendMedia(FONE, { mediaUrl: URL_MP3, mediaType: 'audio', mimeType: 'audio/mpeg', ptt: true });
-    const { url, body } = chamada();
-    expect(url).toBe('https://waha.exemplo.com.br/api/sendVoice');
-    expect(body.convert).toBe(true);
-    expect(body.file.mimetype).toBe('audio/mpeg');
-  });
-
-  it('arquivo anexado vai por /api/sendFile (não existe /api/sendAudio)', async () => {
-    await waha().sendMedia(FONE, {
-      mediaUrl: URL_MP3,
-      mediaType: 'audio',
-      mimeType: 'audio/mpeg',
-      fileName: 'recado.mp3',
-      quotedMessageId: 'false_5511999990000@c.us_FAKE',
-    });
-    const { url, body } = chamada();
-    expect(url).toBe('https://waha.exemplo.com.br/api/sendFile');
-    expect(body.file).toEqual({ url: URL_MP3, filename: 'recado.mp3', mimetype: 'audio/mpeg' });
-    expect(body.convert).toBeUndefined();
-    expect(body.reply_to).toBe('false_5511999990000@c.us_FAKE');
-    expect(fetchMock.mock.calls.some((c) => String((c as unknown as [string])[0]).includes('/api/sendAudio'))).toBe(false);
+  it('texto respondendo leva o id do WhatsApp citado', async () => {
+    await adapter().sendText(FONE, 'resposta', { quotedMessageId: 'FAKE_CLIENTE' });
+    expect(corpo()).toMatchObject({ type: 'text', text: 'resposta', quoted_message_id: 'FAKE_CLIENTE' });
   });
 });

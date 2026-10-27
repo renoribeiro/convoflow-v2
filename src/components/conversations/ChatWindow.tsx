@@ -754,8 +754,10 @@ export const ChatWindow = ({
     // Áudio não leva legenda no WhatsApp: nenhum provider a entrega. Não vai
     // e não é gravada (a conversa não pode mostrar texto que o cliente não viu).
     const legenda = mediaType === 'audio' ? '' : caption;
-    // Bucket privado: Evolution e WAHA baixam pelo link temporário do upload;
-    // a Meta recebe o caminho e o servidor assina (whatsapp-send-message).
+    // Bucket privado: todo provedor recebe o caminho, e o envio sai pelo
+    // servidor (whatsapp-send-message). A Meta baixa por um link que o
+    // servidor assina com o token de quem envia; para Evolution e WAHA o
+    // servidor lê o arquivo e manda os bytes. Nenhum arquivo fica público.
     const providerResult = await active.adapter.sendMedia(phone, {
       mediaUrl: uploaded.signedUrl,
       mediaPath: uploaded.path,
@@ -1394,7 +1396,7 @@ export const ChatWindow = ({
           )}
         {!capabilities?.fetchHistory && !isInstagram && (
           <p className="text-[11px] text-muted-foreground bg-muted/40 px-4 py-1 border-b border-border">
-            Este provider não suporta puxar histórico: apenas mensagens recebidas via webhook aparecem aqui.
+            Aqui aparecem as mensagens que chegaram ao ConvoFlow por este número. O histórico antigo do celular não é trazido.
           </p>
         )}
 

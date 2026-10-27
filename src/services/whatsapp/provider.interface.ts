@@ -27,9 +27,9 @@ export interface IWhatsAppProvider {
   isReadyToSend(): boolean;
 
   /**
-   * Por que não está pronto, quando não é "desconectado" (ex.: número cuja
-   * chave mora só no servidor, ver serverKeyPending.adapter.ts). A tela usa
-   * este texto no lugar do aviso de reconectar.
+   * Por que não está pronto, em pt-BR (Evolution e WAHA: "Este número está
+   * desconectado..."). A tela usa este texto no lugar do aviso genérico de
+   * reconectar.
    */
   readonly notReadyReason?: string;
 

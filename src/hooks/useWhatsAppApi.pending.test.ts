@@ -5,64 +5,62 @@ vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ tenant: null })
 vi.mock('@/lib/logger', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() } }));
 
 import { instanceWithAdapter, pickActiveInstance } from './useWhatsAppApi';
-import type { Tables } from '@/integrations/supabase/types';
+import { rebuildSafeInstanceRow } from '@/lib/whatsapp/safeInstanceColumns';
+import { EvolutionAdapter } from '@/services/whatsapp/evolution.adapter';
+import { WahaAdapter } from '@/services/whatsapp/waha.adapter';
 
 /**
- * Número Evolution/WAHA com a chave só no servidor (desde 2026-10-26): fica na
- * lista como NÃO pronto, para a resposta da conversa dele não sair por outro
- * número da Loja. Valores inventados.
+ * Número Evolution/WAHA com a chave só no servidor: desde a sessão 2
+ * (2026-10-26) ele monta o adapter que envia PELO SERVIDOR, e a resposta da
+ * conversa dele nunca sai por outro número da Loja. Valores inventados.
  */
 
-const row = (over: Partial<Tables<'whatsapp_instances'>>) =>
-  ({
+const row = (over: Record<string, unknown>) =>
+  rebuildSafeInstanceRow({
     id: 'aaaaaaaa-0000-4000-8000-0000000000a1',
     tenant_id: 'aaaaaaaa-0000-4000-8000-000000000002',
     name: 'Comercial',
     instance_key: 'comercial-exemplo',
     provider: 'evolution',
     status: 'open',
-    phone_number: null,
-    profile_name: null,
-    profile_picture_url: null,
-    connection_config: {},
-    evolution_api_key: null,
-    evolution_api_url: null,
     is_active: true,
+    connection_config: {},
     ...over,
-  }) as unknown as Tables<'whatsapp_instances'>;
+  });
 
-describe('número com a chave só no servidor', () => {
-  it('Evolution e WAHA sem chave no navegador: ficam na lista, não prontos, com o motivo', () => {
-    for (const provider of ['evolution', 'waha']) {
-      const item = instanceWithAdapter(row({ provider }));
-      expect(item).not.toBeNull();
-      expect(item!.adapter.isReadyToSend()).toBe(false);
-      expect(item!.adapter.notReadyReason).toContain('guarda a chave só no servidor');
+describe('número Evolution e WAHA nas Conversas', () => {
+  it('monta o adapter do servidor sem chave nenhuma na linha', () => {
+    const evo = instanceWithAdapter(row({}))!;
+    const waha = instanceWithAdapter(row({ provider: 'waha', status: 'connected' }))!;
+    expect(evo.adapter).toBeInstanceOf(EvolutionAdapter);
+    expect(waha.adapter).toBeInstanceOf(WahaAdapter);
+    for (const item of [evo, waha]) {
+      expect(item.adapter.isReadyToSend()).toBe(true);
+      expect(item.adapter.getCapabilities().serverSideOnlySend).toBe(true);
     }
   });
 
-  it('a conversa desse número NÃO cai noutro número pronto da Loja', () => {
-    const pendente = instanceWithAdapter(row({ id: 'aaaaaaaa-0000-4000-8000-0000000000a1' }))!;
+  it('a linha nunca carrega chave: mesmo vindo, ela não passa', () => {
+    const r = row({ evolution_api_key: 'chave-FAKE-123456', connection_config: { apiKey: 'chave-FAKE-123456', baseUrl: 'https://evolution.exemplo.com.br' } });
+    expect(JSON.stringify(r)).not.toContain('chave-FAKE');
+    expect(JSON.stringify(r)).not.toContain('evolution.exemplo');
+  });
+
+  it('desconectado: não pronto, com a frase para a tela', () => {
+    const item = instanceWithAdapter(row({ status: 'close' }))!;
+    expect(item.adapter.isReadyToSend()).toBe(false);
+    expect(item.adapter.notReadyReason).toBe('Este número está desconectado. Peça ao Gestor da Loja para reconectar.');
+  });
+
+  it('a conversa desse número NÃO cai noutro número pronto da Loja, nem desconectada', () => {
+    const daConversa = instanceWithAdapter(row({ status: 'close' }))!;
     const meta = instanceWithAdapter(
       row({ id: 'aaaaaaaa-0000-4000-8000-0000000000a2', provider: 'official', name: 'Oficial', connection_config: { phoneNumberId: '100000000000001' } }),
     )!;
+    const outraEvo = instanceWithAdapter(row({ id: 'aaaaaaaa-0000-4000-8000-0000000000a3', name: 'Plantão' }))!;
     expect(meta.adapter.isReadyToSend()).toBe(true);
-    const escolhida = pickActiveInstance([meta, pendente], 'aaaaaaaa-0000-4000-8000-0000000000a1');
+    const escolhida = pickActiveInstance([meta, outraEvo, daConversa], 'aaaaaaaa-0000-4000-8000-0000000000a1');
     expect(escolhida?.row.id).toBe('aaaaaaaa-0000-4000-8000-0000000000a1');
     expect(escolhida?.adapter.isReadyToSend()).toBe(false);
-  });
-
-  it('o adapter de espera nunca envia', async () => {
-    const item = instanceWithAdapter(row({}))!;
-    const r = await item.adapter.sendText('5585999990201', 'oi');
-    expect(r.status).toBe('failed');
-  });
-
-  it('Evolution com chave antiga na linha continua montando o adapter de sempre', () => {
-    const item = instanceWithAdapter(
-      row({ connection_config: { baseUrl: 'https://evolution.exemplo.com.br', apiKey: 'chave-FAKE-123456' } }),
-    )!;
-    expect(item.adapter.notReadyReason).toBeUndefined();
-    expect(item.adapter.isReadyToSend()).toBe(true);
   });
 });
