@@ -16,6 +16,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { env } from '@/lib/env';
+import { Avancado } from './Avancado';
 
 export interface EvolutionFormValues {
   name: string;
@@ -25,9 +26,13 @@ export interface EvolutionFormValues {
   retryDelay: number;
 }
 
+/** Código interno pronto: quem só quer ler o QR Code não precisa abrir "Avançado" (lote 6e). */
+export const gerarCodigoInterno = () =>
+  `instance_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+
 export const initialEvolutionValues = (): EvolutionFormValues => ({
   name: '',
-  instance_key: '',
+  instance_key: gerarCodigoInterno(),
   enableWebhookAutomation: true,
   retryAttempts: 3,
   retryDelay: 2000,
@@ -41,6 +46,9 @@ interface Props {
   loading: boolean;
   webhookStatus?: EvolutionWebhookStatus;
   webhookError?: string | null;
+  /** "Avançado" aberto: código interno e endereço de entrega (achado 106). */
+  avancado: boolean;
+  onAvancadoChange: (aberto: boolean) => void;
 }
 
 export const EvolutionApiForm = ({
@@ -49,12 +57,10 @@ export const EvolutionApiForm = ({
   loading,
   webhookStatus = 'idle',
   webhookError = null,
+  avancado,
+  onAvancadoChange,
 }: Props) => {
-  const generateInstanceKey = () => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 8);
-    onChange({ instance_key: `instance_${timestamp}_${random}` });
-  };
+  const generateInstanceKey = () => onChange({ instance_key: gerarCodigoInterno() });
 
   // O webhook que a Evolution vai chamar e sempre a edge function do proprio
   // Supabase deste ambiente. Antes isto lia env.get('EVOLUTION_WEBHOOK_URL'),
@@ -67,8 +73,8 @@ export const EvolutionApiForm = ({
       <Alert className="border-slate-200 bg-slate-50/60">
         <Info className="h-4 w-4 text-slate-700" />
         <AlertDescription className="text-xs">
-          Você não precisa configurar servidor: o ConvoFlow já tem um. Dê um nome ao número e
-          conecte lendo o QR Code com o celular dele.
+          Você não precisa configurar nada: o ConvoFlow já tem o servidor. Dê um nome ao número,
+          clique em Criar e abrir QR Code e leia o QR Code com o celular dele.
         </AlertDescription>
       </Alert>
 
@@ -83,6 +89,12 @@ export const EvolutionApiForm = ({
         />
       </div>
 
+      <Avancado
+        id="evo-avancado"
+        aberto={avancado}
+        onAbertoChange={onAvancadoChange}
+        resumo="Código interno e entrega das mensagens. Já vem pronto: só mexa se o suporte pedir."
+      >
       <div className="space-y-2">
         <Label htmlFor="evo-key">Código interno do número *</Label>
         <div className="flex gap-2">
@@ -199,6 +211,7 @@ export const EvolutionApiForm = ({
           </CardContent>
         )}
       </Card>
+      </Avancado>
 
       {/* O erro fica FORA do cartão de webhook: quando a automação está
           desligada o cartão não renderiza o corpo, e era ali que a mensagem

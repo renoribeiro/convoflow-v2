@@ -4,11 +4,12 @@
  *
  * O que a tela precisa garantir:
  *  - nasce desligada, com 60 min e 3 transferências, e "Tudo salvo";
- *  - desligada, os campos não aparecem; ligada, aparecem com o horário padrão
- *    (seg–sex 09–18, Brasília) e o exemplo "sexta 17:50 → segunda 09:50";
+ *  - desligada, os campos não aparecem; ligada, aparecem com o horário SALVO
+ *    numa frase (padrão seg–sex 09–18, Brasília), o link para a aba Horário e
+ *    o exemplo "sexta 17:50 → segunda 09:50";
  *  - minutos fora da faixa bloqueiam o salvar com a mensagem do lib;
- *  - fechar todos os dias bloqueia o salvar;
- *  - salvar manda as QUATRO chaves de uma vez (business_hours inteiro);
+ *  - o horário NÃO se edita aqui (aba Horário, lote 6e) e o salvar manda só
+ *    as TRÊS chaves da regra, nunca business_hours;
  *  - a prévia mostra os números que a RPC devolveu;
  *  - atendente vê só a frase de leitura; sem `store.admin` é só leitura.
  * Quem faz valer a regra é o banco (docs/teste_regra_tempo_resposta.sql).
@@ -16,6 +17,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
 const { updateTenantSettings, estado } = vi.hoisted(() => ({
@@ -57,7 +59,12 @@ vi.mock('sonner', () => ({
 
 import { ResponseRuleSettings } from './ResponseRuleSettings';
 
-const abrir = () => render(<ResponseRuleSettings />);
+const abrir = () =>
+  render(
+    <MemoryRouter>
+      <ResponseRuleSettings />
+    </MemoryRouter>,
+  );
 const chave = () => screen.getByRole('switch', { name: /Transferir conversa sem resposta/i });
 const salvar = () => screen.getByRole('button', { name: /salvar regra/i });
 
@@ -85,11 +92,12 @@ describe('ResponseRuleSettings', () => {
     await user.click(chave());
     expect(screen.getByLabelText(/^Tempo sem resposta/i)).toHaveValue(60);
     expect(screen.getByLabelText(/^Máximo de transferências/i)).toHaveValue(3);
-    expect(screen.getByRole('switch', { name: /Segunda aberto/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /Sábado aberto/i })).not.toBeChecked();
-    expect(screen.getByRole('switch', { name: /Domingo aberto/i })).not.toBeChecked();
-    expect(screen.getByLabelText(/Segunda abre às/i)).toHaveValue('09:00');
-    expect(screen.getByLabelText(/Segunda fecha às/i)).toHaveValue('18:00');
+    expect(screen.getByText(/Segunda a sexta, 09:00 às 18:00/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Mudar o horário na aba Horário/i })).toHaveAttribute(
+      'href',
+      '/dashboard/settings?tab=horario',
+    );
+    expect(screen.queryByRole('switch', { name: /Segunda aberto/i })).not.toBeInTheDocument();
     expect(screen.getByText(/cliente escreve na sexta 17:50/)).toBeInTheDocument();
     expect(screen.getByText(/muda de responsável na segunda 09:50/)).toBeInTheDocument();
     expect(salvar()).toBeEnabled();
@@ -107,35 +115,20 @@ describe('ResponseRuleSettings', () => {
     expect(updateTenantSettings).not.toHaveBeenCalled();
   });
 
-  it('fechar todos os dias bloqueia o salvar', async () => {
-    const user = userEvent.setup();
-    abrir();
-    await user.click(chave());
-    for (const dia of ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']) {
-      await user.click(screen.getByRole('switch', { name: new RegExp(`${dia} aberto`, 'i') }));
-    }
-    expect(screen.getByText(/Deixe pelo menos um dia aberto/)).toBeInTheDocument();
-    expect(salvar()).toBeDisabled();
-  });
-
-  it('salvar manda as quatro chaves, com business_hours inteiro', async () => {
+  it('salvar manda só as três chaves da regra, sem business_hours', async () => {
     const user = userEvent.setup();
     abrir();
     await user.click(chave());
     const minutos = screen.getByLabelText(/^Tempo sem resposta/i);
     await user.clear(minutos);
     await user.type(minutos, '30');
-    await user.click(screen.getByRole('switch', { name: /Sábado aberto/i }));
     await user.click(salvar());
     expect(updateTenantSettings).toHaveBeenCalledTimes(1);
     const [patch] = updateTenantSettings.mock.calls[0];
     expect(patch.response_rule_enabled).toBe(true);
     expect(patch.response_rule_minutes).toBe(30);
     expect(patch.response_rule_max_transfers).toBe(3);
-    expect(patch.business_hours.timezone).toBe('America/Sao_Paulo');
-    expect(patch.business_hours.schedule['6']).toEqual({ start: '09:00', end: '18:00' });
-    expect(patch.business_hours.schedule['0']).toBeNull();
-    expect(patch.business_hours.schedule['1']).toEqual({ start: '09:00', end: '18:00' });
+    expect(patch).not.toHaveProperty('business_hours');
   });
 
   it('a prévia mostra o efeito com o histórico da Loja', async () => {
@@ -160,9 +153,8 @@ describe('ResponseRuleSettings', () => {
     expect(chave()).toBeChecked();
     expect(screen.getByLabelText(/^Tempo sem resposta/i)).toHaveValue(15);
     expect(screen.getByLabelText(/^Máximo de transferências/i)).toHaveValue(5);
-    expect(screen.getByLabelText(/Segunda abre às/i)).toHaveValue('08:00');
     // schedule presente com dia ausente = fechado (regra do motor)
-    expect(screen.getByRole('switch', { name: /Terça aberto/i })).not.toBeChecked();
+    expect(screen.getByText(/Segunda, 08:00 às 12:00\. Fuso: Manaus/)).toBeInTheDocument();
     expect(screen.getByText('Tudo salvo.')).toBeInTheDocument();
   });
 

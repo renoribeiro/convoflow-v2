@@ -12,6 +12,7 @@ import type { UserRow } from '@/hooks/users/useUsers';
 import { SEM_MENSAGEM_DICA, type UserActivity } from '@/hooks/users/useAdminUsersActivity';
 
 vi.mock('@/hooks/users/useManageUser', () => ({
+  useUpdateUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSuspendUser: () => ({ mutate: vi.fn() }),
   useReactivateUser: () => ({ mutate: vi.fn() }),
   useSoftDeleteUser: () => ({ mutate: vi.fn() }),
@@ -19,6 +20,7 @@ vi.mock('@/hooks/users/useManageUser', () => ({
   useResetUserPassword: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('./UserDetailsDialog', () => ({ UserDetailsDialog: () => null }));
+vi.mock('@/contexts/TenantContext', () => ({ useTenant: () => ({ profile: { id: 'p-eu' } }) }));
 
 import { UsersTable } from './UsersTable';
 

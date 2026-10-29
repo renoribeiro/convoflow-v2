@@ -81,6 +81,7 @@ const SCREENS: Screen[] = [
   { name: 'Settings/profile', path: '/dashboard/settings', roles: ALL_DASHBOARD },
   { name: 'Settings/attendance', path: '/dashboard/settings?tab=attendance', roles: ['gerente', 'atendente'] },
   { name: 'Settings/visibility', path: '/dashboard/settings?tab=visibility', roles: ['gerente', 'atendente'] },
+  { name: 'Settings/horario', path: '/dashboard/settings?tab=horario', roles: ['gerente', 'atendente'] },
   { name: 'Settings/quick-replies', path: '/dashboard/settings?tab=quick-replies', roles: ['gerente'] },
   { name: 'Settings/followups', path: '/dashboard/settings?tab=followups', roles: ['gerente'] },
   { name: 'Settings/subscription', path: '/dashboard/settings?tab=subscription', roles: ['gerente'] },

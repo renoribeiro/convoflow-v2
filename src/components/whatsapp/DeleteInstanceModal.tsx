@@ -349,7 +349,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
                     excluir.{' '}
                     {instance.provider === 'official' ? (
                       <>
-                        Feche esta janela, clique em "Conectar número" › "API Oficial do WhatsApp" › "Conectar
+                        Feche esta janela, clique em "Conectar número" › "API oficial da Meta" › "Conectar
                         com a Meta" e escolha este mesmo número: o ConvoFlow o reconhece, atualiza a instância
                         no lugar e o histórico fica. Se a reconexão recusar, escreva para{' '}
                         <a className="underline" href={`mailto:${SUPORTE_EMAIL}`}>{SUPORTE_EMAIL}</a> antes de

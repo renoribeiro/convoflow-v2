@@ -182,6 +182,30 @@ export interface ResponseRuleErrors {
   schedule?: string;
 }
 
+/**
+ * O horário da Loja sozinho (aba Configurações › Horário, lote 6e). Valida os
+ * dias abertos e exige ao menos um: com tudo fechado, o chatbot responderia
+ * sempre "fora do horário" e a transferência nunca contaria minuto nenhum.
+ */
+export const validateBusinessHours = (businessHours: BusinessHours): Pick<ResponseRuleErrors, 'days' | 'schedule'> => {
+  const errors: Pick<ResponseRuleErrors, 'days' | 'schedule'> = {};
+  let anyOpen = false;
+  for (const key of WEEKDAY_KEYS) {
+    const day = businessHours.schedule[key];
+    if (!day) continue;
+    anyOpen = true;
+    if (!HHMM.test(day.start) || !HHMM.test(day.end)) {
+      (errors.days ??= {})[key] = 'Use o formato HH:MM.';
+    } else if (toMinutes(day.end) <= toMinutes(day.start)) {
+      (errors.days ??= {})[key] = 'O fim precisa ser depois do início.';
+    }
+  }
+  if (!anyOpen) {
+    errors.schedule = 'Deixe pelo menos um dia aberto. Com todos fechados, a Loja fica sempre fora do horário.';
+  }
+  return errors;
+};
+
 export const validateResponseRule = (input: {
   minutes: number;
   maxTransfers: number;
@@ -201,22 +225,49 @@ export const validateResponseRule = (input: {
     errors.maxTransfers = `Informe um número inteiro entre ${RESPONSE_RULE_MAX_TRANSFERS_MIN} e ${RESPONSE_RULE_MAX_TRANSFERS_MAX}.`;
   }
 
-  let anyOpen = false;
-  for (const key of WEEKDAY_KEYS) {
-    const day = businessHours.schedule[key];
-    if (!day) continue;
-    anyOpen = true;
-    if (!HHMM.test(day.start) || !HHMM.test(day.end)) {
-      (errors.days ??= {})[key] = 'Use o formato HH:MM.';
-    } else if (toMinutes(day.end) <= toMinutes(day.start)) {
-      (errors.days ??= {})[key] = 'O fim precisa ser depois do início.';
-    }
-  }
-  if (!anyOpen) {
-    errors.schedule = 'Deixe pelo menos um dia aberto, senão a regra nunca dispara.';
-  }
+  const hours = validateBusinessHours(businessHours);
+  if (hours.days) errors.days = hours.days;
+  if (hours.schedule) errors.schedule = 'Deixe pelo menos um dia aberto, senão a regra nunca dispara.';
   return errors;
 };
+
+/** Ordem de leitura: a semana começa na segunda. */
+const ORDEM_DA_SEMANA: readonly WeekdayKey[] = ['1', '2', '3', '4', '5', '6', '0'];
+
+/**
+ * O horário numa frase, para quem só lê (cartão da transferência, atendente):
+ * "Segunda a sexta, 09:00 às 18:00; sábado, 09:00 às 13:00". Dias seguidos com
+ * a mesma janela viram um intervalo.
+ */
+export const describeBusinessHours = (bh: BusinessHours): string => {
+  const partes: string[] = [];
+  let i = 0;
+  while (i < ORDEM_DA_SEMANA.length) {
+    const dia = bh.schedule[ORDEM_DA_SEMANA[i]!];
+    if (!dia) {
+      i += 1;
+      continue;
+    }
+    let j = i;
+    while (j + 1 < ORDEM_DA_SEMANA.length) {
+      const prox = bh.schedule[ORDEM_DA_SEMANA[j + 1]!];
+      if (!prox || prox.start !== dia.start || prox.end !== dia.end) break;
+      j += 1;
+    }
+    const primeiro = WEEKDAY_LABELS[ORDEM_DA_SEMANA[i]!].toLowerCase();
+    const ultimo = WEEKDAY_LABELS[ORDEM_DA_SEMANA[j]!].toLowerCase();
+    const dias = i === j ? primeiro : j === i + 1 ? `${primeiro} e ${ultimo}` : `${primeiro} a ${ultimo}`;
+    partes.push(`${dias}, ${dia.start} às ${dia.end}`);
+    i = j + 1;
+  }
+  if (partes.length === 0) return 'Nenhum dia aberto';
+  const frase = partes.join('; ');
+  return frase.charAt(0).toUpperCase() + frase.slice(1);
+};
+
+/** Nome do fuso para leitura ("Brasília (São Paulo, Rio, Sul, Nordeste)"). */
+export const timezoneLabel = (timezone: string): string =>
+  TIMEZONE_OPTIONS.find((o) => o.value === timezone)?.label ?? timezone;
 
 export const hasResponseRuleErrors = (e: ResponseRuleErrors): boolean =>
   !!e.minutes || !!e.maxTransfers || !!e.schedule || !!(e.days && Object.keys(e.days).length > 0);

@@ -85,6 +85,7 @@ const FONTES_DAS_TELAS: Record<string, string[]> = {
 const FONTES_DAS_ABAS: Record<string, string[]> = {
   profile: ['src/components/settings/ProfileSettings.tsx'],
   attendance: ['src/components/settings/AttendanceSettings.tsx'],
+  horario: ['src/components/settings/BusinessHoursSettings.tsx'],
   visibility: [
     'src/components/settings/VisibilitySettings.tsx',
     'src/components/settings/RotationSettings.tsx',

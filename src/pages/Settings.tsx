@@ -11,11 +11,13 @@ import {
   Zap,
   Users,
   KeyRound,
+  Clock,
 } from 'lucide-react';
 import { AttendanceSettings } from '@/components/settings/AttendanceSettings';
 import { VisibilitySettings } from '@/components/settings/VisibilitySettings';
 import { RotationSettings } from '@/components/settings/RotationSettings';
 import { ResponseRuleSettings } from '@/components/settings/ResponseRuleSettings';
+import { BusinessHoursSettings } from '@/components/settings/BusinessHoursSettings';
 import { FollowupSettings } from '@/components/settings/FollowupSettings';
 import { QuickRepliesSettings } from '@/components/settings/QuickRepliesSettings';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
@@ -48,6 +50,8 @@ interface AbaConfig {
   value: string;
   icon: typeof User;
   render: () => JSX.Element;
+  /** Marca do tour no botão da aba (src/lib/onboarding/tours.ts). */
+  dataTour?: string;
 }
 
 /** Quem alcança a aba: a regra declarada em src/lib/access/abasConfiguracoes.ts. */
@@ -81,6 +85,11 @@ const abaVisivel = (value: string, capabilities: Record<string, boolean>, ctx: C
 const ABAS: AbaConfig[] = [
   { value: 'profile', icon: User, render: () => <ProfileSettings /> },
   { value: 'attendance', icon: Headset, render: () => <AttendanceSettings /> },
+  // Sem `requer`, como ATENDIMENTO: o atendente lê o horário numa frase. Aba
+  // própria desde o lote 6e (decisão D6, achado 114): antes o horário morava
+  // no cartão 3 de Distribuição e transferência e só aparecia com a
+  // transferência ligada; o chatbot "fora do horário" também lê daqui.
+  { value: 'horario', icon: Clock, render: () => <BusinessHoursSettings /> },
   // Sem `requer`, como ATENDIMENTO: o painel mostra os valores em modo leitura
   // para quem não tem `store.admin`. Saber o que a própria Loja esconde dele é
   // o que explica ao atendente por que a lista dele é menor que o número do
@@ -94,6 +103,7 @@ const ABAS: AbaConfig[] = [
   {
     value: 'visibility',
     icon: Users,
+    dataTour: 'aba-distribuicao',
     render: () => (
       <div className="space-y-6">
         {/* O caminho inteiro (bot → rodízio → visibilidade → SLA → regra de
@@ -109,13 +119,13 @@ const ABAS: AbaConfig[] = [
           </h2>
           <VisibilitySettings />
         </section>
-        <section aria-labelledby="escala-sec-2" className="space-y-2" data-tour="distribuicao">
+        <section aria-labelledby="escala-sec-2" className="space-y-2">
           <h2 id="escala-sec-2" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             2. Como a conversa nova chega
           </h2>
           <RotationSettings />
         </section>
-        <section aria-labelledby="escala-sec-3" className="space-y-2" data-tour="horario-funcionamento">
+        <section aria-labelledby="escala-sec-3" className="space-y-2">
           <h2 id="escala-sec-3" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             3. Se ninguém responde
           </h2>
@@ -220,7 +230,7 @@ export default function Settings() {
           {abasVisiveis.map((aba) => {
             const Icon = aba.icon;
             return (
-              <TabsTrigger key={aba.value} value={aba.value} className="flex items-center gap-2">
+              <TabsTrigger key={aba.value} value={aba.value} data-tour={aba.dataTour} className="flex items-center gap-2">
                 <Icon className="w-4 h-4" />
                 {abaDeConfiguracoes(aba.value).label}
               </TabsTrigger>

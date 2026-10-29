@@ -24,6 +24,7 @@ vi.mock('@/hooks/users/useAdminUsersActivity', async (orig) => ({
   useAdminUsersActivity: () => estado.atividade,
 }));
 vi.mock('@/hooks/users/useManageUser', () => ({
+  useUpdateUser: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSuspendUser: () => ({ mutate: vi.fn() }),
   useReactivateUser: () => ({ mutate: vi.fn() }),
   useSoftDeleteUser: () => ({ mutate: vi.fn() }),
@@ -31,6 +32,11 @@ vi.mock('@/hooks/users/useManageUser', () => ({
   useResetUserPassword: () => ({ mutate: vi.fn() }),
 }));
 vi.mock('@/components/users/InviteUserModal', () => ({ InviteUserModal: () => null }));
+// A tabela esconde o "Editar" do próprio perfil (lote 6e): lê o perfil de quem está logado.
+vi.mock('@/contexts/TenantContext', async (orig) => ({
+  ...(await orig<typeof import('@/contexts/TenantContext')>()),
+  useTenant: () => ({ profile: { id: 'p-superadmin' } }),
+}));
 vi.mock('@/components/shared/PageHeader', () => ({
   PageHeader: ({ title }: { title: string }) => <h1>{title}</h1>,
 }));

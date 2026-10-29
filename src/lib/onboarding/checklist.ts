@@ -85,10 +85,10 @@ const horario = (needsLoja: boolean): ChecklistStepDef => ({
   title: 'Definir horário e distribuição',
   description: 'Quando a Loja atende e como as conversas novas chegam ao time.',
   priority: 'recomendado',
-  screen: '/dashboard/settings?tab=visibility',
+  screen: '/dashboard/settings?tab=horario',
   tourId: 'horario-distribuicao',
   tutorialId: 'configurar-distribuicao',
-  helpKey: 'page:settings-visibility',
+  helpKey: 'page:settings-horario',
   needsLoja,
   minRole: 'gestor',
 });

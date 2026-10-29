@@ -26,6 +26,7 @@ export interface AbaDeConfiguracoes {
 export const ABAS_DE_CONFIGURACOES: readonly AbaDeConfiguracoes[] = [
   { value: 'profile', label: 'Perfil', helpKey: 'page:settings-profile' },
   { value: 'attendance', label: 'Atendimento', helpKey: 'page:settings-attendance' },
+  { value: 'horario', label: 'Horário', helpKey: 'page:settings-horario' },
   { value: 'visibility', label: 'Distribuição e transferência', helpKey: 'page:settings-visibility' },
   { value: 'quick-replies', label: 'Respostas rápidas', helpKey: 'page:settings-quick-replies' },
   { value: 'followups', label: 'Follow ups', helpKey: 'page:settings-followups' },

@@ -56,6 +56,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ligarApiManual, podeLiberarApiManual } from '@/lib/api/addon';
 import { adminAccessLabel, type AccessLabelTone } from '@/lib/billing/subscriptionView';
+import { avaliarTrocaDeCargo, type LugarDaPessoa } from '@/lib/users/trocaDeCargo';
 
 interface User {
   id: string;
@@ -386,6 +387,10 @@ const AdminDashboard = () => {
 
   const handleEditUser = () => {
     if (!selectedUser) return;
+    if (!trocaDeCargo.permitida) {
+      toast.error(trocaDeCargo.mensagem);
+      return;
+    }
 
     // NÃO grave is_active aqui. Ele é espelho derivado de status (trigger
     // force_profile_is_active): escrever direto é descartado pelo banco.
@@ -408,6 +413,17 @@ const AdminDashboard = () => {
   };
 
   const cargoMudou = !!selectedUser && userForm.role !== selectedUser.role;
+  // Trava da troca de cargo (lote 6e, D2 parcial): até o redesenho da
+  // hierarquia só Gestor e Atendente trocam entre si, dentro da Loja. O
+  // servidor (manage-user) tem a mesma regra.
+  const lugarDaPessoa: LugarDaPessoa = userForm.tenantId
+    ? tenantById[userForm.tenantId]?.kind === 'account'
+      ? 'account'
+      : 'store'
+    : null;
+  const trocaDeCargo = selectedUser
+    ? avaliarTrocaDeCargo(selectedUser.role, userForm.role, lugarDaPessoa)
+    : ({ permitida: true } as const);
   const desativando = !!selectedUser && selectedUser.status === 'active' && !userForm.isActive;
   const edicaoPedeConfirmacao = cargoMudou || desativando;
 
@@ -708,6 +724,7 @@ const AdminDashboard = () => {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={`Editar ${user.first_name ?? ''} ${user.last_name ?? ''}`.trim()}
               onClick={() => {
                 setSelectedUser({
                   id: user.id,
@@ -1163,6 +1180,11 @@ const AdminDashboard = () => {
                   <SelectItem value="superadmin">Superadmin</SelectItem>
                 </SelectContent>
               </Select>
+              {!trocaDeCargo.permitida && (
+                <p role="alert" className="mt-2 text-sm text-destructive">
+                  {trocaDeCargo.mensagem}
+                </p>
+              )}
               {/* Sem hideStoreCaps: este modal não mostra o aviso de limite. */}
               <RoleDescriptionCard role={userForm.role} />
             </div>
@@ -1182,7 +1204,7 @@ const AdminDashboard = () => {
             <Button
               type="button"
               onClick={() => (edicaoPedeConfirmacao ? setConfirmarEdicao(true) : handleEditUser())}
-              disabled={updateUserMutation.isPending}
+              disabled={updateUserMutation.isPending || !trocaDeCargo.permitida}
             >
               {updateUserMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
             </Button>

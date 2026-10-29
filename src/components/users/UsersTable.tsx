@@ -9,8 +9,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { UserDetailsDialog } from './UserDetailsDialog';
+import { EditarPessoaDialog } from './EditarPessoaDialog';
 import { useState } from 'react';
-import { Eye, MoreHorizontal, Pause, Play, RotateCcw, Trash2, XCircle } from 'lucide-react';
+import { Eye, MoreHorizontal, Pause, Pencil, Play, RotateCcw, Trash2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { RoleBadge } from './RoleBadge';
@@ -19,6 +20,7 @@ import { UserRow } from '@/hooks/users/useUsers';
 import { SEM_MENSAGEM_DICA, type UserActivity } from '@/hooks/users/useAdminUsersActivity';
 import { RelativeTime } from '@/components/shared/RelativeTime';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { useTenant } from '@/contexts/TenantContext';
 import {
   useCancelInvite,
   useSuspendUser,
@@ -101,6 +103,11 @@ export function textoDaAcao(
 
 export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
   const [detalhe, setDetalhe] = useState<UserRow | null>(null);
+  // "Editar" muda só o nome (lote 6e, D2 parcial). O próprio perfil fica de
+  // fora: o servidor recusa, e o seu nome se muda em Configurações › Perfil.
+  const [editando, setEditando] = useState<UserRow | null>(null);
+  const { profile } = useTenant();
+  const meuPerfilId = (profile?.id as string | undefined) ?? null;
   const suspend = useSuspendUser();
   const reactivate = useReactivateUser();
   const resetPwd = useResetUserPassword();
@@ -194,6 +201,11 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
               <DropdownMenuItem onClick={() => setDetalhe(u)}>
                 <Eye className="mr-2 h-4 w-4" /> Ver detalhes
               </DropdownMenuItem>
+              {u.status !== 'deleted' && u.id !== meuPerfilId && (
+                <DropdownMenuItem onClick={() => setEditando(u)}>
+                  <Pencil className="mr-2 h-4 w-4" /> Editar
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onClick={() => setAcao({ tipo: 'senha', u })}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Redefinir senha
               </DropdownMenuItem>
@@ -250,6 +262,8 @@ export function UsersTable({ rows, tenantNames, activity }: UsersTableProps) {
           }}
         />
       )}
+
+      <EditarPessoaDialog pessoa={editando} onClose={() => setEditando(null)} />
 
       <UserDetailsDialog
         row={detalhe}

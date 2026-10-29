@@ -7,8 +7,8 @@ import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Clock, Info, Loader2, Lock, Save } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useTenant, useCan } from '@/contexts/TenantContext';
 import { useCanManageRotation } from '@/hooks/useConversationRotation';
@@ -18,34 +18,30 @@ import {
   RESPONSE_RULE_MAX_TRANSFERS_MIN,
   RESPONSE_RULE_MINUTES_MAX,
   RESPONSE_RULE_MINUTES_MIN,
-  TIMEZONE_OPTIONS,
-  WEEKDAY_KEYS,
-  WEEKDAY_LABELS,
   breachMoment,
-  cloneBusinessHours,
+  describeBusinessHours,
   formatLocalMoment,
   hasResponseRuleErrors,
-  sameBusinessHours,
+  timezoneLabel,
   validateResponseRule,
-  type BusinessHours,
-  type WeekdayKey,
 } from '@/lib/conversations/responseRule';
 
 /**
  * Configurações › Distribuição e transferência — "Transferência por tempo sem
  * resposta" (migração 20260916000001).
  *
- * Quatro chaves em `tenants.settings` (response_rule_enabled,
- * response_rule_minutes, response_rule_max_transfers, business_hours) gravadas
- * por `updateTenantSettings` (merge raso — `business_hours` vai inteiro, sempre).
+ * Três chaves em `tenants.settings` (response_rule_enabled,
+ * response_rule_minutes, response_rule_max_transfers) gravadas por
+ * `updateTenantSettings` (merge raso). O horário de funcionamento
+ * (`business_hours`) é LIDO daqui e editado na aba Horário
+ * (BusinessHoursSettings, lote 6e): até então ele morava neste cartão e só
+ * aparecia com a chave ligada.
  *
  * Regras da tela:
  *   - a regra nasce DESLIGADA; ligada, conta minutos DE FUNCIONAMENTO desde o
  *     início da espera do cliente (não desde a última mensagem dele);
- *   - o horário de funcionamento é a MESMA chave que o chatbot lê para
- *     "fora do horário": editar aqui muda os dois de propósito;
  *   - a prévia ("com X minutos, N das esperas dos últimos 30 dias teriam sido
- *     transferidas") usa o histórico real da Loja e o horário RASCUNHADO, com
+ *     transferidas") usa o histórico real da Loja e o horário SALVO, com
  *     atraso de digitação e cache de 5 min; se a RPC falhar, a prévia some e o
  *     resto da tela continua;
  *   - o exemplo "sexta 17:50 → segunda 09:50" é calculado aqui com o mesmo
@@ -84,7 +80,7 @@ export const ResponseRuleSettings = () => {
   // Texto, não número: o input precisa aceitar campo vazio enquanto se digita.
   const [minutesDraft, setMinutesDraft] = useState(String(saved.response_rule_minutes));
   const [maxDraft, setMaxDraft] = useState(String(saved.response_rule_max_transfers));
-  const [hours, setHours] = useState<BusinessHours>(() => cloneBusinessHours(saved.business_hours));
+  const hours = saved.business_hours;
   const [isSaving, setIsSaving] = useState(false);
 
   // O tenant chega depois do primeiro render (TenantContext carrega async).
@@ -92,8 +88,7 @@ export const ResponseRuleSettings = () => {
     setEnabled(saved.response_rule_enabled);
     setMinutesDraft(String(saved.response_rule_minutes));
     setMaxDraft(String(saved.response_rule_max_transfers));
-    setHours(cloneBusinessHours(saved.business_hours));
-  }, [saved.response_rule_enabled, saved.response_rule_minutes, saved.response_rule_max_transfers, saved.business_hours]);
+  }, [saved.response_rule_enabled, saved.response_rule_minutes, saved.response_rule_max_transfers]);
 
   const minutes = Number(minutesDraft);
   const maxTransfers = Number(maxDraft);
@@ -106,8 +101,7 @@ export const ResponseRuleSettings = () => {
   const isDirty =
     enabled !== saved.response_rule_enabled ||
     minutes !== saved.response_rule_minutes ||
-    maxTransfers !== saved.response_rule_max_transfers ||
-    !sameBusinessHours(hours, saved.business_hours);
+    maxTransfers !== saved.response_rule_max_transfers;
 
   const preview = useResponseRulePreview(minutes, hours, canManage && !errors.minutes && !errors.schedule);
 
@@ -117,21 +111,6 @@ export const ResponseRuleSettings = () => {
     const at = breachMoment(hours, start, minutes);
     return at ? { start: formatLocalMoment(start, hours.timezone), at: formatLocalMoment(at, hours.timezone) } : null;
   }, [hours, minutes, errors.minutes, errors.schedule, errors.days]);
-
-  const setDay = (key: WeekdayKey, patch: { open?: boolean; start?: string; end?: string }) => {
-    setHours((prev) => {
-      const next = cloneBusinessHours(prev);
-      const current = next.schedule[key];
-      if (patch.open === false) {
-        next.schedule[key] = null;
-      } else if (patch.open === true) {
-        next.schedule[key] = current ?? { start: '09:00', end: '18:00' };
-      } else if (current) {
-        next.schedule[key] = { start: patch.start ?? current.start, end: patch.end ?? current.end };
-      }
-      return next;
-    });
-  };
 
   const handleSave = async () => {
     if ((enabled && hasErrors) || !canEdit) return;
@@ -145,7 +124,6 @@ export const ResponseRuleSettings = () => {
             response_rule_enabled: enabled,
             response_rule_minutes: minutes,
             response_rule_max_transfers: maxTransfers,
-            business_hours: hours,
           };
       await updateTenantSettings(patch, { silent: true });
       toast.success(
@@ -247,7 +225,7 @@ export const ResponseRuleSettings = () => {
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5">
               <Label htmlFor="response-rule-enabled">Transferir conversa sem resposta</Label>
-              <DicaDoCampo rotulo="Transferir conversa sem resposta" texto="Ligado, a conversa com dono que esperar mais que o tempo abaixo passa para o próximo da distribuição. Ligue também para ver o horário da Loja." />
+              <DicaDoCampo rotulo="Transferir conversa sem resposta" texto="Ligado, a conversa com dono que esperar mais que o tempo abaixo passa para o próximo da distribuição. O horário da Loja fica na aba Horário." />
             </div>
             <p className="text-sm text-muted-foreground">
               Desligada, nada muda: quem tem a conversa fica com ela até alguém mover à mão.
@@ -356,7 +334,7 @@ export const ResponseRuleSettings = () => {
                 )}
                 {example && (
                   <p className="text-muted-foreground">
-                    Exemplo com o horário abaixo: cliente escreve na {example.start} → sem resposta, a conversa
+                    Exemplo com o horário da Loja: cliente escreve na {example.start} → sem resposta, a conversa
                     muda de responsável na {example.at}.
                   </p>
                 )}
@@ -365,87 +343,15 @@ export const ResponseRuleSettings = () => {
 
             <Separator />
 
-            <div className="space-y-3">
-              <div className="space-y-0.5">
-                <Label id="business-hours-label">Horário de funcionamento da Loja</Label>
-                <p className="text-sm text-muted-foreground">
-                  Só os minutos dentro deste horário contam. É o mesmo horário que o chatbot usa para saber
-                  se está &quot;fora do horário&quot;.
-                </p>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Label htmlFor="business-hours-tz">Fuso horário</Label>
-                  <DicaDoCampo rotulo="Fuso horário" texto="Os horários abaixo valem neste fuso. O padrão é Brasília. É o mesmo horário que o chatbot usa para fora do horário." />
-                </div>
-                <Select
-                  value={hours.timezone}
-                  disabled={!canEdit}
-                  onValueChange={(value) => setHours((prev) => ({ ...cloneBusinessHours(prev), timezone: value }))}
-                >
-                  <SelectTrigger id="business-hours-tz" className="w-full sm:w-80">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(TIMEZONE_OPTIONS.some((o) => o.value === hours.timezone)
-                      ? TIMEZONE_OPTIONS
-                      : [{ value: hours.timezone, label: hours.timezone }, ...TIMEZONE_OPTIONS]
-                    ).map((o) => (
-                      <SelectItem key={o.value} value={o.value}>
-                        {o.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <ul className="divide-y divide-border rounded-md border border-border" aria-labelledby="business-hours-label">
-                {WEEKDAY_KEYS.map((key) => {
-                  const day = hours.schedule[key];
-                  const dayError = errors.days?.[key];
-                  return (
-                    <li key={key} className="flex flex-wrap items-center gap-3 p-3">
-                      <div className="flex w-36 items-center gap-2">
-                        <Switch
-                          id={`bh-open-${key}`}
-                          checked={!!day}
-                          disabled={!canEdit}
-                          onCheckedChange={(open) => setDay(key, { open })}
-                          aria-label={`${WEEKDAY_LABELS[key]} aberto`}
-                        />
-                        <Label htmlFor={`bh-open-${key}`} className="cursor-pointer">
-                          {WEEKDAY_LABELS[key]}
-                        </Label>
-                      </div>
-                      {day ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="time"
-                            aria-label={`${WEEKDAY_LABELS[key]} abre às`}
-                            value={day.start}
-                            disabled={!canEdit}
-                            onChange={(e) => setDay(key, { start: e.target.value })}
-                            className="w-28"
-                          />
-                          <span className="text-sm text-muted-foreground">até</span>
-                          <Input
-                            type="time"
-                            aria-label={`${WEEKDAY_LABELS[key]} fecha às`}
-                            value={day.end}
-                            disabled={!canEdit}
-                            onChange={(e) => setDay(key, { end: e.target.value })}
-                            className="w-28"
-                          />
-                        </div>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Fechado</span>
-                      )}
-                      {dayError && <p className="w-full text-sm text-destructive sm:w-auto">{dayError}</p>}
-                    </li>
-                  );
-                })}
-              </ul>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Horário de funcionamento da Loja</p>
+              <p className="text-sm text-muted-foreground">
+                {describeBusinessHours(hours)}. Fuso: {timezoneLabel(hours.timezone)}. Só os minutos dentro deste
+                horário contam.{' '}
+                <Link to="/dashboard/settings?tab=horario" className="font-medium text-primary underline-offset-4 hover:underline">
+                  Mudar o horário na aba Horário
+                </Link>
+              </p>
               {errors.schedule && <p className="text-sm text-destructive">{errors.schedule}</p>}
             </div>
 

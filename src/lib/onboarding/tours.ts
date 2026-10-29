@@ -149,7 +149,7 @@ export const TOURS: Tour[] = [
       {
         target: 'whatsapp-nova-instancia',
         title: 'Clique em Conectar número',
-        body: 'Com a Conta aberta, a janela pede a Loja primeiro. Escolha como conectar e clique em Continuar. Na API Oficial, clique em Conectar com a Meta e siga a janela da Meta.',
+        body: 'Com a Conta aberta, a janela pede a Loja primeiro. Escolha Conectar pelo QR Code ou API oficial da Meta e clique em Continuar. Na API oficial, clique em Conectar com a Meta e siga a janela da Meta.',
       },
     ],
   },
@@ -192,18 +192,18 @@ export const TOURS: Tour[] = [
   },
   {
     id: 'horario-distribuicao',
-    route: '/dashboard/settings?tab=visibility',
+    route: '/dashboard/settings?tab=horario',
     minRole: 'gestor',
     steps: [
       {
-        target: 'distribuicao',
-        title: 'Distribua as conversas novas',
-        body: 'Com pelo menos 2 atendentes, ligue a distribuição automática e ajuste a fatia de cada pessoa. Depois clique em Salvar distribuição.',
-      },
-      {
         target: 'horario-funcionamento',
         title: 'Horário de funcionamento',
-        body: 'Ligue Transferir conversa sem resposta para ver os dias e horários da Loja. Ajuste e clique em Salvar regra. Para gravar só o horário, desligue a chave antes de salvar.',
+        body: 'Escolha o fuso, ligue os dias em que a Loja atende e ajuste as horas. Clique em Salvar horário. O chatbot usa este horário para saber quando está fora do horário.',
+      },
+      {
+        target: 'aba-distribuicao',
+        title: 'Distribua as conversas novas',
+        body: 'Agora clique em Distribuição e transferência. Com pelo menos 2 atendentes, ligue a distribuição automática, ajuste a fatia de cada pessoa e clique em Salvar distribuição.',
       },
     ],
   },

@@ -136,7 +136,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
     goal:
       'No fim, seu número estará conectado pela API Oficial da Meta, recebendo e enviando mensagens dentro do ConvoFlow.',
     forWhom:
-      'Gestor da Loja, que cuida da configuração dela (o Gerente faz o mesmo, numa Loja escolhida no topo). Atendente não conecta número. Quer conectar por QR Code? Veja "Conectar número por QR Code (Evolution)" ou "Conectar número no seu servidor (WAHA)".',
+      'Gestor da Loja, que cuida da configuração dela (o Gerente faz o mesmo, numa Loja escolhida no topo). Atendente não conecta número. Quer conectar por QR Code? Veja "Conectar número pelo QR Code" ou "Conectar número no seu servidor (WAHA)".',
     moduleName: 'whatsapp-numbers',
     minRole: 'gestor',
     steps: [
@@ -153,16 +153,16 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:whatsapp-numbers',
       },
       {
-        title: 'Escolha "API Oficial do WhatsApp" e clique em "Continuar"',
+        title: 'Escolha "API oficial da Meta" e clique em "Continuar"',
         body:
-          'São três jeitos de conectar. Escolha o primeiro, "API Oficial do WhatsApp": é o mais estável e o único que dispara campanha dentro das regras da Meta. Os outros dois, por QR Code, têm tutorial próprio.',
+          'São duas opções. Escolha "API oficial da Meta": é a mais estável e a única que dispara campanha dentro das regras da Meta. "Conectar pelo QR Code" tem tutorial próprio.',
       },
       {
         title: 'Dê um nome ao número e clique em "Conectar com a Meta"',
         body:
           'O nome é só o rótulo que aparece nas telas (ex.: "WhatsApp Vendas"). Se deixar vazio, o ConvoFlow usa o nome verificado que a Meta devolver para o número. O botão abre uma janela da própria Meta: é ela que faz a conexão, e você não copia código nem chave nenhuma. O número nasce na Loja que a janela mostra no alto, logo abaixo do título.',
         note:
-          'Se o botão estiver cinza, a conexão automática com a Meta ainda não está ligada, e o caminho é o do último passo, com os campos manuais. Para RECONECTAR um número que já está na lista (trocar o app da Meta, renovar a conexão), o caminho é este mesmo botão: escolha o mesmo número na janela da Meta e deixe o nome em branco. O ConvoFlow reconhece o número e atualiza no lugar, sem mexer no histórico.',
+          'Se o botão não aparecer, a conexão automática com a Meta ainda não está ligada: o "Avançado" já vem aberto com os campos manuais, e o caminho é o do último passo. Para RECONECTAR um número que já está na lista (trocar o app da Meta, renovar a conexão), o caminho é este mesmo botão: escolha o mesmo número na janela da Meta e deixe o nome em branco. O ConvoFlow reconhece o número e atualiza no lugar, sem mexer no histórico.',
       },
       {
         title: 'Siga a janela da Meta até o fim',
@@ -193,9 +193,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Se algo travou, não exclua o número para recomeçar: assim que a primeira conversa entra, a lixeira passa a recusar a exclusão, porque apagar o número apagaria o histórico. Escreva para contato@convoflow.com.br e descreva onde parou.',
       },
       {
-        title: 'Só se você já tem app próprio na Meta: preencha os campos manuais',
+        title: 'Só se você já tem app próprio na Meta: abra "Avançado" e preencha os campos',
         body:
-          'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", cole o "Código do número na Meta (Phone Number ID)", o "Código da conta do WhatsApp Business (WABA ID)" e a "Chave de acesso permanente (Access Token)" e clique em "Validar e conectar". O ConvoFlow confere os dados na Meta antes de gravar; se estiverem errados, nada é salvo e você corrige sem duplicar o número.',
+          'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", abra "Avançado", embaixo do botão, e cole o "Código do número na Meta (Phone Number ID)", o "Código da conta do WhatsApp Business (WABA ID)" e a "Chave de acesso permanente (Access Token)" e clique em "Validar e conectar". O ConvoFlow confere os dados na Meta antes de gravar; se estiverem errados, nada é salvo e você corrige sem duplicar o número.',
         note:
           'Use a chave de um usuário do sistema da Meta (System User), de longa duração. A chave de um usuário comum vence em poucas horas e a conexão cai junto. O endereço de entrega da Meta é configurado uma vez para o ConvoFlow inteiro, por quem opera a plataforma. Não é passo seu.',
       },
@@ -203,11 +203,12 @@ export const ALL_TUTORIALS: Tutorial[] = [
   },
 
   // ------------------------------------------------------------------ 2a
-  // QR Code pelo servidor do ConvoFlow. Conferido em 2026-10-27 contra
-  // CreateInstanceModal, EvolutionApiForm, QRCodeModal e evolution-provision.
+  // QR Code pelo servidor do ConvoFlow. Conferido em 2026-10-29 contra
+  // CreateInstanceModal, ProviderSelector, EvolutionApiForm, QRCodeModal e
+  // evolution-provision (duas opções e "Avançado" desde o lote 6e).
   {
     id: 'conectar-evolution',
-    title: 'Conectar número por QR Code (Evolution)',
+    title: 'Conectar número pelo QR Code',
     goal:
       'No fim, um número comum de WhatsApp estará conectado ao ConvoFlow lendo um QR Code, sem você configurar servidor nenhum.',
     forWhom:
@@ -230,21 +231,21 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:whatsapp-numbers',
       },
       {
-        title: 'Escolha "QR Code pelo ConvoFlow (Evolution)" e clique em "Continuar"',
+        title: 'Escolha "Conectar pelo QR Code" e clique em "Continuar"',
         body:
           'O servidor de WhatsApp é o do ConvoFlow e já vem configurado: você não informa endereço nem chave.',
       },
       {
-        title: 'Preencha "Nome do número" e gere o "Código interno do número"',
+        title: 'Preencha "Nome do número"',
         body:
-          'O nome é o rótulo que aparece nas telas, de 3 a 50 letras (ex.: "WhatsApp Vendas"). No "Código interno do número", clique em "Gerar": é um código que o ConvoFlow usa por dentro e não pode repetir em todo o ConvoFlow.',
+          'O nome é o rótulo que aparece nas telas, de 3 a 50 letras (ex.: "WhatsApp Vendas"). O resto já vem pronto: o código interno do número e a entrega das mensagens ficam em "Avançado", e você não precisa abrir.',
       },
       {
-        title: 'Deixe "Receber as mensagens automaticamente" ligado e clique em "Criar e abrir QR Code"',
+        title: 'Clique em "Criar e abrir QR Code"',
         body:
-          'Aparece "Número criado" e a janela do QR Code abre sozinha. Com a chave ligada, as mensagens do número entram no ConvoFlow assim que ele conectar.',
+          'Aparece "Número criado" e a janela do QR Code abre sozinha. As mensagens do número entram no ConvoFlow assim que ele conectar.',
         note:
-          'Se aparecer que já existe um número com esse código interno, clique em "Gerar" de novo. Se o aviso disser para falar com o suporte, o número foi criado mas o endereço de entrega não: escreva para contato@convoflow.com.br.',
+          'Se aparecer que já existe um número com esse código interno, abra "Avançado" e clique em "Gerar". Se o aviso disser para falar com o suporte, o número foi criado mas o endereço de entrega não: escreva para contato@convoflow.com.br.',
       },
       {
         title: 'Leia o QR Code com o celular do número',
@@ -295,9 +296,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:whatsapp-numbers',
       },
       {
-        title: 'Escolha "QR Code no seu servidor (WAHA)" e clique em "Continuar"',
+        title: 'Abra "Avançado", escolha "QR Code no seu servidor WAHA" e clique em "Continuar"',
         body:
-          'Aqui o servidor é seu: por isso o ConvoFlow pede o endereço e a chave dele.',
+          '"Avançado" fica embaixo das duas opções principais. Aqui o servidor é seu: por isso o ConvoFlow pede o endereço e a chave dele.',
       },
       {
         title: 'Preencha os dados do número e do servidor',
@@ -473,22 +474,29 @@ export const ALL_TUTORIALS: Tutorial[] = [
   },
 
   // ------------------------------------------------------------------ 3b
-  // Distribuição e transferência. Conferido em 2026-10-27 contra
-  // VisibilitySettings, RotationSettings e ResponseRuleSettings.
+  // Horário, distribuição e transferência. Conferido em 2026-10-29 contra
+  // BusinessHoursSettings, VisibilitySettings, RotationSettings e
+  // ResponseRuleSettings (o horário ganhou aba própria no lote 6e).
   {
     id: 'configurar-distribuicao',
     minRole: 'gestor',
     title: 'Configurar a distribuição de conversas',
     goal:
-      'No fim, a Loja terá definido o que cada atendente vê, como as conversas novas são divididas e o que acontece quando ninguém responde a tempo.',
+      'No fim, a Loja terá definido o horário em que atende, o que cada atendente vê, como as conversas novas são divididas e o que acontece quando ninguém responde a tempo.',
     forWhom:
       'Gestor da Loja (o Gerente faz o mesmo, com a Loja escolhida no topo). O Atendente vê esta aba só para leitura.',
     steps: [
       {
-        title: 'Abra Configurações › Distribuição e transferência',
+        title: 'Abra Configurações › Horário, ajuste os dias e clique em "Salvar horário"',
+        body:
+          'Escolha o fuso, ligue os dias em que a Loja atende e ajuste as horas de abrir e fechar. É o horário que o chatbot usa para "fora do horário" e que a transferência por tempo sem resposta usa para contar minutos. Ele tem botão próprio: salvar o horário não liga nenhuma outra regra.',
+        screen: '/dashboard/settings',
+        helpKey: 'page:settings-horario',
+      },
+      {
+        title: 'Abra a aba Distribuição e transferência',
         body:
           'São três cartões, na ordem em que a conversa passa por eles: quem vê e quem transfere, como a conversa nova chega e o que acontece se ninguém responde. Tudo aqui vale para a Loja inteira.',
-        screen: '/dashboard/settings',
         helpKey: 'page:settings-visibility',
       },
       {
@@ -522,9 +530,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
         note: 'Vem desligada. Ligue quando o time já souber que isso vai acontecer.',
       },
       {
-        title: 'Confira o "Horário de funcionamento da Loja" e clique em "Salvar regra"',
+        title: 'Confira o horário que o cartão 3 mostra e clique em "Salvar regra"',
         body:
-          'Escolha o fuso e os dias e horas. Só os minutos dentro do horário contam, e é o mesmo horário que o chatbot usa para "fora do horário". O horário só aparece com a chave do cartão 3 ligada: para gravar só o horário, ligue, ajuste, desligue a chave e salve.',
+          'Só os minutos dentro do horário da Loja contam. Para mudar o horário, use o link "Mudar o horário na aba Horário": o cartão 3 só o mostra.',
       },
       {
         title: 'Acompanhe pelas Conversas e pelo Dashboard',

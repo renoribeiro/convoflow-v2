@@ -129,8 +129,8 @@ const ALCANCE_DAS_MARCAS: Record<string, HelpAccessDeclaration> = {
   'primeiros-passos': {}, // PrimeirosPassosCard: todo cargo de onboarding
   'perfil-foto': {}, // ProfileSettings
   'respostas-rapidas-nova': {}, // QuickRepliesSettings: todo cargo cria
-  distribuicao: {}, // Settings, aba visível a todos (só leitura para o atendente)
-  'horario-funcionamento': {},
+  'aba-distribuicao': {}, // Settings, botão da aba visível a todos (só leitura para o atendente)
+  'horario-funcionamento': { capacidade: 'store.admin' }, // BusinessHoursSettings: só o cartão que edita
   'dados-fiscais': { minRole: 'gerente' }, // SubscriptionSettings: isGerente || isSuperAdmin
   'seletor-loja': { minRole: 'gerente' }, // StoreSwitcher: só isGerente
   'chatbots-novo': { capacidade: 'automations.operate', moduleName: 'chatbots' },

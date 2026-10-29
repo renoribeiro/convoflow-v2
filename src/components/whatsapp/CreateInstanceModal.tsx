@@ -14,6 +14,7 @@ import { logger } from '@/lib/logger';
 import { useEvolutionApi } from '@/hooks/useEvolutionApi';
 import { useWahaApi } from '@/hooks/useWahaApi';
 import { useMetaApi } from '@/hooks/useMetaApi';
+import { useMetaEmbeddedSignup } from '@/hooks/useMetaEmbeddedSignup';
 import { useTenant } from '@/contexts/TenantContext';
 import { EscolherLojaDoNumero } from './EscolherLojaDoNumero';
 import { newInstanceSchema, type ProviderType } from '@/lib/validations/whatsappInstance';
@@ -48,6 +49,8 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
   const [step, setStep] = useState<WizardStep>('select-provider');
   const [provider, setProvider] = useState<ProviderType | null>(null);
   const [loading, setLoading] = useState(false);
+  // "Avançado" dos formulários (lote 6e, achado 106): fechado por padrão.
+  const [avancado, setAvancado] = useState(false);
 
   const [officialValues, setOfficialValues] = useState<OfficialFormValues>(initialOfficialValues);
   const [wahaValues, setWahaValues] = useState<WahaFormValues>(initialWahaValues);
@@ -71,10 +74,15 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
   const { createInstance: createEvolution } = useEvolutionApi();
   const { createInstance: createWaha } = useWahaApi();
   const { createInstance: createMeta } = useMetaApi();
+  // Sem a conexão automática da Meta, os campos manuais são o único caminho:
+  // o "Avançado" da API oficial abre aberto e o botão do rodapé aparece.
+  const { isAvailable: metaAutomatica } = useMetaEmbeddedSignup();
+  const camposManuaisDaMeta = !metaAutomatica || avancado;
 
   const resetWizard = () => {
     setStep('select-provider');
     setProvider(null);
+    setAvancado(false);
     setOfficialValues(initialOfficialValues());
     setWahaValues(initialWahaValues());
     setEvolutionValues(initialEvolutionValues());
@@ -92,6 +100,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
 
   const goToConfigure = () => {
     if (!provider) return;
+    setAvancado(false);
     setStep('configure');
   };
 
@@ -193,6 +202,8 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
           values={officialValues}
           onChange={(patch) => setOfficialValues((prev) => ({ ...prev, ...patch }))}
           loading={loading}
+          avancado={camposManuaisDaMeta}
+          onAvancadoChange={setAvancado}
           onSignupSuccess={() => {
             onSuccess();
             onOpenChange(false);
@@ -218,6 +229,8 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
           loading={loading}
           webhookStatus={evolutionWebhookStatus}
           webhookError={evolutionWebhookError}
+          avancado={avancado}
+          onAvancadoChange={setAvancado}
         />
       );
     }
@@ -281,6 +294,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
                 <Button variant="outline" onClick={() => handleClose(false)} disabled={loading}>
                   Cancelar
                 </Button>
+                {(provider !== 'official' || camposManuaisDaMeta) && (
                 <Button onClick={handleSubmit} disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {provider === 'evolution' && (
@@ -292,6 +306,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
                   {provider === 'waha' && 'Salvar número'}
                   {provider === 'official' && 'Validar e conectar'}
                 </Button>
+                )}
               </>
             )}
           </DialogFooter>

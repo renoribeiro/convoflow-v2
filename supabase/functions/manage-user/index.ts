@@ -28,6 +28,7 @@ import {
 import { can, CAPABILITY_DENIAL_MESSAGES, normalizeRole } from '../_shared/capabilities.ts';
 import { contaSlug, sufixoAleatorio } from '../_shared/conta-slug.ts';
 import { setLoginBan, statusBansLogin } from '../_shared/login-ban.ts';
+import { avaliarTrocaDeCargo, type LugarDaPessoa } from '../_shared/troca-de-cargo.ts';
 import {
   checkAttendantEntry,
   EXCLUIDO_NAO_REATIVA,
@@ -532,10 +533,34 @@ async function actionUpdate(
   for (const k of ['first_name', 'last_name', 'phone', 'avatar_url']) {
     if (k in patch) allowed[k] = patch[k];
   }
+  // Nome (o "Editar" da Equipe, lote 6e): nome obrigatório, os dois com até 60 letras.
+  for (const k of ['first_name', 'last_name'] as const) {
+    if (!(k in allowed)) continue;
+    const valor = typeof allowed[k] === 'string' ? (allowed[k] as string).trim() : '';
+    if (k === 'first_name' && !valor) {
+      throw new SecureError('Informe o nome da pessoa.', 'VALIDATION_ERROR', 400);
+    }
+    if (valor.length > 60) {
+      throw new SecureError('O nome e o sobrenome podem ter até 60 letras cada.', 'VALIDATION_ERROR', 400);
+    }
+    allowed[k] = valor || null;
+  }
   // role só superadmin pode alterar
   if ('role' in patch) {
     if (caller.role !== 'superadmin') {
       throw new SecureError('Apenas superadmin pode mudar role', 'FORBIDDEN', 403);
+    }
+    // Trava da troca de cargo (lote 6e, D2 parcial): só Gestor e Atendente
+    // trocam entre si, dentro da Loja. O resto espera o redesenho da hierarquia.
+    const alvo = await fetchTarget(admin, body.targetProfileId);
+    let lugar: LugarDaPessoa = null;
+    if (alvo.tenant_id) {
+      const { data: t } = await admin.from('tenants').select('kind').eq('id', alvo.tenant_id).maybeSingle();
+      lugar = t?.kind === 'account' ? 'account' : 'store';
+    }
+    const troca = avaliarTrocaDeCargo(normalizeRole(alvo.role) ?? String(alvo.role), String(patch.role), lugar);
+    if (!troca.permitida) {
+      throw new SecureError(troca.mensagem, 'ROLE_CHANGE_ON_HOLD', 409);
     }
     allowed.role = patch.role;
   }

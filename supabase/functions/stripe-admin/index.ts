@@ -65,11 +65,14 @@ serve(async (req) => {
         if (user) {
           const { data: profile } = await supabaseClient
             .from('profiles')
-            .select('role')
+            .select('role, status')
             .eq('user_id', user.id)
             .single();
-          // userId vai para o histórico do preço do atendente extra.
-          caller = profile?.role === 'superadmin' ? { kind: 'superadmin', userId: user.id } : { kind: 'other' };
+          // userId vai para o histórico do preço do atendente extra. Perfil
+          // suspenso não passa, mesmo com a sessão ainda válida (lote 6e).
+          caller = profile?.role === 'superadmin' && profile?.status === 'active'
+            ? { kind: 'superadmin', userId: user.id }
+            : { kind: 'other' };
         }
       }
     }

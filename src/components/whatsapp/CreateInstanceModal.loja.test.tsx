@@ -80,7 +80,7 @@ describe('Conta em foco: a janela pede a Loja', () => {
     abrir();
     expect(screen.getByTestId('escolher-loja-do-numero')).toBeInTheDocument();
     expect(screen.getByText(/fica numa Loja, não na Conta/)).toBeInTheDocument();
-    expect(screen.queryByText(/QR Code pelo ConvoFlow/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Conectar pelo QR Code/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Continuar' })).not.toBeInTheDocument();
   });
 
@@ -111,8 +111,9 @@ describe('Loja em foco: diz onde fica e manda a Loja nos três caminhos', () => 
 
   it('QR Code (Evolution)', async () => {
     abrir();
-    escolherProvedor(/QR Code pelo ConvoFlow/);
+    escolherProvedor(/Conectar pelo QR Code/);
     fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Vendas' } });
+    fireEvent.click(screen.getByRole('button', { name: /Avançado/ }));
     fireEvent.change(screen.getByLabelText(/Código interno do número/), { target: { value: 'loja-centro-vendas' } });
     fireEvent.click(screen.getByRole('button', { name: /Criar e abrir QR Code/ }));
     await waitFor(() => expect(createEvolution).toHaveBeenCalled());
@@ -121,6 +122,7 @@ describe('Loja em foco: diz onde fica e manda a Loja nos três caminhos', () => 
 
   it('WAHA', async () => {
     abrir();
+    fireEvent.click(screen.getByRole('button', { name: /Avançado/ }));
     escolherProvedor(/QR Code no seu servidor/);
     fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Suporte' } });
     fireEvent.change(screen.getByLabelText(/Endereço do seu servidor WAHA/), { target: { value: 'https://waha.exemplo.com.br' } });
@@ -132,7 +134,7 @@ describe('Loja em foco: diz onde fica e manda a Loja nos três caminhos', () => 
 
   it('formulário manual da API Oficial', async () => {
     abrir();
-    escolherProvedor(/API Oficial do WhatsApp/);
+    escolherProvedor(/API oficial da Meta/);
     fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Oficial' } });
     fireEvent.change(screen.getByLabelText(/Phone Number ID/), { target: { value: '100000000000001' } });
     fireEvent.change(screen.getByLabelText(/WABA ID/), { target: { value: '200000000000001' } });
@@ -140,5 +142,46 @@ describe('Loja em foco: diz onde fica e manda a Loja nos três caminhos', () => 
     fireEvent.click(screen.getByRole('button', { name: 'Validar e conectar' }));
     await waitFor(() => expect(createMeta).toHaveBeenCalled());
     expect(createMeta).toHaveBeenCalledWith(expect.objectContaining({ phoneNumberId: '100000000000001' }), LOJA);
+  });
+});
+
+describe('Duas opções e o Avançado (lote 6e, achado 106, decisão D12)', () => {
+  beforeEach(() => {
+    state.tenant = { id: LOJA, name: 'Loja Centro', kind: 'store' };
+  });
+
+  it('mostra só QR Code e API oficial; o WAHA fica no Avançado', () => {
+    abrir();
+    expect(screen.getByText('Conectar pelo QR Code')).toBeInTheDocument();
+    expect(screen.getByText('API oficial da Meta')).toBeInTheDocument();
+    expect(screen.queryByText('QR Code no seu servidor WAHA')).not.toBeInTheDocument();
+    const avancado = screen.getByRole('button', { name: /Avançado/ });
+    expect(avancado).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(avancado);
+    expect(avancado).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('QR Code no seu servidor WAHA')).toBeInTheDocument();
+  });
+
+  it('QR Code só com o nome: o código interno já vem pronto e os campos técnicos ficam fechados', async () => {
+    abrir();
+    escolherProvedor(/Conectar pelo QR Code/);
+    expect(screen.queryByLabelText(/Código interno do número/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Endereço de entrega/)).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Vendas' } });
+    fireEvent.click(screen.getByRole('button', { name: /Criar e abrir QR Code/ }));
+    await waitFor(() => expect(createEvolution).toHaveBeenCalled());
+    expect(createEvolution).toHaveBeenCalledWith(
+      expect.stringMatching(/^instance_\d+_[a-z0-9]+$/),
+      undefined,
+      expect.objectContaining({ tenantId: LOJA, displayName: 'Vendas' }),
+    );
+  });
+
+  it('API oficial sem a conexão automática: os campos manuais já aparecem abertos', () => {
+    abrir();
+    escolherProvedor(/API oficial da Meta/);
+    expect(screen.getByRole('button', { name: /Avançado/ })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByLabelText(/Phone Number ID/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Validar e conectar' })).toBeInTheDocument();
   });
 });
