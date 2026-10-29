@@ -22,13 +22,54 @@ import { useFollowupSequences } from '@/hooks/useFollowupSequences';
 import { useContacts } from '@/hooks/useContacts';
 import { useTenantId } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
-import type { FollowupMode } from '@/lib/followups/types';
+import type { FollowupMode, IndividualFollowup } from '@/lib/followups/types';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
+import {
+  dataParaCalendario,
+  diaDoCalendario,
+  diaEmBrasilia,
+  diaJaPassouEmBrasilia,
+  horaEmBrasilia,
+  horarioNoFuturo,
+  instanteEmBrasilia,
+} from '@/lib/datas/brasilia';
 import { toast } from 'sonner';
 import { contactChannel, contactIdentifier } from '@/lib/contacts/identity';
 import { contactAllowedInFollowupMode, followupPickerContacts } from '@/lib/followups/contactPicker';
+import { useWhatsAppInstancesSafe } from '@/hooks/useWhatsAppApi';
+import { ehNumeroOficial, numeroDoEnvio } from '@/lib/followups/numeroDoEnvio';
+import { EscolherTemplate } from '@/components/templates/EscolherTemplate';
+import { TEMPLATE_VAZIO, templateCompleto, templateDoBanco, type TemplateEscolhido } from '@/lib/templates/escolherTemplate';
 
 interface FollowupSchedulerProps {
   onClose: () => void;
+  /**
+   * Editar: o mesmo formulário de criar (achado 98). O modo e o contato ficam
+   * fixos; tipo, mensagem ou template, data, hora, prioridade, recorrência e
+   * notas mudam. Antes a edição tinha outra lista de tipos, sem WhatsApp, não
+   * mudava a mensagem e gravava o dia às 20h59.
+   */
+  followup?: IndividualFollowup | null;
+}
+
+/** Tipos que só existem em follow up antigo: aparecem na edição dele, não na criação. */
+const TIPOS_ANTIGOS: Record<string, string> = {
+  meeting: 'Reunião',
+  visit: 'Visita',
+  task: 'Tarefa',
+  other: 'Outro',
+};
+
+/** Modo do formulário a partir do follow up gravado (tarefa de sequência edita como manual). */
+const modoDoFollowup = (f: IndividualFollowup): FollowupMode => (f.mode === 'scheduled' ? 'scheduled' : 'manual');
+
+/** Dia e hora de Brasília do follow up gravado: o envio (agendado) ou o prazo. */
+function quandoDoFollowup(f: IndividualFollowup): { date: Date | undefined; time: string } {
+  const iso = (f.mode === 'scheduled' ? f.scheduled_at : null) ?? f.due_date;
+  if (!iso) return { date: undefined, time: '' };
+  const instante = new Date(iso);
+  return { date: dataParaCalendario(diaEmBrasilia(instante)), time: horaEmBrasilia(instante) };
 }
 
 const followupTypes = [
@@ -52,28 +93,38 @@ const taskTemplates = [
   'Solicitar feedback sobre atendimento',
 ];
 
-export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
-  const { createFollowup } = useFollowupMutations();
+export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedulerProps) => {
+  const editando = !!followup;
+  const { createFollowup, updateFollowup, deleteFollowup } = useFollowupMutations();
   const { sequences, loading: sequencesLoading, enrollContact } = useFollowupSequences();
   const { contacts, loading: contactsLoading } = useContacts();
   const tenantId = useTenantId();
 
-  const [mode, setMode] = useState<FollowupMode>('manual');
-  const [formData, setFormData] = useState({
-    contactId: '',
-    task: '',
-    type: '',
-    priority: 'medium',
-    date: undefined as Date | undefined,
-    time: '',
-    notes: '',
-    messageBody: '',
+  const [mode, setMode] = useState<FollowupMode>(followup ? modoDoFollowup(followup) : 'manual');
+  const [quandoOriginal] = useState(() => (followup ? quandoDoFollowup(followup) : { date: undefined, time: '' }));
+  const [formData, setFormData] = useState(() => ({
+    contactId: followup?.contact_id ?? '',
+    // O título automático do agendado não volta para o campo.
+    task: followup?.task && followup.task !== 'Envio agendado de WhatsApp' ? followup.task : '',
+    type: followup && followup.mode !== 'scheduled' ? followup.type ?? '' : '',
+    priority: followup?.priority ?? 'medium',
+    date: quandoOriginal.date,
+    time: quandoOriginal.time,
+    notes: followup?.notes ?? '',
+    messageBody: followup?.message_body ?? '',
     sequenceId: '',
-    recurring: false,
-    recurringType: 'weekly',
-    recurringCount: 1,
-  });
+    recurring: followup?.recurring ?? false,
+    recurringType: followup?.recurring_type ?? 'weekly',
+    recurringCount: followup?.recurring_count ?? 1,
+  }));
+  const [confirmarExclusao, setConfirmarExclusao] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
 
+  // Envio agendado por número da API Oficial: mensagem livre ou template
+  // aprovado escolhido da lista (achado 93, decisão D12).
+  const [porTemplate, setPorTemplate] = useState(!!followup?.template_name);
+  const [template, setTemplate] = useState<TemplateEscolhido>(followup ? templateDoBanco(followup) : TEMPLATE_VAZIO);
+  const { instances } = useWhatsAppInstancesSafe();
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -113,6 +164,11 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
   }, [formData.contactId, mode, tenantId]);
 
   const selectedContact = contacts.find((c) => c.id === formData.contactId);
+  const numero = numeroDoEnvio(
+    instances.map((i) => i.row),
+    [followup?.whatsapp_instance_id, selectedContact?.whatsapp_instance_id],
+  );
+  const usaTemplate = mode === 'scheduled' && ehNumeroOficial(numero) && porTemplate;
   const selectedType = followupTypes.find((t) => t.id === formData.type);
   // Agendado e Sequência mandam WhatsApp sozinhos: contato do Instagram não
   // entra na lista deles (ver lib/followups/contactPicker.ts).
@@ -145,7 +201,11 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
       if (!formData.type) e.type = 'Selecione o tipo de follow up';
     }
     if (mode === 'scheduled') {
-      if (!formData.messageBody.trim()) e.messageBody = 'Escreva a mensagem a enviar';
+      if (usaTemplate) {
+        if (!templateCompleto(template)) e.template = 'Escolha o template e preencha as variáveis';
+      } else if (!formData.messageBody.trim()) {
+        e.messageBody = 'Escreva a mensagem a enviar';
+      }
     }
 
     if (!formData.date) e.date = 'Selecione uma data';
@@ -154,11 +214,14 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
     } else if (!/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(formData.time)) {
       e.time = 'Formato de horário inválido (HH:MM)';
     }
-    if (formData.date && formData.time) {
-      const dt = new Date(formData.date);
-      const [h, m] = formData.time.split(':');
-      dt.setHours(parseInt(h), parseInt(m), 0, 0);
-      if (dt < new Date()) e.date = 'Data e horário não podem ser no passado';
+    // Hora de Brasília. Na edição, data e hora que não mudaram não são
+    // cobradas: dá para ajustar a nota de uma tarefa atrasada sem remarcar.
+    const mudouQuando =
+      !editando ||
+      formData.time !== quandoOriginal.time ||
+      formData.date?.getTime() !== quandoOriginal.date?.getTime();
+    if (formData.date && formData.time && mudouQuando && !horarioNoFuturo(diaDoCalendario(formData.date), formData.time)) {
+      e.date = `Data e horário não podem ser no passado (agora são ${horaEmBrasilia(new Date())} em Brasília)`;
     }
     if (formData.recurring && formData.recurringCount < 1) {
       e.recurringCount = 'Número de repetições deve ser maior que 0';
@@ -184,10 +247,10 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
         return;
       }
 
-      const dueDateTime = new Date(formData.date!);
-      const [hours, minutes] = formData.time.split(':');
-      dueDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-      const iso = dueDateTime.toISOString();
+      // O dia e a hora escolhidos são de Brasília, em qualquer computador.
+      const instante = instanteEmBrasilia(diaDoCalendario(formData.date!), formData.time);
+      if (!instante) throw new Error('horário inválido');
+      const iso = instante.toISOString();
 
       const base = {
         contact_id: formData.contactId,
@@ -205,7 +268,13 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
               mode: 'scheduled' as const,
               type: 'whatsapp',
               task: formData.task.trim() || 'Envio agendado de WhatsApp',
-              message_body: formData.messageBody,
+              message_body: usaTemplate ? null : formData.messageBody,
+              // Com template, o número fica gravado: a lista era a da conta
+              // Meta dele, e outro número poderia não ter aquele template.
+              whatsapp_instance_id: usaTemplate ? numero?.id ?? null : followup?.whatsapp_instance_id ?? null,
+              template_name: usaTemplate ? template.nome.trim() : null,
+              template_language: usaTemplate ? template.idioma : null,
+              template_params: usaTemplate && template.parametros.length > 0 ? template.parametros : null,
               scheduled_at: iso,
               notes: formData.notes || null,
             }
@@ -216,6 +285,14 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
               task: formData.task,
               notes: formData.notes || null,
             };
+
+      if (followup) {
+        // Na edição o contato e o modo ficam; o resto é o que está na tela.
+        const { contact_id: _contato, mode: _modo, ...mudancas } = payload as Record<string, unknown>;
+        const ok = await updateFollowup(followup.id, mudancas as never);
+        if (ok) onClose();
+        return;
+      }
 
       const result = await createFollowup(payload as never);
       if (result) {
@@ -238,7 +315,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
           setFormData((p) => ({ ...p, contactId: v }));
           setErrors((p) => ({ ...p, contactId: '' }));
         }}
-        disabled={contactsLoading}
+        disabled={contactsLoading || editando}
       >
         <SelectTrigger className={errors.contactId ? 'border-red-500' : ''}>
           <SelectValue placeholder={contactsLoading ? 'Carregando contatos...' : 'Selecione um contato'} />
@@ -300,7 +377,9 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
                 setIsDatePickerOpen(false);
                 setErrors((p) => ({ ...p, date: '' }));
               }}
-              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              disabled={(date) =>
+                diaJaPassouEmBrasilia(diaDoCalendario(date)) && date.getTime() !== quandoOriginal.date?.getTime()
+              }
               initialFocus
               className="pointer-events-auto"
             />
@@ -309,7 +388,13 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
         {errors.date && <p className="text-sm text-red-500 mt-1">{errors.date}</p>}
       </div>
       <div>
-        <Label htmlFor="time">{mode === 'scheduled' ? 'Hora do envio' : 'Hora'}</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="time">{mode === 'scheduled' ? 'Hora do envio' : 'Hora'}</Label>
+          <DicaDoCampo
+            rotulo={mode === 'scheduled' ? 'Hora do envio' : 'Hora'}
+            texto="Hora de Brasília. Hoje vale, desde que a hora ainda não tenha passado."
+          />
+        </div>
         <div className="relative">
           <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -385,11 +470,18 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Novo Follow up</DialogTitle>
+          <DialogTitle>{editando ? 'Editar Follow up' : 'Novo Follow up'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Seletor de MODO */}
+          {/* Seletor de MODO (na edição o modo fica: só aparece o escolhido) */}
+          {editando ? (
+            <p className="text-sm text-muted-foreground">
+              {mode === 'scheduled'
+                ? 'Envio agendado de WhatsApp: a mensagem sai sozinha na data e hora marcadas.'
+                : 'Lembrete para quem atende, sem mensagem automática.'}
+            </p>
+          ) : (
           <div>
             <Label>Como este follow up vai funcionar?</Label>
             <div className="grid grid-cols-3 gap-3 mt-2">
@@ -413,6 +505,7 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
               })}
             </div>
           </div>
+          )}
 
           {contactSelect}
 
@@ -434,6 +527,8 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
               <span>
                 {windowOpen
                   ? 'Janela de 24h aberta: pode enviar mensagem livre.'
+                  : ehNumeroOficial(numero)
+                  ? 'Fora da janela de 24h. Este número é da API Oficial: só template aprovado chega. Escolha "Template aprovado" abaixo.'
                   : 'Fora da janela de 24h. Em número oficial (Meta), só template aprovado será entregue; o envio livre pode ser bloqueado por conformidade.'}
               </span>
             </div>
@@ -482,7 +577,14 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
             <div>
               <Label>Tipo de Follow up</Label>
               <div className="grid grid-cols-3 gap-3 mt-2">
-                {followupTypes.map((type) => {
+                {[
+                  ...followupTypes,
+                  // Follow up antigo com tipo que a criação não oferece mais: aparece
+                  // marcado em vez de abrir vazio.
+                  ...(TIPOS_ANTIGOS[formData.type]
+                    ? [{ id: formData.type, name: TIPOS_ANTIGOS[formData.type]!, icon: Clock, description: '' }]
+                    : []),
+                ].map((type) => {
                   const Icon = type.icon;
                   return (
                     <Card
@@ -540,8 +642,52 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
             </div>
           )}
 
+          {/* MODO AGENDADO: número oficial escolhe entre mensagem e template */}
+          {mode === 'scheduled' && ehNumeroOficial(numero) && (
+            <div className="space-y-3">
+              <Label>Tipo de envio</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  { valor: false, titulo: 'Mensagem', texto: 'Texto livre: só chega a quem escreveu nas últimas 24 horas' },
+                  { valor: true, titulo: 'Template aprovado', texto: 'Mensagem pronta que a Meta aprovou: chega a qualquer contato' },
+                ] as const).map((op) => (
+                  <button
+                    key={op.titulo}
+                    type="button"
+                    onClick={() => {
+                      setPorTemplate(op.valor);
+                      setErrors((p) => ({ ...p, template: '', messageBody: '' }));
+                    }}
+                    aria-pressed={porTemplate === op.valor}
+                    className={`flex flex-col items-start gap-1 rounded-lg border p-3 text-left transition-colors ${
+                      porTemplate === op.valor ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <span className="text-sm font-medium">{op.titulo}</span>
+                    <span className="text-xs text-muted-foreground">{op.texto}</span>
+                  </button>
+                ))}
+              </div>
+              {usaTemplate && (
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <EscolherTemplate
+                    instanceId={numero?.id ?? null}
+                    valor={template}
+                    aoMudar={(v) => {
+                      setTemplate(v);
+                      setErrors((p) => ({ ...p, template: '' }));
+                    }}
+                    dicaDasVariaveis="Pode usar {{primeiro_nome}}, {{contact_name}} ou {{telefone}}: o contato recebe o dele."
+                    idBase="followup-tpl"
+                  />
+                  {errors.template && <p className="text-sm text-red-500 mt-2">{errors.template}</p>}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* MODO AGENDADO: composição da mensagem */}
-          {mode === 'scheduled' && (
+          {mode === 'scheduled' && !usaTemplate && (
             <div>
               <Label htmlFor="messageBody">Mensagem a enviar</Label>
               <Textarea
@@ -599,7 +745,17 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
             </div>
           )}
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-wrap justify-end gap-3">
+            {editando && (
+              <Button
+                variant="outline"
+                className="mr-auto text-destructive"
+                onClick={() => setConfirmarExclusao(true)}
+                disabled={isSubmitting || excluindo}
+              >
+                Excluir
+              </Button>
+            )}
             <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </Button>
@@ -608,6 +764,8 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Salvando...
                 </>
+              ) : editando ? (
+                'Salvar alterações'
               ) : mode === 'sequence' ? (
                 'Inscrever na sequência'
               ) : mode === 'scheduled' ? (
@@ -619,6 +777,25 @@ export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
           </div>
         </div>
       </DialogContent>
+
+      {followup && (
+        <ConfirmationDialog
+          isOpen={confirmarExclusao}
+          onClose={() => setConfirmarExclusao(false)}
+          onConfirm={async () => {
+            setExcluindo(true);
+            const ok = await deleteFollowup(followup.id);
+            setExcluindo(false);
+            if (ok) onClose();
+          }}
+          title="Excluir este follow up?"
+          description="O lembrete sai da lista e, se ele era um envio agendado, a mensagem não é mais enviada."
+          reversivel={false}
+          confirmText="Excluir follow up"
+          variant="destructive"
+          isLoading={excluindo}
+        />
+      )}
     </Dialog>
   );
 };

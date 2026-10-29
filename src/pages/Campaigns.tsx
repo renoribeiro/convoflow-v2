@@ -112,19 +112,24 @@ export default function Campaigns() {
             <TabsTrigger value="scheduled">Agendadas</TabsTrigger>
             <TabsTrigger value="completed">Concluídas</TabsTrigger>
             <TabsTrigger value="draft">Rascunhos</TabsTrigger>
+            {/* Cancelada sumia da tela (achado 92): agora tem aba própria. */}
+            <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="active">
-            <CampaignsList status="active" onEdit={handleEdit} />
+            <CampaignsList status="active" onEdit={handleEdit} onNova={() => setShowWizard(true)} />
           </TabsContent>
           <TabsContent value="scheduled">
-            <CampaignsList status="scheduled" onEdit={handleEdit} />
+            <CampaignsList status="scheduled" onEdit={handleEdit} onNova={() => setShowWizard(true)} />
           </TabsContent>
           <TabsContent value="completed">
-            <CampaignsList status="completed" onEdit={handleEdit} />
+            <CampaignsList status="completed" onEdit={handleEdit} onNova={() => setShowWizard(true)} />
           </TabsContent>
           <TabsContent value="draft">
-            <CampaignsList status="draft" onEdit={handleEdit} />
+            <CampaignsList status="draft" onEdit={handleEdit} onNova={() => setShowWizard(true)} />
+          </TabsContent>
+          <TabsContent value="cancelled">
+            <CampaignsList status="cancelled" onEdit={handleEdit} onNova={() => setShowWizard(true)} />
           </TabsContent>
         </Tabs>
       )}

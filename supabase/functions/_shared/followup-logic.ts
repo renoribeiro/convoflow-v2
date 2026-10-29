@@ -164,3 +164,20 @@ export function buildFollowupVariables(opts: {
     operador: opts.operatorName || '',
   };
 }
+
+/**
+ * Passos que valem para uma inscrição de sequência: a foto tirada quando ela
+ * entrou (steps_snapshot, migração 20261029000003) ou, para inscrição antiga
+ * sem foto, os passos de hoje. Editar a sequência não muda o caminho de quem
+ * já está nela (decisão D12 do dono).
+ */
+export function passosDaInscricao<T extends { step_order?: number | null }>(
+  inscricao: { steps_snapshot?: unknown } | null | undefined,
+  passosDaTabela: T[],
+): T[] {
+  const foto = inscricao?.steps_snapshot;
+  if (Array.isArray(foto) && foto.length > 0) {
+    return [...(foto as T[])].sort((a, b) => (a?.step_order ?? 0) - (b?.step_order ?? 0));
+  }
+  return passosDaTabela;
+}

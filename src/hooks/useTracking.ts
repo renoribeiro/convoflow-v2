@@ -146,16 +146,18 @@ export function useTrackingMetrics(dateRange?: DateRange) {
   });
 }
 
-// Hook para buscar fontes de tráfego
-export function useTrafficSources() {
+// Hook para buscar fontes de tráfego. A aba Fontes pede também as desligadas
+// (decisão D7: fonte com contatos só desliga, e precisa continuar à vista
+// para ser ligada de novo); o painel do Rastreamento fica só nas ativas.
+export function useTrafficSources(opcoes?: { incluirDesligadas?: boolean }) {
   return useSupabaseQuery({
     table: 'traffic_sources',
-    queryKey: ['traffic-sources'],
+    queryKey: ['traffic-sources', opcoes?.incluirDesligadas ? 'todas' : 'ativas'],
     select: `
       *,
       lead_tracking(count)
     `,
-    filters: [{ column: 'is_active', operator: 'eq', value: true }],
+    filters: opcoes?.incluirDesligadas ? [] : [{ column: 'is_active', operator: 'eq', value: true }],
     order: { column: 'created_at', ascending: false },
   });
 }
@@ -335,6 +337,44 @@ export function useUpdateTrafficSource() {
       toast({
         title: 'Não foi possível salvar a fonte',
         description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+/**
+ * Exclui uma fonte SEM contatos (decisão D7). Fonte com contatos o banco
+ * recusa (gatilho aa_fonte_com_contatos_so_desliga, 20261029000004): ela só
+ * desliga, para os relatórios guardarem a origem.
+ */
+export function useDeleteTrafficSource() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const { tenant } = useTenant();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!tenant?.id) throw new Error('Conta não encontrada');
+      const { error } = await supabase
+        .from('traffic_sources')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', tenant.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['traffic-sources'] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
+      toast({ title: 'Fonte excluída' });
+    },
+    onError: (error: { code?: string; message?: string }) => {
+      toast({
+        title: 'Não foi possível excluir a fonte',
+        description:
+          error?.code === '23503'
+            ? 'Esta fonte já tem contatos. Desligue a fonte em vez de excluir.'
+            : 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     },

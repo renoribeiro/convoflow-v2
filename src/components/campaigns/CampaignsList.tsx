@@ -8,7 +8,6 @@ import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { Pagination } from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
 import { useCan } from '@/contexts/TenantContext';
-import { CampaignReportsModal } from './CampaignReportsModal';
 import { CampaignDetailsModal } from './CampaignDetailsModal';
 import {
   Send,
@@ -20,12 +19,12 @@ import {
   Pause,
   Play,
   Copy,
-  BarChart2,
   XCircle,
   MessageSquare,
   Image as ImageIcon,
   Video,
   Eye,
+  Plus,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -110,13 +109,15 @@ function countdownLabel(dateString?: string | null): string {
 interface CampaignsListProps {
   status: CampaignStatus | 'active'; // 'active' tab includes paused
   onEdit: (campaign: Campaign) => void;
+  /** Abre o assistente: a primeira ação do vazio (B13). */
+  onNova?: () => void;
 }
 
 // ─────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────
 
-export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
+export const CampaignsList = ({ status, onEdit, onNova }: CampaignsListProps) => {
   const { data: campaigns = [], isLoading } = useCampaignsByStatus(
     status as CampaignStatus
   );
@@ -135,7 +136,6 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
   // campaigns.dispatch, como no servidor (policies campaigns_tenant_*).
   // O atendente só acompanha (achado 91).
   const podeAgir = useCan('campaigns.dispatch');
-  const [reportCampaignId, setReportCampaignId] = useState<string | null>(null);
   const [detailsCampaignId, setDetailsCampaignId] = useState<string | null>(null);
 
   const pagination = usePagination({ totalItems: campaigns.length, initialItemsPerPage: 6 });
@@ -165,11 +165,17 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
       cancelled: 'canceladas',
       draft: 'em rascunho',
     };
+    // Primeira ação para quem cria campanha; o atendente só lê (B13).
     return (
       <EmptyState
         icon={<Send className="w-10 h-10" />}
         title="Nenhuma campanha encontrada"
-        description={`Não há campanhas ${emptyLabels[status] ?? status} no momento.`}
+        description={
+          podeAgir && onNova
+            ? `Não há campanhas ${emptyLabels[status] ?? status} no momento. Para falar com muitos contatos de uma vez, crie uma campanha.`
+            : `Não há campanhas ${emptyLabels[status] ?? status} no momento.`
+        }
+        action={podeAgir && onNova ? { label: 'Nova Campanha', onClick: onNova, icon: <Plus className="w-4 h-4 mr-2" /> } : undefined}
       />
     );
   }
@@ -182,7 +188,6 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
             key={campaign.id}
             campaign={campaign}
             onEdit={onEdit}
-            onViewReport={(id) => setReportCampaignId(id)}
             onViewDetails={(id) => setDetailsCampaignId(id)}
             onDispatchNow={() => setDisparoAlvo(campaign)}
             isDispatching={scheduleCampaign.isPending}
@@ -268,13 +273,6 @@ export const CampaignsList = ({ status, onEdit }: CampaignsListProps) => {
         icon={<XCircle className="h-5 w-5 text-red-500" />}
       />
 
-      {reportCampaignId && (
-        <CampaignReportsModal
-          isOpen
-          onClose={() => setReportCampaignId(null)}
-        />
-      )}
-
       <CampaignDetailsModal
         campaignId={detailsCampaignId}
         onClose={() => setDetailsCampaignId(null)}
@@ -300,10 +298,9 @@ function rotuloDeDisparo(total: number): string {
 
 interface CampaignCardProps {
   campaign: Campaign;
-  /** campaigns.dispatch: sem ela, o cartão só mostra (ver detalhes e relatório). */
+  /** campaigns.dispatch: sem ela, o cartão só mostra os detalhes. */
   podeAgir: boolean;
   onEdit: (c: Campaign) => void;
-  onViewReport: (id: string) => void;
   onViewDetails: (id: string) => void;
   onDispatchNow: (id: string) => void;
   isDispatching: boolean;
@@ -318,7 +315,6 @@ function CampaignCard({
   campaign,
   onEdit,
   podeAgir,
-  onViewReport,
   onViewDetails,
   onDispatchNow,
   isDispatching,
@@ -339,6 +335,7 @@ function CampaignCard({
   const isPaused = campaign.status === 'paused';
   const isScheduled = campaign.status === 'scheduled';
   const isCompleted = campaign.status === 'completed';
+  const isCancelled = campaign.status === 'cancelled';
   // "Disparar agora" only when nothing was actually sent yet (the backend guard also enforces this).
   const canDispatch = podeAgir && sent === 0 && (isDraft || isScheduled || isActive);
 
@@ -397,13 +394,12 @@ function CampaignCard({
                   Editar
                 </DropdownMenuItem>
               )}
+              {/* "Ver Relatório" saiu (decisão D10): abria o relatório de todas as
+                  campanhas, não o desta. O desta campanha é "Ver detalhes"; o do
+                  conjunto é o botão "Relatórios" no topo da tela. */}
               <DropdownMenuItem onClick={() => onViewDetails(campaign.id)}>
                 <Eye className="mr-2 h-4 w-4" />
                 Ver detalhes
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onViewReport(campaign.id)}>
-                <BarChart2 className="mr-2 h-4 w-4" />
-                Ver Relatório
               </DropdownMenuItem>
               {podeAgir && (
                 <DropdownMenuItem onClick={() => onDuplicate(campaign)}>
@@ -475,16 +471,19 @@ function CampaignCard({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            {isDraft ? `Editado ${relativeDate(campaign.updated_at)}` : `Criado ${relativeDate(campaign.created_at)}`}
+            {isDraft ? `Editada ${relativeDate(campaign.updated_at)}` : `Criada ${relativeDate(campaign.created_at)}`}
           </span>
           <div className="flex items-center gap-3">
             {isScheduled && campaign.scheduled_at && (
               <span className="text-blue-600 font-medium">
-                Agendado {countdownLabel(campaign.scheduled_at)}
+                Agendada {countdownLabel(campaign.scheduled_at)}
               </span>
             )}
             {isCompleted && campaign.completed_at && (
-              <span>Concluído {relativeDate(campaign.completed_at)}</span>
+              <span>Concluída {relativeDate(campaign.completed_at)}</span>
+            )}
+            {isCancelled && campaign.cancelled_at && (
+              <span>Cancelada {relativeDate(campaign.cancelled_at)}</span>
             )}
             {podeAgir && isDraft && (
               <Button size="sm" variant="outline" onClick={() => onEdit(campaign)}>

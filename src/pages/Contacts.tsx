@@ -229,6 +229,12 @@ export default function Contacts() {
             channel={channel}
             canLinkChannels={hasInstagram}
             onEdit={(id) => { setSelectedContact(id); setIsModalOpen(true); }}
+            onNovoContato={() => setIsModalOpen(true)}
+            onLimparFiltros={() => {
+              setFilters({ search: '', stage: '', source: '', tags: [] });
+              setChannelChoice('all');
+              setActiveInstanceId(null);
+            }}
           />
         </div>
       </div>

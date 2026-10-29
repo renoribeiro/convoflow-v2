@@ -168,23 +168,23 @@ export default function Followups() {
         </TabsList>
 
         <TabsContent value="pending">
-          <FollowupsList status="pending" filters={filters} />
+          <FollowupsList status="pending" filters={filters} onNovo={() => setShowScheduler(true)} />
         </TabsContent>
 
         <TabsContent value="today">
-          <FollowupsList status="today" filters={filters} />
+          <FollowupsList status="today" filters={filters} onNovo={() => setShowScheduler(true)} />
         </TabsContent>
 
         <TabsContent value="scheduled">
-          <FollowupsList status="scheduled" filters={filters} />
+          <FollowupsList status="scheduled" filters={filters} onNovo={() => setShowScheduler(true)} />
         </TabsContent>
 
         <TabsContent value="overdue">
-          <FollowupsList status="overdue" filters={filters} />
+          <FollowupsList status="overdue" filters={filters} onNovo={() => setShowScheduler(true)} />
         </TabsContent>
 
         <TabsContent value="completed">
-          <FollowupsList status="completed" filters={filters} />
+          <FollowupsList status="completed" filters={filters} onNovo={() => setShowScheduler(true)} />
         </TabsContent>
 
         <TabsContent value="sequences">

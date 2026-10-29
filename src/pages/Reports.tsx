@@ -61,7 +61,7 @@ export default function Reports() {
         </TabsList>
 
         <TabsContent value="templates" className="space-y-6">
-          <ReportTemplates />
+          <ReportTemplates onCriar={() => setActiveTab('builder')} />
         </TabsContent>
 
         <TabsContent value="builder" className="space-y-6">

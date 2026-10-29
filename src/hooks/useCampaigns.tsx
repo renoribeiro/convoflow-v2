@@ -58,6 +58,11 @@ export interface Campaign {
   delivered_count: number | null;
   read_count: number | null;
   replied_count: number | null;
+  require_opt_in?: boolean | null;
+  is_template?: boolean | null;
+  template_name?: string | null;
+  template_language?: string | null;
+  template_params?: unknown[] | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -152,7 +157,7 @@ export function useCampaignsByStatus(status: CampaignStatus | 'paused') {
           `id, tenant_id, whatsapp_instance_id, name, description, status,
            message_type, total_recipients, sent_count, failed_count,
            delivered_count, read_count, replied_count,
-           scheduled_at, started_at, completed_at, paused_at, created_at, updated_at,
+           scheduled_at, started_at, completed_at, paused_at, cancelled_at, created_at, updated_at,
            whatsapp_instance:whatsapp_instances(name, status)`
         )
         .eq('tenant_id', tenantId)

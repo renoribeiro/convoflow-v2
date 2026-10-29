@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { EmptyState } from '@/components/shared/EmptyState'
-import { CheckCircle, Clock, Phone, Mail, MessageSquare, Calendar, Edit, Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { CheckCircle, Clock, Plus, Phone, Mail, MessageSquare, Calendar, Edit, Trash2, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useFollowups } from '@/hooks/useFollowups'
-import { FollowupEditModal } from '@/components/FollowupEditModal'
+import { FollowupScheduler } from '@/components/followups/FollowupScheduler'
 import type { IndividualFollowup } from '@/lib/followups/types'
 import { toast } from 'sonner'
 import { CLASSES_DE_SITUACAO } from '@/components/shared/StatusBadge'
@@ -32,12 +32,14 @@ interface FollowupsListProps {
     dateFrom?: Date;
     dateTo?: Date;
   }
+  /** Abre o "Novo Follow up": a primeira ação do vazio (B13). */
+  onNovo?: () => void
 }
 
 
 
-export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
-  const { followups, loading, updateFollowup, deleteFollowup, completeFollowup, getFollowupsByStatus, getOverdueFollowups } = useFollowups()
+export const FollowupsList = ({ status, filters, onNovo }: FollowupsListProps) => {
+  const { followups, loading, completeFollowup, getFollowupsByStatus, getOverdueFollowups } = useFollowups()
   const [selectedFollowup, setSelectedFollowup] = useState<IndividualFollowup | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [completingFollowupId, setCompletingFollowupId] = useState<string | null>(null)
@@ -285,7 +287,8 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
       <EmptyState
         icon={<Clock className="w-full h-full" />}
         title={`Nenhum follow up ${NOME_DO_FILTRO[status] ?? 'aqui'}`}
-        description='Quando houver follow ups assim, eles aparecem aqui. Para criar um, clique em "Novo Follow up".'
+        description="Quando houver follow ups assim, eles aparecem aqui."
+        action={onNovo ? { label: 'Novo Follow up', onClick: onNovo, icon: <Plus className="w-4 h-4 mr-2" /> } : undefined}
       />
     );
   }
@@ -410,13 +413,10 @@ export const FollowupsList = ({ status, filters }: FollowupsListProps) => {
         </div>
       )}
 
-      <FollowupEditModal
-        followup={selectedFollowup}
-        isOpen={isEditModalOpen}
-        onClose={handleCloseModal}
-        onSave={updateFollowup}
-        onDelete={deleteFollowup}
-      />
+      {/* Editar usa o formulário de criar (achado 98). */}
+      {isEditModalOpen && selectedFollowup && (
+        <FollowupScheduler followup={selectedFollowup} onClose={handleCloseModal} />
+      )}
     </>
   )
 }

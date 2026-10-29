@@ -83,12 +83,57 @@ interface ContactsTableProps {
   /** A Loja tem Instagram: só então o menu oferece vincular WhatsApp ↔ Instagram. */
   canLinkChannels?: boolean;
   onEdit: (id: string) => void;
+  /** Primeira ação do vazio sem filtro (B13). */
+  onNovoContato?: () => void;
+  /** Primeira ação do vazio com filtro: volta à lista inteira (B13). */
+  onLimparFiltros?: () => void;
 }
 
 
 
 
-export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', canLinkChannels = false, onEdit }: ContactsTableProps) => {
+/**
+ * O vazio da lista (lote 6c, B13). Com filtro, a ação é "Limpar filtros", e o
+ * texto diz o que filtrou (antes, só com etiqueta, a tela mandava "adicionar o
+ * primeiro contato" numa Loja cheia de contatos). Sem filtro, "Novo contato".
+ */
+export function vazioDosContatos(
+  filters: ContactsTableProps['filters'],
+  channel: string,
+  whatsappInstanceId: string | null | undefined,
+  onNovoContato?: () => void,
+  onLimparFiltros?: () => void,
+) {
+  const temEtiqueta = filters.tags.length > 0;
+  const temOutroFiltro =
+    !!filters.search?.trim() || !!filters.stage || !!filters.source || channel !== 'all' || !!whatsappInstanceId;
+  const limpar = onLimparFiltros ? { label: 'Limpar filtros', onClick: onLimparFiltros } : undefined;
+
+  if (temEtiqueta && !temOutroFiltro) {
+    const uma = filters.tags.length === 1;
+    return {
+      title: uma ? 'Nenhum contato com esta etiqueta' : 'Nenhum contato com estas etiquetas',
+      description: uma
+        ? 'Nenhum contato tem a etiqueta escolhida nos filtros. Limpe o filtro para ver todos.'
+        : 'Nenhum contato tem alguma das etiquetas escolhidas nos filtros. Limpe o filtro para ver todos.',
+      action: limpar,
+    };
+  }
+  if (temEtiqueta || temOutroFiltro) {
+    return {
+      title: 'Nenhum contato encontrado',
+      description: 'Nenhum contato combina com a busca e os filtros escolhidos.',
+      action: limpar,
+    };
+  }
+  return {
+    title: 'Nenhum contato ainda',
+    description: 'Os contatos chegam sozinhos quando alguém escreve para o número da Loja. Para cadastrar um à mão, use Novo Contato.',
+    action: onNovoContato ? { label: 'Novo Contato', onClick: onNovoContato } : undefined,
+  };
+}
+
+export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', canLinkChannels = false, onEdit, onNovoContato, onLimparFiltros }: ContactsTableProps) => {
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;
     contactId: string | null;
@@ -581,15 +626,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         </div>
 
         {filteredContacts.length === 0 ? (
-          <EmptyState
-            icon={<Users />}
-            title="Nenhum contato encontrado"
-            description={
-              filters.search || filters.stage || filters.source || channel !== 'all'
-                ? 'Tente ajustar os filtros de busca'
-                : 'Adicione seu primeiro contato para começar'
-            }
-          />
+          <EmptyState icon={<Users />} {...vazioDosContatos(filters, channel, whatsappInstanceId, onNovoContato, onLimparFiltros)} />
         ) : (
           // Uma coluna, dois modos (ver ResponsiveTable). No cartão: nome/telefone
           // lideram, etapa e etiquetas vêm como chips, fonte e última interação

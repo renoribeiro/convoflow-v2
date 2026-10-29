@@ -33,6 +33,8 @@ interface NewConversationModalProps {
   onConversationCreated?: (contactId: string) => void;
   /** Celular: botão só com o ícone, no topo da página, no lugar do botão largo da lista. */
   icone?: boolean;
+  /** No vazio da lista (decisão D8): botão pequeno "Nova conversa", sem a marca do botão do topo. */
+  noVazio?: boolean;
 }
 
 type Modo = 'template' | 'texto';
@@ -85,7 +87,7 @@ async function buscarAlvo(tenantId: string, instanceId: string, variantes: strin
   return { contato, ultimaEntradaEm: ultima?.created_at ?? null };
 }
 
-export const NewConversationModal = ({ onConversationCreated, icone = false }: NewConversationModalProps) => {
+export const NewConversationModal = ({ onConversationCreated, icone = false, noVazio = false }: NewConversationModalProps) => {
   const [open, setOpen] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -354,7 +356,12 @@ export const NewConversationModal = ({ onConversationCreated, icone = false }: N
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {/* Largo: ocupa a linha inteira, o espaçamento fica por conta de quem usa. */}
-        {icone ? (
+        {noVazio ? (
+          <Button size="sm">
+            <MessageSquarePlus className="w-4 h-4 mr-2" />
+            Nova conversa
+          </Button>
+        ) : icone ? (
           <Button size="icon" className="h-9 w-9 flex-shrink-0" aria-label="Nova Conversa" data-new-conversation>
             <MessageSquarePlus className="w-4 h-4" />
           </Button>

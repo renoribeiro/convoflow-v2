@@ -68,6 +68,8 @@ vi.mock('./InstanceSelector', () => ({
   },
 }));
 vi.mock('./NewConversationModal', () => ({ NewConversationModal: () => <div data-testid="nova-conversa" /> }));
+// O vazio (decisão D8) tem teste próprio: VazioDeConversas.test.tsx.
+vi.mock('./VazioDeConversas', () => ({ VazioDeConversas: () => <div data-testid="vazio" /> }));
 vi.mock('react-intersection-observer', () => ({ useInView: () => ({ ref: vi.fn(), inView: false }) }));
 
 import { ConversationsList } from './ConversationsList';

@@ -530,6 +530,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Chega "ainda está disponível o apartamento do anúncio?". Você responde em minutos e o contato já entra na base com nome e telefone, pronto para acompanhar no Funil.',
     tips: [
+      'Lista vazia: se a Loja ainda não tem número de WhatsApp, quem configura números (Gestor e Gerente) vê "Conectar número", que leva à tela Números de WhatsApp; o Atendente lê que deve pedir ao Gestor da Loja. Com número, o vazio oferece "Nova conversa" para você falar primeiro.',
       'A visão "Por pendência" (o botão ao lado de "Lista"; no celular ele se chama "Pendência") é opcional e só classifica as conversas já carregadas na tela. Role a lista para incluir as mais antigas.',
       'No número da pílula, "12" é o total da fila e "12+" quer dizer "pelo menos 12": as pílulas "Todas", "Minhas", "Sem responsável", "Não lidas" e "Arquivadas" sabem o total; "Aguardando", "Não respondidas", "Em atendimento" e "Responsável indisponível" contam só o que já foi carregado, e o "+" some quando você rola até o fim.',
       'A lista se atualiza sozinha a cada poucos segundos, então numa fila filtrada entram conversas que estavam fora da tela conforme você trabalha. Acompanhe o número da pílula: é ele que mostra a fila diminuindo.',
@@ -676,6 +677,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Você marca com a etiqueta "interesse cobertura" quem pediu alto padrão. Quando entra um lançamento nesse perfil, a campanha vai só para essa etiqueta em vez de ir para a base toda.',
     tips: [
+      'Lista vazia com filtro ligado (busca, etapa, fonte, etiqueta, canal ou número): clique em "Limpar filtros" para voltar a ver todos. Com só etiquetas no filtro, a tela diz que nenhum contato tem a etiqueta escolhida. Sem filtro nenhum, o vazio oferece "Novo Contato".',
       'Campos personalizados são preenchidos automaticamente pelo chatbot quando você usa "Salvar resposta como variável". Não precisa criar o campo antes.',
       'Padronize as etiquetas em minúscula e sem acento ("cliente quente"): fica muito mais fácil de acertar na hora de separar o público.',
       'Contato sem etiqueta nenhuma é contato que nunca vai entrar numa campanha separada por etiqueta.',
@@ -728,6 +730,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Não há o que configurar para anúncios: a origem chega junto com a primeira mensagem e o anúncio vira uma fonte sozinho.',
       'Abra a aba Resumo e escolha o período (o único filtro da aba). Os números são só dos contatos que chegaram nesse intervalo. A comparação de cada cartão é com o período anterior de mesmo tamanho.',
       'Use a aba Fontes para ver quantos contatos cada anúncio trouxe. Para organizar uma origem que você controla por fora (link na bio, portal, indicação), clique em "Nova fonte", no topo, ou em "Adicionar fonte", na aba: nome, tipo e os códigos de campanha (Origem, Meio e Campanha, os UTM), e a tela monta o link para você copiar. Troque o começo do link pelo endereço da sua página.',
+      'Para tirar uma fonte da lista, clique na lixeira dela. Fonte sem contatos é excluída depois da confirmação. Fonte com contatos não pode ser excluída: a janela diz quantos contatos chegaram por ela e oferece "Desligar fonte", para os relatórios continuarem mostrando de onde eles vieram. A fonte desligada continua na aba, como "Inativa", e o olho ao lado liga de novo.',
       'A aba Análises abre os mesmos contatos por dia, por fonte e por etapa do funil.',
     ],
     example:
@@ -753,13 +756,14 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Na segunda etapa você vê a lista do que vai no relatório. É a lista completa: contatos, conversas, mensagens, contatos por etapa do funil e três números de atendimento da Loja inteira: a 1ª resposta de uma pessoa (mediana, isto é, na metade das conversas iniciadas no período alguém do time respondeu em até aquele tempo; não conta bot nem campanha), quantas conversas esperam uma pessoa agora (e quantas delas sem responsável) e quantas conversas do período ficaram sem resposta de pessoa. Não há nada para marcar ou desmarcar.',
       'Na última etapa marque "Enviar por Email", "Enviar por WhatsApp" ou os dois, escreva os "Destinatários" (emails e números com DDD, separados por vírgula) e clique em "Enviar agora". O envio é feito uma vez, na hora.',
       'Mande primeiro para você mesmo e confira os números no email antes de mandar para o dono ou o cliente.',
-      'Para repassar sozinho toda semana, abra a aba Agendamentos e crie um agendamento: nome, frequência, horário e os emails que recebem. Email digitado no campo entra na lista mesmo sem clicar no +.',
+      'Para repassar sozinho toda semana, abra a aba Agendamentos e crie um agendamento: nome, frequência, horário e os emails que recebem. Email digitado no campo entra na lista mesmo sem clicar no +. Para pausar um agendamento, use a chave do cartão; para tirar de vez, a lixeira, que pede confirmação. Os relatórios que já saíram continuam na aba Entregas.',
       'Vai gerar sempre o mesmo recorte? Na aba Criar, salve um modelo com nome, descrição e tipo. Ele aparece na primeira aba, e "Gerar" abre o envio já preenchido. Para mudar um modelo, exclua e salve outro: não há edição.',
       'Acompanhe a aba Entregas depois do primeiro disparo. É lá que aparece se o envio saiu ou falhou.',
     ],
     example:
       'Relatório de segunda-feira com contatos novos, conversas novas, quanto tempo o cliente esperou por uma pessoa e quantas conversas ainda esperam alguém, para o dono acompanhar a semana sem pedir print para ninguém.',
     tips: [
+      'Sem nenhum modelo salvo, a aba Modelos de relatório mostra "Criar relatório", que leva direto à aba Criar.',
       '"Reenviar", na aba Entregas, pede confirmação: o relatório é gerado de novo, com os números de agora, e vai outra vez para todos os destinatários.',
       'O envio agendado é por email. Não há envio recorrente por WhatsApp: no agendamento você informa endereços de email, não telefones.',
       'O horário é o de Brasília e o disparo acontece na janela dos 5 minutos seguintes: marcar 09:00 significa receber entre 09:00 e 09:05.',
@@ -834,14 +838,17 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É o envio ativo: você fala com muita gente de uma vez, sem esperar o cliente escrever. É também a função com mais risco de bloqueio do número, então cuidar da lista e do texto faz parte do trabalho.',
     howToConfigure: [
       'Monte primeiro o público: escolha por etiqueta em vez de mandar para a base toda. Marque "Só para quem aceita campanhas" para mandar só a quem autorizou; na "Planilha", aí, só sai o telefone de um contato que já aceita campanhas. Marcado ou não, quem não quer campanhas e quem está bloqueado ficam sempre de fora.',
-      'Em número da API Oficial aparece "Tipo de envio", com "Texto livre" já marcado. Para falar com quem não escreveu nas últimas 24 horas, clique em "Template aprovado" (mensagem pronta que a Meta aprovou), escolha o template e preencha os "Parâmetros do corpo". Com template, o que sai é ele: o campo "Mensagem" não é enviado. Em número de QR Code não existe essa escolha.',
+      'Em número da API Oficial aparece "Tipo de envio", com "Texto livre" já marcado. Para falar com quem não escreveu nas últimas 24 horas, clique em "Template aprovado" (mensagem pronta que a Meta aprovou) e escolha o template na lista: só os aprovados aparecem. O texto dele aparece embaixo, com um campo "Variável" para cada trecho a preencher. Com template, o que sai é ele: o tipo e o campo "Mensagem" somem. Se a lista não carregar, use "Digitar o nome à mão". Em número de QR Code não existe essa escolha.',
       'Escreva a mensagem e clique nos botões de variável ("Nome do contato", "Primeiro nome"...) para personalizar: eles inserem {name}, {first_name} no texto.',
+      'No passo Agendamento, "Agendar" pede data e hora no horário de Brasília. Hoje também vale, desde que a hora ainda não tenha passado; se passou, a tela avisa e não deixa avançar.',
+      'Precisa parar no meio? "Salvar como rascunho" está em todos os passos e guarda o que já foi preenchido (basta ter nome e número). A campanha fica na aba "Rascunhos", com "Continuar editando".',
       'Faça um teste com poucos contatos antes de liberar a lista inteira.',
       'Depois do disparo, acompanhe a entrega e as respostas na própria campanha.',
     ],
     example:
       'Lançamento na zona sul: campanha só para a etiqueta "interesse zona sul", com "Oi {first_name}, saiu a planta do lançamento que você me pediu".',
     tips: [
+      'Aba vazia: quem dispara campanha (Gestor e Gerente) encontra ali mesmo o botão "Nova Campanha".',
       'Mensagem idêntica para milhares de números é o caminho mais rápido para o WhatsApp bloquear a linha. Personalize e envie em lotes.',
       'Quem nunca falou com você tende a denunciar como spam. Priorize contatos que já conversaram.',
       'Número da API Oficial recém-conectado tem um teto diário de envio na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time, e o dia vira à meia noite de Brasília. Quem ficar fora do teto naquele dia aparece nos Detalhes da campanha como "Não enviada" e não é reenviado sozinho. Monte outra campanha para esses contatos no dia seguinte, ou planeje a primeira semana em lotes.',
@@ -849,7 +856,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Antes de agir, o sistema pergunta: "Disparar agora" (e "Confirmar e Disparar" no assistente) mostra para quantos contatos e por qual número a campanha vai sair; "Cancelar" e "Excluir" avisam que não dá para desfazer; e fechar o assistente com algo preenchido pergunta se você quer sair sem salvar.',
       'O total que aparece antes de disparar é uma estimativa: quem não quer campanhas, quem está bloqueado e, com a caixa marcada, quem não autorizou saem na hora do envio. O número de verdade fica nos Detalhes.',
       'Número da API Oficial com "Texto livre": quem está fora da janela de 24 horas não recebe e aparece como "Não enviada" nos Detalhes, com o motivo. Número de QR Code não tem essa trava.',
-      'As abas mostram "Ativas" (inclui as pausadas), "Agendadas", "Concluídas" e "Rascunhos". Campanha cancelada não aparece em nenhuma delas.',
+      'As abas mostram "Ativas" (inclui as pausadas), "Agendadas", "Concluídas", "Rascunhos" e "Canceladas". A cancelada fica guardada com os números do que chegou a sair; dela dá para "Ver detalhes", "Duplicar" (para disparar de novo) e "Excluir".',
+      'Para ver como foi UMA campanha, abra o menu dela e clique em "Ver detalhes". Para comparar várias de uma vez, use o botão "Relatórios" no topo da tela.',
       'Campanha é só WhatsApp. Contato do Instagram não aparece na lista de "Contatos" do passo Público e não conta no total das etiquetas, mesmo com a etiqueta escolhida. Para falar com ele, responda pelo direct em Conversas.',
     ],
     category: 'tela',
@@ -915,13 +923,15 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Contato visitou o imóvel e sumiu: follow up em 1 dia ("o que você achou?"), em 3 dias (condições de pagamento) e em 7 dias (um imóvel parecido).',
     tips: [
+      'Aba vazia: o botão "Novo Follow up" aparece no meio da lista, além do topo da tela.',
       'A tela se atualiza sozinha: um follow up criado, concluído, cancelado ou enviado (por você, por outra pessoa da Loja ou por uma automação) aparece em poucos segundos nos contadores, na aba aberta e no Calendário, sem recarregar. Abrir e fechar o Calendário ou o "Novo Follow up" não interrompe isso.',
-      'Excluir um follow up (no botão de excluir da janela de edição) pede confirmação: se ele era um envio agendado, a mensagem não sai mais.',
+      'Para mudar um follow up, clique em "Editar" no cartão: abre o mesmo formulário do "Novo Follow up", com o modo e o contato fixos. Dá para trocar o tipo, a mensagem (ou o template), a data, a hora, a prioridade, a recorrência e as notas, e clicar em "Salvar alterações". A hora é sempre a de Brasília e fica como você escolheu. Data e hora que você não mexeu não são cobradas, então dá para anotar algo numa tarefa atrasada sem remarcar.',
+      '"Excluir", no canto da janela de edição, pede confirmação: se era um envio agendado, a mensagem não sai mais. Para marcar como feito, use "Concluir" no cartão.',
       'Quando o cliente responde, o sistema já para a sequência e cancela as mensagens agendadas dele. Você não precisa limpar a lista na mão. O que ele cancela é ajustável em Configurações › Follow ups.',
       'Tarefa manual é a exceção: por padrão ela sobrevive à resposta, porque foi você quem planejou aquele passo.',
       'O modo decide o que acontece: "Manual" é só um lembrete para quem atende, sem mensagem; "Agendado" exige a mensagem e envia sozinho na hora marcada; "Sequência" inscreve o contato numa cadência pronta. Em "Agendado", "Recorrência" repete o envio na frequência e no número de vezes escolhidos.',
       'O envio agendado sai pelo número do follow up; sem ele, pelo número da conversa do contato; sem nenhum dos dois, pelo número ativo mais antigo da Loja.',
-      'Número da API Oficial: o envio "Agendado" é só texto. Se o cliente não escreveu nas últimas 24 horas, ele não sai e o follow up fica com o aviso "Configure um template aprovado no follow up.". Para esse caso, mande o template aprovado pela conversa.',
+      'Número da API Oficial: no modo "Agendado" aparece "Tipo de envio". "Mensagem" é texto livre e só chega a quem escreveu nas últimas 24 horas; fora disso o follow up fica com o aviso "Configure um template aprovado no follow up.". "Template aprovado" chega a qualquer contato: escolha o template na lista (só os aprovados aparecem) e preencha cada "Variável", que pode levar {{primeiro_nome}}. Se a lista não carregar, use "Digitar o nome à mão".',
       'Contato do Instagram só aparece no modo "Manual" do "Novo Follow up". Em "Agendado" e "Sequência" ele sai da lista, porque esses modos mandam WhatsApp sozinhos e ele não tem telefone. Se você escolher um contato do Instagram no Manual e trocar para um desses modos, a escolha é desfeita e você escolhe de novo.',
       'Cadência curta demais irrita e cadência longa demais perde a venda. Uma semana é o intervalo em que a maioria dos contatos ainda lembra de você.',
     ],
@@ -943,10 +953,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Sequência "Pós-visita": mensagem em 1 dia ("o que você achou?"), tarefa "Ligar para o cliente" em 3 dias, mensagem em 7 dias com um imóvel parecido. O contato que responde no segundo dia sai da cadência; o que não responde recebe as três etapas.',
     tips: [
-      'Excluir uma sequência pede confirmação: os contatos que estão nela saem e não recebem os próximos passos.',
-      'Não dá para editar uma sequência depois de criada. Para mudar um passo, crie outra e inscreva os próximos contatos nela. Deixe a antiga ligada enquanto houver gente terminando nela: desligar encerra essas inscrições no próximo passo.',
+      'Excluir uma sequência pede confirmação: os contatos que estão nela saem e não recebem os próximos passos. Para trocar os passos sem tirar ninguém, use "Editar".',
+      'Para mudar uma sequência, clique em "Editar" no cartão dela: abre o mesmo formulário, preenchido. Os passos novos valem só para quem entrar daqui em diante; quem já está nela segue os passos da época em que entrou, até o fim, e a janela diz quantos contatos estão nessa situação. Já "Ativa" e "Parar ao receber resposta" valem na hora para todos.',
       '"Excluir" apaga a sequência, os passos e TODAS as inscrições em andamento de uma vez, sem desfazer. As tarefas e mensagens que já tinham sido criadas ficam na lista de Follow ups, mas soltas, sem a cadência a que pertenciam.',
-      'Número da API Oficial: um passo de WhatsApp para quem não escreveu nas últimas 24 horas não sai, porque o passo não leva template. Planeje a cadência para quem ainda conversa com você, ou use tarefa manual.',
+      'Loja com número da API Oficial: cada passo de WhatsApp escolhe "Mensagem" ou "Template aprovado". Mensagem livre não sai para quem não escreveu nas últimas 24 horas; template aprovado sai para qualquer um. O template vem da lista dos aprovados da conta (com mais de uma conta, escolha qual), e cada "Variável" ganha um campo. Passo de template só sai por número da API Oficial: contato inscrito por número de QR Code não recebe esse passo.',
       'A opção "Parar ao receber resposta" é da sequência, não da Loja: a aba Configurações › Follow ups decide o que a resposta cancela nos follow ups avulsos, e não manda nesta trava.',
       'As mensagens saem pelo número da Loja em que o contato foi inscrito, nos horários dos passos, também de madrugada, se a conta cair de madrugada. Pense nos intervalos em dias inteiros.',
     ],

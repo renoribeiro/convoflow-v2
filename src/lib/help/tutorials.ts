@@ -691,7 +691,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'A aprovação do template acontece do lado da Meta, no Gerenciador do WhatsApp Business; o ConvoFlow não cria nem submete template. Cadastre lá o texto que você quer disparar e espere a aprovação antes de continuar.',
         note:
-          'Guarde o nome exato do template aprovado e o idioma. É esse nome que você digita no ConvoFlow; qualquer diferença de letra faz o envio falhar.',
+          'Depois de aprovado, ele aparece sozinho na lista do ConvoFlow (confira em Templates). Se ainda não apareceu, clique em "Atualizar" ao lado da lista.',
       },
       {
         title: 'Decida o tipo de envio a partir da janela de 24 horas',
@@ -715,7 +715,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'No passo Conteúdo, escolha o número e o tipo de envio',
         body:
-          'Dê um nome à campanha, escolha o "Número de WhatsApp" e marque "Só para quem aceita campanhas" para enviar só a quem autorizou. Com número da API Oficial aparece "Tipo de envio", com "Texto livre" marcado: clique em "Template aprovado", escolha o template e preencha os "Parâmetros do corpo" ({{1}}, {{2}}). Número de QR Code não tem essa escolha: ele envia o texto.',
+          'Dê um nome à campanha, escolha o "Número de WhatsApp" e marque "Só para quem aceita campanhas" para enviar só a quem autorizou. Com número da API Oficial aparece "Tipo de envio", com "Texto livre" marcado: clique em "Template aprovado" e escolha o template na lista, que só mostra os aprovados. O texto dele aparece embaixo, com um campo "Variável" para cada trecho a preencher; use {first_name} para cada contato receber o próprio nome. Com template, o campo de mensagem some: o que sai é o template. Número de QR Code não tem essa escolha: ele envia o texto.',
       },
       {
         title: 'No passo Público, escolha Etiquetas, Contatos ou Planilha',
@@ -725,12 +725,12 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'No passo Agendamento, escolha "Enviar imediatamente" ou "Agendar"',
         body:
-          'Agendar exige data. Horário comercial responde melhor: disparo de madrugada chega com o cliente dormindo e vira bloqueio ou denúncia na manhã seguinte.',
+          'Agendar exige data e hora, sempre no horário de Brasília. Hoje também vale, desde que a hora ainda não tenha passado. Horário comercial responde melhor: disparo de madrugada chega com o cliente dormindo e vira bloqueio ou denúncia na manhã seguinte.',
       },
       {
         title: 'No passo Revisão, confira e dispare',
         body:
-          'Confira o resumo. Na primeira vez, comece pequeno: volte ao passo Público e escolha poucos contatos, porque a Revisão não corta a lista. Se preferir revisar depois, use "Salvar como Rascunho". Confirmado, a campanha entra na fila de envio, que roda a cada 5 minutos.',
+          'Confira o resumo. Na primeira vez, comece pequeno: volte ao passo Público e escolha poucos contatos, porque a Revisão não corta a lista. Se preferir revisar depois, use "Salvar como rascunho" (ele está em todos os passos, não só no último). Confirmado, a campanha entra na fila de envio, que roda a cada 5 minutos.',
         note:
           'Número da API Oficial recém-conectado tem teto diário na primeira semana. É proteção contra bloqueio pela Meta, não limite do plano: 50 por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; depois disso o teto some. Se a lista passar do teto, o resto fica como "Não enviada" nos Detalhes e não sai sozinho no dia seguinte. Planeje a primeira semana em lotes.',
       },

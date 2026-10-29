@@ -12,6 +12,8 @@ import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 export interface SequenceWithSteps extends FollowupSequence {
   steps: FollowupSequenceStep[]
+  /** Contatos com inscrição ativa agora: seguem os passos da época em que entraram. */
+  inscritosAtivos: number
 }
 
 function delayToMs(unit: SequenceDelayUnit, amount: number): number {
@@ -31,8 +33,9 @@ export function useFollowupSequences() {
       setLoading(true)
       const { data, error } = await supabase
         .from('followup_sequences')
-        .select('*, followup_sequence_steps(*)')
+        .select('*, followup_sequence_steps(*), followup_sequence_enrollments(count)')
         .eq('tenant_id', tenant.id)
+        .eq('followup_sequence_enrollments.status', 'active')
         .order('created_at', { ascending: false })
       if (error) throw error
       const mapped: SequenceWithSteps[] = (data || []).map((s: any) => ({
@@ -40,6 +43,7 @@ export function useFollowupSequences() {
         steps: ((s.followup_sequence_steps as FollowupSequenceStep[]) || []).sort(
           (a, b) => a.step_order - b.step_order,
         ),
+        inscritosAtivos: s.followup_sequence_enrollments?.[0]?.count ?? 0,
       }))
       setSequences(mapped)
     } catch (err) {
@@ -97,6 +101,41 @@ export function useFollowupSequences() {
     } catch (err) {
       toast.error(`Não foi possível criar a sequência. ${motivoDoErro(err)}`)
       return null
+    }
+  }
+
+  /**
+   * Edita nome, descrição, chaves e passos numa transação só
+   * (update_followup_sequence, migração 20261029000003). Quem já está inscrito
+   * guardou a foto dos passos ao entrar e segue com ela (decisão D12).
+   */
+  const updateSequence = async (id: string, values: SequenceFormValues): Promise<boolean> => {
+    try {
+      const { error } = await (supabase as any).rpc('update_followup_sequence', {
+        p_sequence_id: id,
+        p_name: values.name,
+        p_description: values.description ?? null,
+        p_is_active: values.is_active,
+        p_stop_on_reply: values.stop_on_reply,
+        p_steps: values.steps.map((st) => ({
+          action_type: st.action_type,
+          delay_amount: st.delay_amount,
+          delay_unit: st.delay_unit,
+          message_body: st.message_body ?? null,
+          template_name: st.template_name ?? null,
+          template_language: st.template_language ?? null,
+          template_params: st.template_params ?? null,
+          task_title: st.task_title ?? null,
+          task_priority: st.task_priority ?? 'medium',
+        })),
+      })
+      if (error) throw error
+      await fetchSequences()
+      toast.success('Sequência salva. Vale para quem entrar daqui em diante.')
+      return true
+    } catch (err) {
+      toast.error(`Não foi possível salvar a sequência. ${motivoDoErro(err)}`)
+      return false
     }
   }
 
@@ -175,6 +214,7 @@ export function useFollowupSequences() {
     sequences,
     loading,
     createSequence,
+    updateSequence,
     deleteSequence,
     toggleActive,
     enrollContact,

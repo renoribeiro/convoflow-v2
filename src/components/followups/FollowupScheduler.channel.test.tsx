@@ -22,6 +22,7 @@ vi.mock('@/hooks/useFollowupSequences', () => ({
   useFollowupSequences: () => ({ sequences: [], loading: false, enrollContact: vi.fn() }),
 }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenantId: () => 't1' }));
+vi.mock('@/hooks/useWhatsAppApi', () => ({ useWhatsAppInstancesSafe: () => ({ instances: [], isLoading: false }) }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { rpc: vi.fn(async () => ({ data: [], error: null })), from: vi.fn() },
 }));

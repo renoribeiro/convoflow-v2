@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { NewConversationModal } from './NewConversationModal';
+import { VazioDeConversas } from './VazioDeConversas';
 import { ConversationViewToggle } from './ConversationViewToggle';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRealtimeConversations } from '@/hooks/useRealtimeMessages';
@@ -173,7 +174,10 @@ export const ConversationsList = ({
   onChannelsChange,
   compacto = false,
 }: ConversationsListProps) => {
-  const { instances } = useWhatsAppInstancesSafe();
+  const { instances, isLoading: carregandoNumeros } = useWhatsAppInstancesSafe();
+  // O vazio da lista muda quando a Loja não tem número (decisão D8). Enquanto
+  // os números carregam, nada de "Nenhum número" piscando.
+  const temNumeroDeWhatsApp = carregandoNumeros ? null : instancesOfChannel(instances, 'whatsapp').length > 0;
   // O seletor mostra só as instâncias do canal aberto.
   const channelInstances = useMemo(
     () => (channel ? instancesOfChannel(instances, channel) : instances),
@@ -654,11 +658,7 @@ export const ConversationsList = ({
               ))}
             </div>
           ) : visibleConversations.length === 0 ? (
-            <EmptyState
-              icon={<MessageSquare className="h-10 w-10" />}
-              title="Nenhuma conversa encontrada"
-              description="Confira os filtros acima. Conversa nova aparece aqui sozinha assim que o cliente escreve."
-            />
+            <VazioDeConversas temNumero={temNumeroDeWhatsApp} ladoInstagram={isInstagramSide} />
           ) : !groupByAttendanceEnabled ? (
             visibleConversations.map(renderConversation)
           ) : (

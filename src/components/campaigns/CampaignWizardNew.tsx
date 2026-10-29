@@ -20,7 +20,19 @@ import { useCampaignMutations, type Campaign, type CampaignCreateInput, type Mes
 import { logger } from '@/lib/logger';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
+import { EscolherTemplate } from '@/components/templates/EscolherTemplate';
+import { templateCompleto } from '@/lib/templates/escolherTemplate';
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
+import {
+  dataHoraCurtaEmBrasilia,
+  dataParaCalendario,
+  diaDoCalendario,
+  diaEmBrasilia,
+  diaJaPassouEmBrasilia,
+  horaEmBrasilia,
+  horarioNoFuturo,
+  instanteEmBrasilia,
+} from '@/lib/datas/brasilia';
 import { ptBR } from 'date-fns/locale';
 import {
   X,
@@ -231,9 +243,12 @@ function initState(campaign?: Campaign): WizardState {
     contactSearch: '',
     contactStageFilter: 'all',
     sendMode: campaign?.scheduled_at ? 'scheduled' : 'immediate',
-    scheduledDate: campaign?.scheduled_at ? new Date(campaign.scheduled_at) : null,
+    // Dia e hora no relógio de Brasília, como foram escolhidos (lote 6c).
+    scheduledDate: campaign?.scheduled_at
+      ? dataParaCalendario(diaEmBrasilia(new Date(campaign.scheduled_at)))
+      : null,
     scheduledTime: campaign?.scheduled_at
-      ? format(new Date(campaign.scheduled_at), 'HH:mm')
+      ? horaEmBrasilia(new Date(campaign.scheduled_at))
       : '09:00',
     timezone: campaign?.timezone ?? 'America/Sao_Paulo',
     delay_between_messages: campaign?.delay_between_messages ?? 5,
@@ -241,11 +256,13 @@ function initState(campaign?: Campaign): WizardState {
     business_hours_start: campaign?.business_hours_start ?? '09:00',
     business_hours_end: campaign?.business_hours_end ?? '18:00',
     daily_send_limit: campaign?.daily_send_limit?.toString() ?? '',
-    require_opt_in: false,
-    is_template: false,
-    template_name: '',
-    template_language: 'pt_BR',
-    template_params: [],
+    // Editar uma campanha de template abria em "Texto livre" e com o nome
+    // vazio: salvar apagava o template. Agora volta o que foi gravado.
+    require_opt_in: campaign?.require_opt_in ?? false,
+    is_template: campaign?.is_template ?? false,
+    template_name: campaign?.template_name ?? '',
+    template_language: campaign?.template_language ?? 'pt_BR',
+    template_params: Array.isArray(campaign?.template_params) ? campaign.template_params.map(String) : [],
   };
 }
 
@@ -294,6 +311,7 @@ export const CampaignWizard = ({
 
   const selectedInstance = instances.find((i) => i.id === state.whatsapp_instance_id) ?? null;
   const isOfficialProvider = selectedInstance?.provider === 'official';
+  const usaTemplate = isOfficialProvider && state.is_template;
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -387,13 +405,16 @@ export const CampaignWizard = ({
     return `${h}h ${m}min`;
   };
 
+  // O dia do calendário e a hora digitada são de Brasília, em qualquer
+  // computador (antes valia o fuso do navegador).
   const scheduledAt = (): string | null => {
     if (state.sendMode !== 'scheduled' || !state.scheduledDate) return null;
-    const [hh, mm] = state.scheduledTime.split(':');
-    const d = new Date(state.scheduledDate);
-    d.setHours(Number(hh), Number(mm), 0, 0);
-    return d.toISOString();
+    return instanteEmBrasilia(diaDoCalendario(state.scheduledDate), state.scheduledTime)?.toISOString() ?? null;
   };
+
+  // Hoje vale, desde que a hora ainda não tenha passado (achado 95).
+  const horarioValido =
+    !!state.scheduledDate && horarioNoFuturo(diaDoCalendario(state.scheduledDate), state.scheduledTime);
 
   const scheduleLabel = (): string => {
     const at = scheduledAt();
@@ -406,7 +427,7 @@ export const CampaignWizard = ({
     if (days > 0) parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);
     if (mins > 0) parts.push(`${mins}min`);
-    return parts.length ? `em ${parts.join(' ')} (${format(d, "dd/MM HH:mm", { locale: ptBR })})` : 'Agora';
+    return parts.length ? `em ${parts.join(' ')} (${dataHoraCurtaEmBrasilia(d)}, horário de Brasília)` : 'Agora';
   };
 
   // ── Step validation ────────────────────────
@@ -414,7 +435,9 @@ export const CampaignWizard = ({
   const canProceed = () => {
     if (step === 1) {
       const ok = state.name.trim().length > 0 && state.whatsapp_instance_id;
-      if (isOfficialProvider && state.is_template) return ok && state.template_name.trim().length > 0;
+      if (usaTemplate) {
+        return ok && templateCompleto({ nome: state.template_name, idioma: state.template_language, parametros: state.template_params });
+      }
       if (state.message_type === 'text') return ok && state.message_template.trim().length > 0;
       return ok && !!state.media_url;
     }
@@ -424,7 +447,7 @@ export const CampaignWizard = ({
       if (state.audience_type === 'contact_list') return state.selectedContactIds.length > 0;
     }
     if (step === 3) {
-      if (state.sendMode === 'scheduled') return !!state.scheduledDate;
+      if (state.sendMode === 'scheduled') return horarioValido;
     }
     return true;
   };
@@ -511,10 +534,10 @@ export const CampaignWizard = ({
       name: state.name.trim(),
       description: state.description.trim() || null,
       whatsapp_instance_id: state.whatsapp_instance_id,
-      message_type: state.message_type,
-      message_template: state.message_template,
-      media_url: state.media_url,
-      media_caption: state.media_caption || null,
+      message_type: usaTemplate ? 'text' : state.message_type,
+      message_template: usaTemplate ? '' : state.message_template,
+      media_url: usaTemplate ? null : state.media_url,
+      media_caption: usaTemplate ? null : state.media_caption || null,
       audience_type: state.audience_type,
       audience_config: audienceConfig,
       target_tags:
@@ -530,12 +553,28 @@ export const CampaignWizard = ({
       timezone: state.timezone,
       scheduled_at: at,
       require_opt_in: state.require_opt_in,
-      is_template: isOfficialProvider && state.is_template,
-      template_name: isOfficialProvider && state.is_template ? state.template_name.trim() : null,
+      is_template: usaTemplate,
+      template_name: usaTemplate ? state.template_name.trim() : null,
       template_language: state.template_language || 'pt_BR',
-      template_params: isOfficialProvider && state.is_template && state.template_params.length > 0 ? state.template_params : null,
+      template_params: usaTemplate && state.template_params.length > 0 ? state.template_params : null,
       status,
     };
+  };
+
+  // O banco exige nome e número em toda campanha, rascunho também.
+  const faltaParaRascunho = !state.name.trim()
+    ? 'Dê um nome à campanha para salvar o rascunho.'
+    : !state.whatsapp_instance_id
+    ? 'Escolha o número de WhatsApp para salvar o rascunho.'
+    : null;
+
+  const pedirRascunho = () => {
+    if (faltaParaRascunho) {
+      toast({ title: 'Ainda não dá para salvar', description: faltaParaRascunho, variant: 'destructive' });
+      setStep(1);
+      return;
+    }
+    void handleSaveDraft();
   };
 
   const handleSaveDraft = async () => {
@@ -726,85 +765,24 @@ export const CampaignWizard = ({
         </div>
       )}
 
-      {/* Template fields — official provider + is_template */}
-      {isOfficialProvider && state.is_template && (
+      {/* Template aprovado: escolhido da lista da conta Meta do número, que
+          monta os campos das variáveis (achado 93, decisão D12). */}
+      {usaTemplate && (
         <div className="space-y-4 border rounded-lg p-4 bg-muted/30">
-          <h4 className="font-medium text-sm">Configuração do Template</h4>
-
-          <div className="space-y-2">
-            <Label htmlFor="template-name">Nome do template *</Label>
-            <Input
-              id="template-name"
-              placeholder="Ex: pedido_confirmado"
-              value={state.template_name}
-              onChange={(e) => set('template_name', e.target.value)}
-            />
-            <p className="text-xs text-muted-foreground">
-              Nome exato do template aprovado no Gerenciador do WhatsApp Business.
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="template-language">Idioma do template</Label>
-            <Select
-              value={state.template_language}
-              onValueChange={(v) => set('template_language', v)}
-            >
-              <SelectTrigger id="template-language">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pt_BR">Português (Brasil)</SelectItem>
-                <SelectItem value="en_US">English (US)</SelectItem>
-                <SelectItem value="es">Español</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label>Parâmetros do corpo</Label>
-              <button
-                type="button"
-                className="text-xs text-primary hover:underline"
-                onClick={() => set('template_params', [...state.template_params, ''])}
-              >
-                + Adicionar parâmetro
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valores para {'{{1}}'}, {'{{2}}'}, etc. Pode usar {'{name}'}, {'{first_name}'}, {'{phone}'}, {'{email}'}.
-            </p>
-            {state.template_params.length === 0 && (
-              <p className="text-sm text-muted-foreground italic">Nenhum parâmetro adicionado.</p>
-            )}
-            {state.template_params.map((param, idx) => (
-              <div key={idx} className="flex gap-2 items-center">
-                <span className="text-xs text-muted-foreground w-6 shrink-0">
-                  {`{{${idx + 1}}}`}
-                </span>
-                <Input
-                  value={param}
-                  placeholder={`Ex: {name}`}
-                  onChange={(e) => {
-                    const updated = [...state.template_params];
-                    updated[idx] = e.target.value;
-                    set('template_params', updated);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-destructive"
-                  onClick={() => set('template_params', state.template_params.filter((_, i) => i !== idx))}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+          <EscolherTemplate
+            instanceId={state.whatsapp_instance_id || null}
+            valor={{ nome: state.template_name, idioma: state.template_language, parametros: state.template_params }}
+            aoMudar={(v) =>
+              setState((prev) => ({ ...prev, template_name: v.nome, template_language: v.idioma, template_params: v.parametros }))
+            }
+            dicaDasVariaveis="Pode usar {name}, {first_name}, {phone} ou {email}: cada contato recebe o dele."
+            idBase="campanha-tpl"
+          />
         </div>
       )}
 
+      {/* Com template, o que sai é ele: tipo e texto livre somem (achado 93). */}
+      {!usaTemplate && (<>
       {/* Message type cards */}
       <div className="space-y-2">
         <Label>Tipo de Mensagem *</Label>
@@ -895,7 +873,7 @@ export const CampaignWizard = ({
           }}
           onClear={() => set('media_url', null)}
         >
-          {state.media_url && (
+          {!usaTemplate && state.media_url && (
             <img
               src={state.media_url}
               alt="Preview"
@@ -956,6 +934,7 @@ export const CampaignWizard = ({
           </div>
         </MediaUploadSection>
       )}
+      </>)}
     </div>
   );
 
@@ -1264,26 +1243,36 @@ export const CampaignWizard = ({
                   mode="single"
                   selected={state.scheduledDate ?? undefined}
                   onSelect={(d) => set('scheduledDate', d ?? null)}
-                  disabled={(d) => d < new Date()}
+                  disabled={(d) => diaJaPassouEmBrasilia(diaDoCalendario(d))}
                   locale={ptBR}
                 />
               </PopoverContent>
             </Popover>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="sched-time">Hora</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="sched-time">Hora</Label>
+              <DicaDoCampo rotulo="Hora" texto="Hora de Brasília. Para hoje, vale qualquer hora que ainda não passou." />
+            </div>
             <Input
               id="sched-time"
               type="time"
               value={state.scheduledTime}
               onChange={(e) => set('scheduledTime', e.target.value)}
+              aria-invalid={!!state.scheduledDate && !horarioValido}
             />
           </div>
         </div>
       )}
 
       {state.sendMode === 'scheduled' && state.scheduledDate && (
-        <p className="text-sm text-blue-600 font-medium">{scheduleLabel()}</p>
+        horarioValido ? (
+          <p className="text-sm text-info font-medium">{scheduleLabel()}</p>
+        ) : (
+          <p className="text-sm text-destructive" role="alert">
+            Esse horário já passou. Escolha uma hora depois de agora (agora são {horaEmBrasilia(new Date())} em Brasília).
+          </p>
+        )
       )}
 
       {/* Dispatch settings */}
@@ -1391,7 +1380,7 @@ export const CampaignWizard = ({
         </div>
 
         {/* Message preview */}
-        {state.message_type === 'text' && state.message_template && (
+        {!usaTemplate && state.message_type === 'text' && state.message_template && (
           <div>
             <Label className="mb-2 block">Prévia da Mensagem</Label>
             <div className="flex justify-end">
@@ -1474,17 +1463,22 @@ export const CampaignWizard = ({
             Anterior
           </Button>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-2">
+            {/* Rascunho em todo passo (achado 95): antes só no último, e quem
+                parava no meio perdia tudo. Campanha já em andamento não vira
+                rascunho: lá o botão é "Salvar alterações". */}
+            {!isInProgress && (
+              <Button
+                variant="outline"
+                onClick={pedirRascunho}
+                disabled={saving}
+              >
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                Salvar como rascunho
+              </Button>
+            )}
             {step === 4 ? (
               <>
-                <Button
-                  variant="outline"
-                  onClick={handleSaveDraft}
-                  disabled={saving || !state.name.trim()}
-                >
-                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                  Salvar como Rascunho
-                </Button>
                 <Button
                   onClick={() => (!isInProgress && state.sendMode !== 'scheduled' ? setPerguntarDisparo(true) : handleConfirm())}
                   disabled={saving || !canProceed()}
@@ -1515,7 +1509,7 @@ export const CampaignWizard = ({
         onClose={() => setPerguntarSaida(false)}
         onConfirm={onClose}
         title="Sair sem salvar?"
-        description={`O que você preencheu ${isEdit ? 'nesta edição' : 'nesta campanha'} se perde. Para guardar e continuar depois, use "Salvar como Rascunho" no último passo.`}
+        description={`O que você preencheu ${isEdit ? 'nesta edição' : 'nesta campanha'} se perde. Para guardar e continuar depois, use "Salvar como rascunho".`}
         confirmText="Sair sem salvar"
         cancelText="Continuar editando"
         variant="destructive"

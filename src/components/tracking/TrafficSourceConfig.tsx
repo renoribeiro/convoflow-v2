@@ -15,13 +15,16 @@ import {
   Settings,
   Eye,
   EyeOff,
-  Target
+  Target,
+  Trash2,
 } from 'lucide-react';
 import { SourceConfigModal } from './SourceConfigModal';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import {
   useTrafficSources,
   useCreateTrafficSource,
   useUpdateTrafficSource,
+  useDeleteTrafficSource,
 } from '@/hooks/useTracking';
 
 /**
@@ -109,9 +112,13 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
     }
   }, [pedidoNovaFonte]);
 
-  const { data, isLoading } = useTrafficSources();
+  const { data, isLoading } = useTrafficSources({ incluirDesligadas: true });
   const createSource = useCreateTrafficSource();
   const updateSource = useUpdateTrafficSource();
+  const deleteSource = useDeleteTrafficSource();
+  // Decisão D7: sem contatos, a fonte se exclui; com contatos, só desliga
+  // (a origem deles continua nos relatórios). A janela diz quantos são.
+  const [fonteParaTirar, setFonteParaTirar] = useState<TrafficSourceRow | null>(null);
 
   const sources = (data ?? []) as unknown as TrafficSourceRow[];
 
@@ -270,7 +277,8 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
                         size="icon"
                         onClick={() => toggleSourceStatus(source)}
                         disabled={updateSource.isPending}
-                        title={source.is_active ? 'Desativar fonte' : 'Ativar fonte'}
+                        title={source.is_active ? 'Desligar fonte' : 'Ligar fonte'}
+                        aria-label={`${source.is_active ? 'Desligar' : 'Ligar'} a fonte ${source.name}`}
                       >
                         {source.is_active ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
@@ -279,8 +287,18 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
                         size="icon"
                         onClick={() => { setSelectedSource(source); setShowModal(true); }}
                         title="Configurar fonte"
+                        aria-label={`Configurar a fonte ${source.name}`}
                       >
                         <Settings className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setFonteParaTirar(source)}
+                        title="Excluir fonte"
+                        aria-label={`Excluir a fonte ${source.name}`}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>
                   </div>
@@ -290,6 +308,55 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
           )}
         </CardContent>
       </Card>
+
+      {fonteParaTirar && (() => {
+        const contatos = leadsOf(fonteParaTirar);
+        if (contatos === 0) {
+          return (
+            <ConfirmationDialog
+              isOpen
+              onClose={() => setFonteParaTirar(null)}
+              onConfirm={async () => { await deleteSource.mutateAsync(fonteParaTirar.id); }}
+              title={`Excluir a fonte "${fonteParaTirar.name}"?`}
+              description="Nenhum contato chegou por esta fonte. Ela sai da lista de vez."
+              reversivel={false}
+              confirmText="Excluir fonte"
+              variant="destructive"
+              isLoading={deleteSource.isPending}
+              icon={<Trash2 className="h-5 w-5 text-red-500" />}
+            />
+          );
+        }
+        const quantos = contatos === 1 ? '1 contato chegou' : `${contatos.toLocaleString('pt-BR')} contatos chegaram`;
+        return (
+          <ConfirmationDialog
+            isOpen
+            onClose={() => setFonteParaTirar(null)}
+            onConfirm={async () => {
+              if (fonteParaTirar.is_active) await updateSource.mutateAsync({ id: fonteParaTirar.id, is_active: false });
+            }}
+            title={`A fonte "${fonteParaTirar.name}" não pode ser excluída`}
+            description={
+              <>
+                <p>
+                  {quantos} por esta fonte. Ela fica guardada para os relatórios continuarem mostrando de onde
+                  {contatos === 1 ? ' ele veio' : ' eles vieram'}.
+                </p>
+                <p>
+                  {fonteParaTirar.is_active
+                    ? 'Você pode desligar a fonte: ela sai das fontes ativas e dá para ligar de novo quando quiser.'
+                    : 'Ela já está desligada.'}
+                </p>
+              </>
+            }
+            confirmText="Desligar fonte"
+            cancelText={fonteParaTirar.is_active ? 'Voltar' : 'Entendi'}
+            apenasAviso={!fonteParaTirar.is_active}
+            isLoading={updateSource.isPending}
+            icon={<EyeOff className="h-5 w-5" />}
+          />
+        );
+      })()}
 
       <SourceConfigModal
         open={showModal}

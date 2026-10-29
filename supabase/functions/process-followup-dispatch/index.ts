@@ -28,6 +28,7 @@ import {
   buildFollowupVariables,
   extractMessageId,
   isFreeFormBlocked,
+  passosDaInscricao,
   recurrenceChild,
   substituteVariables,
   type DelayUnit,
@@ -315,7 +316,7 @@ serve(async (req) => {
           .eq('sequence_id', enr.sequence_id)
           .order('step_order', { ascending: true })
 
-        await advanceEnrollment(supabase, enr, steps ?? [], new Date(), logger)
+        await advanceEnrollment(supabase, enr, passosDaInscricao(enr, steps ?? []), new Date(), logger)
         stats.advanced++
       }
     }
@@ -352,7 +353,9 @@ serve(async (req) => {
             .maybeSingle()
           seqCache.set(enr.sequence_id, seq)
         }
-        const steps = stepsCache.get(enr.sequence_id) ?? []
+        // A foto da inscrição manda: editar a sequência não muda o caminho de
+        // quem já está nela (20261029000003, decisão D12).
+        const steps = passosDaInscricao(enr, stepsCache.get(enr.sequence_id) ?? [])
         const seq = seqCache.get(enr.sequence_id)
 
         // Sequência inativa/excluída → encerra a inscrição.

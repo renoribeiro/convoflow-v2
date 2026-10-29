@@ -16,7 +16,8 @@ import {
   useToggleReportSchedule 
 } from '@/hooks/useReports';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Clock, Mail, MessageSquare, Plus, Edit, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, Mail, MessageSquare, Plus, Edit, AlertCircle, Trash2 } from 'lucide-react';
+import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 
 // Tipos baseados no schema do banco.
 // Nullable onde a coluna é nullable: a linha que vem do Supabase tem
@@ -120,6 +121,8 @@ export const ScheduleList = () => {
   const updateScheduleMutation = useUpdateReportSchedule();
   const deleteScheduleMutation = useDeleteReportSchedule();
   const toggleScheduleMutation = useToggleReportSchedule();
+  // Excluir agendamento (B10): o botão faltava, embora a função existisse.
+  const [paraExcluir, setParaExcluir] = useState<Schedule | null>(null);
 
   const handleEdit = (schedule: Schedule) => {
     setSelectedSchedule(schedule);
@@ -368,13 +371,23 @@ export const ScheduleList = () => {
                         });
                       }}
                       disabled={toggleScheduleMutation.isPending}
+                      aria-label={`${schedule.is_active ? 'Pausar' : 'Ligar'} o envio de ${schedule.name}`}
                     />
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="icon"
                       onClick={() => handleEdit(schedule)}
+                      aria-label={`Editar o agendamento ${schedule.name}`}
                     >
                       <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setParaExcluir(schedule)}
+                      aria-label={`Excluir o agendamento ${schedule.name}`}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
                     </Button>
                   </div>
                 </div>
@@ -397,6 +410,21 @@ export const ScheduleList = () => {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmationDialog
+        isOpen={!!paraExcluir}
+        onClose={() => setParaExcluir(null)}
+        onConfirm={async () => {
+          if (paraExcluir) await deleteScheduleMutation.mutateAsync(paraExcluir.id);
+        }}
+        title="Excluir o agendamento?"
+        description={`"${paraExcluir?.report_templates?.name || paraExcluir?.name || ''}" deixa de ser enviado. Os relatórios que já saíram continuam na aba Entregas. Para só pausar, use a chave ao lado.`}
+        reversivel={false}
+        confirmText="Excluir agendamento"
+        variant="destructive"
+        isLoading={deleteScheduleMutation.isPending}
+        icon={<Trash2 className="h-5 w-5 text-red-500" />}
+      />
 
       <ScheduleModal
         open={showModal}

@@ -75,7 +75,7 @@ vi.mock('@/components/shared/PageHeader', () => ({
     </div>
   ),
 }));
-vi.mock('@/components/FollowupEditModal', () => ({ FollowupEditModal: () => null }));
+vi.mock('@/components/followups/FollowupScheduler', () => ({ FollowupScheduler: () => null }));
 vi.mock('@/components/followups/SequencesManager', () => ({ SequencesManager: () => null }));
 
 import Followups from './Followups';

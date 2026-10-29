@@ -8,6 +8,7 @@ import {
   substituteVariables,
   buildFollowupVariables,
   extractMessageId,
+  passosDaInscricao,
 } from '../../../supabase/functions/_shared/followup-logic';
 
 describe('addDelay', () => {
@@ -175,5 +176,30 @@ describe('extractMessageId', () => {
   it('null/indefinido', () => {
     expect(extractMessageId(null)).toBeNull();
     expect(extractMessageId({})).toBeNull();
+  });
+});
+
+describe('passosDaInscricao (editar sequência vale só para quem entra depois)', () => {
+  const hoje = [
+    { step_order: 1, message_body: 'novo 1' },
+    { step_order: 2, message_body: 'novo 2' },
+    { step_order: 3, message_body: 'novo 3' },
+  ];
+
+  it('a inscrição com foto segue os passos da foto, em ordem', () => {
+    const foto = [
+      { step_order: 2, message_body: 'antigo 2' },
+      { step_order: 1, message_body: 'antigo 1' },
+    ];
+    const passos = passosDaInscricao({ steps_snapshot: foto }, hoje);
+    expect(passos.map((p) => p.message_body)).toEqual(['antigo 1', 'antigo 2']);
+    // O passo 3 de hoje não existe para ela: a cadência dela acaba no 2.
+    expect(passos.find((p) => p.step_order === 3)).toBeUndefined();
+  });
+
+  it('inscrição sem foto (antiga) usa os passos de hoje', () => {
+    expect(passosDaInscricao({ steps_snapshot: null }, hoje)).toBe(hoje);
+    expect(passosDaInscricao({ steps_snapshot: [] }, hoje)).toBe(hoje);
+    expect(passosDaInscricao(null, hoje)).toBe(hoje);
   });
 });

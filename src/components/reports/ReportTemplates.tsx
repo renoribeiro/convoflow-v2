@@ -60,7 +60,12 @@ const translateCategory = (category: string | null | undefined) => {
   return translations[(category ?? '').toLowerCase()] || category || 'Geral';
 };
 
-export const ReportTemplates = () => {
+interface ReportTemplatesProps {
+  /** Leva à aba Criar: a primeira ação do vazio (B13). */
+  onCriar?: () => void;
+}
+
+export const ReportTemplates = ({ onCriar }: ReportTemplatesProps = {}) => {
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const { toast } = useToast();
   const { tenant, loading: tenantLoading } = useTenant();
@@ -326,7 +331,13 @@ export const ReportTemplates = () => {
                   ? 'Um modelo guarda o relatório que você usa sempre, para gerar de novo com um clique. Crie o primeiro na aba Criar.'
                   : `Nenhum modelo na categoria "${selectedCategory}".`
               }
-              action={selectedCategory !== 'Todos' ? { label: 'Ver todos os modelos', onClick: () => setSelectedCategory('Todos') } : undefined}
+              action={
+                selectedCategory !== 'Todos'
+                  ? { label: 'Ver todos os modelos', onClick: () => setSelectedCategory('Todos') }
+                  : onCriar
+                  ? { label: 'Criar relatório', onClick: onCriar }
+                  : undefined
+              }
             />
           </CardContent>
         </Card>
