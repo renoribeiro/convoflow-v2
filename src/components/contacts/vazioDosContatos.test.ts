@@ -35,13 +35,14 @@ describe('vazioDosContatos', () => {
   });
 
   it('busca, etapa, fonte, canal ou número: frase geral e Limpar filtros', () => {
-    for (const [f, canal, numero] of [
+    const casos: Array<[typeof SEM_FILTRO, string, string | null]> = [
       [{ ...SEM_FILTRO, search: 'ana' }, 'all', null],
       [{ ...SEM_FILTRO, stage: 'e1' }, 'all', null],
       [{ ...SEM_FILTRO, source: 'f1', tags: ['t1'] }, 'all', null],
       [SEM_FILTRO, 'instagram', null],
       [SEM_FILTRO, 'all', 'inst-1'],
-    ] as const) {
+    ];
+    for (const [f, canal, numero] of casos) {
       const v = vazioDosContatos(f, canal, numero, novo, limpar);
       expect(v.title).toBe('Nenhum contato encontrado');
       expect(v.action?.label).toBe('Limpar filtros');

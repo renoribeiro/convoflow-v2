@@ -366,13 +366,17 @@ export function useDeleteReportSchedule() {
     mutationFn: async (id: string) => {
       if (!tenant?.id) throw new Error(CONTA_NAO_CARREGADA);
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('report_schedules')
         .delete()
         .eq('id', id)
-        .eq('tenant_id', tenant.id);
-      
+        .eq('tenant_id', tenant.id)
+        .select('id');
+
       if (error) throw error;
+      // DELETE barrado pela RLS não dá erro, só não apaga: sem linha apagada,
+      // nada de "Agendamento excluído".
+      if (!data || data.length === 0) throw Object.assign(new Error('nada excluído'), { code: 'SEM_LINHA' });
     },
     onSuccess: () => {
       toast({
@@ -381,10 +385,13 @@ export function useDeleteReportSchedule() {
       });
       queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
     },
-    onError: (error) => {
+    onError: (error: { code?: string }) => {
       toast({
         title: 'Não foi possível excluir o agendamento',
-        description: 'Ocorreu um erro ao excluir o agendamento.',
+        description:
+          error?.code === 'SEM_LINHA'
+            ? 'Nada foi excluído: seu cargo não pode mudar os agendamentos desta Loja. Peça ao Gestor da Loja.'
+            : 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
     },

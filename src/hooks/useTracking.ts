@@ -356,12 +356,17 @@ export function useDeleteTrafficSource() {
   return useMutation({
     mutationFn: async (id: string) => {
       if (!tenant?.id) throw new Error('Conta não encontrada');
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('traffic_sources')
         .delete()
         .eq('id', id)
-        .eq('tenant_id', tenant.id);
+        .eq('tenant_id', tenant.id)
+        .select('id');
       if (error) throw error;
+      // DELETE barrado pela RLS não dá erro: só não apaga. Sem linha apagada,
+      // a tela não pode dizer "Fonte excluída" (o Gerente só lê as fontes de
+      // uma Loja filha).
+      if (!data || data.length === 0) throw Object.assign(new Error('nada excluído'), { code: 'SEM_LINHA' });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['traffic-sources'] });
@@ -374,6 +379,8 @@ export function useDeleteTrafficSource() {
         description:
           error?.code === '23503'
             ? 'Esta fonte já tem contatos. Desligue a fonte em vez de excluir.'
+            : error?.code === 'SEM_LINHA'
+            ? 'Nada foi excluído: seu cargo não pode mudar as fontes desta Loja. Peça ao Gestor da Loja.'
             : 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });
