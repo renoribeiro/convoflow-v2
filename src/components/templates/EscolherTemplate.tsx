@@ -8,6 +8,7 @@ import { AlertCircle, Loader2, RefreshCw, X } from 'lucide-react';
 import { useMetaTemplates, useMetaWabaGroups } from '@/hooks/useMetaTemplates';
 import {
   chaveDoTemplate,
+  motivoDaListaDeTemplates,
   parametrosParaTemplate,
   templatesAprovados,
   type TemplateEscolhido,
@@ -162,15 +163,15 @@ export function EscolherTemplate({ instanceId, valor, aoMudar, dicaDasVariaveis,
           {error && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                Não deu para carregar a lista de templates ({(error as Error).message}). Digite o nome à mão.
+              <AlertDescription className="text-xs break-words">
+                Não deu para carregar a lista de templates: {motivoDaListaDeTemplates((error as Error).message)}. Enquanto isso, digite o nome à mão.
               </AlertDescription>
             </Alert>
           )}
           {foraDaLista && !error && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
+              <AlertDescription className="text-xs break-words">
                 O template "{valor.nome}" não está entre os aprovados desta conta. Confira o nome ou escolha outro da lista.
               </AlertDescription>
             </Alert>

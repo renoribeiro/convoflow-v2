@@ -102,9 +102,10 @@ describe('EscolherTemplate', () => {
 
   it('se a lista não carrega, cai no nome à mão com o motivo', () => {
     estado.data = undefined;
-    estado.error = new Error('token vencido');
+    estado.error = new Error('Meta Cloud API Error (401): {"error":{"message":"Error validating access token: Session has expired","type":"OAuthException","code":190}}');
     render(<Montar />);
-    expect(screen.getByText(/Não deu para carregar a lista de templates \(token vencido\)/)).toBeInTheDocument();
+    expect(screen.getByText(/o acesso deste número à Meta venceu\. Reconecte o número em Números de WhatsApp/)).toBeInTheDocument();
+    expect(screen.queryByText(/OAuthException/)).toBeNull();
     expect(screen.getByLabelText('Nome do template *')).toBeInTheDocument();
   });
 

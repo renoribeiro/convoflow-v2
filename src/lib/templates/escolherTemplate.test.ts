@@ -5,6 +5,7 @@ import {
   templateCompleto,
   templateDoBanco,
   templatesAprovados,
+  motivoDaListaDeTemplates,
 } from './escolherTemplate';
 
 describe('escolherTemplate', () => {
@@ -41,5 +42,17 @@ describe('escolherTemplate', () => {
       parametros: ['1', 'b'],
     });
     expect(templateDoBanco({})).toEqual({ nome: '', idioma: 'pt_BR', parametros: [] });
+  });
+});
+
+describe('motivoDaListaDeTemplates', () => {
+  it('acesso vencido vira o que fazer', () => {
+    expect(motivoDaListaDeTemplates('Error validating access token: Session has expired')).toMatch(/Reconecte o número/);
+  });
+  it('sem wabaId', () => {
+    expect(motivoDaListaDeTemplates('connection_config.wabaId ausente')).toMatch(/identificação da conta/);
+  });
+  it('o resto não mostra inglês', () => {
+    expect(motivoDaListaDeTemplates('Internal Server Error')).toBe('a Meta não respondeu agora. Tente Atualizar daqui a pouco');
   });
 });

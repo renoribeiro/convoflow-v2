@@ -51,3 +51,18 @@ export function templateDoBanco(row: {
     parametros: Array.isArray(row.template_params) ? row.template_params.map((p) => String(p ?? '')) : [],
   };
 }
+
+/**
+ * O motivo da lista não carregar, em português. A Meta devolve JSON em inglês
+ * ("Error validating access token: Session has expired..."), que não diz à
+ * pessoa o que fazer.
+ */
+export function motivoDaListaDeTemplates(mensagem: string): string {
+  if (/access token|OAuthException|session has expired|"code":\s*190/i.test(mensagem)) {
+    return 'o acesso deste número à Meta venceu. Reconecte o número em Números de WhatsApp';
+  }
+  if (/wabaId/i.test(mensagem)) {
+    return 'este número não tem a identificação da conta do WhatsApp Business';
+  }
+  return 'a Meta não respondeu agora. Tente Atualizar daqui a pouco';
+}
