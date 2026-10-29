@@ -2,8 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
-import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
 import { credentialsForVault } from '../_shared/instance-credentials.ts';
+import { decideConnectTarget, targetTenantIdFor } from '../_shared/connect-target.ts';
 
 /**
  * Cria uma instância no servidor Evolution da plataforma.
@@ -24,6 +24,11 @@ import { credentialsForVault } from '../_shared/instance-credentials.ts';
  * Quem usa a chave é o servidor: whatsapp-instance-action (estado, QR,
  * desconectar), o webhook e os envios. Plano: docs/RUNBOOK_segredos_das_instancias.md.
  *
+ * EM QUE LOJA O NÚMERO NASCE (lote 6b, B2): na Loja aberta no topo, que o
+ * navegador manda em `tenant_id`. connect-target.ts confere cargo, alcance e
+ * que é Loja, ANTES de criar qualquer coisa na Evolution. Até 2026-10-29 o
+ * número nascia em `profiles.tenant_id` (para o Gerente, a Conta).
+ *
  * Endpoints conforme `.agent/skills/evolution-v2/SKILL.md` §2.5, §2.1, §2.8 e §7.1.
  */
 
@@ -33,6 +38,8 @@ interface ProvisionRequest {
   enableWebhookAutomation?: boolean;
   retryAttempts?: number;
   retryDelay?: number;
+  /** A Loja aberta no topo. Sem ela, vale a do perfil (Gerente = Conta = recusa). */
+  tenant_id?: string;
 }
 
 const WEBHOOK_EVENTS = [
@@ -91,21 +98,28 @@ Deno.serve(async (req: Request) => {
     .from('profiles')
     .select('tenant_id, role, status, capabilities')
     .eq('user_id', callerUser.id)
-    .single();
+    .maybeSingle();
 
-  if (!callerProfile?.tenant_id) {
-    return jsonResponse({ ok: false, error: 'Perfil sem Conta vinculada.' }, 403);
+  let body: ProvisionRequest;
+  try {
+    body = await req.json();
+  } catch {
+    return jsonResponse({ ok: false, error: 'Invalid JSON body' }, 400);
   }
 
-  if (callerProfile.status !== 'active') {
-    return jsonResponse({ ok: false, error: statusDenialMessage(callerProfile.status) }, 403);
-  }
-
-  if (!can(callerProfile.role, 'whatsapp.configure', callerProfile.capabilities)) {
-    return jsonResponse(
-      { ok: false, error: CAPABILITY_DENIAL_MESSAGES['whatsapp.configure'] },
-      403,
-    );
+  // Cargo, alcance e Loja (nunca Conta) ANTES de falar com a Evolution.
+  const targetId = targetTenantIdFor(callerProfile, body?.tenant_id);
+  const { data: targetTenant } = targetId
+    ? await supabaseAdmin.from('tenants').select('id, kind, parent_tenant_id').eq('id', targetId).maybeSingle()
+    : { data: null };
+  const target = decideConnectTarget({
+    caller: callerProfile,
+    requestedTenantId: body?.tenant_id,
+    targetTenant: targetTenant ?? null,
+  });
+  if (!target.ok) {
+    logger.warn('evolution-provision recusado', { reason: target.reason, userId: callerUser.id });
+    return jsonResponse({ ok: false, reason: target.reason, error: target.message }, target.status);
   }
 
   // As credenciais da plataforma. Ausentes = recusa explícita, com o nome do
@@ -126,13 +140,6 @@ Deno.serve(async (req: Request) => {
       },
       503,
     );
-  }
-
-  let body: ProvisionRequest;
-  try {
-    body = await req.json();
-  } catch {
-    return jsonResponse({ ok: false, error: 'Invalid JSON body' }, 400);
   }
 
   const instanceKey = (body.instance_key || '').trim();
@@ -340,7 +347,7 @@ Deno.serve(async (req: Request) => {
     .insert({
       instance_key: instanceKey,
       name: displayName,
-      tenant_id: callerProfile.tenant_id,
+      tenant_id: target.tenantId,
       provider: 'evolution',
       connection_config: {},
       status: 'disconnected',
@@ -380,7 +387,7 @@ Deno.serve(async (req: Request) => {
 
   logger.info('Instância Evolution provisionada', {
     instanceKey,
-    tenantId: callerProfile.tenant_id,
+    tenantId: target.tenantId,
     webhookConfigured,
   });
 

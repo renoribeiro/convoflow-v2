@@ -17,7 +17,7 @@ import {
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { useFollowups } from '@/hooks/useFollowups';
+import { useFollowupMutations } from '@/hooks/useFollowups';
 import { useFollowupSequences } from '@/hooks/useFollowupSequences';
 import { useContacts } from '@/hooks/useContacts';
 import { useTenantId } from '@/contexts/TenantContext';
@@ -53,7 +53,7 @@ const taskTemplates = [
 ];
 
 export const FollowupScheduler = ({ onClose }: FollowupSchedulerProps) => {
-  const { createFollowup } = useFollowups();
+  const { createFollowup } = useFollowupMutations();
   const { sequences, loading: sequencesLoading, enrollContact } = useFollowupSequences();
   const { contacts, loading: contactsLoading } = useContacts();
   const tenantId = useTenantId();

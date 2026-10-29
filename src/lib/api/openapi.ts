@@ -61,7 +61,7 @@ const respostas = (exemplo: unknown, lista = true) => ({
     headers: {
       'Cache-Control': { description: 'Sempre no-store.', schema: { type: 'string' } },
       'X-Limite-Restante-Minuto': { description: 'Pedidos que ainda cabem neste minuto, para esta chave.', schema: { type: 'integer' } },
-      'X-Limite-Restante-Dia': { description: 'Pedidos que ainda cabem hoje, para a Conta.', schema: { type: 'integer' } },
+      'X-Limite-Restante-Dia': { description: 'Pedidos que ainda cabem hoje, para a Conta. O dia da API vira à meia noite UTC (21h de Brasília).', schema: { type: 'integer' } },
     },
     content: {
       'application/json': {

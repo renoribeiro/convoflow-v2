@@ -10,7 +10,10 @@
 //
 // Agora, nesta ordem:
 //   1. quem chama tem `whatsapp.configure` e perfil ativo; o número nasce na
-//      Conta/Loja do perfil (a mesma regra do evolution-provision);
+//      Loja aberta no topo (`tenant_id` do pedido), conferida por
+//      connect-target.ts: o chamador alcança e é Loja, nunca Conta (lote 6b,
+//      B2; até 2026-10-29 nascia na Conta/Loja do PERFIL, e o do Gerente
+//      ficava preso na Conta);
 //   2. o endereço do servidor passa pelo bloqueio de rede interna
 //      (`safe-outbound-url.ts`) ANTES de qualquer chamada;
 //   3. o servidor responde em /api/health;
@@ -26,8 +29,9 @@
 // Regra pura com dependências injetadas: o Vitest roda sem Deno.
 // =============================================================================
 
-import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from './capabilities.ts';
 import type { ProviderRequest, ProviderResponse, ControlResult } from './instance-control.ts';
+import type { InstanceAccessTenant } from './instance-access.ts';
+import { decideConnectTarget, targetTenantIdFor } from './connect-target.ts';
 
 export interface WahaProvisionCaller {
   tenant_id: string | null;
@@ -38,6 +42,8 @@ export interface WahaProvisionCaller {
 
 export interface WahaProvisionDeps {
   caller: WahaProvisionCaller | null;
+  /** A linha de `tenants` da Loja de destino (null se não existe). */
+  loadTenant: (tenantId: string) => Promise<InstanceAccessTenant | null>;
   supabaseUrl: string;
   newInstanceId: () => string;
   newSecret: () => string;
@@ -69,15 +75,24 @@ function headers(apiKey: string): Record<string, string> {
 }
 
 export async function provisionWaha(
-  input: { name?: unknown; server_url?: unknown; api_key?: unknown; session_name?: unknown; engine?: unknown },
+  input: {
+    name?: unknown;
+    server_url?: unknown;
+    api_key?: unknown;
+    session_name?: unknown;
+    engine?: unknown;
+    tenant_id?: unknown;
+  },
   deps: WahaProvisionDeps,
 ): Promise<ControlResult> {
   const caller = deps.caller;
-  if (!caller?.tenant_id) return fail(403, 'no_profile', 'Perfil sem Conta vinculada.');
-  if (caller.status !== 'active') return fail(403, 'inactive', statusDenialMessage(caller.status ?? ''));
-  if (!can(caller.role, 'whatsapp.configure', caller.capabilities as Record<string, unknown> | null)) {
-    return fail(403, 'forbidden', CAPABILITY_DENIAL_MESSAGES['whatsapp.configure']);
-  }
+  const targetId = targetTenantIdFor(caller, input.tenant_id);
+  const target = decideConnectTarget({
+    caller,
+    requestedTenantId: input.tenant_id,
+    targetTenant: targetId ? await deps.loadTenant(targetId) : null,
+  });
+  if (!target.ok) return fail(target.status, target.reason, target.message);
 
   const name = typeof input.name === 'string' ? input.name.trim() : '';
   if (name.length < 3 || name.length > 50) return fail(400, 'invalid_name', 'O nome precisa ter de 3 a 50 caracteres.');
@@ -145,7 +160,7 @@ export async function provisionWaha(
 
   const { error: insertError } = await deps.insertInstance({
     id: instanceId,
-    tenant_id: caller.tenant_id,
+    tenant_id: target.tenantId,
     name,
     instance_key: session,
     provider: 'waha',

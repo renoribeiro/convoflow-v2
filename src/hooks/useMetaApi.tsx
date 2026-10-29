@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { callMetaSetup } from '@/services/metaApi';
@@ -10,7 +9,7 @@ type CreateMetaInstanceInput = OfficialInstanceInput;
 
 interface UseMetaApiReturn {
   loading: boolean;
-  createInstance: (input: CreateMetaInstanceInput) => Promise<void>;
+  createInstance: (input: CreateMetaInstanceInput, tenantId?: string) => Promise<void>;
   verifyConnection: (instanceId: string) => Promise<{ ok: boolean; error?: string }>;
 }
 
@@ -19,54 +18,28 @@ export const useMetaApi = (): UseMetaApiReturn => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const createInstance = async (input: CreateMetaInstanceInput) => {
+  /**
+   * Formulário manual (app próprio na Meta). Desde o lote 6b (2026-10-29) o
+   * navegador não grava a linha: manda tudo para `whatsapp-meta-setup`
+   * (modo `create_manual`), que confere a Loja, valida a chave na Meta e só
+   * então salva, na Loja aberta no topo. Antes a linha nascia aqui, na Conta
+   * do perfil, e era apagada se a Meta recusasse.
+   */
+  const createInstance = async (input: CreateMetaInstanceInput, tenantId?: string) => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .single();
-      if (!profile?.tenant_id) throw new Error('Conta do usuário não encontrada');
-
-      const connectionConfig = {
-        phoneNumberId: input.phoneNumberId,
-        wabaId: input.wabaId,
-        graphApiVersion: input.graphApiVersion || 'v20.0',
-      };
-
-      const { data: inserted, error: insertError } = await supabase
-        .from('whatsapp_instances')
-        .insert({
-          tenant_id: profile.tenant_id,
-          name: input.name,
-          instance_key: input.phoneNumberId,
-          provider: 'official',
-          status: 'connecting',
-          connection_config: connectionConfig,
-        })
-        .select('id')
-        .single();
-
-      if (insertError || !inserted) {
-        logger.error('Erro ao inserir instância Meta', { error: insertError });
-        throw new Error('Não foi possível salvar o número. Tente de novo em instantes.');
-      }
-
       const setupResult = await callMetaSetup({
-        instance_id: inserted.id,
-        mode: 'create',
+        mode: 'create_manual',
+        ...(tenantId ? { tenant_id: tenantId } : {}),
+        name: input.name,
+        phone_number_id: input.phoneNumberId,
+        waba_id: input.wabaId,
         access_token: input.accessToken,
         graph_api_version: input.graphApiVersion,
       });
 
       if (!setupResult.ok) {
-        // Rollback: remove the instance row so the user can retry without dupes
-        await supabase.from('whatsapp_instances').delete().eq('id', inserted.id);
-        throw new Error(setupResult.error || 'Falha ao validar credenciais Meta');
+        throw new Error(setupResult.error || 'Não foi possível validar os dados na Meta.');
       }
 
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });

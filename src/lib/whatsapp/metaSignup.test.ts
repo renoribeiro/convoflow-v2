@@ -186,11 +186,11 @@ describe('decideMetaSignup — primeira conexão (nenhuma linha)', () => {
     expect(d).toMatchObject({ ok: true, mode: 'connect', tenantId: STORE, access: 'gerente_child_store' });
   });
 
-  it('gerente conecta na própria Conta', () => {
+  it('gerente NÃO conecta na própria Conta: número é sempre de uma Loja (D1, 2026-10-29)', () => {
     const d = decideMetaSignup(
       input({ caller: gerente, requestedTenantId: ACCOUNT, requestedTenant: accountTenant }),
     );
-    expect(d).toMatchObject({ ok: true, mode: 'connect', tenantId: ACCOUNT, access: 'own_tenant' });
+    expect(d).toMatchObject({ ok: false, reason: 'not_store', status: 400 });
   });
 
   it('gerente NÃO conecta em Conta alheia nem em Loja de outra Conta', () => {
@@ -224,11 +224,16 @@ describe('decideMetaSignup — primeira conexão (nenhuma linha)', () => {
     expect(d2).toMatchObject({ ok: false, reason: 'tenant_required' });
   });
 
-  it('superadmin conecta em qualquer Conta existente', () => {
+  it('superadmin conecta em qualquer Loja existente, mas nunca numa Conta', () => {
+    const foreignStore: InstanceAccessTenant = { id: SIBLING_STORE, kind: 'store', parent_tenant_id: OTHER_ACCOUNT };
     const d = decideMetaSignup(
+      input({ caller: superadmin, requestedTenantId: SIBLING_STORE, requestedTenant: foreignStore }),
+    );
+    expect(d).toMatchObject({ ok: true, mode: 'connect', tenantId: SIBLING_STORE, access: 'superadmin' });
+    const conta = decideMetaSignup(
       input({ caller: superadmin, requestedTenantId: OTHER_ACCOUNT, requestedTenant: otherTenant }),
     );
-    expect(d).toMatchObject({ ok: true, mode: 'connect', tenantId: OTHER_ACCOUNT, access: 'superadmin' });
+    expect(conta).toMatchObject({ ok: false, reason: 'not_store' });
   });
 });
 

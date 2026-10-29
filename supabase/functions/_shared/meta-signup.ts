@@ -27,6 +27,8 @@
 //   primeira conexão: a Conta é a que o navegador mandou (a ativa no seletor);
 //                     a pergunta é "pode gravar nesta Conta/Loja?" — a mesma
 //                     regra, com a Conta de destino no lugar da instância.
+//                     E o destino tem de ser Loja (D1, 2026-10-29): Conta
+//                     recebe `not_store`. Regra comum em connect-target.ts.
 //   Superadmin passa antes da checagem de "tem Conta no perfil" porque ele
 //   não tem tenant_id próprio — mas na primeira conexão precisa mandar a Conta
 //   de destino.
@@ -37,12 +39,8 @@
 // duas iguais.
 // =============================================================================
 
-import { normalizeRole } from './capabilities.ts';
-import {
-  decideInstanceAccess,
-  type InstanceAccessCaller,
-  type InstanceAccessTenant,
-} from './instance-access.ts';
+import type { InstanceAccessCaller, InstanceAccessTenant } from './instance-access.ts';
+import { canReachTenant as canReach, CONNECT_TARGET_MESSAGES } from './connect-target.ts';
 
 /** O que a edge function lê de cada linha candidata de `whatsapp_instances`. */
 export interface MetaSignupExistingInstance {
@@ -73,7 +71,8 @@ export type MetaSignupRefusal =
   | 'provider_mismatch'
   | 'foreign_instance'
   | 'tenant_required'
-  | 'forbidden_tenant';
+  | 'forbidden_tenant'
+  | 'not_store';
 
 export type MetaSignupDecision =
   | {
@@ -108,6 +107,8 @@ export const META_SIGNUP_REFUSAL_MESSAGES: Record<MetaSignupRefusal, string> = {
     'Este número já está conectado em outra Conta ou Loja que você não administra. Se ele é seu, escreva para contato@convoflow.com.br.',
   tenant_required: 'Escolha a Conta ou Loja em que o número vai ser conectado.',
   forbidden_tenant: 'Você não pode conectar número nesta Conta ou Loja.',
+  // Decisão D1 (2026-10-29): número de WhatsApp é sempre de uma Loja.
+  not_store: CONNECT_TARGET_MESSAGES.not_store,
 };
 
 const META_SIGNUP_REFUSAL_STATUS: Record<MetaSignupRefusal, number> = {
@@ -116,6 +117,7 @@ const META_SIGNUP_REFUSAL_STATUS: Record<MetaSignupRefusal, number> = {
   foreign_instance: 403,
   tenant_required: 400,
   forbidden_tenant: 403,
+  not_store: 400,
 };
 
 function refuse(reason: MetaSignupRefusal): MetaSignupDecision {
@@ -125,20 +127,6 @@ function refuse(reason: MetaSignupRefusal): MetaSignupDecision {
     status: META_SIGNUP_REFUSAL_STATUS[reason],
     message: META_SIGNUP_REFUSAL_MESSAGES[reason],
   };
-}
-
-/**
- * Superadmin primeiro (não tem tenant_id próprio, e decideInstanceAccess
- * devolveria no_tenant); depois a regra de instance-access.ts tal qual.
- */
-function canReach(
-  caller: InstanceAccessCaller,
-  targetTenantId: string,
-  targetTenant: InstanceAccessTenant | null,
-): 'superadmin' | 'own_tenant' | 'gerente_child_store' | null {
-  if (normalizeRole(caller.role) === 'superadmin') return 'superadmin';
-  const d = decideInstanceAccess(caller, { tenant_id: targetTenantId }, targetTenant);
-  return d.allowed ? d.reason : null;
 }
 
 export function decideMetaSignup(input: MetaSignupInput): MetaSignupDecision {
@@ -178,6 +166,8 @@ export function decideMetaSignup(input: MetaSignupInput): MetaSignupDecision {
 
   const access = canReach(caller, requested, input.requestedTenant);
   if (!access) return refuse('forbidden_tenant');
+  // Alcance antes do tipo: quem não alcança não fica sabendo se é Conta.
+  if (input.requestedTenant.kind !== 'store') return refuse('not_store');
 
   return {
     ok: true,

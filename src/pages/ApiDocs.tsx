@@ -272,7 +272,11 @@ export default function ApiDocs() {
         <Secao id="limites" titulo="Limites">
           <ul className="list-disc space-y-1 pl-6 text-muted-foreground">
             <li>60 pedidos por minuto, por chave.</li>
-            <li>5.000 pedidos por dia, por Conta. O dia vira à meia noite UTC, 21h de Brasília.</li>
+            <li>
+              5.000 pedidos por dia, por Conta. O dia da API é contado em UTC, de propósito: ele vira à meia noite
+              UTC, que é 21h no horário de Brasília. Não é o mesmo dia do limite de campanha, que vira à meia noite de
+              Brasília.
+            </li>
             <li>
               Toda resposta traz <code>X-Limite-Restante-Minuto</code> e <code>X-Limite-Restante-Dia</code>, para você
               saber quanto ainda cabe.

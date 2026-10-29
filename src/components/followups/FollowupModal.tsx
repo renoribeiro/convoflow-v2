@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useFollowups } from '@/hooks/useFollowups';
+import { useFollowupMutations } from '@/hooks/useFollowups';
 import { toast } from 'sonner';
 import { Calendar, Clock, User } from 'lucide-react';
 
@@ -45,7 +45,7 @@ export function FollowupModal({ isOpen, onClose, contactId, contactName }: Follo
   const [type, setType] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { createFollowup } = useFollowups();
+  const { createFollowup } = useFollowupMutations();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

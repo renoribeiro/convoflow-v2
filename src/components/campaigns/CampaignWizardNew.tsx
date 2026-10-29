@@ -1346,7 +1346,7 @@ export const CampaignWizard = ({
         <div className="space-y-1">
           <div className="flex items-center gap-1.5">
             <Label htmlFor="daily-limit">Limite diário de envios (opcional)</Label>
-            <DicaDoCampo rotulo="Limite diário de envios" texto="Máximo de mensagens desta campanha por dia. Passou disso, o resto espera o dia seguinte. Vazio, não há limite." />
+            <DicaDoCampo rotulo="Limite diário de envios" texto="Máximo de mensagens desta campanha por dia. O dia vira à meia noite de Brasília; o resto espera o dia seguinte. Vazio, não há limite." />
           </div>
           <Input
             id="daily-limit"

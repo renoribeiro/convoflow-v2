@@ -29,6 +29,8 @@ import { useMetaApi } from '@/hooks/useMetaApi';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { CreateInstanceModal } from '@/components/whatsapp/CreateInstanceModal';
+import { EscolherLojaDoNumero } from '@/components/whatsapp/EscolherLojaDoNumero';
+import { consumirConectarNumero } from '@/lib/whatsapp/conectarPendente';
 import { DeleteInstanceModal } from '@/components/whatsapp/DeleteInstanceModal';
 import { RenameInstanceModal } from '@/components/whatsapp/RenameInstanceModal';
 import { QRCodeModal } from '@/components/whatsapp/QRCodeModal';
@@ -196,6 +198,12 @@ export default function WhatsAppNumbers() {
   // erro. Agora a mudança chega sozinha pelo evento CONNECTION_UPDATE (Evolution)
   // ou session.status (WAHA); esta conferência só acerta o que mudou com a tela
   // fechada. Número sem chave salva é pulado em silêncio.
+  // "Conectar número" pedido com a Conta em foco: a janela pediu a Loja, a
+  // Loja em foco trocou e o painel remontou. Reabre a janela, agora na Loja.
+  useEffect(() => {
+    if (tenant?.kind === 'store' && canConfigure && consumirConectarNumero()) setShowCreateModal(true);
+  }, [tenant?.kind, canConfigure]);
+
   const conferidos = useRef<string | null>(null);
   useEffect(() => {
     if (!tenant?.id || isLoading) return;
@@ -626,6 +634,11 @@ export default function WhatsAppNumbers() {
               {Array.from({ length: 3 }).map((_, i) => (
                 <Skeleton key={i} className="h-20 w-full rounded-md" />
               ))}
+            </div>
+          ) : instances.length === 0 && tenant.kind !== 'store' ? (
+            // Conta em foco: número de WhatsApp é sempre de uma Loja (D1).
+            <div data-testid="numeros-ficam-na-loja">
+              <EscolherLojaDoNumero reabrirJanela={false} />
             </div>
           ) : instances.length === 0 ? (
             <EmptyState

@@ -12,7 +12,8 @@ import { newWebhookSecret } from '../_shared/waha-webhook-auth.ts';
  * Cadastra um número WAHA (servidor do cliente). Regra, ordem e por quê:
  * `_shared/waha-provision.ts`.
  *
- * Corpo: { name, server_url, api_key?, session_name, engine? }
+ * Corpo: { name, server_url, api_key?, session_name, engine?, tenant_id? }
+ * `tenant_id` é a Loja aberta no topo; o número nasce nela (connect-target.ts).
  * A resposta NUNCA devolve endereço, chave nem a senha de entrega.
  */
 
@@ -57,6 +58,10 @@ Deno.serve(async (req: Request) => {
 
   const result = await provisionWaha(body, {
     caller,
+    loadTenant: async (tenantId) => {
+      const { data } = await admin.from('tenants').select('id, kind, parent_tenant_id').eq('id', tenantId).maybeSingle();
+      return data ?? null;
+    },
     supabaseUrl,
     newInstanceId: () => crypto.randomUUID(),
     newSecret: newWebhookSecret,
@@ -91,7 +96,8 @@ Deno.serve(async (req: Request) => {
 
   logger.info('waha-provision', {
     userId: user.id,
-    tenantId: caller?.tenant_id ?? null,
+    callerTenantId: caller?.tenant_id ?? null,
+    requestedTenantId: typeof body.tenant_id === 'string' ? body.tenant_id : null,
     httpStatus: result.status,
     reason: result.body.reason ?? null,
   });

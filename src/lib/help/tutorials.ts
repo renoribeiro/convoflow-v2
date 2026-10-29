@@ -117,7 +117,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Planeje a primeira semana com o teto de aquecimento',
         body:
-          'Número recém-conectado tem um teto diário de envio nos primeiros sete dias. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time. Se a ideia é disparar campanha, não compre nem importe uma lista grande para a primeira semana: comece pelos contatos que já conhecem a empresa e cresça junto com o teto.',
+          'Número recém-conectado tem um teto diário de envio nos primeiros sete dias. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time, e o dia vira à meia noite de Brasília. Se a ideia é disparar campanha, não compre nem importe uma lista grande para a primeira semana: comece pelos contatos que já conhecem a empresa e cresça junto com o teto.',
       },
       {
         title: 'Confira a lista e vá para a conexão',
@@ -148,7 +148,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Abra Números de WhatsApp e clique em "Conectar número"',
         body:
-          'Cada linha da lista é um número de WhatsApp ligado ao ConvoFlow. Sem nenhum conectado, não existe conversa, chatbot nem campanha. Na primeira vez, o botão se chama "Conectar o primeiro número".',
+          'Cada linha da lista é um número de WhatsApp ligado ao ConvoFlow. Sem nenhum conectado, não existe conversa, chatbot nem campanha. Na primeira vez, o botão se chama "Conectar o primeiro número". O número fica na Loja aberta no seletor do topo, e a janela diz qual. Gerente com a Conta aberta: a janela pede a Loja primeiro; escolha a Loja, ela abre e a janela volta sozinha.',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },
@@ -160,7 +160,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Dê um nome ao número e clique em "Conectar com a Meta"',
         body:
-          'O nome é só o rótulo que aparece nas telas (ex.: "WhatsApp Vendas"). Se deixar vazio, o ConvoFlow usa o nome verificado que a Meta devolver para o número. O botão abre uma janela da própria Meta: é ela que faz a conexão, e você não copia código nem chave nenhuma. Gerente: o número nasce na Conta ou Loja escolhida no seletor do topo; confira antes de clicar.',
+          'O nome é só o rótulo que aparece nas telas (ex.: "WhatsApp Vendas"). Se deixar vazio, o ConvoFlow usa o nome verificado que a Meta devolver para o número. O botão abre uma janela da própria Meta: é ela que faz a conexão, e você não copia código nem chave nenhuma. O número nasce na Loja que a janela mostra no alto, logo abaixo do título.',
         note:
           'Se o botão estiver cinza, a conexão automática com a Meta ainda não está ligada, e o caminho é o do último passo, com os campos manuais. Para RECONECTAR um número que já está na lista (trocar o app da Meta, renovar a conexão), o caminho é este mesmo botão: escolha o mesmo número na janela da Meta e deixe o nome em branco. O ConvoFlow reconhece o número e atualiza no lugar, sem mexer no histórico.',
       },
@@ -211,7 +211,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
     goal:
       'No fim, um número comum de WhatsApp estará conectado ao ConvoFlow lendo um QR Code, sem você configurar servidor nenhum.',
     forWhom:
-      'Gestor da Loja, com o celular do número em mãos. Atendente não conecta número. Gerente: número de QR Code nasce na sua Conta, não na Loja escolhida no topo; para ficar numa Loja, quem conecta é o Gestor dela.',
+      'Gestor da Loja, com o celular do número em mãos (o Gerente faz o mesmo, numa Loja escolhida no topo). Atendente não conecta número.',
     moduleName: 'whatsapp-numbers',
     minRole: 'gestor',
     steps: [
@@ -225,7 +225,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Abra Números de WhatsApp e clique em "Conectar número"',
         body:
-          'Na primeira vez, o botão se chama "Conectar o primeiro número".',
+          'Na primeira vez, o botão se chama "Conectar o primeiro número". O número fica na Loja aberta no seletor do topo, e a janela diz qual. Gerente com a Conta aberta: a janela pede a Loja primeiro; escolha a Loja, ela abre e a janela volta sozinha.',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },
@@ -277,7 +277,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
     goal:
       'No fim, um número comum de WhatsApp estará conectado ao ConvoFlow pelo seu próprio servidor WAHA, lendo um QR Code.',
     forWhom:
-      'Gestor da Loja que já tem um servidor WAHA no ar (ou quem o hospeda para a empresa), com o celular do número em mãos. Gerente: número de QR Code nasce na sua Conta, não na Loja escolhida no topo.',
+      'Gestor da Loja que já tem um servidor WAHA no ar (ou quem o hospeda para a empresa), com o celular do número em mãos (o Gerente faz o mesmo, numa Loja escolhida no topo). Atendente não conecta número.',
     moduleName: 'whatsapp-numbers',
     minRole: 'gestor',
     steps: [
@@ -290,7 +290,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       },
       {
         title: 'Abra Números de WhatsApp e clique em "Conectar número"',
-        body: 'Na primeira vez, o botão se chama "Conectar o primeiro número".',
+        body: 'Na primeira vez, o botão se chama "Conectar o primeiro número". O número fica na Loja aberta no seletor do topo, e a janela diz qual. Gerente com a Conta aberta: a janela pede a Loja primeiro; escolha a Loja, ela abre e a janela volta sozinha.',
         screen: '/dashboard/whatsapp-numbers',
         helpKey: 'page:whatsapp-numbers',
       },

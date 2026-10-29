@@ -5,7 +5,16 @@ import type { ProviderRequest, ProviderResponse } from '../../../supabase/functi
 
 /** Cadastro de número WAHA pelo servidor. Valores inventados; nada toca a rede. */
 
+const CONTA = 'aaaaaaaa-0000-4000-8000-000000000001';
 const LOJA = 'aaaaaaaa-0000-4000-8000-000000000002';
+const OUTRA_CONTA = 'aaaaaaaa-0000-4000-8000-000000000003';
+const LOJA_DE_OUTRA_CONTA = 'aaaaaaaa-0000-4000-8000-000000000004';
+const TENANTS: Record<string, { id: string; kind: string; parent_tenant_id: string | null }> = {
+  [CONTA]: { id: CONTA, kind: 'account', parent_tenant_id: null },
+  [LOJA]: { id: LOJA, kind: 'store', parent_tenant_id: CONTA },
+  [OUTRA_CONTA]: { id: OUTRA_CONTA, kind: 'account', parent_tenant_id: null },
+  [LOJA_DE_OUTRA_CONTA]: { id: LOJA_DE_OUTRA_CONTA, kind: 'store', parent_tenant_id: OUTRA_CONTA },
+};
 const NOVO = 'aaaaaaaa-0000-4000-8000-0000000000b1';
 const SENHA = 'b'.repeat(64);
 const gestor = { tenant_id: LOJA, role: 'gestor', status: 'active', capabilities: null };
@@ -31,6 +40,7 @@ function deps(over: Partial<WahaProvisionDeps> & { responses?: ProviderResponse[
   const responses = [...(over.responses ?? [{ status: 200, json: { status: 'ok' } }, { status: 201, json: {} }])];
   const d = {
     caller: gestor,
+    loadTenant: vi.fn(async (id: string) => TENANTS[id] ?? null),
     supabaseUrl: 'https://projeto.exemplo.supabase.co',
     newInstanceId: () => NOVO,
     newSecret: () => SENHA,
@@ -61,7 +71,52 @@ describe('quem pode cadastrar', () => {
 
   it('perfil suspenso ou sem Conta: recusado', async () => {
     expect((await provisionWaha(entrada, deps({ caller: { ...gestor, status: 'suspended' } }))).status).toBe(403);
-    expect((await provisionWaha(entrada, deps({ caller: { ...gestor, tenant_id: null } }))).status).toBe(403);
+    const semConta = await provisionWaha(entrada, deps({ caller: { ...gestor, tenant_id: null } }));
+    expect(semConta.body.reason).toBe('tenant_required');
+  });
+});
+
+describe('em que Loja o número nasce (lote 6b, B2)', () => {
+  const gerente = { tenant_id: CONTA, role: 'gerente', status: 'active', capabilities: null };
+
+  it('Gerente com a Loja filha aberta no topo: o número nasce na Loja, não na Conta', async () => {
+    const d = deps({ caller: gerente });
+    const r = await provisionWaha({ ...entrada, tenant_id: LOJA }, d);
+    expect(r.status).toBe(200);
+    expect(d.insertInstance).toHaveBeenCalledWith(expect.objectContaining({ tenant_id: LOJA }));
+  });
+
+  it('Gerente com a Conta em foco: recusado antes de tocar no servidor do cliente', async () => {
+    for (const pedido of [{ tenant_id: CONTA }, {}]) {
+      const d = deps({ caller: gerente });
+      const r = await provisionWaha({ ...entrada, ...pedido }, d);
+      expect(r.body.reason).toBe('not_store');
+      expect(d.callWaha).not.toHaveBeenCalled();
+      expect(d.insertInstance).not.toHaveBeenCalled();
+    }
+  });
+
+  it('Loja de outra Conta e Loja inexistente: a mesma recusa, nada criado', async () => {
+    const alheia = deps({ caller: gerente });
+    const r1 = await provisionWaha({ ...entrada, tenant_id: LOJA_DE_OUTRA_CONTA }, alheia);
+    const inexistente = deps({ caller: gerente });
+    const r2 = await provisionWaha({ ...entrada, tenant_id: 'aaaaaaaa-0000-4000-8000-0000000000ff' }, inexistente);
+    expect(r1).toEqual(r2);
+    expect(r1.status).toBe(403);
+    expect(r1.body.reason).toBe('forbidden_tenant');
+    expect(alheia.callWaha).not.toHaveBeenCalled();
+  });
+
+  it('Gestor não cria número em outra Loja, mesmo mandando o id dela', async () => {
+    const d = deps();
+    const r = await provisionWaha({ ...entrada, tenant_id: LOJA_DE_OUTRA_CONTA }, d);
+    expect(r.body.reason).toBe('forbidden_tenant');
+    expect(d.insertInstance).not.toHaveBeenCalled();
+  });
+
+  it('tenant_id que não é uuid: recusado', async () => {
+    const r = await provisionWaha({ ...entrada, tenant_id: "x' or 1=1" }, deps());
+    expect(r.body.reason).toBe('invalid_tenant');
   });
 });
 

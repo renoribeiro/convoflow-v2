@@ -149,7 +149,7 @@ export const TOURS: Tour[] = [
       {
         target: 'whatsapp-nova-instancia',
         title: 'Clique em Conectar número',
-        body: 'Escolha como conectar e clique em Continuar. Na API Oficial do WhatsApp, clique em Conectar com a Meta e siga a janela da Meta até o fim.',
+        body: 'Com a Conta aberta, a janela pede a Loja primeiro. Escolha como conectar e clique em Continuar. Na API Oficial, clique em Conectar com a Meta e siga a janela da Meta.',
       },
     ],
   },

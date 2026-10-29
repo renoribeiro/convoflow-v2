@@ -13,6 +13,7 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { createLogger } from '../_shared/logger.ts'
 import { guardBackendCaller } from '../_shared/backend-gate.ts'
 import { claimExecution } from '../_shared/campaign-claim.ts'
+import { diaLocal, FUSO_BRASILIA } from '../_shared/dia-local.ts'
 import { corsHeaders, DataSanitizer } from '../_shared/validation.ts'
 import { ProviderFactory } from '../_shared/provider-factory.ts'
 
@@ -134,25 +135,18 @@ function isWithinBusinessHours(campaign: Campaign): boolean {
 // ─── Daily limit check ───────────────────────────────────────────────────────
 
 async function getDailySentCount(supabase: SupabaseClient, campaignId: string, tz: string): Promise<number> {
-  // Count executions with a terminal "sent" status today (in campaign timezone)
-  // We use UTC date range converted from the campaign's local midnight.
-  const now = new Date()
-  const formatter = new Intl.DateTimeFormat('en-CA', {
-    timeZone: tz || 'America/Sao_Paulo',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  })
-  const localDate = formatter.format(now) // 'YYYY-MM-DD'
-
-  // Query sent_at within local calendar day boundaries (UTC strings).
-  // Postgres compares timestamptz against these UTC ISO strings correctly.
-  // Tolerance of up to ±1 day-boundary hour is acceptable for limit enforcement.
+  // Envios da campanha HOJE, no dia do fuso dela (Brasília: a tela não oferece
+  // outro). Os limites são instantes UTC de verdade: até o lote 6b ia a DATA
+  // sem fuso, o banco lia como UTC e das 21h à meia noite de Brasília o
+  // limite parava de somar. Regra e testes: _shared/dia-local.ts.
+  const { inicio, fim } = diaLocal(new Date(), tz || FUSO_BRASILIA)
   const { count } = await supabase
     .from('campaign_executions')
     .select('id', { count: 'exact', head: true })
     .eq('campaign_id', campaignId)
     .in('status', ['sent', 'delivered', 'read', 'replied'])
-    .gte('sent_at', `${localDate}T00:00:00`)
-    .lt('sent_at', `${localDate}T23:59:59.999`)
+    .gte('sent_at', inicio.toISOString())
+    .lt('sent_at', fim.toISOString())
 
   return count ?? 0
 }
@@ -434,6 +428,8 @@ serve(async (req) => {
 
       if (isOfficial) {
         // Gate A (V6): Warm-up — cap de destinatários/dia baseado em dias desde registered_at.
+        // "Dia" do cap = dia de Brasília (D5, lote 6b): instance_outbound_today
+        // conta a partir da meia noite de America/Sao_Paulo (20261029000002).
         // Calcula o cap uma vez por instância por invocação (cache em outboundTodayMap).
         const registeredAt = instanceRow.registered_at || instanceRow.created_at
         const daysSinceRegistered = registeredAt
@@ -467,8 +463,8 @@ serve(async (req) => {
             await supabase.from('campaign_executions').update({
               status: 'skipped',
               error_message:
-                `Limite de warm-up atingido: o número foi registrado há ${daysSinceRegistered} dia(s) e o cap diário para esta fase é ${warmupCap} mensagens. ` +
-                `Aguarde a próxima janela ou avance na fase de warm-up.`,
+                `Teto de aquecimento do dia: o número foi registrado há ${daysSinceRegistered} dia(s) e nesta fase manda até ${warmupCap} mensagens por dia. ` +
+                `O dia vira à meia noite de Brasília.`,
               attempts: exec.attempts + 1,
             }).eq('id', exec.id)
             touchedCampaigns.add(campaign_id)

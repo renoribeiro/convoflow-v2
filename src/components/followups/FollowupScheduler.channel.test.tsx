@@ -16,7 +16,7 @@ vi.mock('@/hooks/useContacts', () => ({
   useContacts: () => ({ contacts: state.contacts, loading: false }),
 }));
 vi.mock('@/hooks/useFollowups', () => ({
-  useFollowups: () => ({ createFollowup: vi.fn() }),
+  useFollowupMutations: () => ({ createFollowup: vi.fn() }),
 }));
 vi.mock('@/hooks/useFollowupSequences', () => ({
   useFollowupSequences: () => ({ sequences: [], loading: false, enrollContact: vi.fn() }),

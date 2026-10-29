@@ -8,7 +8,8 @@ import type { WahaInstanceInput } from '@/lib/validations/whatsappInstance';
 
 interface UseWahaApiReturn {
   loading: boolean;
-  createInstance: (input: WahaInstanceInput) => Promise<void>;
+  /** `tenantId`: a Loja aberta no topo. O número nasce nela; o servidor confere. */
+  createInstance: (input: WahaInstanceInput, tenantId?: string) => Promise<void>;
 }
 
 /**
@@ -26,7 +27,7 @@ export const useWahaApi = (): UseWahaApiReturn => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const createInstance = async (input: WahaInstanceInput) => {
+  const createInstance = async (input: WahaInstanceInput, tenantId?: string) => {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('waha-provision', {
@@ -35,6 +36,7 @@ export const useWahaApi = (): UseWahaApiReturn => {
           server_url: input.serverUrl,
           api_key: input.apiKey || undefined,
           session_name: input.sessionName,
+          ...(tenantId ? { tenant_id: tenantId } : {}),
         },
       });
 

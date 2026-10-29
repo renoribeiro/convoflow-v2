@@ -8,12 +8,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, QrCode } from 'lucide-react';
+import { Loader2, ChevronLeft, QrCode, Store } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { useEvolutionApi } from '@/hooks/useEvolutionApi';
 import { useWahaApi } from '@/hooks/useWahaApi';
 import { useMetaApi } from '@/hooks/useMetaApi';
+import { useTenant } from '@/contexts/TenantContext';
+import { EscolherLojaDoNumero } from './EscolherLojaDoNumero';
 import { newInstanceSchema, type ProviderType } from '@/lib/validations/whatsappInstance';
 import { ProviderSelector } from './ProviderSelector';
 import {
@@ -62,6 +64,10 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
   } | null>(null);
 
   const { toast } = useToast();
+  // A Loja aberta no topo é onde o número nasce; o servidor confere
+  // (connect-target.ts). Com a Conta em foco a janela pede a Loja antes.
+  const { tenant } = useTenant();
+  const lojaEmFoco = tenant?.kind === 'store' ? tenant : null;
   const { createInstance: createEvolution } = useEvolutionApi();
   const { createInstance: createWaha } = useWahaApi();
   const { createInstance: createMeta } = useMetaApi();
@@ -108,6 +114,8 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
   };
 
   const handleSubmit = async () => {
+    if (!lojaEmFoco) return;
+    const tenantId = lojaEmFoco.id;
     const payload = buildPayload();
     if (!payload) {
       toast({ title: 'Não deu certo', description: 'Escolha como conectar o número.', variant: 'destructive' });
@@ -140,6 +148,7 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
             retryAttempts: parsed.data.retryAttempts,
             retryDelay: parsed.data.retryDelay,
             displayName: parsed.data.name,
+            tenantId,
           });
           if (parsed.data.enableWebhookAutomation) setEvolutionWebhookStatus('success');
         } catch (err: any) {
@@ -158,9 +167,9 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
           setShowQRModal(true);
         }
       } else if (parsed.data.provider === 'waha') {
-        await createWaha(parsed.data);
+        await createWaha(parsed.data, tenantId);
       } else if (parsed.data.provider === 'official') {
-        await createMeta(parsed.data);
+        await createMeta(parsed.data, tenantId);
       }
 
       onSuccess();
@@ -224,20 +233,34 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
               {step === 'select-provider' ? 'Conectar número de WhatsApp' : 'Dados do número'}
             </DialogTitle>
             <DialogDescription className="text-xs">
-              {step === 'select-provider'
-                ? 'Escolha como o ConvoFlow vai se conectar a este número.'
-                : 'Preencha os dados abaixo. Chaves e senhas ficam guardadas com proteção e não aparecem mais.'}
+              {!lojaEmFoco
+                ? 'Primeiro, a Loja em que o número vai ficar.'
+                : step === 'select-provider'
+                  ? 'Escolha como o ConvoFlow vai se conectar a este número.'
+                  : 'Preencha os dados abaixo. Chaves e senhas ficam guardadas com proteção e não aparecem mais.'}
             </DialogDescription>
+            {lojaEmFoco && (
+              <p className="flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="loja-do-numero">
+                <Store className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                O número vai ficar na Loja <strong className="font-medium text-foreground">{lojaEmFoco.name}</strong>.
+              </p>
+            )}
           </DialogHeader>
 
-          {step === 'select-provider' ? (
+          {!lojaEmFoco ? (
+            <EscolherLojaDoNumero />
+          ) : step === 'select-provider' ? (
             <ProviderSelector value={provider} onChange={setProvider} disabled={loading} />
           ) : (
             renderForm()
           )}
 
           <DialogFooter className="gap-2 sm:gap-2">
-            {step === 'select-provider' ? (
+            {!lojaEmFoco ? (
+              <Button variant="outline" onClick={() => handleClose(false)}>
+                Cancelar
+              </Button>
+            ) : step === 'select-provider' ? (
               <>
                 <Button variant="outline" onClick={() => handleClose(false)} disabled={loading}>
                   Cancelar

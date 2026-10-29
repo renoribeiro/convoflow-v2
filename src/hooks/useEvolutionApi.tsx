@@ -11,6 +11,8 @@ export interface CreateInstanceOptions {
   retryDelay?: number;
   /** Nome legível digitado pelo usuário. Sem ele, a linha nasce com a chave técnica no lugar do nome. */
   displayName?: string;
+  /** A Loja aberta no topo: o número nasce nela. O servidor confere o alcance e recusa Conta. */
+  tenantId?: string;
 }
 
 interface UseEvolutionApiReturn {
@@ -46,6 +48,7 @@ export const useEvolutionApi = (): UseEvolutionApiReturn => {
           enableWebhookAutomation: options?.enableWebhookAutomation ?? true,
           retryAttempts: options?.retryAttempts,
           retryDelay: options?.retryDelay,
+          ...(options?.tenantId ? { tenant_id: options.tenantId } : {}),
         },
       });
 

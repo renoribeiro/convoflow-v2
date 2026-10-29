@@ -92,6 +92,7 @@ const STATUS_BY_RPC_REASON: Record<string, number> = {
   foreign_instance: 403,
   tenant_required: 400,
   forbidden_tenant: 403,
+  not_store: 400,
 };
 
 Deno.serve(async (req: Request) => {

@@ -3,13 +3,39 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
+import { decideInstanceAccess } from '../_shared/instance-access.ts';
+import { decideConnectTarget, targetTenantIdFor } from '../_shared/connect-target.ts';
 
+/**
+ * API Oficial do WhatsApp pelos campos (app próprio da empresa na Meta).
+ *
+ *   create_manual  O formulário manual. Desde o lote 6b (B2, 2026-10-29) a
+ *                  linha nasce AQUI, no servidor, na Loja aberta no topo
+ *                  (`tenant_id`), conferida por connect-target.ts. Antes o
+ *                  navegador inseria a linha em `profiles.tenant_id` (para o
+ *                  Gerente, a Conta) e só depois chamava `create`.
+ *                  Ordem: Loja → número ainda não existe → Meta valida a
+ *                  chave → app inscrito na WABA → linha → chave no cofre. Se o
+ *                  cofre recusar, a linha sai: nada fica pela metade.
+ *   create         Legado (navegador antigo em cache): grava a chave numa
+ *                  linha que já existe.
+ *   verify         Confere a chave guardada. Alcance pela regra de
+ *                  instance-access.ts (o Gerente confere número da Loja filha).
+ */
 interface SetupRequest {
-  instance_id: string;
+  instance_id?: string;
   access_token?: string;
-  mode: 'create' | 'verify';
+  mode: 'create' | 'verify' | 'create_manual';
   graph_api_version?: string;
+  // create_manual
+  tenant_id?: string;
+  name?: string;
+  phone_number_id?: string;
+  waba_id?: string;
 }
+
+const META_ID_PATTERN = /^\d{6,30}$/;
+const GRAPH_VERSION_PATTERN = /^v\d{1,2}\.\d{1,2}$/;
 
 interface ValidationResult {
   ok: boolean;
@@ -65,7 +91,7 @@ Deno.serve(async (req: Request) => {
     .eq('user_id', callerUser.id)
     .single();
 
-  if (!callerProfile?.tenant_id) {
+  if (!callerProfile) {
     return jsonResponse({ ok: false, error: 'Profile not found' }, 403);
   }
 
@@ -90,6 +116,10 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: false, error: 'Invalid JSON body' }, 400);
   }
 
+  if (body?.mode === 'create_manual') {
+    return await createManual(body);
+  }
+
   if (!body?.instance_id || !body?.mode) {
     return jsonResponse({ ok: false, error: 'instance_id and mode are required' }, 400);
   }
@@ -106,9 +136,15 @@ Deno.serve(async (req: Request) => {
     return jsonResponse({ ok: false, error: 'Instance not found' }, 404);
   }
 
-  // Enum user_role usa 'superadmin'; 'super_admin' é legado aceito por compat.
-  const isSuperAdmin = callerProfile.role === 'superadmin' || callerProfile.role === 'super_admin';
-  if (!isSuperAdmin && instance.tenant_id !== callerProfile.tenant_id) {
+  // Mesma regra do envio (instance-access.ts): superadmin, a própria Loja, ou o
+  // Gerente numa Loja filha. Antes era só "mesmo tenant_id do perfil", e o
+  // Gerente não conseguia conferir número das Lojas dele.
+  const { data: instanceTenant } = await supabaseAdmin
+    .from('tenants')
+    .select('id, kind, parent_tenant_id')
+    .eq('id', instance.tenant_id)
+    .maybeSingle();
+  if (!decideInstanceAccess(callerProfile, instance, instanceTenant ?? null).allowed) {
     return jsonResponse({ ok: false, error: 'Forbidden' }, 403);
   }
 
@@ -127,6 +163,109 @@ Deno.serve(async (req: Request) => {
       { ok: false, error: 'connection_config is missing phoneNumberId or wabaId' },
       400,
     );
+  }
+
+  async function createManual(req: SetupRequest): Promise<Response> {
+    const targetId = targetTenantIdFor(callerProfile, req.tenant_id);
+    const { data: targetTenant } = targetId
+      ? await supabaseAdmin.from('tenants').select('id, kind, parent_tenant_id').eq('id', targetId).maybeSingle()
+      : { data: null };
+    const target = decideConnectTarget({
+      caller: callerProfile,
+      requestedTenantId: req.tenant_id,
+      targetTenant: targetTenant ?? null,
+    });
+    if (!target.ok) {
+      logger.warn('create_manual recusado', { reason: target.reason, userId: callerUser!.id });
+      return jsonResponse({ ok: false, reason: target.reason, error: target.message }, target.status);
+    }
+
+    const name = typeof req.name === 'string' ? req.name.trim() : '';
+    const phoneNumberId = typeof req.phone_number_id === 'string' ? req.phone_number_id.trim() : '';
+    const wabaId = typeof req.waba_id === 'string' ? req.waba_id.trim() : '';
+    const accessToken = typeof req.access_token === 'string' ? req.access_token.trim() : '';
+    const graphVersion =
+      typeof req.graph_api_version === 'string' && GRAPH_VERSION_PATTERN.test(req.graph_api_version)
+        ? req.graph_api_version
+        : DEFAULT_GRAPH_VERSION;
+    if (name.length < 3 || name.length > 50) {
+      return jsonResponse({ ok: false, reason: 'invalid', error: 'O nome precisa ter de 3 a 50 caracteres.' }, 400);
+    }
+    if (!META_ID_PATTERN.test(phoneNumberId)) {
+      return jsonResponse({ ok: false, reason: 'invalid', error: 'O código do número na Meta tem só números.' }, 400);
+    }
+    if (!META_ID_PATTERN.test(wabaId)) {
+      return jsonResponse({ ok: false, reason: 'invalid', error: 'O código da conta do WhatsApp Business tem só números.' }, 400);
+    }
+    if (accessToken.length < 40) {
+      return jsonResponse({ ok: false, reason: 'invalid', error: 'A chave de acesso parece incompleta. Cole a chave inteira.' }, 400);
+    }
+
+    // Já existe? Pelas duas colunas, como no caminho do Facebook. Não diz de quem é.
+    const { data: existing } = await supabaseAdmin
+      .from('whatsapp_instances')
+      .select('id')
+      .or(`instance_key.eq.${phoneNumberId},connection_config->>phoneNumberId.eq.${phoneNumberId}`)
+      .limit(1);
+    if (existing && existing.length > 0) {
+      return jsonResponse({
+        ok: false,
+        reason: 'already_exists',
+        error: 'Este número já está no ConvoFlow. Para reconectar, use o botão "Conectar com a Meta". Se ele não é seu, escreva para contato@convoflow.com.br.',
+      }, 409);
+    }
+
+    try {
+      const validation = await validatePhoneNumber(phoneNumberId, accessToken, graphVersion);
+      if (!validation.ok) {
+        return jsonResponse({ ok: false, reason: 'meta_rejected', error: validation.error || 'Invalid access token' }, 400);
+      }
+      const subscribe = await subscribeWaba(wabaId, accessToken, graphVersion);
+      if (!subscribe.ok) {
+        return jsonResponse({ ok: false, reason: 'meta_rejected', error: subscribe.error || 'Failed to subscribe WABA' }, 400);
+      }
+
+      const { data: inserted, error: insertError } = await supabaseAdmin
+        .from('whatsapp_instances')
+        .insert({
+          tenant_id: target.tenantId,
+          name,
+          instance_key: phoneNumberId,
+          provider: 'official',
+          status: 'open',
+          phone_number: validation.phoneNumberDisplay || null,
+          profile_name: validation.verifiedName || null,
+          last_connected_at: new Date().toISOString(),
+          connection_config: { phoneNumberId, wabaId, graphApiVersion: graphVersion },
+        })
+        .select('id')
+        .single();
+      if (insertError || !inserted) {
+        logger.error('create_manual: insert falhou', { error: insertError?.message });
+        return jsonResponse({ ok: false, reason: 'insert_failed', error: 'Não foi possível salvar o número. Tente de novo em instantes.' }, 500);
+      }
+
+      const { error: rpcError } = await supabaseAdmin.rpc('set_instance_meta_token', {
+        p_instance_id: inserted.id,
+        p_token: accessToken,
+      });
+      if (rpcError) {
+        logger.error('create_manual: cofre recusou', { error: rpcError.message });
+        await supabaseAdmin.from('whatsapp_instances').delete().eq('id', inserted.id);
+        return jsonResponse({ ok: false, reason: 'vault_error', error: 'Não foi possível guardar a chave. Nada foi criado. Tente de novo.' }, 500);
+      }
+
+      logger.info('create_manual: número criado', { instance_id: inserted.id, tenant_id: target.tenantId, access: target.access });
+      return jsonResponse({
+        ok: true,
+        instance_id: inserted.id,
+        phoneNumberDisplay: validation.phoneNumberDisplay,
+        verifiedName: validation.verifiedName,
+      }, 200);
+    } catch (error: any) {
+      logger.error('create_manual falhou', { error: error?.message });
+      return jsonResponse({ ok: false, error: 'Não foi possível falar com a Meta agora. Tente de novo em instantes.' }, 500);
+    }
   }
 
   try {

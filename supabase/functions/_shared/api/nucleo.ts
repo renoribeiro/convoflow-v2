@@ -64,7 +64,7 @@ export const ERROS = {
   metodo_nao_permitido: { status: 405, mensagem: 'Só leitura: use GET.' },
   origem_recusada: { status: 403, mensagem: 'A API não atende pedidos de navegador.' },
   limite_minuto: { status: 429, mensagem: 'Limite de 60 pedidos por minuto desta chave. Espere um minuto.' },
-  limite_dia: { status: 429, mensagem: 'Limite de 5.000 pedidos por dia da Conta. Volta amanhã (UTC).' },
+  limite_dia: { status: 429, mensagem: 'Limite de 5.000 pedidos por dia da Conta. O dia da API vira à meia noite UTC (21h de Brasília).' },
   indisponivel: { status: 503, mensagem: 'A API não está disponível agora. Tente de novo em instantes.' },
   erro_interno: { status: 500, mensagem: 'Erro interno. Tente de novo.' },
 } as const;
