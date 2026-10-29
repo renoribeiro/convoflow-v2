@@ -242,7 +242,10 @@ export const CreateInstanceModal = ({ open, onOpenChange, onSuccess }: CreateIns
             {lojaEmFoco && (
               <p className="flex items-center gap-1.5 text-xs text-muted-foreground" data-testid="loja-do-numero">
                 <Store className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                O número vai ficar na Loja <strong className="font-medium text-foreground">{lojaEmFoco.name}</strong>.
+                {/* Um elemento só: o gap do flex separava o ponto final do nome. */}
+                <span>
+                  O número vai ficar na Loja <strong className="font-medium text-foreground">{lojaEmFoco.name}</strong>.
+                </span>
               </p>
             )}
           </DialogHeader>
