@@ -45,6 +45,13 @@ import { useIsBelowXl } from '@/hooks/use-mobile';
 import { initialsOf, nameInitials } from '@/lib/conversations/channel';
 import { contactDisplayName, instagramHandle } from '@/lib/instagram/contactProfile';
 import { ContactLinkSection } from '@/components/conversations/ContactLinkSection';
+import { toast } from 'sonner';
+import {
+  criarSalvadorDeNotas,
+  TEXTO_DO_ESTADO,
+  type EstadoDaNota,
+  type SalvadorDeNotas,
+} from '@/lib/conversations/salvadorDeNotas';
 
 interface ContactPanelProps {
   open: boolean;
@@ -105,8 +112,10 @@ function ContactPanelBody({
   const queryClient = useQueryClient();
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
   const [notes, setNotes] = useState<string>('');
-  const notesTimerRef = useRef<number | null>(null);
-  const lastSavedNotesRef = useRef<string>('');
+  const [estadoNota, setEstadoNota] = useState<EstadoDaNota>('parado');
+  // Um salvador por contato (ver salvadorDeNotas.ts): grava 1 s depois da
+  // última tecla, na hora ao sair do campo, ao trocar de contato e ao fechar.
+  const salvadorRef = useRef<SalvadorDeNotas | null>(null);
 
   // Vínculo WhatsApp ↔ Instagram (migração 20261009000001). Na conversa do
   // Instagram vinculada, o perfil (funil, etiquetas, notas, campos, fonte e
@@ -132,12 +141,60 @@ function ContactPanelBody({
   const profileContact: any = mainContactId ? mainContactQuery.data ?? null : contact;
   const profileContactId: string | undefined = mainContactId ?? contactId;
 
-  // Sync local notes when the contact changes.
+  // O salvador do contato aberto. Trocar de contato ou fechar o painel (que
+  // desmonta este corpo) descarrega o que faltava gravar: antes, fechar antes
+  // de 1 segundo perdia a nota (achado 48).
+  useEffect(() => {
+    if (!profileContactId) return;
+    const id = profileContactId;
+    const s = criarSalvadorDeNotas({
+      salvoInicial: profileContact?.notes ?? '',
+      salvar: async (texto) => {
+        const { data, error } = await supabase
+          .from('contacts')
+          .update({ notes: texto || null })
+          .eq('id', id)
+          .select('id');
+        if (error) throw error;
+        // UPDATE barrado pela RLS não dá erro: sem linha, não gravou.
+        if (!data || data.length === 0) throw new Error('nota não gravada');
+        queryClient.invalidateQueries({ queryKey: ['conversation', conversationId, tenant?.id] });
+        queryClient.invalidateQueries({ queryKey: ['contacts'] });
+      },
+      aoMudarEstado: (e) => {
+        if (salvadorRef.current === s) setEstadoNota(e);
+      },
+    });
+    salvadorRef.current = s;
+    setEstadoNota('parado');
+    return () => {
+      salvadorRef.current = null;
+      void s.descarregar().then((ok) => {
+        if (!ok) toast.error('Não foi possível salvar a nota do contato. Abra o painel de novo e confira o texto.');
+      });
+    };
+  }, [profileContactId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // O texto do servidor entra no campo quando o contato muda ou chega dado
+  // novo, mas nunca por cima do que a pessoa digitou e ainda não gravou.
   useEffect(() => {
     const next = profileContact?.notes ?? '';
+    if (salvadorRef.current?.temPendente()) return;
+    salvadorRef.current?.sincronizar(next);
     setNotes(next);
-    lastSavedNotesRef.current = next;
   }, [profileContactId, profileContact?.notes]);
+
+  // Fechar a aba com nota por gravar: o navegador pergunta antes.
+  useEffect(() => {
+    const avisar = (e: BeforeUnloadEvent) => {
+      if (!salvadorRef.current?.temPendente()) return;
+      void salvadorRef.current.descarregar();
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', avisar);
+    return () => window.removeEventListener('beforeunload', avisar);
+  }, []);
 
   const { data: funnelStages = [] } = useSupabaseQuery({
     table: 'funnel_stages',
@@ -187,25 +244,10 @@ function ContactPanelBody({
     });
   };
 
-  // Debounced notes auto-save (1s after the user stops typing).
   const handleNotesChange = (value: string) => {
     setNotes(value);
-    if (notesTimerRef.current) window.clearTimeout(notesTimerRef.current);
-    notesTimerRef.current = window.setTimeout(() => {
-      if (!profileContactId || value === lastSavedNotesRef.current) return;
-      lastSavedNotesRef.current = value;
-      updateContactMutation.mutate({
-        data: { notes: value || null },
-        options: { filter: { column: 'id', operator: 'eq', value: profileContactId } },
-      });
-    }, 1000);
+    salvadorRef.current?.mudou(value);
   };
-
-  useEffect(() => {
-    return () => {
-      if (notesTimerRef.current) window.clearTimeout(notesTimerRef.current);
-    };
-  }, []);
 
   if (isLoading || (mainContactId && mainContactQuery.isLoading)) {
     return (
@@ -376,10 +418,27 @@ function ContactPanelBody({
           <Textarea
             value={notes}
             onChange={(e) => handleNotesChange(e.target.value)}
+            onBlur={() => void salvadorRef.current?.descarregar()}
             placeholder="Adicione uma anotação sobre este contato..."
             className="min-h-[80px] text-sm resize-none"
+            aria-label="Notas do contato"
           />
-          <p className="mt-1 text-[10px] text-muted-foreground">Salvo automaticamente</p>
+          <div className="mt-1 flex items-center gap-2" role="status" aria-live="polite" data-testid="estado-da-nota">
+            <p className={`text-xs ${estadoNota === 'erro' ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {TEXTO_DO_ESTADO[estadoNota]}
+            </p>
+            {estadoNota === 'erro' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => void salvadorRef.current?.descarregar()}
+              >
+                Tentar de novo
+              </Button>
+            )}
+          </div>
         </CollapsibleSection>
 
         {/* Follow-ups pendentes */}

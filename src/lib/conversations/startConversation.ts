@@ -114,6 +114,3 @@ export function telefoneDoContatoNovo(params: {
   const confirmado = params.confirmadoPeloProvider?.replace(/\D/g, '');
   return confirmado || params.digitado;
 }
-
-/** O que fica gravado na conversa quando o envio é um template (igual ao SendTemplateDialog). */
-export const resumoDoTemplate = (nome: string) => `Template: ${nome}`;

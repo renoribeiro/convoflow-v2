@@ -4,7 +4,7 @@ import { createLogger } from '../_shared/logger.ts';
 import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { camposDaFalhaMeta } from '../_shared/meta-error-fields.ts';
-import { montarCorpoMeta } from './meta-body.ts';
+import { montarCorpoMeta, montarLidaMeta } from './meta-body.ts';
 import { caminhoDeEnvioValido, MEDIA_LINK_TTL_S, WHATSAPP_MEDIA_BUCKET } from '../_shared/media-links.ts';
 import { rotaDoEnvio, runProviderSend, type ProviderSendBody } from '../_shared/message-send.ts';
 import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
@@ -25,14 +25,16 @@ import { bytesToBase64, callProvider } from '../_shared/provider-call.ts';
  * Consumida pelo `MetaAdapter` em src/services/whatsapp/meta.adapter.ts.
  *
  * Tipos suportados (campo `type` do body):
- *   text, image, video, audio, document, location, reaction
+ *   text, image, video, audio, document, location, reaction, template,
+ *   mark_read (a "lida" do cliente, SKILL §2.14; só quando a pessoa abre a
+ *   conversa no ConvoFlow, lote 6d, decisão D4)
  *
  * Antes de alterar endpoints da Meta, consulte .agent/skills/meta-cloud-api/SKILL.md.
  */
 
 interface SendRequest {
   instance_id: string;
-  type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'reaction' | 'template';
+  type: 'text' | 'image' | 'video' | 'audio' | 'document' | 'location' | 'reaction' | 'template' | 'mark_read';
   to: string;
   // text
   text?: string;
@@ -202,8 +204,9 @@ Deno.serve(async (req: Request) => {
   // deixar a Meta rejeitar com 131047 — cada rejeição é sinal negativo de qualidade.
   // Reações e templates ficam isentos: reações são respostas a mensagens recebidas;
   // templates são o mecanismo explícito da Meta para contato fora da janela.
+  // A "lida" não é mensagem: não conta janela nenhuma.
   // Em erro de RPC, deixamos passar (o mapeamento reativo de 131047 abaixo é a rede de segurança).
-  if (body.type !== 'reaction' && body.type !== 'template') {
+  if (body.type !== 'reaction' && body.type !== 'template' && body.type !== 'mark_read') {
     const { data: inWindow, error: windowErr } = await supabaseAdmin.rpc(
       'is_within_service_window',
       { p_instance_id: instance.id, p_phone: body.to },
@@ -258,7 +261,7 @@ Deno.serve(async (req: Request) => {
   }
 
   // Monta payload da Graph API conforme o tipo (meta-body.ts)
-  const corpo = montarCorpoMeta(body);
+  const corpo = body.type === 'mark_read' ? montarLidaMeta(body.message_id) : montarCorpoMeta(body);
   if (!corpo.ok) return jsonResponse(corpo.resposta, corpo.status);
   const metaBody = corpo.metaBody;
 
@@ -306,10 +309,19 @@ Deno.serve(async (req: Request) => {
     // que o front grava em messages.error_message quando a linha vira failed.
     const { error_message: metaMessage } = camposDaFalhaMeta(err ?? metaJson);
     return jsonResponse(
-      { ok: false, error: friendly, code: errCode, status: metaResp.status, meta_message: metaMessage },
+      {
+        ok: false,
+        error: friendly,
+        code: errCode,
+        status: metaResp.status,
+        meta_message: metaMessage,
+        ...(body.type === 'mark_read' ? { signal: true } : {}),
+      },
       400,
     );
   }
+  // A "lida" responde { success: true }: não há mensagem nova nem id.
+  if (body.type === 'mark_read') return jsonResponse({ ok: true }, 200);
 
   const messageId = metaJson?.messages?.[0]?.id;
   logger.info('Meta message sent', { instance_id: instance.id, type: body.type, messageId });

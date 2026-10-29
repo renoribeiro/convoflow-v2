@@ -22,12 +22,12 @@ import {
   chaveDoTemplate,
   normalizarTelefoneDigitado,
   podeTextoLivre,
-  resumoDoTemplate,
   telefoneDoContatoNovo,
   telefoneValido,
   templatesParaIniciar,
   variantesDoTelefone,
 } from '@/lib/conversations/startConversation';
+import { textoDoTemplate } from '@/lib/conversations/textoDoTemplate';
 
 interface NewConversationModalProps {
   onConversationCreated?: (contactId: string) => void;
@@ -323,8 +323,10 @@ export const NewConversationModal = ({ onConversationCreated, icone = false, noV
         tenant_id: tenant!.id,
         whatsapp_instance_id: selecionada.row.id,
         direction: 'outbound',
-        message_type: 'text',
-        content: modoEfetivo === 'template' ? resumoDoTemplate(template!.name) : message.trim(),
+        // Template: o texto que o cliente leu, com o tipo próprio (achado 44).
+        message_type: modoEfetivo === 'template' ? 'template' : 'text',
+        content:
+          modoEfetivo === 'template' ? textoDoTemplate(template!.bodyText, params, template!.name) : message.trim(),
         status: 'sent',
         is_from_bot: false,
         evolution_message_id: resultado.providerMessageId ?? null,

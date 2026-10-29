@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { X, AlertCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
+import { avisoDeParametros, parametrosEmBranco, textoDoTemplate } from '@/lib/conversations/textoDoTemplate';
 import type { IWhatsAppProvider, WhatsAppTemplate } from '@/services/whatsapp';
 
 interface SendTemplateDialogProps {
@@ -33,10 +34,11 @@ interface SendTemplateDialogProps {
   /** Telefone do destinatário (formato aceito pelo adapter). */
   toPhone: string;
   /**
-   * Chamado após envio bem-sucedido para persistir a linha na thread. Recebe um
-   * resumo textual do que foi enviado (ex.: "Template: pedido_confirmado").
+   * Chamado após envio bem-sucedido para gravar a linha na conversa. Recebe o
+   * texto que o cliente leu (o corpo com os parâmetros, ver textoDoTemplate) e
+   * o id do envio, que faz os riscos de entregue e lida avançarem.
    */
-  onSent: (summary: string) => Promise<void> | void;
+  onSent: (texto: string, providerMessageId?: string) => Promise<void> | void;
 }
 
 const LANGUAGE_LABELS: Record<string, string> = {
@@ -156,12 +158,20 @@ export function SendTemplateDialog({
       return;
     }
 
+    // Todo parâmetro é obrigatório: descartar o vazio mudava os seguintes de
+    // lugar ({{3}} caía no {{2}}).
+    const aviso = avisoDeParametros(params);
+    if (aviso) {
+      toast.error(aviso);
+      return;
+    }
+
     setSending(true);
     try {
       const res = await adapter.sendTemplate(toPhone, {
         templateName: name,
         language,
-        bodyParams: params.map((p) => p.trim()).filter((p) => p.length > 0),
+        bodyParams: params.map((p) => p.trim()),
       });
 
       if (res.status !== 'sent' && res.status !== 'pending') {
@@ -169,7 +179,9 @@ export function SendTemplateDialog({
         return;
       }
 
-      await onSent(`Template: ${name}`);
+      // O corpo só existe quando o template veio da lista e é o mesmo nome.
+      const corpo = selectedTemplate && selectedTemplate.name === name ? selectedTemplate.bodyText : null;
+      await onSent(textoDoTemplate(corpo, params, name), res.providerMessageId);
       toast.success('Template enviado.');
       onOpenChange(false);
     } catch (e) {
@@ -181,7 +193,8 @@ export function SendTemplateDialog({
     }
   };
 
-  const canSubmit = !sending && !!templateName.trim();
+  const emBranco = parametrosEmBranco(params);
+  const canSubmit = !sending && !!templateName.trim() && emBranco.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -325,7 +338,7 @@ export function SendTemplateDialog({
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Valores para {'{{1}}'}, {'{{2}}'}, etc., na ordem em que aparecem no template.
+              Valores para {'{{1}}'}, {'{{2}}'}, etc., na ordem em que aparecem no template. Todos são obrigatórios.
             </p>
             {params.length === 0 && (
               <p className="text-sm text-muted-foreground italic">
@@ -337,6 +350,8 @@ export function SendTemplateDialog({
                 <span className="text-xs text-muted-foreground w-8 shrink-0">{`{{${idx + 1}}}`}</span>
                 <Input
                   value={param}
+                  aria-label={`Parâmetro {{${idx + 1}}}`}
+                  aria-invalid={emBranco.includes(idx + 1) || undefined}
                   placeholder={`Valor de {{${idx + 1}}}`}
                   onChange={(e) => {
                     setParams((prev) => {
@@ -360,6 +375,11 @@ export function SendTemplateDialog({
                 )}
               </div>
             ))}
+            {params.length > 0 && emBranco.length > 0 && (
+              <p className="text-xs text-muted-foreground" data-testid="aviso-parametros">
+                {avisoDeParametros(params)}
+              </p>
+            )}
           </div>
         </div>
 

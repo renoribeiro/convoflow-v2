@@ -53,8 +53,12 @@ export interface IWhatsAppProvider {
   /* ----------------------------- Sinalizações ---------------------------- */
   /** Envia o indicador de "digitando..." (true=on, false=off). */
   setTyping(toPhone: string, on: boolean): Promise<void>;
-  /** Marca uma conversa (ou mensagem) como lida pelo lado do cliente. */
-  markRead(toPhone: string, providerMessageId?: string): Promise<void>;
+  /**
+   * Marca como lidas, no WhatsApp do cliente, as mensagens dele que a pessoa
+   * acabou de ver (os ids do WhatsApp, a última no fim). Só se chama quando a
+   * conversa está aberta e a tela visível (lote 6d, decisão D4).
+   */
+  markRead(toPhone: string, providerMessageIds?: readonly string[]): Promise<void>;
 
   /* ------------------------------- Chats --------------------------------- */
   archiveChat(toPhone: string, archive: boolean): Promise<void>;

@@ -78,7 +78,7 @@ export class MetaAdapter implements IWhatsAppProvider {
     if (!this.isReadyToSend()) {
       return {
         status: 'failed',
-        error: `Instância Meta "${this.instance.name}" não está pronta para envio (status=${this.instance.status}).`,
+        error: `O número "${this.instance.name}" está desconectado. Peça ao Gestor da Loja para reconectar.`,
       };
     }
     try {
@@ -239,10 +239,21 @@ export class MetaAdapter implements IWhatsAppProvider {
      * pode acionar a partir do edge function ao processar o webhook. */
   }
 
-  async markRead(_toPhone: string, _providerMessageId?: string): Promise<void> {
-    /* Necessita do `wamid.*` da última mensagem recebida. Quando o webhook
-     * popular essa coluna, podemos chamar via edge function. Por hora,
-     * marcação como lida acontece apenas no banco local. */
+  /**
+   * "Lida" no WhatsApp do cliente (SKILL §2.14), pelo servidor, que pega o
+   * token no cofre. Basta o wamid da última mensagem vista: a Meta marca as
+   * anteriores junto. Sinal: falha não atrapalha a conversa.
+   */
+  async markRead(toPhone: string, providerMessageIds?: readonly string[]): Promise<void> {
+    const ultima = providerMessageIds?.at(-1);
+    if (!this.isReadyToSend() || !toPhone || !ultima) return;
+    try {
+      await supabase.functions.invoke('whatsapp-send-message', {
+        body: { instance_id: this.instance.id, type: 'mark_read', to: toPhone, message_id: ultima },
+      });
+    } catch (e) {
+      logger.warn('[MetaAdapter] lida não saiu', { error: e instanceof Error ? e.message : String(e) });
+    }
   }
 
   async archiveChat(_toPhone: string, _archive: boolean): Promise<void> {

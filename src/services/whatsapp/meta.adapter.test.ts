@@ -142,3 +142,25 @@ describe('envio aceito', () => {
     expect(r).toEqual({ status: 'sent', providerMessageId: 'wamid.FAKE1', recipientId: '551199990000' });
   });
 });
+
+describe('MetaAdapter: lida no WhatsApp do cliente (lote 6d, D4)', () => {
+  it('manda mark_read pelo servidor com o wamid da última mensagem vista', async () => {
+    await new MetaAdapter(base).markRead('5585999990201', ['wamid.FAKE1', 'wamid.FAKE2']);
+    expect(invoke).toHaveBeenCalledWith('whatsapp-send-message', {
+      body: { instance_id: base.id, type: 'mark_read', to: '5585999990201', message_id: 'wamid.FAKE2' },
+    });
+  });
+
+  it('sem mensagem para marcar ou com o número parado, nada sai', async () => {
+    await new MetaAdapter(base).markRead('5585999990201', []);
+    await new MetaAdapter({ ...base, status: 'close' }).markRead('5585999990201', ['wamid.FAKE1']);
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it('falha do servidor não atrapalha a conversa', async () => {
+    impl = async () => {
+      throw new Error('rede');
+    };
+    await expect(new MetaAdapter(base).markRead('5585999990201', ['wamid.FAKE1'])).resolves.toBeUndefined();
+  });
+});

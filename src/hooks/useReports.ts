@@ -374,8 +374,9 @@ export function useDeleteReportSchedule() {
         .select('id');
 
       if (error) throw error;
-      // DELETE barrado pela RLS não dá erro, só não apaga: sem linha apagada,
-      // nada de "Agendamento excluído".
+      // DELETE que não acha a linha não dá erro, só não apaga: sem linha
+      // apagada, nada de "Agendamento excluído". Desde a 20261029000005 o
+      // Gerente grava nas Lojas filhas; sobra o agendamento que já saiu.
       if (!data || data.length === 0) throw Object.assign(new Error('nada excluído'), { code: 'SEM_LINHA' });
     },
     onSuccess: () => {
@@ -390,7 +391,7 @@ export function useDeleteReportSchedule() {
         title: 'Não foi possível excluir o agendamento',
         description:
           error?.code === 'SEM_LINHA'
-            ? 'Nada foi excluído: seu cargo não pode mudar os agendamentos desta Loja. Peça ao Gestor da Loja.'
+            ? 'Nada foi excluído: este agendamento já não está nesta Loja. Atualize a página para ver a lista de agora.'
             : 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });

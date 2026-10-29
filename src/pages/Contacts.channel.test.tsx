@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render as renderRtl, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 
 /**
  * Página de Contatos com o filtro de canal. Na Loja SEM Instagram (a
@@ -39,7 +40,10 @@ vi.mock('@/components/contacts/ContactsTable', () => ({
     return <div data-testid="table" />;
   },
 }));
-vi.mock('@/components/contacts/ContactModal', () => ({ ContactModal: () => null }));
+vi.mock('@/components/contacts/ContactModal', () => ({
+  ContactModal: ({ isOpen, contactId }: { isOpen: boolean; contactId?: string | null }) =>
+    isOpen ? <div data-testid="cartao-do-contato">{contactId}</div> : null,
+}));
 vi.mock('@/components/contacts/ContactFilters', () => ({
   ContactFilters: (props: Record<string, unknown>) => {
     seen.filters = props;
@@ -58,6 +62,10 @@ vi.mock('@/hooks/useContactLinks', () => ({ useContactLinks: () => ({ data: [] }
 vi.mock('sonner', () => ({ toast: { error: vi.fn(), info: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 
 import Contacts from './Contacts';
+
+// A tela lê ?contact= (busca rápida, achado 28): precisa do roteador.
+const render = (ui: React.ReactElement, endereco = '/dashboard/contacts') =>
+  renderRtl(<MemoryRouter initialEntries={[endereco]}>{ui}</MemoryRouter>);
 
 const WA_INST = { row: { id: 'wa-inst', provider: 'official', name: 'Vaga Certa' }, providerLabel: 'Meta' };
 const IG_INST = { row: { id: 'ig-inst', provider: 'instagram', name: 'Instagram @convoflow' }, providerLabel: 'Instagram' };
@@ -112,5 +120,19 @@ describe('Contatos — Loja com Instagram', () => {
     expect(seen.table!.channel).toBe('whatsapp');
     expect(seen.selector!.instances.map((i) => i.row.id)).toEqual(['wa-inst']);
     expect(seen.selector!.allLabel).toBe('Todos os números');
+  });
+});
+
+describe('Contatos — vindo da busca rápida', () => {
+  it('?contact= abre o cartão daquele contato', () => {
+    state.instances = [WA_INST];
+    render(<Contacts />, '/dashboard/contacts?contact=aaaaaaaa-0000-4000-8000-0000000000d1');
+    expect(screen.getByTestId('cartao-do-contato').textContent).toBe('aaaaaaaa-0000-4000-8000-0000000000d1');
+  });
+
+  it('sem ?contact=, o cartão fica fechado', () => {
+    state.instances = [WA_INST];
+    render(<Contacts />);
+    expect(screen.queryByTestId('cartao-do-contato')).not.toBeInTheDocument();
   });
 });

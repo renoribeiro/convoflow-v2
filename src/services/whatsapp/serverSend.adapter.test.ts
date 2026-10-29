@@ -102,10 +102,10 @@ describe.each(['evolution', 'waha'] as const)('%s pelo servidor', (provider) => 
 
   it('digitando, lida e arquivar', async () => {
     await adapter().setTyping(FONE, true);
-    await adapter().markRead(FONE, 'Q1');
+    await adapter().markRead(FONE, ['Q0', 'Q1']);
     await adapter().archiveChat(FONE, true);
     expect(corpo(0)[1].body).toMatchObject({ type: 'typing', on: true });
-    expect(corpo(1)[1].body).toMatchObject({ type: 'mark_read', message_id: 'Q1' });
+    expect(corpo(1)[1].body).toMatchObject({ type: 'mark_read', message_id: 'Q1', message_ids: ['Q0', 'Q1'] });
     expect(corpo(2)[1].body).toMatchObject({ type: 'archive', archive: true });
   });
 

@@ -148,9 +148,10 @@ export abstract class ServerSendAdapter implements IWhatsAppProvider {
     await this.invoke({ type: 'typing', to: toPhone, on });
   }
 
-  async markRead(toPhone: string, providerMessageId?: string): Promise<void> {
+  async markRead(toPhone: string, providerMessageIds?: readonly string[]): Promise<void> {
     if (!this.isReadyToSend() || !toPhone) return;
-    await this.invoke({ type: 'mark_read', to: toPhone, message_id: providerMessageId });
+    const ids = [...(providerMessageIds ?? [])];
+    await this.invoke({ type: 'mark_read', to: toPhone, message_id: ids.at(-1), message_ids: ids });
   }
 
   async archiveChat(toPhone: string, archive: boolean): Promise<void> {

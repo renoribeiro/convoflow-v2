@@ -276,6 +276,21 @@ describe('Evolution: cada tipo', () => {
     expect(req.body).toEqual({ readMessages: [{ remoteJid: `${FONE}@s.whatsapp.net`, fromMe: false, id: 'EVO_FAKE_CLIENTE' }] });
   });
 
+  it('lida ao abrir (D4): um recibo para cada mensagem do cliente vista, até 50', async () => {
+    const { req } = await call({ type: 'mark_read', message_id: 'EVO_FAKE_2', message_ids: ['EVO_FAKE_1', 'EVO_FAKE_2', 'EVO_FAKE_1', 7] });
+    expect(req.body).toEqual({
+      readMessages: [
+        { remoteJid: `${FONE}@s.whatsapp.net`, fromMe: false, id: 'EVO_FAKE_1' },
+        { remoteJid: `${FONE}@s.whatsapp.net`, fromMe: false, id: 'EVO_FAKE_2' },
+      ],
+    });
+    const muitos = Array.from({ length: 70 }, (_, i) => `EVO_FAKE_${i}`);
+    const { req: r50 } = await call({ type: 'mark_read', message_ids: muitos });
+    const lidos = (r50.body as { readMessages: Array<{ id: string }> }).readMessages;
+    expect(lidos).toHaveLength(50);
+    expect(lidos.at(-1)!.id).toBe('EVO_FAKE_69');
+  });
+
   it('lida sem id de mensagem não chama o Evolution', async () => {
     const { r, d } = await call({ type: 'mark_read' });
     expect(r.body).toEqual({ ok: true, skipped: true });

@@ -1,5 +1,7 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { contatoDoEndereco } from '@/lib/contacts/destinoNaBusca';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ContactsTable } from '@/components/contacts/ContactsTable';
 import { ContactModal } from '@/components/contacts/ContactModal';
@@ -30,6 +32,14 @@ export default function Contacts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  // Busca rápida (Ctrl+K): ?contact=<id> abre o cartão desse contato (achado 28).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const contatoPedido = contatoDoEndereco(searchParams);
+  useEffect(() => {
+    if (!contatoPedido) return;
+    setSelectedContact(contatoPedido);
+    setIsModalOpen(true);
+  }, [contatoPedido]);
   const [activeInstanceId, setActiveInstanceId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     search: '',
@@ -255,6 +265,16 @@ export default function Contacts() {
         onClose={() => {
           setIsModalOpen(false);
           setSelectedContact(null);
+          // Fechou o cartão que veio da busca: o endereço volta a ser o da lista.
+          if (contatoPedido) {
+            setSearchParams(
+              (p) => {
+                p.delete('contact');
+                return p;
+              },
+              { replace: true },
+            );
+          }
         }}
         contactId={selectedContact}
       />

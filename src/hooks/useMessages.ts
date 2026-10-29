@@ -29,6 +29,9 @@ interface Message {
   sender_profile_id?: string | null;
   /** CTWA ad referral (Meta) on the first inbound message from a Click-to-WhatsApp ad. */
   ad_referral?: Record<string, unknown> | null;
+  /** Por que não saiu (migração 20261008000001); a bolha mostra o motivo. */
+  error_code?: string | null;
+  error_message?: string | null;
 }
 
 interface MessagesPage {
@@ -71,7 +74,9 @@ export const useMessages = ({ contactId, pageSize = 50, enabled = true }: UseMes
           is_from_bot,
           source,
           campaign_id,
-          ad_referral
+          ad_referral,
+          error_code,
+          error_message
         `)
         .eq('tenant_id', tenant.id)
         .eq('contact_id', contactId)

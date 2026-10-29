@@ -84,6 +84,12 @@ export interface ProviderSendBody {
   address?: unknown;
   /** Reação e lida: o id do WhatsApp da mensagem (evolution_message_id). */
   message_id?: unknown;
+  /**
+   * Lida: os ids de TODAS as mensagens do cliente que a pessoa acabou de ver
+   * (lote 6d, decisão D4). O Evolution manda um recibo por id; o WAHA marca a
+   * conversa inteira pelo chatId. Até 50.
+   */
+  message_ids?: unknown;
   emoji?: unknown;
   /** Reação: a mensagem é nossa (enviada) ou do cliente. */
   from_me?: unknown;
@@ -184,6 +190,16 @@ const fail = (status: number, reason: string, error: string, extra: Record<strin
 
 // ------------------------------------------------------------- utilidades
 
+/** Lida: message_ids (até 50, sem repetir) ou o message_id sozinho. */
+export function idsDaLida(body: Pick<ProviderSendBody, 'message_id' | 'message_ids'>): string[] {
+  const lista = Array.isArray(body.message_ids)
+    ? body.message_ids.filter((v): v is string => typeof v === 'string').map((v) => v.trim()).filter(Boolean)
+    : [];
+  const unico = typeof body.message_id === 'string' ? body.message_id.trim() : '';
+  const todos = lista.length ? lista : unico ? [unico] : [];
+  return [...new Set(todos)].slice(-50);
+}
+
 const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
 const trimSlash = (u: string) => u.replace(/\/+$/, '');
 
@@ -236,6 +252,8 @@ export interface PreparedSend {
   name?: string;
   address?: string;
   messageId?: string;
+  /** Lida no Evolution: um recibo para cada mensagem vista. */
+  messageIds?: string[];
   emoji?: string;
   fromMe?: boolean;
   on?: boolean;
@@ -314,7 +332,11 @@ export function buildEvolutionRequest(
       });
     case 'mark_read':
       return post('/chat/markMessageAsRead', {
-        readMessages: [{ remoteJid: jid, fromMe: false, id: p.messageId }],
+        readMessages: (p.messageIds?.length ? p.messageIds : [p.messageId]).map((id) => ({
+          remoteJid: jid,
+          fromMe: false,
+          id,
+        })),
       });
     case 'archive':
       // Com `chat`, o Evolution acha a última mensagem da conversa sozinho.
@@ -544,8 +566,9 @@ async function prepare(
   }
 
   if (type === 'mark_read') {
-    const messageId = str(body.message_id);
-    return { ...base, ...(messageId ? { messageId } : {}) };
+    const messageIds = idsDaLida(body);
+    const messageId = messageIds.at(-1);
+    return { ...base, ...(messageId ? { messageId, messageIds } : {}) };
   }
   if (type === 'typing') return { ...base, on: body.on === true };
   if (type === 'archive') return { ...base, archive: body.archive !== false };
@@ -571,7 +594,7 @@ export async function runProviderSend(body: ProviderSendBody, deps: SendDeps): P
   }
 
   // Sinais sem a mensagem de que precisam não chamam ninguém.
-  if (type === 'mark_read' && provider === 'evolution' && !str(body.message_id)) {
+  if (type === 'mark_read' && provider === 'evolution' && idsDaLida(body).length === 0) {
     return { status: 200, body: { ok: true, skipped: true } };
   }
 

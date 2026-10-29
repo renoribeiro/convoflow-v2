@@ -28,6 +28,8 @@ import { contactIdentifier, contactLabel, contactSearchOrFilter } from '@/lib/co
 import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { estadoDoNumeroTexto } from '@/lib/whatsapp/connectionSections';
+import { destinoDoContatoNaBusca } from '@/lib/contacts/destinoNaBusca';
+import { logger } from '@/lib/logger';
 
 type PageItem = {
   label: string;
@@ -146,10 +148,27 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
     navigate(path);
   };
 
-  const handleSelectContact = (contactId: string) => {
+  // A tela Conversas, pela mesma regra do menu: sem ela, o contato abre no cartão.
+  const alcancaConversas = useMemo(() => {
+    const tela = TELAS.find((t) => t.chave === 'conversations');
+    return !!tela && acessoATela(tela, ctx) === 'liberado';
+  }, [ctx]);
+
+  // Achado 28 (decisão D12): o contato escolhido abre a conversa dele; sem
+  // conversa que a pessoa enxergue, o cartão do contato em Contatos.
+  const handleSelectContact = async (contactId: string) => {
     onOpenChange(false);
-    // Sem rota dedicada de detalhe — leva à lista de contatos com filtro de id.
-    navigate(`/dashboard/contacts?contact=${contactId}`);
+    let temConversa = false;
+    if (alcancaConversas) {
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('contact_id', contactId)
+        .limit(1);
+      if (error) logger.warn('[CommandPalette] conversa do contato não carregou', { error: error.message });
+      temConversa = (data?.length ?? 0) > 0;
+    }
+    navigate(destinoDoContatoNaBusca({ contactId, temConversa, alcancaConversas }));
   };
 
   const handleSelectInstance = (instanceId: string) => {
@@ -241,7 +260,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
                 <CommandItem
                   key={contact.id}
                   value={`${contact.name ?? ''} ${contactIdentifier(contact)}`}
-                  onSelect={() => handleSelectContact(contact.id)}
+                  onSelect={() => void handleSelectContact(contact.id)}
                 >
                   <Users className="mr-2 h-4 w-4 text-muted-foreground" />
                   <div className="flex flex-col">

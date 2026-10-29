@@ -94,7 +94,7 @@ export const ROLE_DESCRIPTIONS: Record<UserRole, RoleDescription> = {
     label: 'Gerente',
     summary: 'Responsável pela Conta e por todas as Lojas dela.',
     can: [
-      'Tudo que o gestor faz',
+      'Tudo que o gestor faz, em qualquer Loja da Conta (campanhas, follow ups, sequências, fontes e relatórios inclusive)',
       'Criar gestores e atendentes',
       'Ver faturamento',
       'Alternar entre Lojas',

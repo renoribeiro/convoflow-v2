@@ -15,6 +15,17 @@ export type CorpoMeta =
 
 const falha = (resposta: Record<string, any>, status: number): CorpoMeta => ({ ok: false, resposta, status });
 
+/**
+ * "Lida" no WhatsApp do cliente, pela API Oficial (SKILL §2.14): os dois riscos
+ * azuis. Marca a mensagem e as anteriores da conversa. Só sai quando a pessoa
+ * abre a conversa no ConvoFlow (lote 6d, decisão D4).
+ */
+export function montarLidaMeta(messageId: unknown): CorpoMeta {
+  const id = typeof messageId === 'string' ? messageId.trim() : '';
+  if (!id) return falha({ ok: false, error: 'message_id obrigatório', signal: true }, 400);
+  return { ok: true, metaBody: { messaging_product: 'whatsapp', status: 'read', message_id: id } };
+}
+
 // deno-lint-ignore no-explicit-any
 export function montarCorpoMeta(body: any): CorpoMeta {
   // Monta payload da Graph API conforme o tipo

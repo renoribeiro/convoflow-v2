@@ -219,7 +219,8 @@ describe('número oficial, fora da janela de 24 horas', () => {
     expect(insertsEm('messages')).toEqual([
       expect.objectContaining({
         contact_id: CONTATO_NOVO,
-        content: 'Template: boas_vindas',
+        content: 'Olá Ana, aqui é da clínica.',
+        message_type: 'template',
         status: 'sent',
         evolution_message_id: 'wamid.FAKE2',
       }),

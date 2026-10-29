@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { montarCorpoMeta } from '../../../supabase/functions/whatsapp-send-message/meta-body.ts';
+import { montarCorpoMeta, montarLidaMeta } from '../../../supabase/functions/whatsapp-send-message/meta-body.ts';
 
 /**
  * O envio da Meta (API oficial) não mudou com a sessão 2 dos segredos das
@@ -76,6 +76,15 @@ describe('Meta: corpo da Graph API, tipo a tipo', () => {
       language: { code: 'en_US' },
       components: comps,
     });
+  });
+
+  it('lida (lote 6d, D4, SKILL §2.14): status read com o wamid, sem destinatário', () => {
+    expect(montarLidaMeta('wamid.FAKE')).toEqual({
+      ok: true,
+      metaBody: { messaging_product: 'whatsapp', status: 'read', message_id: 'wamid.FAKE' },
+    });
+    expect(montarLidaMeta('  ')).toMatchObject({ ok: false, status: 400 });
+    expect(montarLidaMeta(undefined)).toMatchObject({ ok: false, status: 400 });
   });
 
   it('as recusas de antes, com o mesmo status e a mesma frase', () => {

@@ -5,8 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 /**
  * Lixeiras do lote 6c (fonte de tráfego e agendamento de relatório): DELETE
- * barrado pela RLS não dá erro, só não apaga. Sem linha apagada, a tela não
- * pode dizer "excluído" (é o caso do Gerente numa Loja filha, onde ele só lê).
+ * que não acha a linha não dá erro, só não apaga. Sem linha apagada, a tela não
+ * pode dizer "excluído". Desde o lote 6d (20261029000005) o Gerente grava nas
+ * Lojas filhas, então o motivo não fala mais de cargo: a linha já saiu.
  */
 
 const { estado } = vi.hoisted(() => ({ estado: { apagadas: [] as Array<{ id: string }>, toast: vi.fn() } }));
@@ -36,8 +37,8 @@ beforeEach(() => {
 });
 
 describe.each([
-  ['fonte de tráfego', useDeleteTrafficSource, 'Fonte excluída', /fontes desta Loja/],
-  ['agendamento de relatório', useDeleteReportSchedule, 'Agendamento excluído', /agendamentos desta Loja/],
+  ['fonte de tráfego', useDeleteTrafficSource, 'Fonte excluída', /esta fonte já não está nesta Loja/],
+  ['agendamento de relatório', useDeleteReportSchedule, 'Agendamento excluído', /este agendamento já não está nesta Loja/],
 ])('excluir %s', (_nome, gancho, tituloDeSucesso, motivo) => {
   it('sem linha apagada: avisa que nada foi excluído', async () => {
     const { result } = renderHook(() => gancho(), { wrapper: embrulho });

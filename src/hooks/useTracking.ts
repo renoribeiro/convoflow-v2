@@ -363,9 +363,10 @@ export function useDeleteTrafficSource() {
         .eq('tenant_id', tenant.id)
         .select('id');
       if (error) throw error;
-      // DELETE barrado pela RLS não dá erro: só não apaga. Sem linha apagada,
-      // a tela não pode dizer "Fonte excluída" (o Gerente só lê as fontes de
-      // uma Loja filha).
+      // DELETE que não acha a linha não dá erro: só não apaga. Sem linha
+      // apagada, a tela não pode dizer "Fonte excluída". Desde a 20261029000005
+      // nenhum cargo que vê a lixeira é barrado pela RLS (o Gerente grava nas
+      // Lojas filhas); sobra a fonte que já saiu por outro caminho.
       if (!data || data.length === 0) throw Object.assign(new Error('nada excluído'), { code: 'SEM_LINHA' });
     },
     onSuccess: () => {
@@ -380,7 +381,7 @@ export function useDeleteTrafficSource() {
           error?.code === '23503'
             ? 'Esta fonte já tem contatos. Desligue a fonte em vez de excluir.'
             : error?.code === 'SEM_LINHA'
-            ? 'Nada foi excluído: seu cargo não pode mudar as fontes desta Loja. Peça ao Gestor da Loja.'
+            ? 'Nada foi excluído: esta fonte já não está nesta Loja. Atualize a página para ver a lista de agora.'
             : 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.',
         variant: 'destructive',
       });

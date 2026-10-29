@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
+  AlertCircle,
   Bot,
   Download,
   ExternalLink,
@@ -15,16 +16,20 @@ import {
   Megaphone,
   Mic,
   Reply,
+  SmilePlus,
   Trash2,
   Zap,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { REACOES_RAPIDAS } from '@/lib/conversations/lidaAoAbrir';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MessageStatusIcon } from './MessageStatusIcon';
 import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
 import { classifyMediaUrl, downloadHref } from '@/lib/media/whatsappMedia';
 import { resumoDaMensagem, semRotuloDeMidia } from '@/lib/media/legendaDaMidia';
+import { motivoDaFalhaDaMensagem, type Reenvio } from '@/lib/conversations/falhaDaMensagem';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -78,6 +83,9 @@ export type RenderableMessage = {
    * de uma resposta; o `id` acima é o nosso e o WhatsApp não o conhece.
    */
   provider_message_id?: string | null;
+  /** Por que não saiu (messages.error_code / error_message), quando falhou. */
+  error_code?: string | null;
+  error_message?: string | null;
 };
 
 /** Characters after which a text message gets a "Ver mais"/"Ver menos" toggle. */
@@ -247,11 +255,55 @@ function MediaPendente({ type, state }: { type: string; state: 'loading' | 'unav
 
 const TIPOS_DE_ARQUIVO = new Set(['image', 'video', 'audio', 'document', 'sticker']);
 
-function ReactionPlaceholder({ emoji }: { emoji?: string }) {
+function ReactionPlaceholder({ emoji, nossa }: { emoji?: string; nossa?: boolean }) {
   return (
     <p className="text-sm italic opacity-80">
-      Reagiu com {emoji || '👍'}
+      {nossa ? 'Você reagiu com' : 'Reagiu com'} {emoji || '👍'}
     </p>
+  );
+}
+
+/** O botão de reagir da bolha e a fileira de emojis do WhatsApp. */
+function BotaoDeReagir({ onEscolher }: { onEscolher: (emoji: string) => void }) {
+  const [aberto, setAberto] = useState(false);
+  return (
+    <Popover open={aberto} onOpenChange={setAberto}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              data-alvo-expandido=""
+              className="md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity rounded-sm p-0.5 hover:bg-background/30"
+              aria-label="Reagir a esta mensagem"
+            >
+              <SmilePlus className="w-3.5 h-3.5" />
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          Reagir a esta mensagem
+        </TooltipContent>
+      </Tooltip>
+      <PopoverContent side="top" className="w-auto p-1" aria-label="Escolha a reação">
+        <div className="flex gap-0.5">
+          {REACOES_RAPIDAS.map((emoji) => (
+            <button
+              key={emoji}
+              type="button"
+              className="rounded-md px-2 py-1 text-lg leading-none hover:bg-muted focus-visible:bg-muted"
+              aria-label={`Reagir com ${emoji}`}
+              onClick={() => {
+                setAberto(false);
+                onEscolher(emoji);
+              }}
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -341,6 +393,16 @@ function OriginBadge({ message }: { message: RenderableMessage }) {
     );
   }
 
+  // Template aprovado enviado da conversa: o texto é o que o cliente leu.
+  if ((message.message_type || '').toLowerCase() === 'template') {
+    return (
+      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded-sm font-medium bg-muted text-foreground">
+        <FileText className="w-3 h-3" />
+        Template
+      </span>
+    );
+  }
+
   return null;
 }
 
@@ -361,6 +423,19 @@ interface MessageBubbleProps {
    * histórico.
    */
   onSaveAsQuickReply?: (content: string) => void;
+  /**
+   * Mensagem nossa que falhou: se dá para reenviar (ver falhaDaMensagem.ts).
+   * Sem isto a bolha mostra só o motivo, sem botão.
+   */
+  reenvio?: Reenvio | null;
+  onResend?: (message: RenderableMessage) => void;
+  /** O reenvio desta mensagem está em andamento. */
+  reenviando?: boolean;
+  /**
+   * Reagir com um emoji (lote 6d, decisão D4). Sem isto, ou sem o id da
+   * mensagem no WhatsApp, o botão de reagir não aparece.
+   */
+  onReact?: (message: RenderableMessage, emoji: string) => void;
 }
 
 /** Tipos cujo corpo NÃO é texto reaproveitável como resposta rápida. */
@@ -383,6 +458,10 @@ export function MessageBubble({
   searchTerm,
   isActiveMatch,
   onSaveAsQuickReply,
+  reenvio,
+  onResend,
+  reenviando = false,
+  onReact,
 }: MessageBubbleProps) {
   const isOutbound = message.direction === 'outbound';
   const meta = useMemo(() => tryParseMetadata(message), [message]);
@@ -421,7 +500,14 @@ export function MessageBubble({
 
   const renderBody = () => {
     if (type === 'deleted' || meta.deleted === true) return <DeletedPlaceholder />;
-    if (type === 'reaction') return <ReactionPlaceholder emoji={typeof meta.emoji === 'string' ? meta.emoji : message.content ?? undefined} />;
+    if (type === 'reaction') {
+      return (
+        <ReactionPlaceholder
+          emoji={typeof meta.emoji === 'string' ? meta.emoji : message.content ?? undefined}
+          nossa={isOutbound}
+        />
+      );
+    }
     if (midiaPendente) return <MediaPendente type={type} state={midiaPendente} />;
 
     if (type === 'image' && url) {
@@ -485,8 +571,22 @@ export function MessageBubble({
     );
   };
 
+  // Achado 37: o motivo fica embaixo da bolha, em português, e não só no aviso
+  // que some. Reação que falhou também diz o motivo.
+  const falhou = isOutbound && message.status === 'failed';
+
+  // Reagir precisa do id da mensagem no WhatsApp, e não vale para reação,
+  // mensagem apagada nem mensagem nossa que não saiu.
+  const podeReagir =
+    Boolean(onReact) &&
+    Boolean(message.provider_message_id) &&
+    type !== 'reaction' &&
+    type !== 'deleted' &&
+    meta.deleted !== true &&
+    !(isOutbound && (message.status === 'failed' || message.status === 'pending'));
+
   return (
-    <div className={`flex ${isOutbound ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex flex-col ${isOutbound ? 'items-end' : 'items-start'}`}>
       <div
         className={`group max-w-[78%] p-3 transition-shadow ${
           isOutbound
@@ -537,6 +637,7 @@ export function MessageBubble({
                 </TooltipContent>
               </Tooltip>
             )}
+            {podeReagir && <BotaoDeReagir onEscolher={(emoji) => onReact?.(message, emoji)} />}
             {podeSalvarComoResposta && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -562,6 +663,28 @@ export function MessageBubble({
           </span>
         </div>
       </div>
+
+      {falhou && (
+        <div className="mt-1 flex max-w-[78%] flex-col items-end gap-1 text-right" data-testid="falha-da-mensagem">
+          <p className="flex items-start gap-1 text-xs text-destructive">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" aria-hidden />
+            <span>{motivoDaFalhaDaMensagem(message)}</span>
+          </p>
+          {reenvio?.pode && onResend && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => onResend(message)}
+              disabled={reenviando}
+            >
+              {reenviando ? 'Reenviando...' : 'Reenviar'}
+            </Button>
+          )}
+          {reenvio && !reenvio.pode && <p className="text-xs text-muted-foreground">{reenvio.motivo}</p>}
+        </div>
+      )}
 
       {type === 'image' && url && (
         <Dialog open={imageOpen} onOpenChange={setImageOpen}>

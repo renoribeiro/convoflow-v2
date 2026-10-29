@@ -102,6 +102,9 @@ import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
 import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
 import { logger } from '@/lib/logger';
 import { camposDaFalha } from '@/lib/whatsapp/failureFields';
+import { reenvioDaMensagem } from '@/lib/conversations/falhaDaMensagem';
+import { idsParaMarcarComoLidas, naoLidasDoCliente } from '@/lib/conversations/lidaAoAbrir';
+import { usePaginaVisivel } from '@/hooks/usePaginaVisivel';
 import { cn, formatPhoneBR } from '@/lib/utils';
 import { MessageBubble, type RenderableMessage } from './MessageBubble';
 import { resumoDaMensagem } from '@/lib/media/legendaDaMidia';
@@ -239,6 +242,8 @@ export const ChatWindow = ({
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingFilePreview, setPendingFilePreview] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<RenderableMessage | null>(null);
+  // A bolha que está sendo reenviada (só uma por vez).
+  const [reenviandoId, setReenviandoId] = useState<string | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
   const [isEndSessionOpen, setIsEndSessionOpen] = useState(false);
@@ -487,26 +492,58 @@ export const ChatWindow = ({
     return () => window.removeEventListener('keydown', onKey, true);
   }, [showEmojiPicker, quickRepliesOpen]);
 
-  // Marcar mensagens como lidas localmente quando a conversa é aberta
+  // Abrir a conversa marca como lida: aqui e, desde o lote 6d (decisão D4),
+  // no WhatsApp do cliente (os dois riscos azuis), como o próprio WhatsApp
+  // faz. Só a conversa ABERTA e só com a aba à vista: mensagem que chega com a
+  // aba escondida espera a pessoa voltar. Conversa que ninguém abriu nunca
+  // manda recibo. Os ids do WhatsApp ficam guardados até o número estar
+  // pronto, e cada um sai uma vez só.
+  const paginaVisivel = usePaginaVisivel();
+  // Cada id guarda o número por onde a mensagem chegou: o recibo só sai pelo
+  // número da conversa, para as mensagens que chegaram por ele.
+  const recibosRef = useRef<{
+    contactId: string | null;
+    pendentes: Array<{ id: string; numero: string | null }>;
+    enviados: Set<string>;
+  }>({
+    contactId: null,
+    pendentes: [],
+    enviados: new Set(),
+  });
   useEffect(() => {
-    if (contactId && messages.length > 0) {
-      const unreadMessages = messages.filter(
-        (msg) => msg.direction === 'inbound' && msg.status !== 'read',
-      );
-      if (unreadMessages.length > 0) {
-        markAsReadMutation.mutate({
-          contactId,
-          messageIds: unreadMessages.map((msg) => msg.id),
-        });
+    if (!contactId || !paginaVisivel) return;
+    if (recibosRef.current.contactId !== contactId) {
+      recibosRef.current = { contactId, pendentes: [], enviados: new Set() };
+    }
+    const recibos = recibosRef.current;
+    const unreadMessages = naoLidasDoCliente(messages);
+    if (unreadMessages.length > 0) {
+      markAsReadMutation.mutate({
+        contactId,
+        messageIds: unreadMessages.map((msg) => msg.id),
+      });
+      for (const m of unreadMessages) {
+        const [id] = idsParaMarcarComoLidas([m]);
+        if (id && !recibos.enviados.has(id) && !recibos.pendentes.some((x) => x.id === id)) {
+          recibos.pendentes.push({ id, numero: (m as any).whatsapp_instance_id ?? null });
+        }
       }
     }
-  }, [contactId, messages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+    const phone = phoneOf(contact);
+    if (recibos.pendentes.length === 0 || !active || !phone || isInstagram || !active.adapter.isReadyToSend()) return;
+    const doNumero = recibos.pendentes.filter((x) => !x.numero || x.numero === active.row.id);
+    recibos.pendentes = [];
+    const ids = doNumero.map((x) => x.id).slice(-50);
+    ids.forEach((id) => recibos.enviados.add(id));
+    if (ids.length) active.adapter.markRead(phone, ids).catch(() => {});
+  }, [contactId, messages.length, paginaVisivel, active?.row.id, active?.row.status, contact?.phone]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    if (!paginaVisivel) return;
     if (conversationId && conversation?.unread_count && conversation.unread_count > 0) {
       markConversationAsReadMutation.mutate(conversationId);
     }
-  }, [conversationId, conversation?.unread_count]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [conversationId, conversation?.unread_count, paginaVisivel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cálculo da janela de 24h (Meta)
   const lastInboundAt = useMemo(() => {
@@ -574,6 +611,8 @@ export const ChatWindow = ({
         is_from_bot: m.is_from_bot ?? null,
         ad_referral: (m.ad_referral as RenderableMessage['ad_referral']) ?? null,
         provider_message_id: m.evolution_message_id ?? null,
+        error_code: m.error_code ?? null,
+        error_message: m.error_message ?? null,
       };
     });
   }, [messages, campaignNames, resolverMidia]);
@@ -828,6 +867,32 @@ export const ChatWindow = ({
    * pelo envio do WhatsApp logo abaixo. A linha é gravada com a sessão do
    * usuário (autor e participante); ver sendInstagramReply.
    */
+  /** Manda o texto pelo Instagram e grava a linha. true = saiu. */
+  const enviarNoInstagram = async (text: string): Promise<boolean> => {
+    if (!contactId || !tenant?.id || !active) return false;
+    const res = await sendInstagramReply({
+      client: supabase as unknown as Parameters<typeof sendInstagramReply>[0]['client'],
+      adapter: active.adapter,
+      tenantId: (conversation as any)?.tenant_id ?? tenant.id,
+      instanceId: active.row.id,
+      contactId,
+      recipientId: (contact as any)?.external_id ?? '',
+      text,
+    });
+    queryClient.invalidateQueries({ queryKey: ['messages', contactId, tenant.id] });
+    queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
+
+    if (!res.ok) {
+      toast.error(res.error);
+      if (res.reason === 'outside_window') {
+        queryClient.invalidateQueries({ queryKey: ['instagram-window', contactId] });
+      }
+      return false;
+    }
+    if (res.warning && res.warning !== 'sem_message_id') toast.warning(res.warning);
+    return true;
+  };
+
   const handleSendInstagram = async () => {
     const text = message.trim();
     if (!text || !contactId || !tenant?.id) return;
@@ -846,26 +911,8 @@ export const ChatWindow = ({
 
     setIsSending(true);
     try {
-      const res = await sendInstagramReply({
-        client: supabase as unknown as Parameters<typeof sendInstagramReply>[0]['client'],
-        adapter: active.adapter,
-        tenantId: (conversation as any)?.tenant_id ?? tenant.id,
-        instanceId: active.row.id,
-        contactId,
-        recipientId: (contact as any)?.external_id ?? '',
-        text,
-      });
-      queryClient.invalidateQueries({ queryKey: ['messages', contactId, tenant.id] });
-      queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
-
-      if (!res.ok) {
-        toast.error(res.error);
-        if (res.reason === 'outside_window') {
-          queryClient.invalidateQueries({ queryKey: ['instagram-window', contactId] });
-        }
-        return; // o texto fica no campo para o atendente decidir
-      }
-      if (res.warning && res.warning !== 'sem_message_id') toast.warning(res.warning);
+      // Não saiu: o texto fica no campo para o atendente decidir.
+      if (!(await enviarNoInstagram(text))) return;
       setMessage('');
       resetTextareaHeight();
     } catch (e) {
@@ -932,44 +979,7 @@ export const ChatWindow = ({
           toast.error(`Falha no upload da mídia: ${err}`);
         }
       } else if (text) {
-        // Envio otimista: grava já como "pending" para a mensagem aparecer na
-        // hora (relógio), sem esperar o round-trip até a Meta. Depois atualiza
-        // para o status real e guarda o wamid (p/ o webhook avançar delivered/read).
-        const pending = await sendMessageMutation.mutateAsync({
-          contact_id: contactId,
-          whatsapp_instance_id: active.row.id,
-          content: text,
-          direction: 'outbound',
-          message_type: 'text',
-          status: 'pending',
-          is_from_bot: false,
-        } as any);
-
-        const providerResult = await active.adapter.sendText(phoneOf(contact), text, {
-          // O id do WhatsApp (wamid.* na Meta), não o nosso: é ele que faz a
-          // citação aparecer para o cliente. Sem ele, vai sem citação.
-          quotedMessageId: replyTo?.provider_message_id ?? undefined,
-          linkPreview: true,
-        });
-        const status =
-          providerResult?.status === 'sent' || providerResult?.status === 'pending' ? 'sent' : 'failed';
-        if (status === 'failed') {
-          toast.error(`A mensagem não foi enviada. ${providerResult?.error || 'Tente de novo em instantes.'}`);
-        }
-
-        const pendingId = (pending as any)?.id;
-        if (pendingId) {
-          await supabase
-            .from('messages')
-            .update({
-              status,
-              evolution_message_id: providerResult?.providerMessageId ?? null,
-              ...(status === 'failed' ? camposDaFalha(providerResult) : {}),
-            })
-            .eq('id', pendingId);
-          queryClient.invalidateQueries({ queryKey: ['messages', contactId, tenant.id] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
-        }
+        await enviarTexto(text, replyTo?.provider_message_id ?? undefined);
       }
 
       if (!manterTexto) {
@@ -993,6 +1003,115 @@ export const ChatWindow = ({
     }
   };
 
+  /**
+   * Texto pelo número da conversa (WhatsApp). Envio otimista: grava já como
+   * "pending" para a mensagem aparecer na hora (relógio), sem esperar o
+   * round-trip até o provedor. Depois atualiza para o status real, guarda o id
+   * do WhatsApp (p/ o webhook avançar entregue/lida) e, se falhou, o motivo,
+   * que a bolha mostra embaixo dela.
+   */
+  const enviarTexto = async (text: string, quotedMessageId?: string) => {
+    if (!contactId || !tenant?.id || !active) return;
+    const pending = await sendMessageMutation.mutateAsync({
+      contact_id: contactId,
+      whatsapp_instance_id: active.row.id,
+      content: text,
+      direction: 'outbound',
+      message_type: 'text',
+      status: 'pending',
+      is_from_bot: false,
+    } as any);
+
+    const providerResult = await active.adapter.sendText(phoneOf(contact), text, {
+      // O id do WhatsApp (wamid.* na Meta), não o nosso: é ele que faz a
+      // citação aparecer para o cliente. Sem ele, vai sem citação.
+      quotedMessageId,
+      linkPreview: true,
+    });
+    const status =
+      providerResult?.status === 'sent' || providerResult?.status === 'pending' ? 'sent' : 'failed';
+    if (status === 'failed') {
+      toast.error(`A mensagem não foi enviada. ${providerResult?.error || 'Tente de novo em instantes.'}`);
+    }
+
+    const pendingId = (pending as any)?.id;
+    if (pendingId) {
+      await supabase
+        .from('messages')
+        .update({
+          status,
+          evolution_message_id: providerResult?.providerMessageId ?? null,
+          ...(status === 'failed' ? camposDaFalha(providerResult) : {}),
+        })
+        .eq('id', pendingId);
+      queryClient.invalidateQueries({ queryKey: ['messages', contactId, tenant.id] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', tenant.id] });
+    }
+  };
+
+  /**
+   * "Reenviar" na bolha que falhou (achado 37, decisão D12): uma mensagem
+   * NOVA com o mesmo texto, pelo mesmo caminho do campo; a que falhou fica no
+   * histórico como estava. Quem decide se dá é reenvioDaMensagem.
+   */
+  const handleResend = async (msg: RenderableMessage) => {
+    const text = (msg.content ?? '').trim();
+    if (!text || reenviandoId || isSending) return;
+    if (bloqueioDoEnvio) {
+      toast.error(bloqueioDoEnvio);
+      return;
+    }
+    setReenviandoId(msg.id);
+    try {
+      if (isInstagram) await enviarNoInstagram(text);
+      else await enviarTexto(text);
+    } catch (e) {
+      logger.error('[ChatWindow] reenvio falhou', { error: e instanceof Error ? e.message : String(e) });
+      toast.error('A mensagem não foi enviada. Tente de novo em instantes.');
+    } finally {
+      setReenviandoId(null);
+    }
+  };
+
+  /**
+   * Reação na bolha (lote 6d, decisão D4): Evolution, WAHA e API Oficial. A
+   * reação vai para a mensagem pelo id do WhatsApp e fica no histórico como
+   * uma linha "Você reagiu com", do jeito que a do cliente já aparece; se não
+   * saiu, a linha leva o motivo embaixo.
+   */
+  const handleReact = async (msg: RenderableMessage, emoji: string) => {
+    if (!contactId || !active || !msg.provider_message_id) return;
+    if (bloqueioDoEnvio) {
+      toast.error(bloqueioDoEnvio);
+      return;
+    }
+    try {
+      const resultado = await active.adapter.sendReaction(phoneOf(contact), {
+        messageId: msg.provider_message_id,
+        emoji,
+        fromMe: msg.direction === 'outbound',
+      });
+      const status = resultado?.status === 'sent' || resultado?.status === 'pending' ? 'sent' : 'failed';
+      if (status === 'failed') {
+        toast.error(`A reação não foi enviada. ${resultado?.error || 'Tente de novo em instantes.'}`);
+      }
+      await sendMessageMutation.mutateAsync({
+        contact_id: contactId,
+        whatsapp_instance_id: active.row.id,
+        content: emoji,
+        direction: 'outbound',
+        message_type: 'reaction',
+        status,
+        evolution_message_id: resultado?.providerMessageId ?? null,
+        is_from_bot: false,
+        ...(status === 'failed' ? camposDaFalha(resultado) : {}),
+      } as any);
+    } catch (e) {
+      logger.error('[ChatWindow] reação falhou', { error: e instanceof Error ? e.message : String(e) });
+      toast.error('A reação não foi enviada. Tente de novo em instantes.');
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -1000,19 +1119,22 @@ export const ChatWindow = ({
     }
   };
 
-  // Persiste na thread a linha do template enviado. O envio em si acontece dentro
-  // do SendTemplateDialog (via adapter.sendTemplate); aqui só gravamos o registro
-  // local para aparecer na conversa — useSendMessage.onSuccess invalida a query.
-  const handleTemplateSent = async (summary: string) => {
+  // Grava na conversa a linha do template enviado. O envio em si acontece dentro
+  // do SendTemplateDialog (via adapter.sendTemplate); aqui fica o texto que o
+  // cliente leu e o id do envio, para os riscos de entregue e lida avançarem
+  // pelo webhook (achado 44). O tipo 'template' é o que tira o "Reenviar" de
+  // texto livre de uma linha dessas. useSendMessage.onSuccess invalida a query.
+  const handleTemplateSent = async (texto: string, providerMessageId?: string) => {
     if (!contactId || !active) return;
     try {
       await sendMessageMutation.mutateAsync({
         contact_id: contactId,
         whatsapp_instance_id: active.row.id,
-        content: summary,
+        content: texto,
         direction: 'outbound',
-        message_type: 'text',
+        message_type: 'template',
         status: 'sent',
+        evolution_message_id: providerMessageId ?? null,
         is_from_bot: false,
       } as any);
     } catch {
@@ -1152,6 +1274,19 @@ export const ChatWindow = ({
     foraDaJanela24h: outsideMetaWindow,
     temTelefone: !!phoneOf(contact),
   });
+  // Por que esta conversa não envia texto agora (o mesmo que o campo barra). É
+  // o que trava o "Reenviar" da bolha que falhou.
+  const bloqueioDoEnvio: string | null = isInstagram
+    ? igBlockedReason
+    : !active
+      ? 'Esta conversa não tem um número de WhatsApp para responder. Peça ao Gestor da Loja para conectar um em Números de WhatsApp.'
+      : !active.adapter.isReadyToSend()
+        ? active.adapter.notReadyReason ?? `O número "${active.row.name}" está desconectado. Peça ao Gestor da Loja para reconectar.`
+        : !phoneOf(contact)
+          ? SEM_ENDERECO
+          : outsideMetaWindow
+            ? TEXTO_FORA_DA_JANELA
+            : null;
   const pendingIsAudio = !!pendingFile && detectMediaTypeFromMime(pendingFile.type) === 'audio';
   const seenLabel = lastSeenLabel((contact as any)?.last_interaction_at);
 
@@ -1459,6 +1594,12 @@ export const ChatWindow = ({
                     searchTerm={searchOpen ? searchTerm : undefined}
                     isActiveMatch={activeMatchId === msg.id}
                     onSaveAsQuickReply={handleSaveAsQuickReply}
+                    reenvio={reenvioDaMensagem(msg, { bloqueio: bloqueioDoEnvio })}
+                    onResend={handleResend}
+                    reenviando={reenviandoId === msg.id}
+                    // Reação: só WhatsApp e só quando a conversa deixa enviar
+                    // (na API Oficial, dentro da janela de 24 horas).
+                    onReact={isInstagram || bloqueioDoEnvio ? undefined : handleReact}
                   />
                 </div>
               ))

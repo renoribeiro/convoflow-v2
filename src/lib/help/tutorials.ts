@@ -795,18 +795,12 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'page:settings-visibility',
       },
       {
-        title: 'Saiba como a distribuição automática entrega conversas novas',
+        title: 'Entenda como uma conversa entra e sai de "Minhas" sozinha',
         body:
-          'Com a distribuição automática ligada, a conversa nova já chega com responsável, na fatia que o Gestor definiu para cada pessoa, na primeira mensagem do cliente ou só quando o chatbot terminar. Ela entra em "Minhas" sem aviso no sino; o sino toca só quando alguém entrega de propósito. Cliente que volta cai com quem já o atendia: a distribuição automática nunca troca um responsável que existe.',
-        helpKey: 'concept:conversation-routing',
-      },
-      {
-        title: 'Entenda por que uma conversa pode sair de "Minhas" sozinha',
-        body:
-          'Se a Loja ligou a transferência por tempo sem resposta, uma conversa sua em que o cliente esperou resposta de pessoa por mais minutos de funcionamento do que o limite passa para o próximo da distribuição automática, e quem recebe ganha "Conversa transferida para você" no sino. Resposta do bot não segura a conversa; só a sua. Quando ela chega a você por esse caminho, o relógio começa do zero.',
+          'Com a distribuição automática ligada, a conversa nova já chega com responsável, na fatia que o Gestor definiu para cada pessoa, e entra em "Minhas" sem aviso no sino; cliente que volta cai com quem já o atendia. Se a Loja ligou a transferência por tempo sem resposta, uma conversa sua em que o cliente esperou resposta de pessoa por mais minutos de funcionamento do que o limite passa para o próximo da distribuição, e quem recebe ganha "Conversa transferida para você" no sino. Resposta do bot não segura a conversa; só a sua.',
         note:
           'Não é punição: é a Loja garantindo que o cliente não fique sem resposta. Para não perder conversas, responda dentro do limite ou peça ao Gestor para transferir antes.',
-        helpKey: 'page:conversations',
+        helpKey: 'concept:conversation-routing',
       },
       {
         title: 'Mande voz, áudio ou documento pela conversa',
@@ -814,6 +808,14 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Com o campo vazio, clique no microfone, fale, clique no quadrado para parar, ouça e envie (a gravação para sozinha em 5 minutos). Para um arquivo, clique no clipe: áudio MP3, M4A, AAC ou OGG de até 16 MB; documento até 30 MB em número de QR Code. Microfone apagado? Passe o mouse ou toque nele: ele diz o motivo.',
         note:
           'Em número da API Oficial, passadas 24 horas sem mensagem do cliente, só um template aprovado reabre a conversa: use "Enviar template", que aparece embaixo, no lugar do campo de mensagem.',
+        helpKey: 'page:conversations',
+      },
+      {
+        title: 'Saiba o que o cliente vê: lida, reação e mensagem que falhou',
+        body:
+          'Ao abrir a conversa, o cliente vê os dois riscos azuis nas mensagens dele, como no WhatsApp; conversa que você não abriu não avisa nada. Para reagir, clique na carinha com + na mensagem e escolha o emoji. Mensagem sua que não saiu fica com o motivo embaixo da bolha e o botão "Reenviar", que manda uma nova com o mesmo texto; a que falhou continua no histórico.',
+        note:
+          'Na API Oficial, depois de 24 horas sem mensagem do cliente, o "Reenviar" dá lugar ao aviso da janela: use "Enviar template". Arquivo que falhou se anexa de novo.',
         helpKey: 'page:conversations',
       },
       {
