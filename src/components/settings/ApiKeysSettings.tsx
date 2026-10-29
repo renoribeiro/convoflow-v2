@@ -92,6 +92,7 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
   const contaId = (profile?.tenant_id as string | null | undefined) ?? null;
 
   const estadoQ = useApiAddonEstado(contaId);
+  const apiDesligada = !!estadoQ.data && !estadoQ.data.ativo;
   const chavesQ = useQuery({
     queryKey: [API_QUERY_KEYS.CHAVES, contaId],
     enabled: !!contaId,
@@ -220,7 +221,13 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
               Com uma chave, outro sistema lê os dados da sua Conta. {ativas} de {MAX_CHAVES_ATIVAS} chaves em uso.
             </CardDescription>
           </div>
-          <Button onClick={abrirCriacao} disabled={ativas >= MAX_CHAVES_ATIVAS || !contaId} className="gap-2 self-start">
+          {/* Com a API desligada o servidor recusa a chave nova (achado 122): o
+              botão fica desligado e o aviso abaixo diz onde ligar. */}
+          <Button
+            onClick={abrirCriacao}
+            disabled={ativas >= MAX_CHAVES_ATIVAS || !contaId || apiDesligada}
+            className="gap-2 self-start"
+          >
             <Plus className="h-4 w-4" /> Nova chave
           </Button>
         </CardHeader>
@@ -244,7 +251,12 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
             <Alert>
               <AlertTriangle className="h-4 w-4" />
               <AlertDescription>
-                A API está desligada nesta Conta: as chaves ficam suspensas até ela voltar.
+                A API está desligada nesta Conta: as chaves ficam suspensas e não dá para criar uma nova.
+                Ligue no cartão "API e integrações", em{' '}
+                <Link to="/dashboard/settings?tab=subscription" className="font-medium underline underline-offset-2">
+                  Configurações › Assinatura
+                </Link>
+                .
               </AlertDescription>
             </Alert>
           ) : null}
@@ -262,7 +274,11 @@ export function ApiKeysSettings({ liberado = API_ADDON_RELEASED }: { liberado?: 
               compacto
               icon={<KeyRound />}
               title="Nenhuma chave ainda."
-              description='Clique em "Nova chave" para criar a primeira.'
+              description={
+                apiDesligada
+                  ? 'Ligue a API em Assinatura e depois clique em "Nova chave" para criar a primeira.'
+                  : 'Clique em "Nova chave" para criar a primeira.'
+              }
             />
           ) : (
             <ul className="divide-y rounded-md border" aria-label="Chaves de API">

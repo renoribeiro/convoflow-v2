@@ -15,7 +15,9 @@ import { DEFAULT_CAPABILITIES } from '../src/types/userHierarchy';
  * Falha quando:
  *   1. a página rola para o lado (scrollWidth maior que a janela);
  *   2. o axe acha contraste abaixo do AA (regra color-contrast), ou botão,
- *      link ou campo sem nome que o leitor de tela consiga ler;
+ *      link ou campo sem nome que o leitor de tela consiga ler; e texto sobre
+ *      fundo em degradê (que o axe não mede) fica abaixo do AA contra alguma
+ *      cor do degradê;
  *   3. no celular, um alvo de toque (botão, aba, chave, caixa de marcar,
  *      campo) tem menos de 44 pixels de altura ou de largura. Link no meio de
  *      um parágrafo fica de fora, como manda a WCAG.
@@ -136,6 +138,59 @@ const MEDIR = (minimo: number) => {
   return { scrollWidth: document.documentElement.scrollWidth, vw, pequenos };
 };
 
+/**
+ * Roda no navegador: texto sobre fundo em degradê. O axe não mede contraste
+ * sobre degradê (deixa o caso como "incompleto"), e foi assim que o destaque
+ * "WhatsApp Business" da página de vendas passou o lote 5 com 1,1:1. Aqui o
+ * contraste é medido contra CADA cor do degradê; vale a regra AA (4,5, ou 3
+ * para texto grande).
+ */
+const TEXTO_SOBRE_DEGRADE = () => {
+  const cor = (s: string) => {
+    const m = s.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const [r, g, b, a = '1'] = m[1].split(/[ ,/]+/).filter(Boolean);
+    return { r: +r, g: +g, b: +b, a: +a };
+  };
+  const lum = ({ r, g, b }: { r: number; g: number; b: number }) => {
+    const c = [r, g, b].map((v) => {
+      const s = v / 255;
+      return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+  };
+  const razao = (x: number, y: number) => (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  const falhas: string[] = [];
+  for (const el of document.querySelectorAll<HTMLElement>('body *')) {
+    const temTexto = [...el.childNodes].some((n) => n.nodeType === 3 && (n.textContent ?? '').trim());
+    if (!temTexto || el.closest('[aria-hidden="true"]')) continue;
+    const cs = getComputedStyle(el);
+    if (cs.visibility === 'hidden' || Number(cs.opacity) === 0 || el.getBoundingClientRect().width === 0) continue;
+    // O fundo que pinta atrás do texto: o primeiro (dele ou de um antepassado) com degradê ou cor sólida.
+    let fundo: Element | null = el;
+    let degrade: string | null = null;
+    while (fundo) {
+      const f = getComputedStyle(fundo);
+      if (f.backgroundImage.includes('gradient')) { degrade = f.backgroundImage; break; }
+      const c = cor(f.backgroundColor);
+      if (c && c.a >= 0.99) break;
+      fundo = fundo.parentElement;
+    }
+    if (!degrade) continue;
+    const texto = cor(cs.color);
+    const paradas = (degrade.match(/rgba?\([^)]+\)/g) ?? []).map(cor).filter((c) => c && c.a >= 0.5);
+    if (!texto || !paradas.length) continue;
+    const tamanho = parseFloat(cs.fontSize);
+    const grande = tamanho >= 24 || (tamanho >= 18.66 && Number(cs.fontWeight) >= 700);
+    const minimo = grande ? 3 : 4.5;
+    const pior = Math.min(...paradas.map((p) => razao(lum(texto), lum(p!))));
+    if (pior < minimo) {
+      falhas.push(`texto sobre degradê "${(el.textContent ?? '').trim().slice(0, 40)}" ${pior.toFixed(2)}:1 (mínimo ${minimo})`);
+    }
+  }
+  return falhas;
+};
+
 interface Medida {
   largura: number;
   rolagemLateral: number | null;
@@ -160,7 +215,7 @@ async function medirTela(page: Page, papel: Papel, tela: Tela): Promise<Medida[]
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .exclude('[data-sonner-toaster]')
       .analyze();
-    const contraste: string[] = [];
+    const contraste: string[] = await page.evaluate(TEXTO_SOBRE_DEGRADE);
     const semNome: string[] = [];
     const outrasRegras: string[] = [];
     for (const v of axe.violations) {
@@ -210,6 +265,80 @@ test.describe('visual: páginas públicas', () => {
       const page = await context.newPage();
       conferir('publico', tela, await medirTela(page, 'publico', tela));
     });
+  }
+});
+
+/**
+ * Telas de layout fixo (lote 6a, A2): a página inteira cabe na janela de um
+ * notebook, sem rolagem vertical, e o rodapé de cada uma (marcado com
+ * data-rodape-fixo: "Salvar" do painel do bloco, controles do desenho da
+ * automação, campo de mensagem de Conversas) fica inteiro à vista. O
+ * construtor de chatbot passava 96 px da janela e escondia o "Salvar".
+ */
+const NOTEBOOKS = [
+  [1366, 768],
+  [1440, 900],
+] as const;
+
+const TELAS_FIXAS: { nome: string; caminho: string; preparar: (page: Page) => Promise<void> }[] = [
+  {
+    nome: 'construtor-de-chatbot',
+    caminho: '/dashboard/chatbots/aaaaaaaa-0000-4000-8000-000000000001/builder',
+    preparar: async (page) => {
+      await page.locator('.react-flow__node').first().waitFor({ timeout: 20_000 });
+      // Os blocos do backend falso nascem empilhados: o de cima é o último.
+      await page.locator('.react-flow__node').last().click({ force: true });
+    },
+  },
+  {
+    nome: 'construtor-de-automacao',
+    caminho: '/dashboard/automation',
+    preparar: async (page) => {
+      await page.getByRole('button', { name: /nova automa/i }).first().click();
+    },
+  },
+  {
+    nome: 'conversas',
+    caminho: '/dashboard/conversations',
+    preparar: async (page) => {
+      await page.locator('[data-conversation-id]').first().click();
+    },
+  },
+];
+
+test.describe('visual: telas de layout fixo cabem na janela', () => {
+  for (const [largura, altura] of NOTEBOOKS) {
+    for (const tela of TELAS_FIXAS) {
+      test(`${tela.nome} ${largura}x${altura}`, async ({ context }) => {
+        await installSupabaseMock(context, 'gerente');
+        const page = await context.newPage();
+        await page.setViewportSize({ width: largura, height: altura });
+        await page.goto(tela.caminho, { waitUntil: 'domcontentloaded' });
+        await esperar(page);
+        await tela.preparar(page);
+        await page.waitForTimeout(800);
+        const m = await page.evaluate(() => {
+          window.scrollTo(0, 0);
+          const rodapes = [...document.querySelectorAll<HTMLElement>('[data-rodape-fixo]')]
+            .filter((el) => el.getBoundingClientRect().height > 0)
+            .map((el) => {
+              const r = el.getBoundingClientRect();
+              return { topo: Math.round(r.top), base: Math.round(r.bottom) };
+            });
+          return { sobra: document.scrollingElement!.scrollHeight - innerHeight, janela: innerHeight, rodapes };
+        });
+        if (DESTINO_FOTOS) {
+          await page.screenshot({ path: path.join(DESTINO_FOTOS, `fixa__${tela.nome}__${largura}x${altura}.png`) });
+        }
+        if (SO_MEDIR) return;
+        expect(m.sobra, `${tela.nome}: a página passa ${m.sobra} px da janela`).toBeLessThanOrEqual(1);
+        expect(m.rodapes.length, `${tela.nome}: nenhum rodapé [data-rodape-fixo] à vista`).toBeGreaterThan(0);
+        for (const r of m.rodapes) {
+          expect(r.base, `${tela.nome}: rodapé termina em ${r.base} px, a janela tem ${m.janela}`).toBeLessThanOrEqual(m.janela);
+          expect(r.topo).toBeGreaterThanOrEqual(0);
+        }
+      });
+    }
   }
 });
 

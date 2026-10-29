@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense, lazy } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -101,8 +102,9 @@ import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
 import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
 import { logger } from '@/lib/logger';
 import { camposDaFalha } from '@/lib/whatsapp/failureFields';
-import { formatPhoneBR } from '@/lib/utils';
+import { cn, formatPhoneBR } from '@/lib/utils';
 import { MessageBubble, type RenderableMessage } from './MessageBubble';
+import { resumoDaMensagem } from '@/lib/media/legendaDaMidia';
 import { LeadTagsDialog } from '@/components/etiquetas/LeadTagsDialog';
 import { ContactPanel } from './ContactPanel';
 import { ChatSearchBar } from './ChatSearchBar';
@@ -156,6 +158,10 @@ interface ChatWindowProps {
 
 /** Max auto-grow height for the message textarea (~5 rows). */
 const MAX_TEXTAREA_HEIGHT = 120;
+
+/** API Oficial fora da janela de 24 horas: uma linha, no lugar do campo de mensagem. */
+export const TEXTO_FORA_DA_JANELA =
+  'Mais de 24 horas sem mensagem do cliente: pela regra da Meta, só um template aprovado reabre a conversa.';
 
 /**
  * Ponteiro grosso = dedo (celular/tablet). Serve para NÃO puxar o foco de volta
@@ -217,6 +223,9 @@ export const ChatWindow = ({
   onChannelDetected,
   onOpenConversation,
 }: ChatWindowProps) => {
+  // Celular: cabeçalho numa linha (busca e detalhes vão para o menu ⋮) e
+  // campo de digitar sem o botão de emoji (o teclado do celular já tem).
+  const celular = useIsMobile();
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
@@ -893,8 +902,12 @@ export const ChatWindow = ({
       toast.error(SEM_ENDERECO);
       return;
     }
-    if (outsideMetaWindow && !pendingFile && message.trim()) {
-      toast.warning('O cliente não escreve há mais de 24 horas. Pela regra da Meta, só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa.');
+    // Fora da janela de 24 horas a tela nem mostra o campo (só "Enviar
+    // template"); isto segura um envio que chegue por outro caminho. A Meta
+    // recusaria, e o servidor também recusa (whatsapp-send-message).
+    if (outsideMetaWindow) {
+      toast.error(TEXTO_FORA_DA_JANELA);
+      return;
     }
 
     setIsSending(true);
@@ -1171,13 +1184,36 @@ export const ChatWindow = ({
       {/* Chat column */}
       <div className="flex flex-col flex-1 min-w-0 bg-card">
         {/* Header */}
-        <div className="flex items-center justify-between gap-2 px-3 py-2 sm:p-4 border-b border-border flex-shrink-0">
+        <div
+          className={cn(
+            'flex items-center justify-between gap-2 border-b border-border flex-shrink-0',
+            celular ? 'px-1.5 pb-1 pt-[max(0.25rem,env(safe-area-inset-top))]' : 'px-3 py-2 sm:p-4',
+          )}
+        >
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             {onBack && (
               <Button variant="ghost" size="icon" className="h-9 w-9 -ml-1 flex-shrink-0" onClick={onBack} aria-label="Voltar">
                 <ArrowLeft className="w-5 h-5" />
               </Button>
             )}
+            {/* No celular, tocar no nome abre os detalhes do contato. */}
+            <div
+              className={cn('flex min-w-0 items-center gap-2 sm:gap-3', celular && 'cursor-pointer')}
+              {...(celular
+                ? {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-label': `Detalhes de ${headerName}`,
+                    onClick: () => onPanelOpenChange?.(!panelOpen),
+                    onKeyDown: (e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onPanelOpenChange?.(!panelOpen);
+                      }
+                    },
+                  }
+                : {})}
+            >
             <Avatar className="w-9 h-9 sm:w-10 sm:h-10 flex-shrink-0">
               {(contact as any)?.avatar_url && <AvatarImage src={(contact as any).avatar_url} alt={headerName} />}
               <AvatarFallback>
@@ -1208,22 +1244,26 @@ export const ChatWindow = ({
                       {formatPhoneBR(contact?.phone)}
                     </span>
                   )}
-                  {(contact as any)?.stage?.name && (
+                  {/* No celular a linha é só o telefone: os selos quebravam o
+                      cabeçalho em quatro linhas. Eles continuam nos detalhes. */}
+                  {!celular && (contact as any)?.stage?.name && (
                     <Badge variant="outline" className="text-xs">{(contact as any).stage.name}</Badge>
                   )}
-                  {active && (
+                  {!celular && active && (
                     <Badge variant="secondary" className="text-xs">
                       {active.row.name}
                     </Badge>
                   )}
                   {/* Só existe enquanto há sessão ativa de bot neste contato:
-                      sem sessão, nada é montado (nem selo cinza). */}
-                  {botSession && <BotSessionBadge botName={botName} size="md" />}
+                      sem sessão, nada é montado (nem selo cinza). No celular
+                      fica na lista e no menu ⋮ ("Encerrar sessão do bot"). */}
+                  {!celular && botSession && <BotSessionBadge botName={botName} size="md" />}
                 </div>
               )}
-              {!isContactTyping && seenLabel && (
+              {!celular && !isContactTyping && seenLabel && (
                 <span className="text-[11px] text-muted-foreground">{seenLabel}</span>
               )}
+            </div>
             </div>
           </div>
 
@@ -1235,37 +1275,41 @@ export const ChatWindow = ({
               assignedProfileId={(conversation as any)?.assigned_profile_id}
             />
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => onSearchOpenChange?.(!searchOpen)}
-                  aria-label="Buscar na conversa"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">Buscar na conversa (Ctrl+Shift+F)</TooltipContent>
-            </Tooltip>
+            {!celular && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onSearchOpenChange?.(!searchOpen)}
+                    aria-label="Buscar na conversa"
+                  >
+                    <Search className="w-5 h-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">Buscar na conversa (Ctrl+Shift+F)</TooltipContent>
+              </Tooltip>
+            )}
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => onPanelOpenChange?.(!panelOpen)}
-                  aria-label={panelOpen ? 'Fechar painel do contato' : 'Abrir painel do contato'}
-                >
-                  {panelOpen ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs">
-                {panelOpen ? 'Fechar detalhes' : 'Detalhes do contato'}
-              </TooltipContent>
-            </Tooltip>
+            {!celular && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => onPanelOpenChange?.(!panelOpen)}
+                    aria-label={panelOpen ? 'Fechar painel do contato' : 'Abrir painel do contato'}
+                  >
+                    {panelOpen ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  {panelOpen ? 'Fechar detalhes' : 'Detalhes do contato'}
+                </TooltipContent>
+              </Tooltip>
+            )}
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -1274,6 +1318,19 @@ export const ChatWindow = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {celular && (
+                  <>
+                    <DropdownMenuItem onClick={() => onPanelOpenChange?.(true)}>
+                      <PanelRightOpen className="w-4 h-4 mr-2" />
+                      Detalhes do contato
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onSearchOpenChange?.(!searchOpen)}>
+                      <Search className="w-4 h-4 mr-2" />
+                      Buscar na conversa
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={handleEditContact}>
                   <Edit className="w-4 h-4 mr-2" />
                   Editar Contato
@@ -1355,26 +1412,6 @@ export const ChatWindow = ({
             </AlertDescription>
           </Alert>
         )}
-        {outsideMetaWindow && (
-          <Alert className="rounded-none border-x-0 border-warning/30 bg-warning/10 text-warning">
-            <AlertCircle className="w-4 h-4" />
-            <AlertDescription className="text-xs flex items-center justify-between gap-2">
-              <span>
-                O cliente não escreve há mais de 24 horas. Pela regra da Meta, a conversa só reabre com
-                um <strong>template aprovado</strong>, uma mensagem pronta que a Meta aprovou.
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                className="shrink-0 h-7"
-                onClick={() => setTemplateDialogOpen(true)}
-                disabled={!contactId || !active?.adapter.isReadyToSend()}
-              >
-                Enviar template
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
         {active?.adapter.type === 'official' &&
           (active.row.profile_name === 'Test Number' ||
             active.row.phone_number?.startsWith('+1 555-052')) && (
@@ -1436,7 +1473,7 @@ export const ChatWindow = ({
             {replyTo && (
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="text-xs text-muted-foreground">Respondendo:</span>
-                <span className="text-xs truncate">{replyTo.content || rotuloDoTipo(replyTo.message_type)}</span>
+                <span className="text-xs truncate">{resumoDaMensagem(replyTo.content) || rotuloDoTipo(replyTo.message_type)}</span>
                 <Button variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
                   <X className="w-3 h-3" />
                 </Button>
@@ -1479,8 +1516,32 @@ export const ChatWindow = ({
           </Alert>
         )}
 
-        {/* Input */}
-        <div className="p-4 border-t border-border flex-shrink-0">
+        {/* Input. No celular, encostado embaixo e acima da faixa do gesto do
+            iPhone (safe area), com menos respiro para o campo caber numa linha. */}
+        <div
+          className={cn(
+            'border-t border-border flex-shrink-0',
+            celular ? 'px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]' : 'p-4',
+          )}
+          data-rodape-fixo
+        >
+          {outsideMetaWindow ? (
+            // API Oficial, mais de 24 horas sem mensagem do cliente: a Meta só
+            // aceita template. No lugar do campo, a explicação e o botão.
+            <div className="flex items-center gap-3" data-testid="fora-da-janela-24h">
+              <p className="min-w-0 flex-1 text-xs text-muted-foreground">{TEXTO_FORA_DA_JANELA}</p>
+              <Button
+                type="button"
+                className="flex-shrink-0"
+                onClick={() => setTemplateDialogOpen(true)}
+                disabled={!contactId || !active?.adapter.isReadyToSend()}
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Enviar template
+              </Button>
+            </div>
+          ) : (
+          <>
           {isInstagram && igBytes > INSTAGRAM_TEXT_WARN_BYTES && (
             <p
               className={igTooLong ? 'mb-2 text-xs text-destructive' : 'mb-2 text-xs text-muted-foreground'}
@@ -1524,7 +1585,7 @@ export const ChatWindow = ({
 
           {/* The AudioRecorder keeps a stable `key` so its live MediaRecorder survives
               the idle→recording transition (siblings are hidden while recording). */}
-          <form onSubmit={handleSend} className="flex items-end gap-2">
+          <form onSubmit={handleSend} className={cn('flex items-end', celular ? 'gap-1' : 'gap-2')}>
             {!isRecording && (
               <>
                 {!isInstagram && (
@@ -1546,22 +1607,25 @@ export const ChatWindow = ({
                   disabled={isSending}
                 />
 
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={toggleEmojiPicker}
-                      aria-label="Adicionar emoji"
-                      aria-expanded={showEmojiPicker}
-                      data-emoji-toggle
-                    >
-                      <Smile className="w-5 h-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-xs">Emoji</TooltipContent>
-                </Tooltip>
+                {/* No celular o teclado já tem emoji: o botão sairia do lugar do campo. */}
+                {!celular && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={toggleEmojiPicker}
+                        aria-label="Adicionar emoji"
+                        aria-expanded={showEmojiPicker}
+                        data-emoji-toggle
+                      >
+                        <Smile className="w-5 h-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="text-xs">Emoji</TooltipContent>
+                  </Tooltip>
+                )}
 
                 <Textarea
                   ref={textareaRef}
@@ -1578,7 +1642,9 @@ export const ChatWindow = ({
                           : 'Digite sua mensagem...'
                   }
                   rows={1}
-                  className={`flex-1 min-h-[40px] resize-none py-2 ${isSending ? 'opacity-70' : ''}`}
+                  // min-w-0: sem ele o campo não encolhe e empurra o botão de
+                  // enviar para fora da tela no celular.
+                  className={`min-w-0 flex-1 min-h-[40px] resize-none py-2 ${isSending ? 'opacity-70' : ''}`}
                   style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
                   /* `readOnly`, e não `disabled`: elemento desabilitado perde o foco
                      e não o recupera sozinho ao ser reabilitado. Bloqueia a digitação
@@ -1618,6 +1684,8 @@ export const ChatWindow = ({
               />
             )}
           </form>
+          </>
+          )}
         </div>
       </div>
 

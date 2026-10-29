@@ -28,9 +28,11 @@ interface TenantContextType {
    * Recarrega perfil e Conta. Com `{ silent: true }` relê só a linha da
    * Conta/Loja aberta, sem passar por `loading` — o AuthGuard troca o painel
    * inteiro por um carregando enquanto `loading` é true, e um rename não
-   * justifica desmontar a tela em que a pessoa está.
+   * justifica desmontar a tela em que a pessoa está. Com `perfil: true` (só
+   * no silencioso) relê também o perfil de quem está logado: o nome e a foto
+   * do topo mudam sem o carregando.
    */
-  refreshTenant: (options?: { silent?: boolean }) => Promise<void>;
+  refreshTenant: (options?: { silent?: boolean; perfil?: boolean }) => Promise<void>;
   /**
    * Merge raso em `tenants.settings`. Passe `{ silent: true }` quando a tela
    * chamadora já dá o próprio retorno — sem isso saem dois toasts (o genérico
@@ -201,10 +203,21 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     setLoading(false);
   };
 
-  const refreshTenant = async (options?: { silent?: boolean }) => {
+  const refreshTenant = async (options?: { silent?: boolean; perfil?: boolean }) => {
     if (!options?.silent) {
       await loadTenantData();
       return;
+    }
+
+    if (options.perfil && user?.id) {
+      const quem = user.id;
+      const { data: perfil, error: perfilError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', quem)
+        .maybeSingle();
+      if (perfilError) console.error('[TenantContext] Erro ao reler o perfil:', perfilError);
+      else if (perfil) setProfile(prev => (prev && prev.user_id === quem ? perfil : prev));
     }
 
     const id = tenant?.id;

@@ -81,3 +81,27 @@ describe('ChatbotFlowCreateSchema', () => {
     expect(noName.success).toBe(false);
   });
 });
+
+describe('mensagens em português no painel do bloco', () => {
+  it('bloco recém-solto, sem o campo, não mostra "Required"', () => {
+    const r = validateNodeData('send_text', {});
+    expect(r.success).toBe(false);
+    if (!r.success) {
+      const msgs = r.error.errors.map((e) => e.message);
+      expect(msgs).toContain('Campo obrigatório');
+      expect(msgs.join(' ')).not.toMatch(/Required|Expected|String must/);
+    }
+  });
+
+  it('a mensagem escrita no esquema continua valendo', () => {
+    const r = validateNodeData('send_text', { message: '' });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.errors[0]?.message).toBe('A mensagem é obrigatória');
+  });
+
+  it('limite de tamanho sem mensagem própria sai em português', () => {
+    const r = validateNodeData('start', { label: 'x'.repeat(61) });
+    expect(r.success).toBe(false);
+    if (!r.success) expect(r.error.errors[0]?.message).toBe('Use no máximo 60 caracteres');
+  });
+});

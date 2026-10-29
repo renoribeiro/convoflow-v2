@@ -10,7 +10,10 @@ interface ConversationShortcutsOptions {
   closeSearch: () => void;
   closePanel: () => void;
   deselect: () => void;
-  /** Ctrl+K — focus the conversation list search input. */
+  /**
+   * "/" (fora de um campo) — foca a busca da lista de conversas. Ctrl+K é da
+   * busca geral do topo (Navbar) em toda tela, Conversas inclusive (achado 27).
+   */
   focusListSearch: () => void;
   /** Ctrl+Shift+F — open the in-conversation search (no-op without a selection). */
   openChatSearch: () => void;
@@ -58,8 +61,9 @@ export function useConversationShortcuts(opts: ConversationShortcutsOptions) {
     const handler = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
 
-      // Ctrl+K — focus list search (works even from inputs).
-      if (ctrl && !e.shiftKey && (e.key === 'k' || e.key === 'K')) {
+      // "/" — foca a busca da lista. Só fora de um campo: no campo de mensagem
+      // vazio, "/" abre as respostas rápidas. Ctrl+K fica com a busca geral.
+      if (e.key === '/' && !ctrl && !e.altKey && !isTypingTarget(e.target)) {
         if (isModalOpen()) return;
         e.preventDefault();
         focusListSearch();

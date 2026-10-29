@@ -92,7 +92,8 @@ export const ContactFilters = ({ filters, onFiltersChange, searchByHandle = fals
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               id="search"
-              placeholder={searchByHandle ? 'Nome, telefone ou @...' : 'Nome ou telefone...'}
+              // A busca acha nome, telefone e email (e o @ do Instagram): achado 53.
+              placeholder={searchByHandle ? 'Nome, telefone, email ou @...' : 'Nome, telefone ou email...'}
               value={filters.search}
               onChange={(e) => updateFilters('search', e.target.value)}
               className="pl-10"

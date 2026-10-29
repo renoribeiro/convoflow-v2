@@ -3,7 +3,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useSupabaseQuerySingle } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
@@ -23,7 +22,6 @@ export function ProfileSettings() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
 
   // Buscar dados do perfil (um único registro) somente quando houver usuário
@@ -40,9 +38,10 @@ export function ProfileSettings() {
     operation: 'update',
     onSuccess: () => {
       toast.success('Perfil salvo.');
-      // Recarregar dados do formulário e do cabeçalho
+      // Recarregar dados do formulário e do cabeçalho. Silencioso: sem ele o
+      // painel inteiro virava um carregando e a tela voltava do zero.
       refetch();
-      refreshTenant();
+      void refreshTenant({ silent: true, perfil: true });
     },
     onError: (error) => {
       toast.error(`Não foi possível salvar o perfil. ${motivoDoErro(error)}`);
@@ -57,7 +56,6 @@ export function ProfileSettings() {
       // Email vem do Auth e é somente leitura aqui
       setEmail(user?.email || '');
       setPhone(profile.phone || '');
-      setBio(profile.bio || '');
       setAvatarUrl(profile.avatar_url || '');
     }
   }, [profile, user?.email]);
@@ -71,7 +69,6 @@ export function ProfileSettings() {
         first_name: firstName,
         last_name: lastName,
         phone: phone,
-        bio: bio,
         avatar_url: avatarUrl,
       },
       // Atualizar apenas o registro do usuário logado
@@ -212,17 +209,6 @@ export function ProfileSettings() {
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="(11) 99999-9999"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
-          <Textarea
-            id="bio"
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            placeholder="Conte um pouco sobre você..."
-            rows={3}
           />
         </div>
 

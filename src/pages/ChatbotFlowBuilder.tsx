@@ -598,7 +598,7 @@ const ChatbotFlowBuilder: React.FC = () => {
   // ---------------------------------------------------------------------------
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-background">
+      <div className="altura-da-tela -m-6 flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -606,7 +606,7 @@ const ChatbotFlowBuilder: React.FC = () => {
 
   if (loadError || !flowData) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-background gap-3">
+      <div className="altura-da-tela -m-6 flex flex-col items-center justify-center bg-background gap-3">
         <AlertTriangle className="h-10 w-10 text-destructive" />
         <p className="text-muted-foreground">Erro ao carregar o fluxo</p>
         <Button variant="outline" onClick={() => navigate('/dashboard/chatbots')}>
@@ -684,7 +684,10 @@ const ChatbotFlowBuilder: React.FC = () => {
   );
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
+    // Altura da janela menos o topo do painel (.altura-da-tela), encostado nas
+    // bordas como Conversas: com h-screen a página passava 96 px da janela e o
+    // "Salvar" do painel do bloco ficava abaixo da borda num notebook.
+    <div className="altura-da-tela -m-6 flex flex-col bg-background overflow-hidden">
       {/* Top bar */}
       {/* flex-wrap: abaixo de 1024px a barra não cabia (945px a 768) e o
           "Publicar" saía da tela. Os rótulos dos botões da direita só aparecem

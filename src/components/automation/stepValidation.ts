@@ -34,6 +34,14 @@ export function validateConfig(entry: CatalogEntry | undefined, config: Record<s
     }
   }
 
+  // Regra especial: "Enviar Mensagem" precisa de uma resposta rápida OU de um
+  // texto. Vazio, aparecia "Configurado" e o motor falhava o passo depois
+  // ("nenhum conteúdo"), em automação ativa inclusive (achado 86).
+  if (entry.key === 'send_message' && isEmptyValue(cfg.quick_reply_id) && isEmptyValue(cfg.custom_message)) {
+    missing.push('Resposta rápida ou mensagem personalizada');
+    missingKeys.push('quick_reply_id', 'custom_message');
+  }
+
   // Regra especial: "Atualizar Contato" com campo personalizado exige a chave.
   if (entry.key === 'update_contact' && cfg.field === 'custom' && isEmptyValue(cfg.custom_key)) {
     missing.push('Nome do campo personalizado');

@@ -191,14 +191,24 @@ describe('lista', () => {
     expect(screen.getByText(/1 de 10 chaves em uso/)).toBeInTheDocument();
   });
 
-  it('API desligada: avisa que as chaves ficam suspensas', async () => {
+  it('API desligada: avisa, aponta para Assinatura e trava "Nova chave" (achado 122)', async () => {
     estado = { ativo: false, motivo: 'desligado', ate: null };
     chaves = [chave({ estado: 'suspensa' })];
     renderizar();
-    expect(
-      await screen.findByText('A API está desligada nesta Conta: as chaves ficam suspensas até ela voltar.'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/A API está desligada nesta Conta: as chaves ficam suspensas/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Configurações › Assinatura' })).toHaveAttribute(
+      'href',
+      '/dashboard/settings?tab=subscription',
+    );
+    expect(screen.getByRole('button', { name: /Nova chave/ })).toBeDisabled();
     expect(screen.getByTestId('chave-k1')).toHaveTextContent('Suspensa');
+  });
+
+  it('API desligada e nenhuma chave: o vazio manda ligar antes', async () => {
+    estado = { ativo: false, motivo: 'desligado', ate: null };
+    chaves = [];
+    renderizar();
+    expect(await screen.findByText(/Ligue a API em Assinatura e depois clique em "Nova chave"/)).toBeInTheDocument();
   });
 
   it('com 10 chaves em uso, "Nova chave" fica travada', async () => {

@@ -1,4 +1,5 @@
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { LinhaDeSelos } from '@/components/shared/LinhaDeSelos';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ConversationSkeleton } from '@/components/shared/Skeleton';
@@ -103,6 +104,12 @@ interface ConversationsListProps {
    * instâncias, e sem Instagram a chave nem aparece.
    */
   onChannelsChange?: (info: { hasInstagram: boolean }) => void;
+  /**
+   * Celular: a lista é o que importa. Sai o título "Conversas Ativas", a
+   * contagem e o "Nova Conversa" largo (ele vira ícone no topo da página), e o
+   * seletor de número divide uma linha só com "Lista / Pendência".
+   */
+  compacto?: boolean;
 }
 
 /** "Online" se houve interação nos últimos 5 minutos. */
@@ -164,6 +171,7 @@ export const ConversationsList = ({
   onItemsChange,
   channel,
   onChannelsChange,
+  compacto = false,
 }: ConversationsListProps) => {
   const { instances } = useWhatsAppInstancesSafe();
   // O seletor mostra só as instâncias do canal aberto.
@@ -445,7 +453,7 @@ export const ConversationsList = ({
       <div
         key={conversation.id}
         data-conversation-id={conversation.id}
-        className={`relative cursor-pointer rounded-lg border-b border-border/50 p-3 ${
+        className={`relative cursor-pointer rounded-lg border-b border-border/50 ${compacto ? 'px-3 py-2.5' : 'p-3'} ${
           isSelected
             ? 'bg-primary/20 border-l-[3px] border-l-primary transition-all duration-150'
             : hasUnreadMsgs
@@ -490,7 +498,7 @@ export const ConversationsList = ({
               </span>
             </div>
 
-            <div className={`flex items-center gap-1 mb-2 min-w-0 ${hasUnreadMsgs && !isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
+            <div className={`flex items-center gap-1 ${compacto ? 'mb-1.5' : 'mb-2'} min-w-0 ${hasUnreadMsgs && !isSelected ? 'text-foreground' : 'text-muted-foreground'}`}>
               {conversation.last_message_direction === 'outbound' && (
                 <span className="flex-shrink-0">
                   <MessageStatusIcon status={(conversation.last_message_status as any) ?? 'sent'} />
@@ -502,42 +510,40 @@ export const ConversationsList = ({
             </div>
 
             <div className="flex items-center justify-between gap-2">
-              <div className="flex gap-1 min-w-0 flex-wrap items-center">
+              {/* Uma linha só: o que não cabe vira "+N" (nada passa da borda). */}
+              <LinhaDeSelos>
                 <OwnerChip
+                  key={`responsavel-${conversation.assigned_profile_id ?? 'ninguem'}`}
                   member={lookupMember(conversation.assigned_profile_id)}
                   assignedProfileId={conversation.assigned_profile_id}
                   size="sm"
                 />
                 <SlaIndicator
+                  key={`sla-${slaLevel}`}
                   level={slaLevel}
                   lastMessageAt={conversation.last_message_at}
                   criticalHint={SLA_CRITICAL_HINT_BY_CHANNEL[conversation.channel]}
                 />
-                {conversation.has_bot_session && <BotSessionBadge botName={null} size="sm" />}
+                {conversation.has_bot_session && <BotSessionBadge key="bot" botName={null} size="sm" />}
                 {isNewLead && (
-                  <Badge variant="outline" className="border-0 bg-accent/15 text-accent text-[10px] font-medium px-1.5">
+                  <Badge key="novo" variant="outline" className="border-0 bg-accent/15 text-accent text-[10px] font-medium px-1.5 whitespace-nowrap">
                     Contato novo
                   </Badge>
                 )}
                 {conversation.contact_source && (
-                  <Badge variant="secondary" className="text-xs truncate max-w-[80px]">
+                  <Badge key={`fonte-${conversation.contact_source}`} variant="secondary" className="text-xs truncate max-w-[80px]">
                     {conversation.contact_source}
                   </Badge>
                 )}
                 {conversation.contact_current_stage && (
-                  <Badge variant="outline" className="text-xs truncate max-w-[80px]">
+                  <Badge key={`etapa-${conversation.contact_current_stage}`} variant="outline" className="text-xs truncate max-w-[80px]">
                     {conversation.contact_current_stage}
                   </Badge>
                 )}
-                {conversation.tags.slice(0, 2).map((tag) => (
-                  <TagBadge key={tag.id} name={tag.name} color={tag.color} />
+                {conversation.tags.map((tag) => (
+                  <TagBadge key={`etiqueta-${tag.id}`} name={tag.name} color={tag.color} />
                 ))}
-                {conversation.tags.length > 2 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{conversation.tags.length - 2}
-                  </Badge>
-                )}
-              </div>
+              </LinhaDeSelos>
               <div className="flex flex-shrink-0 items-center gap-1">
                 {hasUnreadMsgs && (
                   <span className="flex h-5 min-w-5 flex-shrink-0 items-center justify-center rounded-full bg-[hsl(var(--unread-strong))] px-1.5 text-[11px] font-bold text-[hsl(var(--unread-on-strong))] shadow-sm">
@@ -569,7 +575,33 @@ export const ConversationsList = ({
   return (
     // A moldura só existe no celular, onde a lista é um cartão solto. De `md`
     // para cima ela faz parte da superfície contínua e quem separa é a divisória.
-    <div className="bg-card border border-border rounded-lg md:border-0 md:rounded-none h-full flex flex-col">
+    <div
+      className={cn(
+        'bg-card h-full flex flex-col',
+        !compacto && 'border border-border rounded-lg md:border-0 md:rounded-none',
+      )}
+    >
+      {compacto ? (
+        <div className="flex flex-shrink-0 items-center gap-2 border-b border-border px-3 pb-2">
+          {channelInstances.length > 0 ? (
+            <div className="min-w-0 flex-1">
+              <InstanceSelector
+                instances={channelInstances}
+                selectedId={whatsappInstanceId ?? null}
+                allLabel={INSTANCE_SELECTOR_ALL_LABEL[channel ?? 'whatsapp']}
+                onChange={(id) => onInstanceChange?.(id === ALL_INSTANCES_VALUE ? null : id)}
+              />
+            </div>
+          ) : (
+            <span className="flex-1" />
+          )}
+          <ConversationViewToggle
+            grouped={groupByAttendanceEnabled}
+            onChange={setGroupByAttendanceEnabled}
+            compacto
+          />
+        </div>
+      ) : (
       <div className="p-4 border-b border-border flex-shrink-0 space-y-3">
         {/* Título numa linha; "Nova Conversa" ganha a linha de baixo. O botão
             de sincronizar saiu em 2026-10-26: ele só funcionava com a chave
@@ -609,9 +641,12 @@ export const ConversationsList = ({
           />
         </div>
       </div>
+      )}
 
-      <ScrollArea className="flex-1 min-h-0">
-        <div className="p-2">
+      {/* Rolagem nativa, uma só: a ScrollArea do Radix punha o conteúdo numa
+          tabela que crescia além da largura e cortava os selos à direita. */}
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain" data-lista-de-conversas>
+        <div className={compacto ? 'px-1 py-1' : 'p-2'}>
           {isLoading ? (
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -672,7 +707,7 @@ export const ConversationsList = ({
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
     </div>
   );
 };

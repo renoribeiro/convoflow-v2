@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 /**
@@ -12,6 +12,8 @@ import { MemoryRouter } from 'react-router-dom';
 const { state } = vi.hoisted(() => ({
   state: {
     rows: [] as Record<string, unknown>[],
+    erro: null as null | Error,
+    refetch: (() => {}) as () => void,
     lastQuery: null as null | { queryKey: unknown[]; filter: { column: string; operator: string; value: unknown }[] },
   },
 }));
@@ -21,7 +23,7 @@ vi.mock('@/hooks/useSupabaseQuery', () => ({
     state.lastQuery = { queryKey: opts.queryKey, filter: opts.filter };
     // Simula o servidor: aplica os filtros "eq" que a tabela mandou.
     const rows = state.rows.filter((r) => opts.filter.every((f) => f.operator !== 'eq' || r[f.column] === f.value));
-    return { data: rows, isLoading: false, error: null };
+    return { data: rows, isLoading: false, error: state.erro, refetch: state.refetch, isFetching: false };
   },
 }));
 vi.mock('@/hooks/useSupabaseMutation', () => ({
@@ -68,7 +70,19 @@ function renderTable(props: Partial<React.ComponentProps<typeof ContactsTable>> 
 beforeEach(() => {
   state.rows = [WA, WA_NO_NAME, IG, IG_NO_NAME, IG_BARE];
   state.lastQuery = null;
+  state.erro = null;
+  state.refetch = vi.fn();
   links.list = [];
+});
+
+describe('ContactsTable — erro ao carregar (achado 53)', () => {
+  it('mostra "Tentar de novo", que busca de novo sem recarregar a página', () => {
+    state.erro = new Error('falhou');
+    renderTable();
+    expect(screen.getByText('Não foi possível carregar os contatos.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }));
+    expect(state.refetch).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('ContactsTable — vínculo WhatsApp ↔ Instagram', () => {

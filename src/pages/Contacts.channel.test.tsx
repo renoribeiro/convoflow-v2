@@ -5,7 +5,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 /**
  * Página de Contatos com o filtro de canal. Na Loja SEM Instagram (a
  * VagaCerta, por exemplo) a página é a de sempre: sem filtro, canal "Todos",
- * seletor com "Todas as instâncias" e busca "Nome ou telefone...".
+ * seletor com "Todas as instâncias" e busca "Nome, telefone ou email...".
  */
 
 const { state, seen } = vi.hoisted(() => ({

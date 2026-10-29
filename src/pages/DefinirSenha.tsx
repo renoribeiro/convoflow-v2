@@ -11,11 +11,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
-import { registrarEnvioBarradoNoNavegador } from '@/lib/signup/authEmailFailure';
+import { motivoDoEnvioBarrado, registrarEnvioBarradoNoNavegador } from '@/lib/signup/authEmailFailure';
 import { lerChegada, mensagemDoErroDoLink, TIPO_DO_CODIGO } from '@/lib/auth/linkDoEmail';
 import { MIN_SENHA, mensagemDoErroDeSenha } from '@/lib/auth/mensagensDeSenha';
 import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
+
+/** Achado 17: o que aparece quando o envio é barrado por excesso (ou repetido em menos de um minuto). */
+export const TEXTO_MUITAS_TENTATIVAS = 'Muitas tentativas. Espere alguns minutos e tente de novo.';
+const ESPERA_ENTRE_ENVIOS_MS = 60_000;
 
 /** Erro do código que não é "vencido ou inválido": frase fixa, sem o inglês do Supabase. */
 const CODIGO_ERRO_GENERICO = 'Não deu certo agora. Tente de novo em alguns minutos.';
@@ -67,6 +71,9 @@ export const DefinirSenha = () => {
   const [enviando, setEnviando] = useState(false);
   const [enviadoPara, setEnviadoPara] = useState<string | null>(null);
   const [reenviado, setReenviado] = useState(false);
+  // Achado 17: barrado por excesso, a tela dizia que o código tinha saído.
+  const [muitasTentativas, setMuitasTentativas] = useState(false);
+  const [ultimoEnvio, setUltimoEnvio] = useState<number | null>(null);
   const [codigo, setCodigo] = useState('');
   const [verificando, setVerificando] = useState(false);
   const [erroCodigo, setErroCodigo] = useState<string | null>(null);
@@ -148,7 +155,17 @@ export const DefinirSenha = () => {
     const destino = email.trim();
     if (!destino) return;
 
+    // Espera de um minuto entre pedidos, para QUALQUER email. O Supabase só
+    // barra (429) o email que existe, e só esta espera faz a mesma resposta
+    // valer para os dois casos: a tela não revela se a conta existe.
+    if (ultimoEnvio !== null && Date.now() - ultimoEnvio < ESPERA_ENTRE_ENVIOS_MS) {
+      setMuitasTentativas(true);
+      return;
+    }
+    setMuitasTentativas(false);
+
     setEnviando(true);
+    let barrado = false;
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(destino, {
         redirectTo: `${window.location.origin}/definir-senha`,
@@ -163,10 +180,16 @@ export const DefinirSenha = () => {
       void registrarEnvioBarradoNoNavegador(
         err as { status?: number; code?: string; message?: string },
       );
+      barrado = motivoDoEnvioBarrado(err as { status?: number; code?: string; message?: string }) === 'quota';
     } finally {
-      setReenviado(enviadoPara !== null);
-      setEnviadoPara(destino);
-      setEtapa('codigo');
+      setUltimoEnvio(Date.now());
+      if (barrado) {
+        setMuitasTentativas(true);
+      } else {
+        setReenviado(enviadoPara !== null);
+        setEnviadoPara(destino);
+        setEtapa('codigo');
+      }
       setEnviando(false);
     }
   };
@@ -370,6 +393,12 @@ export const DefinirSenha = () => {
                   />
                 </div>
 
+                {muitasTentativas && (
+                  <Alert variant="destructive" role="alert">
+                    <AlertDescription>{TEXTO_MUITAS_TENTATIVAS}</AlertDescription>
+                  </Alert>
+                )}
+
                 <Button type="submit" className="w-full" disabled={enviando || !email.trim()}>
                   {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Enviar código
@@ -432,7 +461,11 @@ export const DefinirSenha = () => {
                 </form>
 
                 <div className="border-t border-border pt-4 space-y-2">
-                  {reenviado && (
+                  {muitasTentativas ? (
+                    <p role="alert" className="text-center text-sm text-destructive">
+                      {TEXTO_MUITAS_TENTATIVAS}
+                    </p>
+                  ) : reenviado && (
                     <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                       <Check className="h-4 w-4" />
                       Enviamos de novo. Use o código mais recente.

@@ -8,6 +8,8 @@ interface ConversationViewToggleProps {
   grouped: boolean;
   onChange: (grouped: boolean) => void;
   className?: string;
+  /** Celular: "Pendência" no lugar de "Por pendência", para dividir a linha com o seletor de número. */
+  compacto?: boolean;
 }
 
 /** Mesmo par de cores da pílula ativa dos filtros rápidos. */
@@ -22,8 +24,8 @@ const ACTIVE_LAYOUT_ID = 'conversations-view-toggle-active';
 
 /** A ordem daqui é a ordem visual e a ordem de navegação pelas setas. */
 const VIEW_OPTIONS = [
-  { grouped: false, label: 'Lista' },
-  { grouped: true, label: 'Por pendência' },
+  { grouped: false, label: 'Lista', curto: 'Lista' },
+  { grouped: true, label: 'Por pendência', curto: 'Pendência' },
 ] as const;
 
 /**
@@ -37,6 +39,7 @@ export const ConversationViewToggle = ({
   grouped,
   onChange,
   className,
+  compacto = false,
 }: ConversationViewToggleProps) => {
   const reduceMotion = useReducedMotion();
   const optionRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -78,6 +81,7 @@ export const ConversationViewToggle = ({
             type="button"
             role="radio"
             aria-checked={isActive}
+            aria-label={compacto ? option.label : undefined}
             tabIndex={isActive ? 0 : -1}
             variant="ghost"
             size="sm"
@@ -101,7 +105,7 @@ export const ConversationViewToggle = ({
                 }
               />
             )}
-            <span className="relative z-10 whitespace-nowrap">{option.label}</span>
+            <span className="relative z-10 whitespace-nowrap">{compacto ? option.curto : option.label}</span>
           </Button>
         );
       })}

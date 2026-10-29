@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { HeroHighlight, Highlight } from '@/components/ui/hero-highlight';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, MessageSquare, TrendingUp, Users } from 'lucide-react';
+import { ArrowRight, ArrowDown, MessageSquare, TrendingUp, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { salesTrialOn, signupEntryPath, startCtaLabel } from '@/lib/signup/release';
 import { TRIAL_DAYS } from '@/lib/billing/trialOffer';
@@ -48,7 +48,9 @@ export const HeroSection = () => {
 
               <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground mb-4 sm:mb-6 leading-tight px-4 sm:px-0">
                 Automatize seu{' '}
-                <Highlight className="text-brand-primary">
+                {/* Lima clara sobre a caixa verde escura. `text-brand-primary` é a
+                    tinta escura (para fundo claro) desde o lote 5 e sumia aqui. */}
+                <Highlight className="text-[hsl(var(--brand-primary))]">
                   WhatsApp Business
                 </Highlight>{' '}
                 e multiplique suas vendas
@@ -79,8 +81,9 @@ export const HeroSection = () => {
                 className="w-full sm:w-auto"
               >
                 <Button size="xl" variant="outline" className="group w-full sm:w-auto">
-                  <Play className="mr-2 h-5 w-5" />
-                  Ver Demonstração
+                  {/* Achado 6: dizia "Ver Demonstração" e só rolava até a lista. */}
+                  <ArrowDown className="mr-2 h-5 w-5" />
+                  Ver funcionalidades
                 </Button>
               </a>
             </motion.div>

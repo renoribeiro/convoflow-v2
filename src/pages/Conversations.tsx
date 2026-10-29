@@ -42,6 +42,9 @@ import { useSlaConfig } from '@/hooks/useSlaConfig';
 import { useTenant } from '@/contexts/TenantContext';
 import { EtiquetasManagerSheet } from '@/components/etiquetas/EtiquetasManagerSheet';
 import { Search, Filter, Tag } from 'lucide-react';
+import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { NewConversationModal } from '@/components/conversations/NewConversationModal';
+import { useJanelaVisivel } from '@/hooks/useJanelaVisivel';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -477,20 +480,20 @@ export default function Conversations() {
           value={channel}
           onChange={changeChannel}
           awaitingInOther={aguardandoNoOutroCanal.data}
-          className={cn('flex-shrink-0', isMobile ? 'mx-0 mt-1' : 'mx-4 mt-4')}
+          className={cn('flex-shrink-0', isMobile ? 'mx-3 mt-2' : 'mx-4 mt-4')}
         />
       )}
       <TagFilterChips
         tagIds={filters.tagIds}
         onRemove={removeTagFilter}
-        className={cn('flex-shrink-0 pb-2', isMobile ? 'px-0 pt-1' : 'px-4 pt-4')}
+        className={cn('flex-shrink-0 pb-2', isMobile ? 'px-3 pt-2' : 'px-4 pt-4')}
       />
       <OwnerFilterChips
         assignedProfileIds={filters.assignedProfileIds}
         onRemove={removeOwnerFilter}
         className={cn(
           'flex-shrink-0 pb-2',
-          isMobile ? 'px-0 pt-1' : 'px-4',
+          isMobile ? 'px-3 pt-2' : 'px-4',
           !isMobile && filters.tagIds.length === 0 && 'pt-4',
         )}
       />
@@ -503,8 +506,8 @@ export default function Conversations() {
           slaEnabled={slaEnabled}
           canSeeIneligible={canSeeIneligible}
           className={cn(
-            'flex-shrink-0 pb-3',
-            isMobile ? 'px-0' : 'px-4',
+            'flex-shrink-0',
+            isMobile ? 'px-3 py-2' : 'px-4 pb-3',
             // Com selos (etiqueta ou responsável) em cima, o respiro já veio deles.
             !isMobile && !temSelosAcimaDasPilulas && 'pt-4',
           )}
@@ -529,109 +532,166 @@ export default function Conversations() {
           onItemsChange={setItemIds}
           channel={channel}
           onChannelsChange={handleChannelsChange}
+          compacto={isMobile}
         />
       </div>
     </div>
   );
 
-  // No celular, conversa aberta ocupa a tela inteira: o cabeçalho da página não
-  // ajuda a conversar e custa ~230px de altura. `dvh` em vez de `vh` porque no
-  // navegador do celular a barra de endereço entra na conta.
+  // No celular, conversa aberta ocupa a tela inteira, por cima do topo do
+  // painel: presa à parte visível da tela (useJanelaVisivel), ela fica entre o
+  // topo e o teclado, com o campo de digitar encostado embaixo, e o Safari não
+  // empurra o cabeçalho para trás da barra de endereço.
   const chatEmTelaCheia = isMobile && !!selectedConversation;
+  const janela = useJanelaVisivel(chatEmTelaCheia);
+  useEffect(() => {
+    if (!chatEmTelaCheia) return;
+    // A página de trás não rola enquanto a conversa cobre a tela.
+    const raiz = document.documentElement;
+    const antes = raiz.style.overflow;
+    raiz.style.overflow = 'hidden';
+    return () => {
+      raiz.style.overflow = antes;
+    };
+  }, [chatEmTelaCheia]);
+
+  const ladoInstagram = channel === 'instagram';
+
+  // Busca da lista, filtros, etiquetas e (no celular) "Nova Conversa": um
+  // conjunto só de botões. O celular põe tudo numa linha, ao lado do título.
+  const acoes = (
+    <div className={cn('flex items-center', isMobile ? 'gap-1' : 'gap-2', isMobile && mobileSearchOpen && 'min-w-0 flex-1')}>
+      {/* Celular e tablet: lupa que expande o campo. Desktop (lg+): campo sempre visível. */}
+      {!mobileSearchOpen && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="lg:hidden h-9 w-9 flex-shrink-0"
+          onClick={openMobileSearch}
+          aria-label="Buscar conversas"
+        >
+          <Search className="w-4 h-4" />
+        </Button>
+      )}
+
+      <div className={cn('relative lg:block', mobileSearchOpen ? 'block' : 'hidden', isMobile && 'min-w-0 flex-1')}>
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Input
+              ref={listSearchRef}
+              placeholder="Buscar conversas..."
+              aria-label="Buscar conversas"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              // Campo vazio ao perder o foco volta a ser lupa (só no mobile).
+              onBlur={() => {
+                if (!searchQuery) setMobileSearchOpen(false);
+              }}
+              className={cn('pl-10', isMobile ? 'w-full' : 'w-40 sm:w-56 lg:w-64')}
+            />
+          </TooltipTrigger>
+          {!isMobile && <TooltipContent className="text-xs">Buscar conversas (tecla /)</TooltipContent>}
+        </Tooltip>
+      </div>
+
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn('flex-shrink-0', isMobile ? 'relative h-9 w-9 px-0' : 'px-2 lg:px-3')}
+        onClick={() => setShowFilters(true)}
+        aria-label="Filtros"
+        data-tour="conversas-filtros"
+      >
+        <Filter className="w-4 h-4 lg:mr-2" />
+        <span className="hidden lg:inline">Filtros</span>
+        {activeFilterCount > 0 && (
+          <Badge
+            variant="secondary"
+            className={cn('h-5 px-1.5 text-[10px]', isMobile ? 'absolute -right-1.5 -top-1.5' : 'ml-1 lg:ml-2')}
+          >
+            {activeFilterCount}
+          </Badge>
+        )}
+      </Button>
+
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn('flex-shrink-0', isMobile ? 'h-9 w-9 px-0' : 'px-2 lg:px-3')}
+        onClick={() => setShowEtiquetas(true)}
+        aria-label="Etiquetas"
+      >
+        <Tag className="w-4 h-4 lg:mr-2" />
+        <span className="hidden lg:inline">Etiquetas</span>
+      </Button>
+
+      {/* No computador o botão largo fica no alto da lista. */}
+      {isMobile && !ladoInstagram && <NewConversationModal icone />}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-80px)] -m-6">
+    <div className="flex flex-col altura-da-tela -m-6">
       <div
         className={cn(
-          'px-6 py-4 bg-background border-b border-border flex-shrink-0',
+          'bg-background border-b border-border flex-shrink-0',
+          isMobile ? 'px-3 py-1.5' : 'px-6 py-4',
           chatEmTelaCheia && 'hidden',
         )}
       >
-        <PageHeader
-          title="Conversas"
-          helpKey="page:conversations"
-          description={CONVERSATIONS_PAGE_DESCRIPTION[channel]}
-          breadcrumbs={[
-            { label: 'Dashboard', href: '/dashboard' },
-            { label: 'Conversas' },
-          ]}
-          actions={
-            <div className="flex items-center gap-2">
-              {/* Mobile: lupa que expande o campo. Desktop (lg+): campo sempre visível. */}
-              {!mobileSearchOpen && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="lg:hidden h-9 w-9 flex-shrink-0"
-                  onClick={openMobileSearch}
-                  aria-label="Buscar conversas"
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              )}
-
-              <div className={cn('relative lg:block', mobileSearchOpen ? 'block' : 'hidden')}>
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Input
-                      ref={listSearchRef}
-                      placeholder="Buscar conversas..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      // Campo vazio ao perder o foco volta a ser lupa (só no mobile).
-                      onBlur={() => {
-                        if (!searchQuery) setMobileSearchOpen(false);
-                      }}
-                      className="pl-10 w-40 sm:w-56 lg:w-64"
-                    />
-                  </TooltipTrigger>
-                  {!isMobile && <TooltipContent className="text-xs">Buscar conversas (Ctrl+K)</TooltipContent>}
-                </Tooltip>
+        {isMobile ? (
+          // Celular: título e botões numa linha só; sem trilha e sem descrição,
+          // para a lista ficar com a tela.
+          <div className="flex min-h-[44px] items-center gap-2">
+            {!mobileSearchOpen && (
+              <div className="flex min-w-0 items-center gap-1.5">
+                <h1 className="truncate text-lg font-semibold leading-tight text-foreground">Conversas</h1>
+                <FeatureHelp helpKey="page:conversations" className="flex-shrink-0" />
               </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-2 lg:px-3 flex-shrink-0"
-                onClick={() => setShowFilters(true)}
-                aria-label="Filtros"
-                data-tour="conversas-filtros"
-              >
-                <Filter className="w-4 h-4 lg:mr-2" />
-                <span className="hidden lg:inline">Filtros</span>
-                {activeFilterCount > 0 && (
-                  <Badge variant="secondary" className="ml-1 lg:ml-2 h-5 px-1.5 text-[10px]">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="px-2 lg:px-3 flex-shrink-0"
-                onClick={() => setShowEtiquetas(true)}
-                aria-label="Etiquetas"
-              >
-                <Tag className="w-4 h-4 lg:mr-2" />
-                <span className="hidden lg:inline">Etiquetas</span>
-              </Button>
-            </div>
-          }
-        />
+            )}
+            <div className={cn('flex items-center', mobileSearchOpen ? 'min-w-0 flex-1' : 'ml-auto')}>{acoes}</div>
+          </div>
+        ) : (
+          <PageHeader
+            title="Conversas"
+            helpKey="page:conversations"
+            description={CONVERSATIONS_PAGE_DESCRIPTION[channel]}
+            breadcrumbs={[
+              { label: 'Dashboard', href: '/dashboard' },
+              { label: 'Conversas' },
+            ]}
+            actions={acoes}
+          />
+        )}
       </div>
 
-      {isMobile ? (
-        // Mobile: show ONLY the list OR the chat (never both).
-        <div className={cn('flex-1 overflow-hidden min-h-0', chatEmTelaCheia ? 'p-0' : 'p-4')}>
-          {selectedConversation ? (
+      {/* A lista fica SEMPRE no mesmo lugar da árvore, no celular e no
+          computador. useIsMobile começa false no primeiro quadro: com a lista
+          em dois galhos, ela era desmontada e montada de novo logo depois, e o
+          tour pegava a cópia que ia embora (destaque perdido no celular). No
+          celular com a conversa aberta ela só se esconde: voltar mantém a
+          rolagem. */}
+      <div className="flex flex-1 overflow-hidden min-h-0">
+        <div
+          className={cn(
+            'h-full',
+            // min-w-0: item de flex cresce até o conteúdo mais largo (1081 px
+            // medidos) e a direita da lista saía cortada.
+            isMobile ? 'min-h-0 min-w-0 flex-1' : 'w-80 flex-shrink-0 border-r border-border',
+            chatEmTelaCheia && 'hidden',
+          )}
+        >
+          {list}
+        </div>
+
+        {isMobile ? (
+          // Celular: a conversa aberta cobre a tela.
+          selectedConversation && (
             <div
-              className={cn(
-                'h-full overflow-hidden',
-                // Sem moldura na tela cheia — a conversa encosta nas bordas.
-                !chatEmTelaCheia && 'border border-border rounded-lg',
-              )}
+              className="fixed inset-x-0 bottom-0 z-40 flex flex-col overflow-hidden bg-card"
+              style={janela.altura > 0 ? { top: janela.topo, height: janela.altura } : { top: 0 }}
+              data-conversa-tela-cheia
             >
               <ChatWindow
                 conversationId={selectedConversation}
@@ -644,17 +704,10 @@ export default function Conversations() {
                 onOpenConversation={setSelectedConversation}
               />
             </div>
-          ) : (
-            <div className="h-full">{list}</div>
-          )}
-        </div>
-      ) : (
-        // Desktop: list + chat (+ contact panel rendered inside ChatWindow).
-        // Superfície contínua: sem molduras nem respiro entre as colunas — a
-        // separação é uma divisória só, como num cliente de mensagens.
-        <div className="flex flex-1 overflow-hidden min-h-0">
-          <div className="w-80 flex-shrink-0 h-full border-r border-border">{list}</div>
-
+          )
+        ) : (
+          // Desktop: lista + conversa (+ painel do contato dentro do ChatWindow).
+          // Superfície contínua: a separação é uma divisória só.
           <div className="flex-1 h-full overflow-hidden" data-tour="conversas-janela">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
@@ -677,8 +730,8 @@ export default function Conversations() {
               </motion.div>
             </AnimatePresence>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <ConversationFiltersModal
         isOpen={showFilters}

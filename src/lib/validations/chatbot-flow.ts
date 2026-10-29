@@ -86,31 +86,61 @@ export const EndFlowNodeDataSchema = z.object({
   silent: z.boolean().optional().default(false),
 });
 
+/**
+ * Mensagens padrão do zod em português, para o que o esquema não diz. Campo que
+ * ainda não existe (bloco recém-solto no desenho) saía "Required" no painel.
+ * A mensagem escrita no esquema (`.min(1, '...')`) continua valendo antes desta.
+ */
+export const ERROS_EM_PORTUGUES: z.ZodErrorMap = (issue, ctx) => {
+  switch (issue.code) {
+    case z.ZodIssueCode.invalid_type:
+      return { message: issue.received === 'undefined' || issue.received === 'null' ? 'Campo obrigatório' : 'Valor inválido' };
+    case z.ZodIssueCode.too_small:
+      if (issue.type === 'string') {
+        return { message: Number(issue.minimum) <= 1 ? 'Campo obrigatório' : `Use pelo menos ${issue.minimum} caracteres` };
+      }
+      if (issue.type === 'array') return { message: `Adicione pelo menos ${issue.minimum}` };
+      return { message: `O mínimo é ${issue.minimum}` };
+    case z.ZodIssueCode.too_big:
+      if (issue.type === 'string') return { message: `Use no máximo ${issue.maximum} caracteres` };
+      if (issue.type === 'array') return { message: `No máximo ${issue.maximum}` };
+      return { message: `O máximo é ${issue.maximum}` };
+    case z.ZodIssueCode.invalid_enum_value:
+      return { message: 'Escolha uma das opções' };
+    case z.ZodIssueCode.invalid_string:
+      return { message: issue.validation === 'uuid' ? 'Escolha um item da lista' : 'Formato inválido' };
+    default:
+      return { message: ctx.defaultError };
+  }
+};
+
+const validar = (schema: z.ZodTypeAny, dados: unknown) => schema.safeParse(dados, { errorMap: ERROS_EM_PORTUGUES });
+
 /** Validate a node's data by its type. Returns a zod SafeParseReturn. */
 export function validateNodeData(type: string, data: unknown) {
   switch (type) {
     case 'start':
-      return StartNodeDataSchema.safeParse(data);
+      return validar(StartNodeDataSchema, data);
     case 'send_text':
-      return SendTextNodeDataSchema.safeParse(data);
+      return validar(SendTextNodeDataSchema, data);
     case 'ask_question':
-      return AskQuestionNodeDataSchema.safeParse(data);
+      return validar(AskQuestionNodeDataSchema, data);
     case 'show_options':
-      return ShowOptionsNodeDataSchema.safeParse(data);
+      return validar(ShowOptionsNodeDataSchema, data);
     case 'condition':
-      return ConditionNodeDataSchema.safeParse(data);
+      return validar(ConditionNodeDataSchema, data);
     case 'transfer_agent':
-      return TransferAgentNodeDataSchema.safeParse(data);
+      return validar(TransferAgentNodeDataSchema, data);
     case 'set_variable':
-      return SetVariableNodeDataSchema.safeParse(data);
+      return validar(SetVariableNodeDataSchema, data);
     case 'update_contact':
-      return UpdateContactNodeDataSchema.safeParse(data);
+      return validar(UpdateContactNodeDataSchema, data);
     case 'move_funnel':
-      return MoveFunnelNodeDataSchema.safeParse(data);
+      return validar(MoveFunnelNodeDataSchema, data);
     case 'end_flow':
-      return EndFlowNodeDataSchema.safeParse(data);
+      return validar(EndFlowNodeDataSchema, data);
     default:
-      return z.object({}).safeParse(data);
+      return validar(z.object({}), data);
   }
 }
 
@@ -134,17 +164,17 @@ export const FunnelStageTriggerValueSchema = z.object({
 export function validateTriggerValue(type: string, value: unknown) {
   switch (type) {
     case 'keyword':
-      return KeywordTriggerValueSchema.safeParse(value);
+      return validar(KeywordTriggerValueSchema, value);
     case 'first_contact':
-      return FirstContactTriggerValueSchema.safeParse(value);
+      return validar(FirstContactTriggerValueSchema, value);
     case 'out_of_hours':
-      return OutOfHoursTriggerValueSchema.safeParse(value);
+      return validar(OutOfHoursTriggerValueSchema, value);
     case 'no_agent_reply':
-      return NoAgentReplyTriggerValueSchema.safeParse(value);
+      return validar(NoAgentReplyTriggerValueSchema, value);
     case 'funnel_stage':
-      return FunnelStageTriggerValueSchema.safeParse(value);
+      return validar(FunnelStageTriggerValueSchema, value);
     default:
-      return z.object({}).safeParse(value);
+      return validar(z.object({}), value);
   }
 }
 

@@ -351,6 +351,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Escolha uma resposta rápida da Loja. São as mesmas que o atendente usa no botão de raio da conversa.',
       'Ou deixe o campo em branco e escreva a mensagem personalizada logo abaixo.',
       'Use {variavel} para personalizar (ex.: "Olá {first_name}").',
+      'Um dos dois é obrigatório: sem resposta rápida e sem texto o passo fica "Incompleto", os dois campos ficam em vermelho e a automação não pode ser salva ativa.',
     ],
     example: '"Recebemos seus dados, {first_name}! Em breve entramos em contato."',
     tips: [
@@ -375,7 +376,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Defina o atraso em horas.',
       'Escolha o tipo (whatsapp, ligação, email).',
-      'Opcional: escreva a mensagem (com {variaveis}).',
+      'Escreva a mensagem (com {variaveis}). Ela é obrigatória: é o texto do envio agendado ou, numa tarefa de ligação ou email, o que o responsável deve fazer. Sem ela o passo fica "Incompleto" e a automação não pode ser salva ativa.',
     ],
     example: 'Em 24h, enviar "Oi {first_name}, conseguiu ver nossa proposta?"',
     category: 'automacao',
@@ -498,13 +499,14 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'É a caixa de entrada do time: onde você responde, assume e encerra atendimentos. A lista é ordenada pela última mensagem, então o que chegou por último sobe, e o que ninguém respondeu fica marcado.',
     howToConfigure: [
       'Escolha uma conversa na lista da esquerda para abrir o histórico à direita.',
+      'No celular a lista ocupa a tela: no topo ficam a lupa, Filtros, Etiquetas e Nova Conversa (o balão com +), e logo abaixo as pílulas, que deslizam de lado. Ao tocar numa conversa ela cobre a tela inteira, com o campo de mensagem encostado embaixo; a seta no canto de cima volta para a lista.',
       'Se a Loja tem conta do Instagram, o topo da lista ganha a chave "WhatsApp" / "Instagram". Cada lado é uma lista própria, com as suas pílulas e os seus números: clique no outro lado para trocar. Sem Instagram na Loja a chave não aparece e a tela é só WhatsApp.',
       'No lado da chave que não está aberto, o número ao lado do nome do canal conta as conversas que aguardam resposta lá, com a mesma regra da pílula "Aguardando". É o total exato, contado no servidor, não só o que já foi carregado. Ele cai assim que você lê a conversa.',
-      'O seletor logo abaixo de "Conversas Ativas" mostra só os números do lado aberto (no Instagram, as contas do Instagram). "Todos os números" volta a mostrar a lista inteira daquele lado.',
-      'Use a busca por nome ou número em vez de rolar a lista inteira. No lado do Instagram a busca olha o nome e o @ do cliente: digite com ou sem a arroba, as duas formas acham a mesma pessoa.',
+      'O seletor de números, logo acima da lista (no celular, na mesma linha de "Lista" e "Pendência"), mostra só os números do lado aberto (no Instagram, as contas do Instagram). "Todos os números" volta a mostrar a lista inteira daquele lado.',
+      'Use a busca por nome ou número em vez de rolar a lista inteira. No lado do Instagram a busca olha o nome e o @ do cliente: digite com ou sem a arroba, as duas formas acham a mesma pessoa. No computador, a tecla / (fora do campo de mensagem) leva direto a essa busca; Ctrl K abre a busca geral do ConvoFlow, como em qualquer tela.',
       'Para reaproveitar um trecho pronto, clique no raio ao lado do campo de mensagem, ou digite "/" com o campo vazio, que abre a mesma lista.',
       'Para guardar um trecho que você acabou de escrever, passe o mouse sobre a mensagem enviada e clique no raio que aparece nela.',
-      'Para pôr um emoji, clique na carinha ao lado do campo de mensagem e procure pelo nome em português ("sorriso", "aperto"...) ou pelas categorias. O emoji entra onde está o cursor e a caixa continua aberta para você escolher vários; feche no mesmo botão ou com Esc. Os que você mais usa aparecem em "Favoritos" e o tom de pele escolhido fica valendo, guardados neste navegador.',
+      'Para pôr um emoji, clique na carinha ao lado do campo de mensagem e procure pelo nome em português ("sorriso", "aperto"...) ou pelas categorias. O emoji entra onde está o cursor e a caixa continua aberta para você escolher vários; feche no mesmo botão ou com Esc. Os que você mais usa aparecem em "Favoritos" e o tom de pele escolhido fica valendo, guardados neste navegador. No celular a carinha não aparece: use os emojis do próprio teclado.',
       'Para mandar mensagem de voz, deixe o campo vazio e clique no microfone ao lado dele. Na primeira vez o navegador pede para usar o microfone: permita. Fale, clique no quadrado para parar, ouça o áudio e clique em enviar, ou na lixeira para descartar e gravar de novo. A gravação para sozinha em 5 minutos e espera você ouvir.',
       'Para mandar um áudio que já está no computador ou no celular, clique no clipe e escolha um arquivo MP3, M4A, AAC ou OGG de até 16 MB. Ele chega para o cliente como arquivo de áudio, não como mensagem de voz. Áudio não leva legenda: se você escreveu algo no campo, o áudio vai sozinho e o texto fica no campo para você enviar em seguida.',
       'Para mandar um documento (PDF, Word, Excel ou texto), clique no clipe e escolha o arquivo. Num número Evolution ou WAHA o documento vai até 30 MB: maior que isso, a tela avisa na hora, antes de subir, "Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.", e nada é enviado. No número da API Oficial vale o limite da Meta.',
@@ -528,7 +530,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example:
       'Chega "ainda está disponível o apartamento do anúncio?". Você responde em minutos e o contato já entra na base com nome e telefone, pronto para acompanhar no Funil.',
     tips: [
-      'A visão "Por pendência" (o botão ao lado de "Lista") é opcional e só classifica as conversas já carregadas na tela. Role a lista para incluir as mais antigas.',
+      'A visão "Por pendência" (o botão ao lado de "Lista"; no celular ele se chama "Pendência") é opcional e só classifica as conversas já carregadas na tela. Role a lista para incluir as mais antigas.',
       'No número da pílula, "12" é o total da fila e "12+" quer dizer "pelo menos 12": as pílulas "Todas", "Minhas", "Sem responsável", "Não lidas" e "Arquivadas" sabem o total; "Aguardando", "Não respondidas", "Em atendimento" e "Responsável indisponível" contam só o que já foi carregado, e o "+" some quando você rola até o fim.',
       'A lista se atualiza sozinha a cada poucos segundos, então numa fila filtrada entram conversas que estavam fora da tela conforme você trabalha. Acompanhe o número da pílula: é ele que mostra a fila diminuindo.',
       'Dá para parar de sinalizar uma conversa específica quando a demora é justificada, sem tirá-la da lista: clique no sino da linha, em "Parar de sinalizar esta conversa", e confirme em "Parar de sinalizar". O aviso de atraso some e ela deixa de contar como sem resposta. O mesmo sino, em "Voltar a sinalizar esta conversa", desfaz.',
@@ -551,7 +553,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Gerente atende as Lojas da própria Conta escolhendo a Loja no seletor do topo: abre o histórico, responde e marca como lida, igual ao Gestor. O que o Gerente não faz é apagar conversa ou contato de uma Loja.',
       'A resposta rápida entra no campo com as variáveis já trocadas pelos dados de quem está na conversa, e só sai quando você clica em enviar. Dá para ajustar antes.',
       'No campo de mensagem, Enter envia e Shift+Enter quebra a linha. Depois de enviar o cursor continua no campo, então dá para emendar a próxima mensagem sem clicar na caixa de novo.',
-      'Microfone apagado não grava: passe o mouse ou toque nele para ver o motivo. São quatro: a conversa não tem número de WhatsApp para enviar (peça ao Gestor da Loja para conectar um); o número da conversa está desconectado (peça ao Gestor para reconectar em Números de WhatsApp); o contato não tem número de WhatsApp para receber; ou é número da API Oficial e o cliente não escreve há mais de 24 horas, e aí só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa. Nesse último caso o anexo também é recusado quando você clica em enviar.',
+      'Microfone apagado não grava: passe o mouse ou toque nele para ver o motivo. São três: a conversa não tem número de WhatsApp para enviar (peça ao Gestor da Loja para conectar um); o número da conversa está desconectado (peça ao Gestor para reconectar em Números de WhatsApp); ou o contato não tem número de WhatsApp para receber. Em número da API Oficial com o cliente sem escrever há mais de 24 horas, nem o microfone aparece: o campo de mensagem, o clipe e o microfone dão lugar a uma linha que explica a regra e ao botão "Enviar template", porque só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa.',
       'Se ao clicar no microfone aparecer "Este navegador não grava áudio", grave pelo celular ou anexe um arquivo de áudio pelo clipe.',
       'Se aparecer "O microfone está bloqueado", clique no cadeado ao lado do endereço do site, permita o microfone e tente de novo. No celular a permissão fica nos ajustes do navegador. "Nenhum microfone encontrado" quer dizer que o aparelho não tem microfone ligado; "está sendo usado por outro programa", que uma chamada ou outro app está com ele.',
       'A mensagem de voz chega para o cliente com o microfone, igual às gravadas no próprio WhatsApp, e no número da API Oficial ele pode ver a transcrição. Até cerca de 2 minutos e meio ela toca na hora; mais longa, o cliente toca depois de baixar. Em iPhone com sistema anterior ao iOS 18.4 a gravação chega como arquivo de áudio, não como mensagem de voz.',
@@ -582,13 +584,13 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É o único jeito de voltar a falar com um cliente pela API Oficial da Meta depois de 24 horas sem mensagem dele. Passado esse prazo, o texto livre não é entregue: a Meta só aceita um modelo que ela já aprovou, e é ele que reabre a conversa.',
     howToConfigure: [
-      'Abra a conversa. Se o cliente não escreve há mais de 24 horas, aparece um aviso no topo do chat, logo abaixo do cabeçalho, com o botão "Enviar template" (cinza enquanto o número estiver desconectado). O mesmo botão fica no menu ⋮ do cabeçalho, em qualquer momento.',
+      'Abra a conversa. Se o cliente não escreve há mais de 24 horas, o campo de mensagem some: no lugar dele, embaixo, fica uma linha explicando a regra e o botão "Enviar template" (cinza enquanto o número estiver desconectado). Texto livre, anexo e áudio não saem até o cliente responder. O mesmo botão fica no menu ⋮ do cabeçalho, em qualquer momento.',
       'Escolha o template na lista "Template": só os aprovados são entregues, e os outros aparecem com o selo e o aviso "Este template não está APROVADO". Se a lista não carregar, clique em "Digitar o nome manualmente" e preencha "Nome do template" e "Idioma do template" exatamente como estão na Meta.',
       'Preencha os "Parâmetros do corpo" na ordem: cada campo é um {{1}}, {{2}} do template. O texto do template aparece na janela, mas sem os seus parâmetros: confira cada campo antes de enviar.',
       'Clique em "Enviar template". O modelo sai pelo número da conversa e fica gravado no histórico como uma mensagem sua; se o cliente responder, a janela de 24 horas reabre e o texto livre volta a funcionar.',
     ],
     example:
-      'O cliente pediu orçamento na segunda e sumiu. Na quinta você abre a conversa, vê o aviso das 24 horas, escolhe o modelo "retorno_orcamento" com o nome dele no {{1}} e envia. Ele responde à tarde, e a partir daí você escreve normalmente.',
+      'O cliente pediu orçamento na segunda e sumiu. Na quinta você abre a conversa, vê o botão "Enviar template" no lugar do campo, escolhe o modelo "retorno_orcamento" com o nome dele no {{1}} e envia. Ele responde à tarde, e a partir daí você escreve normalmente.',
     tips: [
       'Isto só existe em número da API Oficial. Número conectado por QR Code (Evolution ou WAHA) não tem janela de 24 horas nem template: nele o texto livre sai sempre.',
       'Fora da janela não é só o texto: o microfone fica apagado, com o motivo, e o anexo é recusado ao enviar, até o cliente responder ao template.',
@@ -606,7 +608,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Começa uma conversa com um telefone que ainda não está na sua lista: você escolhe o número da Loja, digita o telefone do cliente e a primeira mensagem, e o envio sai pelo mesmo caminho da tela da conversa. Em número conectado por QR Code, a primeira mensagem é texto livre. Em número da API Oficial, é um template aprovado, a não ser que o cliente tenha escrito para esse número nas últimas 24 horas.',
     howToConfigure: [
-      'Clique em "Nova Conversa", acima da lista.',
+      'Clique em "Nova Conversa", acima da lista. No celular, é o balão com + no topo da tela, ao lado de Etiquetas.',
       'Escolha em "Número da Loja" o número que vai enviar. Ele precisa estar conectado; se a Loja tem um número só, ele já vem escolhido.',
       'Digite o "Número do WhatsApp" com DDD.',
       'Número conectado por QR Code: escreva a "Mensagem inicial" (até 1000 caracteres).',
@@ -631,7 +633,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a ficha do cliente ao lado do chat, para você mexer no cadastro sem sair da conversa: etapa do funil, etiquetas, anotações, follow ups pendentes e a origem do contato. O que você muda aqui vale em Contatos e no Funil na mesma hora.',
     howToConfigure: [
-      'Abra o painel pelo ícone "Detalhes do contato", no canto direito do cabeçalho da conversa; o mesmo ícone fecha. Em tela larga (1280px ou mais) a escolha fica salva: nas próximas conversas ele volta como você deixou. Em janela mais estreita (tablet, celular ou navegador reduzido), ele abre por cima do chat, como uma gaveta, e fecha ao tocar fora; e nasce fechado, mesmo que esteja aberto na tela larga.',
+      'Abra o painel pelo ícone "Detalhes do contato", no canto direito do cabeçalho da conversa; o mesmo ícone fecha. No celular, toque no nome do cliente no topo da conversa, ou use o menu ⋮ › "Detalhes do contato" (a busca dentro da conversa também fica nesse menu). Em tela larga (1280px ou mais) a escolha fica salva: nas próximas conversas ele volta como você deixou. Em janela mais estreita (tablet, celular ou navegador reduzido), ele abre por cima do chat, como uma gaveta, e fecha ao tocar fora; e nasce fechado, mesmo que esteja aberto na tela larga.',
       'Em "Funil", troque a etapa em "Mover para etapa...": é o mesmo que arrastar o card no Funil de Vendas, e dispara as mesmas automações.',
       'Em "Etiquetas", o botão "Adicionar" abre o mesmo diálogo de etiquetar do menu ⋮; a etiqueta vale para campanhas segmentadas.',
       'Em "Notas", escreva o que o resto do time precisa saber antes de responder. Não há botão de salvar: o texto grava sozinho 1 segundo depois que você para de digitar. A nota é a mesma de "Observações" em Contatos.',
@@ -667,6 +669,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'A coluna "Consentimento" mostra a autorização de cada pessoa. "Aceita campanhas": ela autorizou receber campanhas. "Não quer campanhas": pediu para não receber, e fica fora de toda campanha. "Bloqueado": o contato foi bloqueado. Sem selo, aparecem os dois botões, "Aceita campanhas" e "Não quer campanhas", para você registrar. Para mudar, clique no selo: uma janela pergunta antes e explica o efeito. Só marque "Aceita campanhas" com a autorização da pessoa.',
       'Não existe importação de planilha: base antiga entra sozinha, à medida que essas pessoas escrevem, ou à mão em "Novo Contato". Cadastre antes só quem precisa estar numa campanha segmentada, e já coloque a etiqueta no cadastro.',
       'Em "Novo Contato", digite o telefone com DDI e DDD, como 55 11 99999-9999. Pode colar com espaço, parêntese ou traço: fica gravado só com os dígitos.',
+      'A busca acha pelo nome, pelo telefone ou pelo email. Se a lista não carregar, clique em "Tentar de novo" no aviso, sem precisar recarregar a página.',
       'Na Loja com Instagram, use o filtro "Todos / WhatsApp / Instagram" acima da lista. Cada contato traz o logo do canal ao lado do nome, e a busca também acha pelo @, com ou sem o "@".',
       'Para marcar que um contato do WhatsApp e um do Instagram são a mesma pessoa, abra o menu da linha (⋯) e clique em "Vincular a contato do Instagram" (num contato do Instagram, "Vincular a contato do WhatsApp"). A busca e a confirmação são as mesmas do painel do contato em Conversas.',
     ],
@@ -807,7 +810,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     howToConfigure: [
       'Arraste "Início do Fluxo" primeiro. Só pode existir um por chatbot.',
       'Arraste os blocos seguintes e ligue as bolinhas, saída de um na entrada do próximo. Bloco solto não executa.',
-      'Clique num bloco para configurar o conteúdo dele no painel da direita (no tablet e no celular o painel abre por cima do desenho e fecha ao tocar fora).',
+      'Clique num bloco para configurar o conteúdo dele no painel da direita (no tablet e no celular o painel abre por cima do desenho e fecha ao tocar fora). No pé do painel ficam "Salvar", que grava o fluxo, e "Descartar", que desfaz o que você mudou no bloco; a tela cabe na janela e eles estão sempre à vista. Campo vazio que o bloco exige aparece em vermelho com "Campo obrigatório".',
       'Publicar valida o fluxo inteiro e coloca no ar. Salvar grava o fluxo sem validar: num bot que AINDA não foi publicado, é rascunho; num bot já publicado, o que você salva passa a valer na hora, nas próximas conversas. Por isso, num bot no ar, prefira "Publicar" para salvar: ele confere antes.',
     ],
     example:
@@ -1060,6 +1063,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'A corretora preenche "Ana Ribeiro" e a foto. Nas conversas transferidas o time passa a ver quem está atendendo, em vez de um email solto.',
     tips: [
       'Perfil em branco atrapalha relatório por pessoa: fica impossível saber quem atendeu o quê.',
+      'Ao salvar, o nome e a foto do topo da tela mudam na hora, sem recarregar a página.',
       'Trocar senha é na aba Segurança, não aqui.',
       'O email é o seu login e não muda por aqui. Para trocar, fale com quem administra a sua Conta.',
     ],
@@ -1325,7 +1329,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Cria as chaves que deixam outro sistema ler os dados da sua Conta: uma planilha, um painel, o n8n. A chave é a senha desse acesso. Quem tem a chave lê o que você permitiu, e nada além.',
     howToConfigure: [
-      `Antes da primeira chave, ligue a API da Conta: em Configurações › Assinatura, no cartão "API e integrações", clique em "Ligar a API" (o botão mostra o preço por mês). Sem isso, o servidor recusa criar a chave.`,
+      `Antes da primeira chave, ligue a API da Conta: em Configurações › Assinatura, no cartão "API e integrações", clique em "Ligar a API" (o botão mostra o preço por mês). Enquanto ela estiver desligada, "Nova chave" fica cinza e o aviso da tela tem o link direto para Assinatura.`,
       'Clique em "Nova chave" e dê um nome que diga onde ela vai ser usada, por exemplo Painel de vendas (até 60 letras).',
       'Marque o que a chave pode ler: contatos, conversas, funil, equipe e métricas já vêm marcados. O histórico das conversas (o texto das mensagens) e as fotos, áudios e documentos vêm desmarcados. Marque só se o serviço realmente precisar.',
       'Fotos, áudios e documentos só funcionam junto com o histórico das conversas. Eles chegam por links que valem 15 minutos.',
@@ -1399,7 +1403,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Os cargos vão de Atendente (atende) a Gestor (administra a Loja) e Gerente (administra várias Lojas).',
       'Loja nova já nasce com acesso: ela herda o da sua Conta. Quem você convidar entra direto, sem precisar de liberação separada para cada Loja.',
       'A coluna "Loja" diz onde cada pessoa trabalha, e "Ver detalhes" no menu de Ações abre o resto: telefone, último acesso e o que o cargo dela alcança.',
-      'O convite chega por email com um botão e um código de 6 dígitos, e vale por 24 horas. Quando a pessoa usa um, o outro deixa de valer. Quem perdeu o prazo, ou esqueceu a senha, resolve sozinho pelo "Esqueci minha senha" da tela de login: recebe um código novo e cria a senha. Você também pode disparar pelo "Redefinir senha" no menu de Ações.',
+      'O convite chega por email com um botão e um código de 6 dígitos, e vale por 24 horas. Quando a pessoa usa um, o outro deixa de valer. Quem perdeu o prazo, ou esqueceu a senha, resolve sozinho pelo "Esqueci minha senha" da tela de login: recebe um código novo e cria a senha. Um pedido por minuto: pedir de novo antes disso, ou passar do limite de emails, mostra "Muitas tentativas. Espere alguns minutos e tente de novo." e nada é enviado. Você também pode disparar pelo "Redefinir senha" no menu de Ações.',
       'O plano Gerente inclui 5 Lojas. Quando elas acabam, "Nova Loja" fica cinza e o motivo aparece ao passar o mouse. Lojas adicionais são contratadas em Configurações › Assinatura.',
       'Cada Loja tem 1 Gestor e 2 vagas de Atendente, inclusive as Lojas adicionais. O Gestor não ocupa vaga de Atendente. Ocupam vaga quem está ativo e o convite pendente; quem está suspenso não. Para ter mais Atendentes em uma Loja, fale com o ConvoFlow: contato@convoflow.com.br. O atendente adicional é cobrado por mês, junto com o plano, ao preço combinado.',
       'Com a Loja cheia, a janela de convite avisa assim que você escolhe "Atendente" e a Loja, e não deixa enviar. Para abrir vaga: cancele um convite pendente ("Cancelar convite" no menu de Ações) ou suspenda alguém.',

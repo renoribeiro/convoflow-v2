@@ -47,9 +47,12 @@ vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }))
 vi.mock('@/lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
-vi.mock('@/lib/signup/authEmailFailure', () => ({ registrarEnvioBarradoNoNavegador: vi.fn() }));
+vi.mock('@/lib/signup/authEmailFailure', async (orig) => ({
+  ...(await orig<typeof import('@/lib/signup/authEmailFailure')>()),
+  registrarEnvioBarradoNoNavegador: vi.fn(),
+}));
 
-import { DefinirSenha } from './DefinirSenha';
+import { DefinirSenha, TEXTO_MUITAS_TENTATIVAS } from './DefinirSenha';
 
 /** `fim` é o que vem depois de /definir-senha: "?token_hash=..." ou "#...". */
 function renderTela(fim = '') {
@@ -124,6 +127,30 @@ describe('visita comum ("Esqueci minha senha")', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
 
     await screen.findByText(/Enviamos um código de 6 dígitos para naoexiste@exemplo.com/);
+  });
+
+  it('barrado por excesso (429): avisa e NÃO diz que enviou (achado 17)', async () => {
+    mockResetPasswordForEmail.mockResolvedValue({
+      error: { status: 429, code: 'over_email_send_rate_limit', message: 'email rate limit exceeded' },
+    });
+    renderTela();
+    fireEvent.change(screen.getByLabelText(/seu email/i), { target: { value: 'alguem@exemplo.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
+
+    expect(await screen.findByText(TEXTO_MUITAS_TENTATIVAS)).toBeInTheDocument();
+    expect(screen.queryByText(/Enviamos um código de 6 dígitos para alguem@exemplo.com/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar código' })).toBeInTheDocument();
+  });
+
+  it('pedir de novo em menos de um minuto: mesma resposta para qualquer email, sem chamar o servidor', async () => {
+    renderTela();
+    fireEvent.change(screen.getByLabelText(/seu email/i), { target: { value: 'naoexiste@exemplo.com' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar código' }));
+    await screen.findByText(/Enviamos um código de 6 dígitos/);
+
+    fireEvent.click(screen.getByRole('button', { name: /enviar de novo/i }));
+    expect(await screen.findByText(TEXTO_MUITAS_TENTATIVAS)).toBeInTheDocument();
+    expect(mockResetPasswordForEmail).toHaveBeenCalledTimes(1);
   });
 
   it('"Já tenho um código" abre o campo sem mandar email', async () => {

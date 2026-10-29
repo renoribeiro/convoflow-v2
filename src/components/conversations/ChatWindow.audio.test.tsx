@@ -115,7 +115,7 @@ vi.mock('@/components/etiquetas/LeadTagsDialog', () => ({ LeadTagsDialog: () => 
 vi.mock('./QuickRepliesPopover', () => ({ QuickRepliesPopover: () => null }));
 vi.mock('./ConversationOwnerControl', () => ({ ConversationOwnerControl: () => null }));
 
-import { ChatWindow } from './ChatWindow';
+import { ChatWindow, TEXTO_FORA_DA_JANELA } from './ChatWindow';
 
 const HORA = 60 * 60 * 1000;
 const mensagemDoCliente = (horasAtras: number, extra: Record<string, unknown> = {}) => ({
@@ -200,10 +200,21 @@ describe('microfone travado antes de gravar', () => {
     expect(gravador.props?.blockedReason).toBeNull();
   });
 
-  it('número oficial e cliente sem escrever há 25 horas: travado com o motivo da janela', () => {
+  it('número oficial e cliente sem escrever há 25 horas: no lugar do campo, a explicação e "Enviar template" (lote 6a, D3)', () => {
     estado.mensagens = [mensagemDoCliente(25)];
     renderChat();
-    expect(gravador.props?.blockedReason).toBe(MOTIVOS_AUDIO_BLOQUEADO.janelaFechada);
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(gravador.props).toBeNull();
+    expect(inputArquivo()).toBeNull();
+    expect(screen.getByText(TEXTO_FORA_DA_JANELA)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Enviar template/ })).toBeEnabled();
+  });
+
+  it('fora da janela com o número desconectado: "Enviar template" desligado', () => {
+    estado.mensagens = [mensagemDoCliente(25)];
+    estado.conectada = false;
+    renderChat();
+    expect(screen.getByRole('button', { name: /Enviar template/ })).toBeDisabled();
   });
 
   it('QR Code (sem janela de 24h) não trava por tempo', () => {
@@ -250,18 +261,6 @@ describe('gravação sai como mensagem de voz', () => {
     expect(ultimaGravacao()).toMatchObject({ media_url: 't/voz-1.ogg' });
   });
 
-  it('fora da janela, um envio que escapou da trava é barrado antes do upload e devolve false', async () => {
-    estado.mensagens = [mensagemDoCliente(25)];
-    renderChat();
-    let saiu: unknown;
-    await act(async () => {
-      saiu = await gravador.props!.onSend(new File(['x'], 'voz-1.ogg', { type: 'audio/ogg' }), { voz: true });
-    });
-    expect(saiu).toBe(false);
-    expect(uploadWhatsAppMedia).not.toHaveBeenCalled();
-    expect(sendMedia).not.toHaveBeenCalled();
-    expect(toast.error).toHaveBeenCalledWith(MOTIVOS_AUDIO_BLOQUEADO.janelaFechada);
-  });
 });
 
 // =============================================================================
@@ -318,14 +317,12 @@ describe('áudio anexado pelo clipe', () => {
     expect(ultimaGravacao()).toMatchObject({ content: 'Olha a foto' });
   });
 
-  it('fora da janela de 24h o anexo é barrado antes do upload e continua anexado', async () => {
+  it('número de QR Code com cliente há 25 horas: campo, clipe e microfone continuam (não há janela)', () => {
     estado.mensagens = [mensagemDoCliente(25)];
-    const user = userEvent.setup();
+    estado.oficial = false;
     renderChat();
-    anexar(new File(['mp3'], 'recado.mp3', { type: 'audio/mpeg' }));
-    await user.click(screen.getByRole('button', { name: 'Enviar' }));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(MOTIVOS_AUDIO_BLOQUEADO.janelaFechada));
-    expect(uploadWhatsAppMedia).not.toHaveBeenCalled();
-    expect(screen.getByText('recado.mp3')).toBeInTheDocument();
+    expect(campo()).toBeInTheDocument();
+    expect(inputArquivo()).not.toBeNull();
+    expect(screen.queryByText(TEXTO_FORA_DA_JANELA)).toBeNull();
   });
 });

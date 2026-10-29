@@ -86,6 +86,9 @@ export default defineConfig(({ mode }) => {
       // PWA Plugin - only in production
       VitePWA({
         registerType: 'autoUpdate',
+        // O registro sai do src/lib/pwa/atualizacao.ts (procura versão nova a
+        // cada volta para a tela); com o módulo virtual em uso o plugin não
+        // injeta mais o registerSW.js.
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
         manifest: {
           name: 'ConvoFlow: atendimento e vendas pelo WhatsApp',

@@ -64,12 +64,12 @@ test.describe('Landing — navegação', () => {
     await expect(page).toHaveURL(/\/auth$/);
   });
 
-  test('hero: "Ver Demonstração" rola até a seção de Funcionalidades', async ({ page }) => {
+  test('hero: "Ver funcionalidades" rola até a seção de Funcionalidades', async ({ page }) => {
     await page.goto('/');
     const features = page.locator('#features');
     await expect(features).not.toBeInViewport();
 
-    await page.getByRole('link', { name: /Ver Demonstração/ }).click();
+    await page.getByRole('link', { name: /Ver funcionalidades/ }).click();
 
     // Nao troca de rota: e ancora na propria pagina.
     await expect(page).toHaveURL(/\/(#features)?$/);

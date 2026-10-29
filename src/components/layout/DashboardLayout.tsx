@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { TELAS_SO_DE_LOJA, telaDoCaminho } from '@/lib/access/telas';
 import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
@@ -41,6 +41,31 @@ export const DashboardLayout = () => {
     setMobileNavOpen(false);
   }, [location.pathname]);
 
+  // Altura do topo (faixa de manutenção + Navbar) em --altura-topo: é o que
+  // as telas de layout fixo descontam da janela (.altura-da-tela, index.css).
+  // Mede onde o <main> começa dentro da coluna, sem embrulhar a faixa: ela é
+  // sticky e deixaria de ser dentro de um embrulho.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const main = mainRef.current;
+    const coluna = main?.parentElement;
+    if (!main || !coluna) return;
+    const raiz = document.documentElement;
+    const medir = () => {
+      const topo = main.getBoundingClientRect().top - coluna.getBoundingClientRect().top;
+      raiz.style.setProperty('--altura-topo', `${Math.max(0, Math.round(topo))}px`);
+    };
+    medir();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(medir) : null;
+    // A coluna cresce quando a faixa aparece; os filhos, quando mudam de altura.
+    ro?.observe(coluna);
+    for (const filho of Array.from(coluna.children)) if (filho !== main) ro?.observe(filho);
+    return () => {
+      ro?.disconnect();
+      raiz.style.removeProperty('--altura-topo');
+    };
+  }, [accessLoading, locked]);
+
   if (accessLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted/30">
@@ -77,7 +102,7 @@ export const DashboardLayout = () => {
 
         <Navbar onMenuClick={() => setMobileNavOpen(true)} />
 
-        <main className="flex-1 min-w-0 p-6">
+        <main ref={mainRef} className="flex-1 min-w-0 p-6">
           <PageErrorBoundary key={location.pathname} pageName={pageName}>
             {blockedForSuperadmin ? <LojaOnlyNotice /> : <Outlet />}
           </PageErrorBoundary>

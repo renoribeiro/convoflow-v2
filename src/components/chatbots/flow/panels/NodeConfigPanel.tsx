@@ -117,7 +117,8 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
       </ScrollArea>
       {/* Ações do card: salvar (persiste o fluxo) ou descartar as edições */}
       <Separator />
-      <div className="p-3 flex gap-2">
+      {/* data-rodape-fixo: o e2e/visual.spec.ts confere que fica dentro da janela. */}
+      <div className="p-3 flex gap-2" data-rodape-fixo>
         <Button
           variant="outline"
           className="flex-1"

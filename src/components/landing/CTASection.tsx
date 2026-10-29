@@ -9,7 +9,9 @@ import { ctaSubtitle } from '@/lib/landing/socialProof';
 
 export const CTASection = () => {
   return (
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-brand-secondary to-brand-dark relative overflow-hidden">
+    // Começa no lilás escuro (o da tinta, 240 45% 48%), fixo nos dois temas:
+    // texto branco sobre o lilás claro da marca dava 3,8:1, abaixo do AA.
+    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-[hsl(240_45%_48%)] to-brand-dark relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30" 
            style={{

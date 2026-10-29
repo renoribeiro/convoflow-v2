@@ -24,7 +24,7 @@ import { ptBR } from 'date-fns/locale';
 import { MessageStatusIcon } from './MessageStatusIcon';
 import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
 import { classifyMediaUrl, downloadHref } from '@/lib/media/whatsappMedia';
-import { semRotuloDeMidia } from '@/lib/media/legendaDaMidia';
+import { resumoDaMensagem, semRotuloDeMidia } from '@/lib/media/legendaDaMidia';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -502,7 +502,7 @@ export function MessageBubble({
         {showQuoted && message.quoted && (
           <div className="mb-2 px-2 py-1 border-l-2 border-current/40 bg-background/20 rounded-sm">
             <p className="text-xs opacity-70">{message.quoted.sender || 'Em resposta a'}</p>
-            <p className="text-xs opacity-90 line-clamp-2">{message.quoted.content || '...'}</p>
+            <p className="text-xs opacity-90 line-clamp-2">{resumoDaMensagem(message.quoted.content) || '...'}</p>
           </div>
         )}
 

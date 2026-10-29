@@ -301,7 +301,9 @@ export const ACTIONS: CatalogEntry[] = [
     fields: [
       { key: 'delay_hours', type: 'number', label: 'Daqui a quantas horas' },
       { key: 'followup_type', type: 'select', label: 'Tipo', options: [...FOLLOWUP_TYPE_NAMES] },
-      { key: 'message', type: 'textarea_with_vars', label: 'Mensagem' },
+      // Obrigatória: é o texto do envio agendado ou a descrição da tarefa. O
+      // motor não lê resposta rápida aqui, só este campo.
+      { key: 'message', type: 'textarea_with_vars', label: 'Mensagem', required: true },
     ],
   },
   // --- Em breve (sem suporte no motor) ---

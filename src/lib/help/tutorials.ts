@@ -783,7 +783,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Reconheça o selo "Bot em atendimento" e encerre a sessão antes de responder',
         body:
-          'O selo na linha da lista e no cabeçalho quer dizer que um chatbot está conduzindo a conversa agora. Antes de escrever, abra o menu ⋮, clique em "Encerrar sessão do bot" e confirme em "Encerrar sessão": o bot para e a conversa passa a ser sua para responder. Sem isso, você e o bot falam com o cliente ao mesmo tempo.',
+          'O selo na linha da lista e no cabeçalho (no celular, só na lista) quer dizer que um chatbot está conduzindo a conversa agora. Antes de escrever, abra o menu ⋮, clique em "Encerrar sessão do bot" e confirme em "Encerrar sessão": o bot para e a conversa passa a ser sua para responder. Sem isso, você e o bot falam com o cliente ao mesmo tempo.',
         note:
           'Sem selo, não há bot e o item fica desabilitado. Encerrar a sessão não muda o responsável nem chama a distribuição automática: é uma ação sua, e só.',
         helpKey: 'page:conversations',
@@ -813,7 +813,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'Com o campo vazio, clique no microfone, fale, clique no quadrado para parar, ouça e envie (a gravação para sozinha em 5 minutos). Para um arquivo, clique no clipe: áudio MP3, M4A, AAC ou OGG de até 16 MB; documento até 30 MB em número de QR Code. Microfone apagado? Passe o mouse ou toque nele: ele diz o motivo.',
         note:
-          'Em número da API Oficial, passadas 24 horas sem mensagem do cliente, só um template aprovado reabre a conversa: use "Enviar template", no aviso do topo do chat.',
+          'Em número da API Oficial, passadas 24 horas sem mensagem do cliente, só um template aprovado reabre a conversa: use "Enviar template", que aparece embaixo, no lugar do campo de mensagem.',
         helpKey: 'page:conversations',
       },
       {

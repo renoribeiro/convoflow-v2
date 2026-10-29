@@ -308,6 +308,22 @@
   }
 }
 
+/*
+ * Telas de layout fixo (Conversas, construtor de chatbot): a altura da janela
+ * menos o topo do painel. --altura-topo é medido pelo DashboardLayout (o topo
+ * tem 48 px, mais a faixa de manutenção quando ela aparece). Duas linhas de
+ * propósito: o Safari do iPhone abaixo do 15.4 não conhece dvh e fica com a
+ * primeira; os outros ficam com a segunda, que acompanha a barra do navegador.
+ * O e2e/visual.spec.ts mede que essas telas não passam da janela.
+ */
+:root {
+  --altura-topo: 3rem;
+}
+.altura-da-tela {
+  height: calc(100vh - var(--altura-topo));
+  height: calc(100dvh - var(--altura-topo));
+}
+
 /* Chat messages background — subtle repeating ConvoFlow icon (WhatsApp-style watermark).
    Motif derived from src/assets/logos/icon-green.svg. Light: Oliva #49511D @ 4% over creme.
    Dark: Lima #DAE27C @ 5% over the dark background. Kept faint to preserve message readability. */

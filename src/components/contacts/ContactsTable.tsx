@@ -171,7 +171,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
     return { ...query, filter: filters_array };
   };
 
-  const { data: allContactsRaw = [], isLoading, error } = useSupabaseQuery({
+  const { data: allContactsRaw = [], isLoading, error, refetch, isFetching } = useSupabaseQuery({
     table: 'contacts',
     queryKey: ['contacts', filters.stage, filters.source, filters.tags, whatsappInstanceId ?? 'all', channel],
     ...buildQuery()
@@ -558,8 +558,11 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         <div className="p-6">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Não foi possível carregar os contatos. Recarregue a página.
+            <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+              <span>Não foi possível carregar os contatos.</span>
+              <Button variant="outline" size="sm" onClick={() => void refetch()} disabled={isFetching}>
+                {isFetching ? 'Tentando...' : 'Tentar de novo'}
+              </Button>
             </AlertDescription>
           </Alert>
         </div>

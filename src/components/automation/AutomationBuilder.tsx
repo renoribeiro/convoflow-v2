@@ -357,7 +357,8 @@ export const AutomationBuilder = ({ flowId, onClose }: AutomationBuilderProps) =
 
       <div className="flex flex-1 flex-col gap-3 overflow-hidden lg:flex-row">
         {/* Canvas */}
-        <div className="relative flex-1 overflow-auto rounded-xl border bg-muted/20 bg-dot-thick-neutral-300 dark:bg-dot-thick-neutral-800">
+        {/* data-rodape-fixo: a borda de baixo do desenho fica dentro da janela (e2e/visual.spec.ts). */}
+        <div className="relative flex-1 overflow-auto rounded-xl border bg-muted/20 bg-dot-thick-neutral-300 dark:bg-dot-thick-neutral-800" data-rodape-fixo>
           {!flow.trigger_type ? (
             <EmptyBuilder onPick={handleTriggerChange} />
           ) : (

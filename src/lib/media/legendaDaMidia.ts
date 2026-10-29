@@ -20,3 +20,29 @@ export function semRotuloDeMidia(texto: string | null | undefined): string {
   if (typeof texto !== 'string') return '';
   return texto.replace(ROTULO_NO_COMECO, '').trim();
 }
+
+const NOME_DO_ROTULO: Record<string, string> = {
+  imagem: 'Foto',
+  'áudio': 'Áudio',
+  audio: 'Áudio',
+  'arquivo de áudio': 'Áudio',
+  'vídeo': 'Vídeo',
+  video: 'Vídeo',
+  documento: 'Documento',
+  figurinha: 'Figurinha',
+  sticker: 'Figurinha',
+};
+
+/**
+ * Uma linha que fala de uma mensagem (citação, "Respondendo:"): sem o rótulo
+ * cru do webhook. "[Imagem]" → "Foto"; "[Imagem] olha isso" → "Foto: olha isso";
+ * texto sem rótulo fica igual.
+ */
+export function resumoDaMensagem(texto: string | null | undefined): string {
+  if (typeof texto !== 'string') return '';
+  const achado = ROTULO_NO_COMECO.exec(texto);
+  if (!achado) return texto.trim();
+  const nome = NOME_DO_ROTULO[achado[0].trim().slice(1, -1).toLowerCase()] ?? 'Arquivo';
+  const resto = semRotuloDeMidia(texto);
+  return resto ? `${nome}: ${resto}` : nome;
+}
