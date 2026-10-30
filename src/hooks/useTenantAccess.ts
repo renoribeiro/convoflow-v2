@@ -92,13 +92,22 @@ export function useTenantAccess(): TenantAccess {
   const contaDeCobranca =
     role === 'gerente' ? ((profile?.tenant_id as string | null) ?? tenantId) : tenantId;
 
-  const habilitada = !loading && role !== null && !temBypass && !!contaDeCobranca;
+  // A pergunta sai assim que o PERFIL chega, junto com a leitura da Loja, e
+  // não depois dela (lote 6f, B14). Para quem não troca de Loja (Gestor,
+  // Atendente) a Loja do perfil é a que vai abrir; para o Gerente a pergunta
+  // já é a Conta do perfil. A DECISÃO continua esperando a Loja carregar (ver
+  // os retornos abaixo): só a espera ficou mais curta.
+  const contaParaPerguntar = loading
+    ? ((profile?.tenant_id as string | null) ?? null)
+    : contaDeCobranca;
+
+  const habilitada = !!profile && role !== null && !temBypass && !!contaParaPerguntar;
 
   // Primeiro segmento 'tenant' → faixa estática do cache (ver queryClient.ts).
   // A chave inclui a Conta de cobrança, então trocar de Loja pelo seletor já
   // busca o acesso certo sozinho, sem invalidação manual.
   const consulta = useQuery({
-    queryKey: [QUERY_KEYS.TENANT, 'access-state', contaDeCobranca],
+    queryKey: [QUERY_KEYS.TENANT, 'access-state', contaParaPerguntar],
     enabled: habilitada,
     // Uma tentativa a mais cobre a queda de rede passageira. Além disso não
     // vale: os dois erros prováveis aqui — função ainda não aplicada e permissão
@@ -109,13 +118,13 @@ export function useTenantAccess(): TenantAccess {
     queryFn: async (): Promise<AccessDecision> => {
       // Cast local: função nova, fora dos tipos gerados em types.ts.
       const { data, error } = await (supabase as any).rpc('tenant_access_state', {
-        p_tenant_id: contaDeCobranca,
+        p_tenant_id: contaParaPerguntar,
       });
 
       if (error) {
         logger.warn(
           '[useTenantAccess] tenant_access_state falhou; avaliando a linha carregada',
-          { tenantId: contaDeCobranca, message: error.message },
+          { tenantId: contaParaPerguntar, message: error.message },
         );
         throw error;
       }

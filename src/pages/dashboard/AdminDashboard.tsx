@@ -47,7 +47,8 @@ import {
 import { useIsSuperAdmin } from '@/contexts/TenantContext';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
+import { abaDoAdmin, contarEstrutura } from '@/lib/admin/painel';
 import { ROLE_LABELS, STATUS_LABELS, UserRole } from '@/types/userHierarchy';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { accountStatePatch, checkboxValueFor, profileStatusOf } from '@/lib/accountStatus';
@@ -136,7 +137,16 @@ const AdminDashboard = () => {
   // Capturado aqui porque dentro do .map a variável `user` é sombreada pela linha.
   const currentUserId = user?.id ?? null;
   const isSuperAdmin = useIsSuperAdmin();
-  const [activeTab, setActiveTab] = useState('overview');
+  // A aba mora no endereço (?tab=): a faixa de manutenção leva direto para
+  // Configurações, e o link copiado abre na mesma aba (achado 134).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = abaDoAdmin(searchParams.get('tab'));
+  const setActiveTab = (aba: string) => {
+    const proxima = new URLSearchParams(searchParams);
+    if (aba === 'overview') proxima.delete('tab');
+    else proxima.set('tab', aba);
+    setSearchParams(proxima, { replace: true });
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [activeUsersDateFilter, setActiveUsersDateFilter] = useState('30');
   const [newSubscriptionsDateFilter, setNewSubscriptionsDateFilter] = useState('30');
@@ -206,13 +216,14 @@ const AdminDashboard = () => {
 
   // A admin_users_view não traz colunas de acesso da Conta; carregamos os
   // tenants à parte (superadmin lê todos via RLS) e cruzamos por tenant_id.
-  const { data: tenantsRows = [], refetch: refetchTenants } = useSupabaseQuery({
+  const { data: tenantsRows = [], isLoading: tenantsLoading, refetch: refetchTenants } = useSupabaseQuery({
     table: 'tenants',
     queryKey: ['admin-tenants-access'],
     select: 'id, name, kind, parent_tenant_id, subscription_status, trial_ends_at, subscription_will_cancel, subscription_cancel_at, manual_access_granted, manual_access_granted_at, api_addon_manual',
     orderBy: [{ column: 'name', ascending: true }],
     enabled: !!user && !authLoading && isSuperAdmin,
   });
+  const estrutura = contarEstrutura(tenantsRows as Array<{ kind?: string | null }>);
   const tenantById: Record<string, any> = {};
   for (const t of tenantsRows as any[]) tenantById[t.id] = t;
 
@@ -621,7 +632,8 @@ const AdminDashboard = () => {
         </Badge>
       ),
     },
-    { key: 'conta', header: 'Conta', cell: (user) => (user.tenant_id && tenantById[user.tenant_id]?.name) || 'N/A' },
+    // "Sem Conta" no lugar de "N/A" (achado 132): superadmin não tem Conta.
+    { key: 'conta', header: 'Conta', cell: (user) => (user.tenant_id && tenantById[user.tenant_id]?.name) || 'Sem Conta' },
     { key: 'plano', header: 'Plano / Acesso', cardFull: true, cell: renderPlanoAcesso },
     {
       key: 'criado',
@@ -942,13 +954,14 @@ const AdminDashboard = () => {
             <CardContent>
               <ResponsiveTable
                 ariaLabel="Resumo do Sistema"
-                loading={usersLoading}
+                loading={usersLoading || tenantsLoading}
                 loadingRows={4}
                 rows={[
-                  { id: 'usuarios', metrica: 'Usuários Cadastrados', valor: usersWithEmails.length, descricao: 'Total de contas na plataforma' },
+                  { id: 'usuarios', metrica: 'Usuários Cadastrados', valor: usersWithEmails.length, descricao: 'Todas as pessoas com login' },
                   { id: 'superadmins', metrica: 'Superadmins', valor: usersWithEmails.filter((u: any) => u.role === 'superadmin').length, descricao: 'Administradores com acesso total' },
-                  { id: 'contas', metrica: 'Contas', valor: usersWithEmails.filter((u: any) => u.role === 'gerente').length, descricao: 'Gerentes (donos de Conta, gerenciam as Lojas dela)' },
-                  { id: 'lojas', metrica: 'Lojas', valor: usersWithEmails.filter((u: any) => u.role === 'gestor').length, descricao: 'Lojas/Gestores (operam conversas/contatos do dia-a-dia)' },
+                  // Pela estrutura (tenants.kind), não pelos cargos (achado 132).
+                  { id: 'contas', metrica: 'Contas', valor: estrutura.contas, descricao: 'Contas cadastradas, cada uma com a assinatura e as Lojas dela' },
+                  { id: 'lojas', metrica: 'Lojas', valor: estrutura.lojas, descricao: 'Lojas de todas as Contas, com ou sem equipe' },
                 ]}
                 rowKey={(r) => r.id}
                 columns={[
@@ -1332,13 +1345,13 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Telefone</Label>
-                  <p className="text-sm text-muted-foreground">{selectedUser.phone || 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">{selectedUser.phone || 'Sem telefone'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Cargo</Label>
                   <div>
                     <Badge variant={selectedUser.role === 'superadmin' ? 'destructive' : 'secondary'}>
-                      {selectedUser.role}
+                      {ROLE_LABELS[selectedUser.role as UserRole] ?? selectedUser.role}
                     </Badge>
                   </div>
                 </div>
@@ -1352,7 +1365,10 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Conta</Label>
-                  <p className="text-sm text-muted-foreground">{selectedUser.tenantName || 'N/A'}</p>
+                  {/* O nome vem da lista de Contas já carregada (achado 132: aparecia "N/A"). */}
+                  <p className="text-sm text-muted-foreground">
+                    {selectedUser.tenantName || (selectedUser.tenantId && tenantById[selectedUser.tenantId]?.name) || 'Sem Conta'}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Criado em</Label>

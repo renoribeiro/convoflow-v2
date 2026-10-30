@@ -2,9 +2,9 @@
  * Fila de UM pedido de tour.
  *
  * Quem pede ("Fazer agora", "Começar") quase sempre navega em seguida, e às
- * vezes troca a Loja em foco — o que recarrega o painel inteiro (o AuthGuard
- * mostra o carregando enquanto o TenantContext relê a Loja). Um estado React
- * dentro do painel morreria junto. Esta fila fica fora do React (zustand, no
+ * vezes troca a Loja em foco, o que monta de novo a tela do meio (a chave dela
+ * leva a Loja, ver DashboardLayout). Um estado React dentro da tela morreria
+ * junto. Esta fila fica fora do React (zustand, no
  * módulo) e o TourHost, montado no DashboardLayout, pega o pedido quando a
  * tela do tour estiver aberta.
  *

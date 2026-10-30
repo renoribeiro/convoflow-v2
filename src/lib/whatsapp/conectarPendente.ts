@@ -4,8 +4,8 @@
  *
  * Número de WhatsApp é sempre de uma Loja (decisão D1, 2026-10-29). Com a
  * Conta aberta, a janela pede a Loja primeiro; escolher troca a Loja em foco,
- * o que recarrega o painel inteiro (o AuthGuard mostra o carregando enquanto o
- * TenantContext relê a Loja), e a janela morre junto. O pedido fica aqui, fora
+ * o que monta de novo a tela do meio (a chave dela leva a Loja, ver
+ * DashboardLayout), e a janela morre junto. O pedido fica aqui, fora
  * do React, e Números de WhatsApp o consome ao montar de novo. Mesmo desenho
  * de src/lib/funnel/funilPendente.ts: pedido velho é descartado, a janela
  * nunca reabre minutos depois numa visita qualquer.

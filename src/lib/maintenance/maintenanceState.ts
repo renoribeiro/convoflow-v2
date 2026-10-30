@@ -132,6 +132,16 @@ export function resolveMaintenance(
 
 // ---------------------------------------------------------------- Formatação
 
+/**
+ * O selo do alto da tela (achado 134 do checkup): dizia sempre "Manutenção
+ * programada", até quando ela foi ligada às pressas. A tela só aparece com a
+ * manutenção em curso; o que muda é se ela veio de uma janela marcada antes.
+ */
+export function seloDaManutencao(startsAt: string | null | undefined): string {
+  return startsAt ? 'Manutenção programada, em andamento' : 'Manutenção ligada agora';
+}
+
+
 const FORMATO_COMPLETO = new Intl.DateTimeFormat('pt-BR', {
   day: '2-digit',
   month: '2-digit',

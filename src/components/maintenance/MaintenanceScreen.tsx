@@ -4,12 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { SUPORTE_EMAIL } from '@/lib/billing/checkout';
-import { formatarFaltando, formatarMomento } from '@/lib/maintenance/maintenanceState';
+import { formatarFaltando, formatarMomento, seloDaManutencao } from '@/lib/maintenance/maintenanceState';
 import { MaintenanceIllustration } from './MaintenanceIllustration';
 
 interface MaintenanceScreenProps {
   /** Texto escrito pelo superadmin no painel de Administração. */
   reason: string | null;
+  /**
+   * Início da janela. Com início marcado, a manutenção foi programada; sem
+   * ele, foi ligada na hora (emergência). O selo da tela diz qual das duas.
+   */
+  startsAt?: string | null;
   /** Fim da janela — a previsão de retorno. `null` = sem previsão. */
   endsAt: string | null;
   /** Repergunta ao servidor se a manutenção já acabou. */
@@ -36,7 +41,7 @@ interface MaintenanceScreenProps {
  *   3. o contato de suporte, vindo de `lib/billing/checkout` (o mesmo par que
  *      o paywall e a landing publicam — um lugar só para mudar o telefone).
  */
-export const MaintenanceScreen = ({ reason, endsAt, onRecheck }: MaintenanceScreenProps) => {
+export const MaintenanceScreen = ({ reason, startsAt = null, endsAt, onRecheck }: MaintenanceScreenProps) => {
   const { logout } = useAuth();
   const [reconferindo, setReconferindo] = useState(false);
 
@@ -70,7 +75,7 @@ export const MaintenanceScreen = ({ reason, endsAt, onRecheck }: MaintenanceScre
           <CardContent className="space-y-6 pt-8">
             <div className="text-center space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-brand-primary">
-                Manutenção programada
+                {seloDaManutencao(startsAt)}
               </p>
               <h1 className="text-2xl font-semibold text-foreground">
                 Já já o ConvoFlow volta

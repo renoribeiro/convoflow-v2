@@ -146,6 +146,45 @@ describe('lista do Gerente', () => {
     expect(update.mock.calls[0]![0]({}).lista_escondida_em).toBeTruthy();
     expect(useTourQueue.getState().pending).toBeNull();
   });
+
+  it('"Esconder" diz como a lista volta (decisão D11)', async () => {
+    montar();
+    await userEvent.click(screen.getByRole('button', { name: 'Esconder' }));
+    expect(toastInfo).toHaveBeenCalledWith(expect.stringContaining('Ver tutorial de novo'));
+  });
+});
+
+// Lote 6f, B12 (decisão D11). No celular, a lista curta é CSS (max-md:hidden):
+// o jsdom não aplica a regra, então o teste confere as classes, e o e2e
+// (onboarding.spec, 390 px) confere o que aparece de verdade.
+describe('celular: progresso, os 2 próximos e "Ver todos"', () => {
+  const escondidoNoCelular = (id: string) => linha(id).className.includes('max-md:hidden');
+
+  it('só os 2 próximos pendentes ficam à vista no celular; o resto, do tablet para cima', () => {
+    montar();
+    const pendentes = CHECKLISTS.gerente.map((d) => d.id).filter((id) => linha(id).getAttribute('data-feito') === 'nao');
+    const [primeiro, segundo, ...resto] = pendentes;
+    expect(escondidoNoCelular(primeiro!)).toBe(false);
+    expect(escondidoNoCelular(segundo!)).toBe(false);
+    for (const id of resto) expect(escondidoNoCelular(id)).toBe(true);
+    expect(escondidoNoCelular('loja')).toBe(true); // feito
+    expect(screen.getByText('3 de 9')).toBeInTheDocument();
+  });
+
+  it('"Ver todos" abre a lista inteira e vira "Ver menos"', async () => {
+    montar();
+    await userEvent.click(screen.getByRole('button', { name: 'Ver todos' }));
+    for (const d of CHECKLISTS.gerente) expect(escondidoNoCelular(d.id)).toBe(false);
+    expect(screen.getByRole('button', { name: 'Ver menos' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('com 2 passos ou menos, não há "Ver todos"', () => {
+    papel = 'atendente';
+    summary = resumo('atendente', {});
+    montar();
+    expect(screen.queryByRole('button', { name: 'Ver todos' })).toBeNull();
+    expect(escondidoNoCelular('foto')).toBe(false);
+  });
 });
 
 describe('outros cargos e estados', () => {

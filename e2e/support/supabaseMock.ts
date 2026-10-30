@@ -113,6 +113,9 @@ function valueFor(table: string, col: string, type: string, i: number, role: Moc
   if (col === 'role') return role;
   if (col === 'kind') return 'store';
   if (col === 'provider' || col === 'connection_type') return 'evolution';
+  // Conversa de WhatsApp de verdade: com "Valor N" no canal nenhuma conversa do
+  // backend falso tinha número para responder (lote 6f, localização).
+  if (col === 'channel' && table === 'conversations') return 'whatsapp';
   if (col === 'type') return table === 'lead_sources' ? 'organic' : table === 'report_templates' ? 'conversations' : 'text';
   if (col === 'trigger_type') return 'keyword';
   if (col === 'node_type') return 'send_text';

@@ -811,9 +811,9 @@ export const ALL_TUTORIALS: Tutorial[] = [
         helpKey: 'concept:conversation-routing',
       },
       {
-        title: 'Mande voz, áudio ou documento pela conversa',
+        title: 'Mande voz, áudio, documento ou localização pela conversa',
         body:
-          'Com o campo vazio, clique no microfone, fale, clique no quadrado para parar, ouça e envie (a gravação para sozinha em 5 minutos). Para um arquivo, clique no clipe: áudio MP3, M4A, AAC ou OGG de até 16 MB; documento até 30 MB em número de QR Code. Microfone apagado? Passe o mouse ou toque nele: ele diz o motivo.',
+          'Com o campo vazio, clique no microfone, fale, clique no quadrado para parar, ouça e envie (a gravação para sozinha em 5 minutos). Para um arquivo, clique no clipe e escolha "Arquivo": áudio MP3, M4A, AAC ou OGG de até 16 MB; documento até 30 MB em número de QR Code. Para um endereço, clique no clipe e escolha "Localização": use a sua localização atual ou digite o endereço, confira e clique em "Enviar localização". Microfone apagado? Passe o mouse ou toque nele: ele diz o motivo.',
         note:
           'Em número da API Oficial, passadas 24 horas sem mensagem do cliente, só um template aprovado reabre a conversa: use "Enviar template", que aparece embaixo, no lugar do campo de mensagem.',
         helpKey: 'page:conversations',

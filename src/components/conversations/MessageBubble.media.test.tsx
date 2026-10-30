@@ -117,3 +117,22 @@ describe('MessageBubble — mídia pelo link temporário', () => {
     expect(document.querySelector('img')?.getAttribute('src')).toBe('https://pps.whatsapp.net/v/foto.jpg');
   });
 });
+
+// Lote 6f, B5: a localização enviada pelas Conversas guarda o ponto em
+// metadata (migração 20261029000007), e a bolha desenha o cartão com o mapa.
+describe('MessageBubble — localização', () => {
+  it('com o ponto em metadata: nome, endereço e o link para o mapa', () => {
+    mostrar(
+      msg({
+        direction: 'outbound',
+        status: 'sent',
+        message_type: 'location',
+        content: 'Loja Centro',
+        metadata: { latitude: -3.73186, longitude: -38.52667, name: 'Loja Centro', address: 'Rua Um, 10, Fortaleza, CE' },
+      }),
+    );
+    const link = screen.getByRole('link', { name: /Loja Centro/ });
+    expect(link).toHaveAttribute('href', 'https://www.google.com/maps/search/?api=1&query=-3.73186,-38.52667');
+    expect(link).toHaveTextContent('Rua Um, 10, Fortaleza, CE');
+  });
+});

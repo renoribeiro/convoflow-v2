@@ -3136,6 +3136,7 @@ export type Database = {
           is_from_bot: boolean | null
           media_url: string | null
           message_type: string
+          metadata: Json | null
           sender_profile_id: string | null
           source: string | null
           status: string | null
@@ -3158,6 +3159,7 @@ export type Database = {
           is_from_bot?: boolean | null
           media_url?: string | null
           message_type: string
+          metadata?: Json | null
           sender_profile_id?: string | null
           source?: string | null
           status?: string | null
@@ -3180,6 +3182,7 @@ export type Database = {
           is_from_bot?: boolean | null
           media_url?: string | null
           message_type?: string
+          metadata?: Json | null
           sender_profile_id?: string | null
           source?: string | null
           status?: string | null

@@ -79,6 +79,14 @@ describe('reenvioDaMensagem', () => {
     });
   });
 
+  it('localização que falhou sai de novo pelo clipe (lote 6f, B5)', () => {
+    expect(reenvioDaMensagem({ ...falhou, message_type: 'location' }, livre)).toEqual({
+      pode: false,
+      motivo: REENVIO_TEXTOS.localizacao,
+    });
+    expect(REENVIO_TEXTOS.localizacao).toMatch(/clipe/);
+  });
+
   it('reação que falhou e texto vazio: sem botão', () => {
     expect(reenvioDaMensagem({ ...falhou, message_type: 'reaction' }, livre)).toBeNull();
     expect(reenvioDaMensagem({ ...falhou, content: '  ' }, livre)).toBeNull();

@@ -52,6 +52,7 @@ import {
   PanelRightClose,
   ArrowLeft,
   SquareX,
+  MapPin,
 } from 'lucide-react';
 import { format, isToday, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -102,6 +103,8 @@ import { ehArquivoDeAudio, validarAudioAnexado } from '@/lib/audio/audioFile';
 import { MOTIVOS_AUDIO_BLOQUEADO, motivoAudioBloqueado } from '@/lib/conversations/audioBlock';
 import { logger } from '@/lib/logger';
 import { camposDaFalha } from '@/lib/whatsapp/failureFields';
+import { SendLocationDialog } from './SendLocationDialog';
+import { textoDaLocalizacao, type PontoDoMapa } from '@/lib/conversations/localizacao';
 import { reenvioDaMensagem } from '@/lib/conversations/falhaDaMensagem';
 import { idsParaMarcarComoLidas, naoLidasDoCliente } from '@/lib/conversations/lidaAoAbrir';
 import { usePaginaVisivel } from '@/hooks/usePaginaVisivel';
@@ -232,6 +235,8 @@ export const ChatWindow = ({
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  // "Localização", no clipe (lote 6f, B5, decisão D4).
+  const [locationOpen, setLocationOpen] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
   // Salvar uma mensagem já enviada como resposta rápida. O texto fica em estado
@@ -859,6 +864,58 @@ export const ChatWindow = ({
         error: e instanceof Error ? e.message : String(e),
       });
       throw e; // let AudioRecorder show its own toast
+    }
+  };
+
+  /**
+   * Localização (lote 6f, B5, decisão D4): pelo servidor, nos três provedores
+   * (Evolution, WAHA e API Oficial). As mesmas guardas do anexo: barrada antes
+   * do envio, devolve false e a janela fica; saiu ou falhou, a linha é gravada
+   * (a que falhou leva o motivo embaixo) e devolve true.
+   */
+  const handleSendLocation = async (ponto: PontoDoMapa): Promise<boolean> => {
+    if (isInstagram) {
+      toast.error('O Instagram só responde texto por aqui.');
+      return false;
+    }
+    if (bloqueioDoEnvio || !contactId || !active) {
+      toast.error(bloqueioDoEnvio ?? 'Esta conversa não tem um número de WhatsApp para responder.');
+      return false;
+    }
+    try {
+      const resultado = await active.adapter.sendLocation(phoneOf(contact), {
+        latitude: ponto.latitude,
+        longitude: ponto.longitude,
+        name: ponto.nome,
+        address: ponto.endereco,
+      });
+      const status = resultado?.status === 'sent' || resultado?.status === 'pending' ? 'sent' : 'failed';
+      if (status === 'failed') {
+        toast.error(`A localização não foi enviada. ${resultado?.error || 'Tente de novo em instantes.'}`);
+      }
+      await sendMessageMutation.mutateAsync({
+        contact_id: contactId,
+        whatsapp_instance_id: active.row.id,
+        content: textoDaLocalizacao(ponto),
+        direction: 'outbound',
+        message_type: 'location',
+        // A bolha monta o cartão do mapa a partir daqui (MediaLocation).
+        metadata: {
+          latitude: ponto.latitude,
+          longitude: ponto.longitude,
+          ...(ponto.nome ? { name: ponto.nome } : {}),
+          ...(ponto.endereco ? { address: ponto.endereco } : {}),
+        },
+        status,
+        evolution_message_id: resultado?.providerMessageId ?? null,
+        is_from_bot: false,
+        ...(status === 'failed' ? camposDaFalha(resultado) : {}),
+      } as any);
+      return true;
+    } catch (e) {
+      logger.error('[ChatWindow] envio de localização falhou', { error: e instanceof Error ? e.message : String(e) });
+      toast.error('A localização não foi enviada. Tente de novo em instantes.');
+      return false;
     }
   };
 
@@ -1730,14 +1787,25 @@ export const ChatWindow = ({
             {!isRecording && (
               <>
                 {!isInstagram && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button type="button" variant="ghost" size="sm" onClick={handleAttachClick} aria-label="Anexar arquivo">
+                  // O clipe abre o menu: Arquivo (o seletor de sempre) ou
+                  // Localização (lote 6f, B5, decisão D4).
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="ghost" size="sm" aria-label="Anexar arquivo ou localização">
                         <Paperclip className="w-5 h-5" />
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-xs">Anexar arquivo</TooltipContent>
-                  </Tooltip>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" side="top">
+                      <DropdownMenuItem onSelect={handleAttachClick}>
+                        <FileTextIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Arquivo
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setLocationOpen(true)} disabled={!contactId}>
+                        <MapPin className="mr-2 h-4 w-4" aria-hidden="true" />
+                        Localização
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
 
                 <QuickRepliesPopover
@@ -1910,6 +1978,15 @@ export const ChatWindow = ({
           adapter={active.adapter}
           toPhone={phoneOf(contact)}
           onSent={handleTemplateSent}
+        />
+      )}
+
+      {!isInstagram && (
+        <SendLocationDialog
+          open={locationOpen}
+          onOpenChange={setLocationOpen}
+          contactName={headerName}
+          onSend={handleSendLocation}
         />
       )}
 

@@ -1,9 +1,9 @@
 /**
  * O que reabrir no Funil depois que o Gerente escolhe a Loja.
  *
- * Trocar a Loja em foco recarrega o painel inteiro (o AuthGuard mostra o
- * carregando enquanto o TenantContext relê a Loja), e a janela aberta morre
- * junto. O pedido fica aqui, fora do React, e a tela do Funil o consome ao
+ * Trocar a Loja em foco monta de novo a tela do meio (a chave dela leva a
+ * Loja, ver DashboardLayout; o menu e o topo ficam desde o lote 6f), e a
+ * janela aberta morre junto. O pedido fica aqui, fora do React, e a tela do Funil o consome ao
  * montar de novo. Pedido velho é descartado: a janela nunca reabre minutos
  * depois, numa visita qualquer ao Funil.
  */

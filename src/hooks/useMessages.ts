@@ -9,8 +9,13 @@ interface Message {
   created_at: string;
   direction: 'inbound' | 'outbound';
   status: 'sent' | 'delivered' | 'read' | 'failed';
-  message_type: 'text' | 'image' | 'audio' | 'video' | 'document';
+  message_type: 'text' | 'image' | 'audio' | 'video' | 'document' | 'location' | 'reaction' | 'template';
   media_url?: string;
+  /**
+   * O que não cabe em content (migração 20261029000007). Localização:
+   * { latitude, longitude, name?, address? }, que a bolha desenha como mapa.
+   */
+  metadata?: Record<string, unknown> | null;
   contact_id: string;
   tenant_id: string;
   whatsapp_instance_id?: string;
@@ -67,6 +72,7 @@ export const useMessages = ({ contactId, pageSize = 50, enabled = true }: UseMes
           status,
           message_type,
           media_url,
+          metadata,
           contact_id,
           tenant_id,
           whatsapp_instance_id,
@@ -138,6 +144,7 @@ export const useRecentMessages = (contactId: string, limit: number = 20) => {
           status,
           message_type,
           media_url,
+          metadata,
           contact_id,
           tenant_id,
           whatsapp_instance_id,

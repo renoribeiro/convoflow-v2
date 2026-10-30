@@ -10,8 +10,13 @@
  *   "Fazer agora"      → abre a tela e destaca onde clicar (tour). Nada é
  *                        destacado sem este clique.
  *   "Ver passo a passo"→ o tutorial (ou a referência) na Ajuda.
+ *
+ * No celular (lote 6f, B12, decisão D11) a lista vem curta: o progresso, os 2
+ * próximos passos pendentes e "Ver todos". Do tablet para cima, a lista
+ * inteira. É só CSS (max-md:hidden): o passo escondido continua na página,
+ * sem piscar a lista inteira antes de encolher.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Circle, PartyPopper, Rocket } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,6 +36,7 @@ import {
 import { hideChecklist } from '@/lib/onboarding/state';
 import { requestTour } from '@/lib/onboarding/tourQueue';
 import {
+  CHECKLIST_COMO_VOLTAR,
   CHECKLIST_DONE_BODY,
   CHECKLIST_DONE_TITLE,
   CHECKLIST_SUBTITLE,
@@ -47,11 +53,13 @@ export function PrimeirosPassosCard() {
   const { tenant, setActiveTenant } = useTenant();
   const { stores } = useMyStores();
   const navigate = useNavigate();
+  const [verTodos, setVerTodos] = useState(false);
 
   if (view === 'oculto' || !summary || !role || role === 'superadmin') return null;
 
   const esconder = () => {
     void onboarding.update((s) => hideChecklist(s, new Date().toISOString()));
+    toast.info(CHECKLIST_COMO_VOLTAR);
   };
 
   if (view === 'pronto') {
@@ -106,6 +114,11 @@ export function PrimeirosPassosCard() {
 
   const pct = summary.total > 0 ? Math.round((summary.done / summary.total) * 100) : 0;
 
+  // Celular: só os 2 próximos pendentes, até a pessoa pedir "Ver todos".
+  const proximos = summary.items.filter((i) => !i.done).slice(0, 2).map((i) => i.id);
+  const sobra = summary.items.length - proximos.length;
+  const curto = !verTodos && sobra > 0;
+
   return (
     <Moldura>
       <div className="flex items-start gap-3">
@@ -116,7 +129,9 @@ export function PrimeirosPassosCard() {
           <h2 id="primeiros-passos-titulo" className="text-sm font-semibold text-foreground">
             Primeiros passos
           </h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">{CHECKLIST_SUBTITLE[role]}</p>
+          <p className={cn('mt-0.5 text-sm text-muted-foreground', curto && 'max-md:hidden')}>
+            {CHECKLIST_SUBTITLE[role]}
+          </p>
           <div className="mt-3 flex items-center gap-3">
             <Progress value={pct} className="h-2 flex-1" aria-label="Progresso dos primeiros passos" />
             <span className="whitespace-nowrap text-xs text-muted-foreground">
@@ -137,10 +152,16 @@ export function PrimeirosPassosCard() {
       <ol className="mt-4 divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
         {summary.items.map((item) => {
           const href = stepHelpHref(item);
+          const posicao = proximos.indexOf(item.id);
           return (
             <li
               key={item.id}
-              className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4"
+              className={cn(
+                'flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:gap-4',
+                curto && posicao < 0 && 'max-md:hidden',
+                // O primeiro à vista no celular não ganha a linha de cima.
+                curto && posicao === 0 && 'max-md:border-t-0',
+              )}
               data-passo={item.id}
               data-feito={item.done ? 'sim' : 'nao'}
             >
@@ -190,6 +211,19 @@ export function PrimeirosPassosCard() {
           );
         })}
       </ol>
+
+      {sobra > 0 && (
+        <div className="mt-3 flex justify-center md:hidden">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setVerTodos((v) => !v)}
+            aria-expanded={verTodos}
+          >
+            {verTodos ? 'Ver menos' : 'Ver todos'}
+          </Button>
+        </div>
+      )}
     </Moldura>
   );
 }

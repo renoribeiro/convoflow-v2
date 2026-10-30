@@ -9,9 +9,8 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ChatbotProvider } from "@/contexts/ChatbotContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { TenantProvider } from "@/contexts/TenantContext";
-import { AuthGuard } from '@/components/auth/AuthGuard';
+import { PortaDeEntrada } from '@/components/auth/PortaDeEntrada';
 import { TelaGuard } from '@/components/auth/TelaGuard';
-import { MaintenanceGuard } from '@/components/maintenance/MaintenanceGuard';
 import { DashboardCardSkeleton } from "@/components/shared/Skeleton";
 
 // Landing Page (carregamento imediato)
@@ -24,29 +23,61 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import DataDeletion from "./pages/DataDeletion";
 import NotFound from "./pages/NotFound";
 
-// Dashboard Pages (lazy loading)
-const Index = React.lazy(() => import("./pages/Index"));
-const Conversations = React.lazy(() => import("./pages/Conversations"));
-const Contacts = React.lazy(() => import("./pages/Contacts"));
-const Funnel = React.lazy(() => import("./pages/Funnel"));
-const Tracking = React.lazy(() => import("./pages/Tracking"));
-const Reports = React.lazy(() => import("./pages/Reports"));
-const Chatbots = React.lazy(() => import("./pages/Chatbots"));
-const Campaigns = React.lazy(() => import("./pages/Campaigns"));
-const Templates = React.lazy(() => import("./pages/Templates"));
-const Followups = React.lazy(() => import("./pages/Followups"));
-const Automation = React.lazy(() => import("./pages/Automation"));
-const Settings = React.lazy(() => import("./pages/Settings"));
+// Dashboard Pages (lazy loading). O mapa é o primeiro segmento depois de
+// /dashboard/: a mesma função baixa a tela no React.lazy e no precarregar.
+const TELAS_DO_PAINEL = {
+  '': () => import("./pages/Index"),
+  conversations: () => import("./pages/Conversations"),
+  contacts: () => import("./pages/Contacts"),
+  funnel: () => import("./pages/Funnel"),
+  tracking: () => import("./pages/Tracking"),
+  reports: () => import("./pages/Reports"),
+  chatbots: () => import("./pages/Chatbots"),
+  campaigns: () => import("./pages/Campaigns"),
+  templates: () => import("./pages/Templates"),
+  followups: () => import("./pages/Followups"),
+  automation: () => import("./pages/Automation"),
+  settings: () => import("./pages/Settings"),
+  notifications: () => import("./pages/Notifications"),
+  help: () => import("./pages/Help"),
+  admin: () => import("./pages/dashboard/AdminDashboard"),
+  team: () => import("./pages/dashboard/TeamPage"),
+  'store-comparison': () => import("./pages/dashboard/StoreComparison"),
+  'whatsapp-numbers': () => import("./pages/WhatsAppNumbers"),
+} as const;
+
+const Index = React.lazy(TELAS_DO_PAINEL['']);
+const Conversations = React.lazy(TELAS_DO_PAINEL.conversations);
+const Contacts = React.lazy(TELAS_DO_PAINEL.contacts);
+const Funnel = React.lazy(TELAS_DO_PAINEL.funnel);
+const Tracking = React.lazy(TELAS_DO_PAINEL.tracking);
+const Reports = React.lazy(TELAS_DO_PAINEL.reports);
+const Chatbots = React.lazy(TELAS_DO_PAINEL.chatbots);
+const Campaigns = React.lazy(TELAS_DO_PAINEL.campaigns);
+const Templates = React.lazy(TELAS_DO_PAINEL.templates);
+const Followups = React.lazy(TELAS_DO_PAINEL.followups);
+const Automation = React.lazy(TELAS_DO_PAINEL.automation);
+const Settings = React.lazy(TELAS_DO_PAINEL.settings);
 const ProfileSettings = React.lazy(() => import("@/components/settings/ProfileSettings").then(module => ({ default: module.ProfileSettings })));
-const Notifications = React.lazy(() => import("./pages/Notifications"));
-const Help = React.lazy(() => import("./pages/Help"));
-const AdminDashboard = React.lazy(() => import("./pages/dashboard/AdminDashboard"));
+const Notifications = React.lazy(TELAS_DO_PAINEL.notifications);
+const Help = React.lazy(TELAS_DO_PAINEL.help);
+const AdminDashboard = React.lazy(TELAS_DO_PAINEL.admin);
 const UsersPage = React.lazy(() => import("./pages/dashboard/admin/UsersPage"));
 const UsageLimitsPage = React.lazy(() => import("./pages/dashboard/admin/UsageLimitsPage"));
-const TeamPage = React.lazy(() => import("./pages/dashboard/TeamPage"));
-const StoreComparison = React.lazy(() => import("./pages/dashboard/StoreComparison"));
-const WhatsAppNumbers = React.lazy(() => import("./pages/WhatsAppNumbers"));
+const TeamPage = React.lazy(TELAS_DO_PAINEL.team);
+const StoreComparison = React.lazy(TELAS_DO_PAINEL['store-comparison']);
+const WhatsAppNumbers = React.lazy(TELAS_DO_PAINEL['whatsapp-numbers']);
 const ChatbotFlowBuilder = React.lazy(() => import("./pages/ChatbotFlowBuilder"));
+
+// Quem abre o painel direto numa tela (link, favorito, recarregar) já começa a
+// baixar a tela junto com a sessão, em vez de esperar a porta de entrada
+// decidir (lote 6f, B14). Uma tela que a pessoa não pode ver só fica no cache.
+if (typeof window !== 'undefined') {
+  const caminho = /^\/dashboard(?:\/([^/]*))?/.exec(window.location.pathname);
+  const carregar = caminho ? TELAS_DO_PAINEL[(caminho[1] ?? '') as keyof typeof TELAS_DO_PAINEL] : undefined;
+  if (carregar) void carregar().catch(() => {});
+}
+
 // Cadastro pelo site: pública, e só carrega com a chave ligada (release.ts).
 const Cadastro = React.lazy(() => import("./pages/Cadastro"));
 // Documentação pública da API: só existe com a chave API_ADDON_RELEASED ligada.
@@ -128,16 +159,13 @@ const App = () => (
                 <Route path="/exclusao-de-dados" element={<DataDeletion />} />
 
                 {/* Protected Dashboard Routes */}
-                {/* MaintenanceGuard fica ENTRE o AuthGuard e o layout: e o
-                    unico no por onde toda rota autenticada passa, e o perfil ja
-                    esta carregado quando ele monta (o AuthGuard garante). Ele
-                    nao encosta no paywall -- sao duas perguntas diferentes. */}
+                {/* PortaDeEntrada: sessão, cadastro pendente, manutenção e
+                    pagamento numa espera só, com um esqueleto só (lote 6f,
+                    B14). As regras estão em src/lib/access/entrada.ts. */}
                 <Route path="/dashboard" element={
-                  <AuthGuard>
-                    <MaintenanceGuard>
-                      <DashboardLayout />
-                    </MaintenanceGuard>
-                  </AuthGuard>
+                  <PortaDeEntrada>
+                    <DashboardLayout />
+                  </PortaDeEntrada>
                 }>
                   {/* Toda rota do painel passa pela TelaGuard, que lê o registro
                       único de telas (src/lib/access/telas.ts): módulo ligado e

@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ModulesApi } from '@/api/modules';
 import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRole, useTenant } from '@/contexts/TenantContext';
 
 type ModuleSettings = Database['public']['Tables']['module_settings']['Row'];
 
@@ -12,50 +13,31 @@ type ModuleSettings = Database['public']['Tables']['module_settings']['Row'];
  */
 export const useModules = () => {
   const queryClient = useQueryClient();
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean>(false);
   const { user, isLoading: authLoading } = useAuth();
+  // O cargo vem do perfil que o TenantContext já leu. Antes, este gancho
+  // perguntava de novo ao servidor quem é o usuário e qual o cargo dele, e só
+  // depois buscava os módulos: três idas em fila na entrada do painel (lote
+  // 6f, B14).
+  const { loading: perfilCarregando } = useTenant();
+  const role = useRole();
+  const isSuperAdmin = role === 'superadmin';
 
-  // Query para verificar se é superadmin
-  const { data: superAdminStatus, isLoading: isLoadingSuperAdmin } = useQuery({
-    queryKey: ['superAdminStatus'],
-    queryFn: () => ModulesApi.isSuperAdmin(),
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    enabled: !!user && !authLoading, // Só executa se há usuário autenticado
-  });
-
-  // Query para buscar todos os módulos (para superadmin)
-  const { 
-    data: allModules = [], 
+  // Uma leitura só, para todo cargo: a política authenticated_read_module_settings
+  // deixa qualquer sessão ler a lista inteira, e quem não é superadmin enxerga
+  // só os ligados (filtrados abaixo). Sai junto com o perfil, sem esperar o cargo.
+  const {
+    data: allModules = [],
     isLoading: isLoadingAll,
-    error: allModulesError 
+    error: allModulesError,
   } = useQuery({
     queryKey: ['modules', 'all'],
     queryFn: () => ModulesApi.getModules(),
-    enabled: !!user && !authLoading && superAdminStatus === true,
+    staleTime: 2 * 60 * 1000,
+    enabled: !!user && !authLoading,
   });
 
-  // Query para buscar módulos visíveis (baseado no tipo de usuário)
-  const { 
-    data: visibleModules = [], 
-    isLoading: isLoadingVisible,
-    error: visibleModulesError 
-  } = useQuery({
-    queryKey: ['modules', 'visible'],
-    queryFn: () => ModulesApi.getVisibleModules(),
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    enabled: !!user && !authLoading, // Só executa se há usuário autenticado
-  });
-
-  // Query para buscar apenas módulos habilitados
-  const { 
-    data: enabledModules = [], 
-    isLoading: isLoadingEnabled,
-    error: enabledModulesError 
-  } = useQuery({
-    queryKey: ['modules', 'enabled'],
-    queryFn: () => ModulesApi.getEnabledModules(),
-    enabled: !!user && !authLoading && superAdminStatus === false,
-  });
+  const enabledModules = useMemo(() => allModules.filter((m) => m.is_enabled), [allModules]);
+  const visibleModules = isSuperAdmin ? allModules : enabledModules;
 
   // Mutation para atualizar status de um módulo
   const updateModuleStatusMutation = useMutation({
@@ -145,13 +127,6 @@ export const useModules = () => {
     },
   });
 
-  // Atualizar estado do superadmin
-  useEffect(() => {
-    if (superAdminStatus !== undefined) {
-      setIsSuperAdmin(superAdminStatus);
-    }
-  }, [superAdminStatus]);
-
   // Funções de conveniência
   const toggleModuleStatus = useCallback((moduleId: string, currentStatus: boolean) => {
     updateModuleStatusMutation.mutate({
@@ -202,17 +177,10 @@ export const useModules = () => {
     return !!module && module.is_enabled;
   }, [getModulesForCurrentUser, isSuperAdmin]);
 
-  // Estados de loading — só considera queries que realmente vão rodar
-  // (queries com enabled=false em React Query mantêm isPending=true mas
-  // isLoading=false; mesmo assim, computamos explicitamente para clareza).
-  const isLoading = (() => {
-    if (isLoadingSuperAdmin) return true;
-    if (isLoadingVisible) return true;
-    if (superAdminStatus === true && isLoadingAll) return true;
-    if (superAdminStatus === false && isLoadingEnabled) return true;
-    return false;
-  })();
-  const error = allModulesError || visibleModulesError || enabledModulesError;
+  // Carregando enquanto a lista não chegou ou o cargo ainda não é conhecido
+  // (sem o cargo não dá para saber se vale a lista inteira ou só os ligados).
+  const isLoading = isLoadingAll || (!!user && perfilCarregando);
+  const error = allModulesError;
 
   return {
     // Estados

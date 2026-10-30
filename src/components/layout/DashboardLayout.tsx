@@ -5,10 +5,8 @@ import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
 import { cn } from '@/lib/utils';
 import PageErrorBoundary from '@/components/ErrorBoundaries/PageErrorBoundary';
-import { useTenantAccess } from '@/hooks/useTenantAccess';
-import { PaywallScreen } from '@/components/auth/PaywallScreen';
 import { LojaOnlyNotice } from '@/components/auth/LojaOnlyNotice';
-import { useRole } from '@/contexts/TenantContext';
+import { useRole, useTenant } from '@/contexts/TenantContext';
 import { MaintenanceBanner } from '@/components/maintenance/MaintenanceBanner';
 import { TourHost } from '@/components/onboarding/TourHost';
 
@@ -25,16 +23,10 @@ export const DashboardLayout = () => {
   const firstSegment = location.pathname.replace(/^\/dashboard\/?/, '').split('/')[0] ?? '';
   const blockedForSuperadmin = role === 'superadmin' && TELAS_SO_DE_LOJA.includes(firstSegment);
 
-  // Paywall: Conta sem acesso liberado (pago/manual) vê só a tela de bloqueio.
-  // Só o superadmin tem bypass (ver useTenantAccess) — o gerente perdeu o dele
-  // em 2026-08-19 e agora também é barrado quando a Conta dele não está paga.
-  //
-  // O bloqueio continua sendo total AQUI, para todo mundo: nenhuma rota do
-  // dashboard passa. O que muda por cargo é o CONTEÚDO da PaywallScreen — o
-  // gerente recebe dentro dela o caminho de pagamento (checkout do Stripe), e
-  // por isso não existe lista de rotas liberadas neste arquivo. A justificativa
-  // dessa escolha está no cabeçalho da PaywallScreen.
-  const { loading: accessLoading, locked } = useTenantAccess();
+  // Paywall, manutenção, sessão e cadastro pendente são decididos antes, na
+  // PortaDeEntrada (App.tsx), com um esqueleto só (lote 6f, B14). Quem chega
+  // aqui já pode usar o painel.
+  const { tenantId, trocandoLoja } = useTenant();
 
   // Navegou? O drawer do mobile fecha sozinho.
   useEffect(() => {
@@ -64,19 +56,7 @@ export const DashboardLayout = () => {
       ro?.disconnect();
       raiz.style.removeProperty('--altura-topo');
     };
-  }, [accessLoading, locked]);
-
-  if (accessLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
-  }
-
-  if (locked) {
-    return <PaywallScreen />;
-  }
+  }, []);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -102,15 +82,22 @@ export const DashboardLayout = () => {
 
         <Navbar onMenuClick={() => setMobileNavOpen(true)} />
 
+        {/* Troca de Loja no ar: a tela atual fica até a nova chegar. */}
+        {trocandoLoja ? (
+          <div className="h-0.5 w-full animate-pulse bg-primary" role="status" aria-label="Abrindo a Loja" />
+        ) : null}
+
         <main ref={mainRef} className="flex-1 min-w-0 p-6">
-          <PageErrorBoundary key={location.pathname} pageName={pageName}>
+          {/* A chave leva a Loja: trocar de Loja monta de novo só a tela do
+              meio (com os dados e a seleção da Loja nova); menu e topo ficam. */}
+          <PageErrorBoundary key={`${location.pathname}|${tenantId ?? ''}`} pageName={pageName}>
             {blockedForSuperadmin ? <LojaOnlyNotice /> : <Outlet />}
           </PageErrorBoundary>
         </main>
       </div>
 
       {/* Tours do onboarding. Aqui, depois do bloqueio de pagamento: com a
-          Conta bloqueada o return acima já entregou a PaywallScreen. */}
+          Conta bloqueada a PortaDeEntrada já entregou a PaywallScreen. */}
       <TourHost />
     </div>
   );

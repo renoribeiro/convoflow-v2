@@ -117,7 +117,19 @@ test.describe('Landing — navegação', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test('rodapé: "Painel" sem sessão cai no /auth (AuthGuard)', async ({ page }) => {
+  test('login: quem ainda não é cliente tem "Fale com a gente" (achado 3, decisão D12)', async ({ page }) => {
+    for (const rota of ['/auth', '/login']) {
+      await page.goto(rota);
+      const linha = page.getByTestId('login-nao-cliente');
+      await expect(linha).toContainText('Ainda não é cliente?');
+      await expect(linha.getByRole('link', { name: 'Fale com a gente' })).toHaveAttribute(
+        'href',
+        /^mailto:contato@convoflow\.com\.br\?subject=/,
+      );
+    }
+  });
+
+  test('rodapé: "Painel" sem sessão cai no /auth (PortaDeEntrada)', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('contentinfo').getByRole('link', { name: 'Painel' }).click();
     await expect(page).toHaveURL(/\/(auth|dashboard)/);

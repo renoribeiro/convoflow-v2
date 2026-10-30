@@ -144,8 +144,10 @@ for (const tela of TELAS) {
         await expect(balao(page)).toBeHidden();
         await semRolagemLateral(page);
 
-        // "Fazer agora" no convite: abre Equipe e destaca o botão.
+        // "Fazer agora" no convite: abre Equipe e destaca o botão. No celular
+        // ele é um dos 2 próximos passos, à vista sem "Ver todos".
         const passo = page.locator('[data-passo="equipe"]');
+        await expect(passo).toBeVisible();
         await passo.getByRole('button', { name: 'Fazer agora' }).click();
         await expect(page).toHaveURL(/\/dashboard\/team$/);
         await expect(balao(page).getByText('Clique em Convidar')).toBeVisible();
@@ -225,7 +227,17 @@ test('Ver tutorial de novo: zera e a boas-vindas volta no Dashboard', async ({ b
     estado = corpo.state as Record<string, unknown>;
     return json(route, [corpo]);
   });
+
+  await context.route(/\/rest\/v1\/rpc\/onboarding_checklist/, (route) =>
+    route.request().method() === 'OPTIONS' ? route.fulfill({ status: 204, headers: CORS }) : json(route, LISTA.gestor),
+  );
   const page = await context.newPage();
+
+  // Veterano com a lista escondida: o Dashboard não mostra nada.
+  estado = { ...estado, lista_escondida_em: '2026-10-22T12:00:00Z' };
+  await page.goto('/dashboard');
+  await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
+  await expect(page.locator('#primeiros-passos-titulo')).toHaveCount(0);
 
   await page.goto('/dashboard/help');
   await expect(page.getByRole('heading', { name: 'Ajuda' })).toBeVisible();
@@ -233,6 +245,35 @@ test('Ver tutorial de novo: zera e a boas-vindas volta no Dashboard', async ({ b
   await page.getByRole('button', { name: 'Ver tutorial de novo' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('dialog').getByText('Olá, Paulo! Que bom ter você aqui.')).toBeVisible();
+  // A lista volta de verdade (decisão D11), por baixo da boas-vindas.
+  await expect(page.locator('#primeiros-passos-titulo')).toHaveText('Primeiros passos');
   expect(gravacoes.at(-1)?.state).toEqual({});
+  await context.close();
+});
+
+test('celular: a lista mostra o progresso, os 2 próximos passos e "Ver todos"; Esconder diz como voltar', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const { page, gravacoes } = await abrirNovo(context, 'gerente');
+  await page.goto('/dashboard');
+  await page.getByRole('dialog').getByRole('button', { name: 'Agora não' }).click();
+
+  const lista = page.locator('[data-tour="primeiros-passos"]');
+  await expect(lista.getByText('3 de 9')).toBeVisible();
+  const visiveis = async () =>
+    lista.locator('[data-passo]').evaluateAll((els) =>
+      els.filter((e) => (e as HTMLElement).offsetParent !== null).map((e) => e.getAttribute('data-passo')),
+    );
+  await expect.poll(visiveis).toEqual(['whatsapp', 'equipe']);
+
+  await lista.getByRole('button', { name: 'Ver todos' }).click();
+  await expect.poll(async () => (await visiveis()).length).toBe(9);
+  await lista.getByRole('button', { name: 'Ver menos' }).click();
+  await expect.poll(visiveis).toEqual(['whatsapp', 'equipe']);
+  await semRolagemLateral(page);
+
+  await lista.getByRole('button', { name: 'Esconder' }).click();
+  await expect(page.getByText(/Para ver de novo, abra a Ajuda e clique em Ver tutorial de novo/)).toBeVisible();
+  await expect(page.locator('#primeiros-passos-titulo')).toHaveCount(0);
+  expect(typeof (gravacoes.at(-1)?.state as Record<string, unknown>)?.lista_escondida_em).toBe('string');
   await context.close();
 });

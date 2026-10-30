@@ -4,6 +4,7 @@ import { CalendarClock, Wrench } from 'lucide-react';
 import { useRole } from '@/contexts/TenantContext';
 import { useMaintenanceMode } from '@/hooks/useMaintenanceMode';
 import { formatarFaltando, formatarMomento } from '@/lib/maintenance/maintenanceState';
+import { CAMINHO_DA_MANUTENCAO } from '@/lib/admin/painel';
 
 /**
  * O aviso que o superadmin não consegue não ver.
@@ -24,8 +25,11 @@ import { formatarFaltando, formatarMomento } from '@/lib/maintenance/maintenance
  * clientes trancados agora), azul quando está apenas agendada (ninguém foi
  * trancado ainda). Usar o mesmo tom para as duas ensinaria a ignorar as duas.
  *
+ * Os dois links levam à aba Configurações do painel, onde a manutenção mora
+ * (achado 134: abriam na Visão Geral).
+ *
  * Sem cargo nenhum além do superadmin chega a ver isto: quem não é superadmin
- * ou está bloqueado pelo MaintenanceGuard, ou a manutenção não está ligada.
+ * ou está bloqueado pela PortaDeEntrada, ou a manutenção não está ligada.
  */
 export const MaintenanceBanner = () => {
   const role = useRole();
@@ -57,7 +61,7 @@ export const MaintenanceBanner = () => {
           {retorno ? ` e termina ${retorno}` : ''}. Ninguém está bloqueado ainda.
         </span>
         <Link
-          to="/dashboard/admin"
+          to={CAMINHO_DA_MANUTENCAO}
           className="ml-auto whitespace-nowrap font-medium underline underline-offset-2"
         >
           Ver ou cancelar
@@ -84,7 +88,7 @@ export const MaintenanceBanner = () => {
         {reason ? ` Motivo: ${reason}` : ''}
       </span>
       <Link
-        to="/dashboard/admin"
+        to={CAMINHO_DA_MANUTENCAO}
         className="ml-auto whitespace-nowrap font-semibold underline underline-offset-2"
       >
         Desligar

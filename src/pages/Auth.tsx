@@ -9,6 +9,7 @@ import { Mail, Lock, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { MaintenanceLoginNotice } from '@/components/maintenance/MaintenanceLoginNotice';
+import { SUPORTE_EMAIL } from '@/lib/billing/checkout';
 import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 
@@ -128,6 +129,20 @@ export const Auth = () => {
                     {entrando ? "Entrando..." : "Entrar"}
                   </Button>
             </form>
+
+            {/* Caminho para quem ainda não é cliente (achado 3, decisão D12):
+                com o cadastro pelo site desligado, todo "Começar Agora" da
+                página de vendas cai aqui, e a tela não tinha saída. O email
+                é o único canal público de contato. */}
+            <p className="mt-6 text-center text-sm text-muted-foreground" data-testid="login-nao-cliente">
+              Ainda não é cliente?{' '}
+              <a
+                href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent('Quero conhecer o ConvoFlow')}`}
+                className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+              >
+                Fale com a gente
+              </a>
+            </p>
           </CardContent>
         </Card>
 

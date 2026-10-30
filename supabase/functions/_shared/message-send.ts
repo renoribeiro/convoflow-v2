@@ -171,7 +171,7 @@ export const SEND_MESSAGES = {
   /** A mesma frase que a tela mostra antes de subir (src/lib/whatsapp/limiteDocumento.ts). */
   documentTooLarge:
     'Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.',
-  invalidLocation: 'Localização inválida. Escolha o ponto no mapa de novo.',
+  invalidLocation: 'Localização inválida. Escolha o lugar de novo em Localização, no clipe.',
   invalidReaction: 'Não foi possível achar a mensagem para reagir.',
 } as const;
 

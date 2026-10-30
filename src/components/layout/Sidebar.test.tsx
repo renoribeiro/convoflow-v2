@@ -1,7 +1,8 @@
 /**
  * Menu lateral: "Comparar Lojas" é só do Gerente (a rota é RoleGuard
  * role="gerente"); até 2026-10-21 o Gestor via o item e voltava ao Dashboard
- * ao clicar. E o item Ajuda carrega a marca do tour da boas-vindas.
+ * ao clicar. E o item Ajuda carrega a marca do tour da boas-vindas. E o
+ * grupo Admin do superadmin leva às três telas dele (lote 6f, achado 133).
  */
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
@@ -23,9 +24,9 @@ vi.mock('@/hooks/useModules', () => ({
 
 import { Sidebar } from './Sidebar';
 
-function montar() {
+function montar(onde = '/dashboard') {
   return render(
-    <MemoryRouter initialEntries={['/dashboard']}>
+    <MemoryRouter initialEntries={[onde]}>
       <TooltipProvider>
         <Sidebar isOpen onToggle={() => {}} mobileOpen={false} onMobileClose={() => {}} />
       </TooltipProvider>
@@ -53,6 +54,29 @@ describe('menu lateral', () => {
     montar();
     expect(screen.queryByRole('link', { name: 'Equipe' })).toBeNull();
     expect(screen.queryByRole('link', { name: 'Comparar Lojas' })).toBeNull();
+  });
+
+  // Achado 133: Gestão de Usuários e Limites de uso só abriam pela busca.
+  it('Superadmin vê Administração, Gestão de Usuários e Limites de uso no grupo Admin', () => {
+    papel = 'superadmin';
+    montar();
+    expect(screen.getByRole('link', { name: 'Administração' })).toHaveAttribute('href', '/dashboard/admin');
+    expect(screen.getByRole('link', { name: 'Gestão de Usuários' })).toHaveAttribute('href', '/dashboard/admin/users');
+    expect(screen.getByRole('link', { name: 'Limites de uso' })).toHaveAttribute('href', '/dashboard/admin/usage-limits');
+  });
+
+  it('em Gestão de Usuários, só ela fica acesa (Administração não)', () => {
+    papel = 'superadmin';
+    montar('/dashboard/admin/users');
+    expect(screen.getByRole('link', { name: 'Gestão de Usuários' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Administração' })).not.toHaveAttribute('aria-current');
+  });
+
+  it('Gerente não vê o grupo Admin', () => {
+    papel = 'gerente';
+    montar();
+    expect(screen.queryByRole('link', { name: 'Gestão de Usuários' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Limites de uso' })).toBeNull();
   });
 
   it('o item Ajuda tem a marca do tour', () => {

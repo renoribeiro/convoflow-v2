@@ -51,12 +51,13 @@ export interface ContextoDoReenvio {
 export const REENVIO_TEXTOS = {
   template: 'Para reenviar um template, use "Enviar template" no menu ⋮.',
   arquivo: 'Para reenviar um arquivo, anexe de novo e envie.',
+  localizacao: 'Para reenviar a localização, clique no clipe e escolha Localização de novo.',
 } as const;
 
 /**
  * Reenviar cria uma mensagem NOVA com o mesmo texto; a que falhou fica no
- * histórico como estava. Só texto: arquivo se anexa de novo e template sai
- * por "Enviar template". Na API Oficial fora da janela de 24 horas, quem barra
+ * histórico como estava. Só texto: arquivo se anexa de novo, localização sai
+ * de novo pelo clipe e template sai por "Enviar template". Na API Oficial fora da janela de 24 horas, quem barra
  * é o `bloqueio` (a mesma regra do campo de mensagem).
  * null = a mensagem não falhou, ou não é nossa: a bolha não mostra nada.
  */
@@ -65,6 +66,7 @@ export function reenvioDaMensagem(m: MensagemParaReenvio, ctx: ContextoDoReenvio
   const tipo = (m.message_type || 'text').toLowerCase();
   if (tipo === 'reaction') return null;
   if (tipo === 'template') return { pode: false, motivo: REENVIO_TEXTOS.template };
+  if (tipo === 'location') return { pode: false, motivo: REENVIO_TEXTOS.localizacao };
   if (tipo !== 'text') return { pode: false, motivo: REENVIO_TEXTOS.arquivo };
   if (!m.content?.trim()) return null;
   if (ctx.bloqueio) return { pode: false, motivo: ctx.bloqueio };

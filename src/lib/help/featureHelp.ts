@@ -465,7 +465,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a primeira parada do dia: mostra se o atendimento está saudável e o que precisa de ação agora. Os cartões, o gráfico e a seção "Atendimento" obedecem ao período escolhido no topo; "Precisa de Atenção", "Por atendente", o funil e a situação dos números mostram o momento atual, e a atividade recente, os últimos 7 dias.',
     howToConfigure: [
-      'Chegou agora? No primeiro acesso aparece uma janela de boas vindas e, no topo do Dashboard, a lista "Primeiros passos" com o que falta configurar. Nos passos que têm tela, "Fazer agora" abre a tela certa e destaca onde clicar; "Ver passo a passo" abre o tutorial completo na Ajuda. Cada passo é marcado sozinho quando você o conclui, e "Esconder" tira a lista da tela.',
+      'Chegou agora? No primeiro acesso aparece uma janela de boas vindas e, no topo do Dashboard, a lista "Primeiros passos" com o que falta configurar. Nos passos que têm tela, "Fazer agora" abre a tela certa e destaca onde clicar; "Ver passo a passo" abre o tutorial completo na Ajuda. Cada passo é marcado sozinho quando você o conclui, e "Esconder" tira a lista da tela. No celular a lista vem curta: o progresso e os 2 próximos passos; toque em "Ver todos" para abrir a lista inteira.',
       'Escolha o período no topo (Hoje, 7 dias, 30 dias ou uma faixa personalizada). Os cartões, o gráfico e a seção "Atendimento" seguem essa escolha.',
       'Comece pelo painel "Precisa de Atenção": é onde estão as conversas e os contatos parados e os follow ups atrasados.',
       'Clique em um cartão de métrica para ir direto à tela correspondente (Conversas, Contatos, Funil).',
@@ -481,12 +481,13 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Quando os obrigatórios e os recomendados ficam prontos, a lista dá lugar a "Tudo pronto por aqui", com o botão "Fechar". O passo opcional não segura a lista.',
       'Quem já usava o ConvoFlow antes de 21/10/2026 não vê a boas vindas, e a lista só aparece para essa pessoa enquanto houver passo OBRIGATÓRIO pendente na Conta ou na Loja dela. Por isso o Atendente antigo, que não tem passo obrigatório, não vê a lista.',
       'Gerente: WhatsApp, funil, respostas rápidas, horário e chatbot são configurados dentro de uma Loja. Com a Conta em foco, "Fazer agora" abre a Loja sozinho se ela for a única (aparece "Abrimos a Loja ... para este passo."); com várias, destaca "Escolher Loja", no topo, para você escolher; sem nenhuma Loja, avisa "Crie a primeira Loja antes deste passo." e abre a Equipe.',
-      'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página.',
+      'Fechou a boas vindas ou escondeu a lista e quer ver de novo? Abra a Ajuda e clique em "Ver tutorial de novo", no topo da página. Você volta ao Dashboard com a boas vindas e a lista "Primeiros passos" de novo, com o que já está feito marcado.',
       'Em imobiliária, a 1ª resposta de uma pessoa é a métrica que mais move venda: o contato de portal fala com três corretores e fecha com quem responde primeiro. O bot responder rápido não substitui isso.',
       'Os números de atendimento olham conversas iniciadas no período escolhido; só "Esperando uma pessoa agora" é retrato de hoje, seja qual for o período.',
       'A tela se atualiza sozinha a cada 30 segundos. Não precisa recarregar.',
       'Como Gerente ou Superadmin você troca a Conta em foco pelo seletor do topo. Como Gestor ou Atendente, você vê sempre a sua Loja.',
       'Gerente: ao escolher uma Loja em "Escolher Loja", os dados dela aparecem: conversas, contatos, funil, campanhas. Você trabalha dentro dela como o Gestor: atende na caixa de entrada, configura as etapas do funil, os números, as respostas rápidas, a distribuição e o chatbot da Loja.',
+      'Gerente: trocar de Loja não recarrega o sistema. O menu e o topo ficam onde estão, uma linha fina aparece embaixo do topo enquanto a Loja nova abre, e só a tela do meio volta com os dados dela.',
       'Gerente: para sair da Loja e voltar à sua Conta, abra o seletor e clique em "Voltar para a Conta", o primeiro item da lista. Ele só aparece enquanto uma Loja está aberta; com a Conta em foco, o seletor mostra "Escolher Loja". A Conta tem dados próprios, como as conversas dela. O Instagram não é um deles: a conta do Instagram fica sempre numa Loja, como o WhatsApp de cada Loja.',
     ],
     category: 'tela',
@@ -508,11 +509,12 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Para guardar um trecho que você acabou de escrever, passe o mouse sobre a mensagem enviada e clique no raio que aparece nela.',
       'Para pôr um emoji, clique na carinha ao lado do campo de mensagem e procure pelo nome em português ("sorriso", "aperto"...) ou pelas categorias. O emoji entra onde está o cursor e a caixa continua aberta para você escolher vários; feche no mesmo botão ou com Esc. Os que você mais usa aparecem em "Favoritos" e o tom de pele escolhido fica valendo, guardados neste navegador. No celular a carinha não aparece: use os emojis do próprio teclado.',
       'Para mandar mensagem de voz, deixe o campo vazio e clique no microfone ao lado dele. Na primeira vez o navegador pede para usar o microfone: permita. Fale, clique no quadrado para parar, ouça o áudio e clique em enviar, ou na lixeira para descartar e gravar de novo. A gravação para sozinha em 5 minutos e espera você ouvir.',
-      'Para mandar um áudio que já está no computador ou no celular, clique no clipe e escolha um arquivo MP3, M4A, AAC ou OGG de até 16 MB. Ele chega para o cliente como arquivo de áudio, não como mensagem de voz. Áudio não leva legenda: se você escreveu algo no campo, o áudio vai sozinho e o texto fica no campo para você enviar em seguida.',
-      'Para mandar um documento (PDF, Word, Excel ou texto), clique no clipe e escolha o arquivo. Num número Evolution ou WAHA o documento vai até 30 MB: maior que isso, a tela avisa na hora, antes de subir, "Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.", e nada é enviado. No número da API Oficial vale o limite da Meta.',
+      'Para mandar um áudio que já está no computador ou no celular, clique no clipe, escolha "Arquivo" e depois um arquivo MP3, M4A, AAC ou OGG de até 16 MB. Ele chega para o cliente como arquivo de áudio, não como mensagem de voz. Áudio não leva legenda: se você escreveu algo no campo, o áudio vai sozinho e o texto fica no campo para você enviar em seguida.',
+      'Para mandar um documento (PDF, Word, Excel ou texto), clique no clipe, escolha "Arquivo" e depois o arquivo. Num número Evolution ou WAHA o documento vai até 30 MB: maior que isso, a tela avisa na hora, antes de subir, "Este arquivo passa de 30 MB e não pode ser enviado por este número. Envie um link para o arquivo.", e nada é enviado. No número da API Oficial vale o limite da Meta.',
+      'Para mandar uma localização, clique no clipe e escolha "Localização". Em "Minha localização", clique em "Usar minha localização atual": o navegador pede a sua permissão na primeira vez. Em "Digitar endereço", escreva rua, número e cidade e clique em "Buscar"; se aparecer mais de um lugar, escolha o certo. Se quiser, dê um nome ao lugar (por exemplo "Loja Centro"), confira em "Ver no mapa" e clique em "Continuar". A confirmação mostra para quem vai e o que vai sair; só "Enviar localização" envia. O cliente recebe no WhatsApp um cartão com o ponto no mapa. Vale em número Evolution, WAHA e da API Oficial; na API Oficial, só dentro da janela de 24 horas.',
       'Para responder citando uma mensagem, clique na seta de responder no canto de baixo dela (no computador ela aparece quando você passa o mouse) ou dê dois cliques na mensagem. Aparece "Respondendo:" acima do campo; o que você mandar a seguir (texto ou áudio) chega para o cliente com a citação.',
       'Para reagir a uma mensagem, clique na carinha com + no canto de baixo dela (no computador ela aparece quando você passa o mouse) e escolha o emoji. A reação chega no WhatsApp do cliente, presa à mensagem, e fica no histórico como "Você reagiu com". Vale em número Evolution, WAHA e da API Oficial; na API Oficial, só dentro da janela de 24 horas. Conversa do Instagram não tem reação.',
-      'Se uma mensagem sua não saiu, a bolha ganha o sinal vermelho e, embaixo dela, o motivo em português e o botão "Reenviar". "Reenviar" manda uma mensagem nova com o mesmo texto, pelo mesmo número; a que falhou continua no histórico, para você saber o que aconteceu. Na API Oficial, passadas 24 horas sem mensagem do cliente, o botão dá lugar ao aviso da janela: só um template reabre a conversa. Arquivo que falhou se anexa de novo; template que falhou sai de novo por "Enviar template".',
+      'Se uma mensagem sua não saiu, a bolha ganha o sinal vermelho e, embaixo dela, o motivo em português e o botão "Reenviar". "Reenviar" manda uma mensagem nova com o mesmo texto, pelo mesmo número; a que falhou continua no histórico, para você saber o que aconteceu. Na API Oficial, passadas 24 horas sem mensagem do cliente, o botão dá lugar ao aviso da janela: só um template reabre a conversa. Arquivo que falhou se anexa de novo; localização que falhou sai de novo pelo clipe, em "Localização"; template que falhou sai de novo por "Enviar template".',
       'Use as pílulas acima da lista ("Não lidas", "Aguardando"...) para trabalhar uma fila de cada vez; o número em cada uma diz o tamanho dela. Não cabem todas na coluna: a seta na ponta (ou arrastar de lado) mostra as demais.',
       'O botão "Filtros" abre os recortes que se somam às pílulas: só não lidas, só arquivadas (as ativas somem da lista), um período pela data da última mensagem (o dia "Até" entra inteiro) e as etiquetas do contato. Gestor e Gerente veem um recorte a mais, "Responsável pela conversa". Cada um vale na hora, assim que você marca; "Fechar" só fecha a janela e "Limpar" desliga todos.',
       'Para ver só as conversas de quem tem uma etiqueta, abra "Filtros" e marque a etiqueta em "Etiquetas do contato". Marque várias para ver quem tem qualquer uma delas. As marcadas aparecem acima das pílulas, cada uma com um "x" para tirar; a lista e o número da pílula passam a contar só essas conversas.',
@@ -559,7 +561,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'A resposta rápida entra no campo com as variáveis já trocadas pelos dados de quem está na conversa, e só sai quando você clica em enviar. Dá para ajustar antes.',
       'No campo de mensagem, Enter envia e Shift+Enter quebra a linha. Depois de enviar o cursor continua no campo, então dá para emendar a próxima mensagem sem clicar na caixa de novo.',
       'Microfone apagado não grava: passe o mouse ou toque nele para ver o motivo. São três: a conversa não tem número de WhatsApp para enviar (peça ao Gestor da Loja para conectar um); o número da conversa está desconectado (peça ao Gestor para reconectar em Números de WhatsApp); ou o contato não tem número de WhatsApp para receber. Em número da API Oficial com o cliente sem escrever há mais de 24 horas, nem o microfone aparece: o campo de mensagem, o clipe e o microfone dão lugar a uma linha que explica a regra e ao botão "Enviar template", porque só um template aprovado (mensagem pronta que a Meta aprovou) reabre a conversa.',
-      'Se ao clicar no microfone aparecer "Este navegador não grava áudio", grave pelo celular ou anexe um arquivo de áudio pelo clipe.',
+      'Se ao clicar no microfone aparecer "Este navegador não grava áudio", grave pelo celular ou anexe um arquivo de áudio pelo clipe, em "Arquivo".',
+      'Se "Usar minha localização atual" disser que o navegador não deixou, libere a localização para o site nas configurações do navegador (no cadeado ao lado do endereço) ou use "Digitar endereço". A busca do endereço usa o mapa do OpenStreetMap, só no Brasil: só o texto que você digitou sai do navegador.',
       'Se aparecer "O microfone está bloqueado", clique no cadeado ao lado do endereço do site, permita o microfone e tente de novo. No celular a permissão fica nos ajustes do navegador. "Nenhum microfone encontrado" quer dizer que o aparelho não tem microfone ligado; "está sendo usado por outro programa", que uma chamada ou outro app está com ele.',
       'A mensagem de voz chega para o cliente com o microfone, igual às gravadas no próprio WhatsApp, e no número da API Oficial ele pode ver a transcrição. Até cerca de 2 minutos e meio ela toca na hora; mais longa, o cliente toca depois de baixar. Em iPhone com sistema anterior ao iOS 18.4 a gravação chega como arquivo de áudio, não como mensagem de voz.',
       'No histórico, áudio com o desenho do microfone é mensagem de voz, sua ou do cliente; sem o microfone é arquivo de áudio.',
@@ -1494,6 +1497,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a visão global do ConvoFlow: todas as Contas, quem está pagando e quem está liberado na mão. É o único lugar onde se abre acesso sem passar pelo pagamento.',
     howToConfigure: [
+      'No menu, o grupo Admin tem três telas: Administração (este painel), Gestão de Usuários e Limites de uso.',
       'Ache a Conta pela busca.',
       'Confira a situação de acesso antes de mexer: assinatura paga e liberação manual são coisas diferentes.',
       'Para liberar sem pagamento, use a liberação manual. Ela fica registrada com data e autor.',
@@ -1518,6 +1522,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'É a lista de todo mundo no sistema, de todas as Contas, não só do seu time, com o rastro de uso de cada pessoa: quando entrou, quando esteve com o ConvoFlow aberto pela última vez e quanto atendeu. Serve para achar alguém e para ver se a pessoa está usando o sistema de verdade.',
     howToConfigure: [
+      'Abra pelo menu, no grupo Admin, em "Gestão de Usuários" (ou pela busca rápida).',
       'Busque pelo nome ou pelo telefone. A busca daqui não procura email: se você só tem o email, use a busca da tela Administração, que procura por nome e por email.',
       'Use os filtros de função e de status para estreitar a lista, por exemplo só os Atendentes suspensos.',
       'Leia "Visto por último" para saber se a pessoa está usando o sistema. Ele é mais fiel que "Último acesso".',
@@ -1554,7 +1559,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Preencha a "Previsão de retorno". Esse horário não é enfeite: é a hora em que o sistema abre sozinho.',
       'Para parar tudo agora, deixe o "Início" vazio e clique em "Ligar agora". Para marcar de madrugada, preencha o "Início" e clique em "Agendar".',
       'Confirme lendo o aviso até o fim: ao ligar agora, todo mundo cai na tela de manutenção em até um minuto.',
-      'Enquanto estiver ligada, uma faixa âmbar fica no topo de todas as suas telas. É por ela que você desliga, com um clique em "Desligar".',
+      'Enquanto estiver ligada, uma faixa âmbar fica no topo de todas as suas telas. "Desligar", na faixa, abre Administração direto na aba Configurações, onde fica este cartão. Agendada, a faixa é azul e o link "Ver ou cancelar" leva ao mesmo lugar.',
     ],
     example:
       'Você vai trocar uma tabela grande às 3h. Marca início 03:00 e previsão de retorno 04:00. Ninguém é bloqueado até as 3h; às 4h o sistema abre sozinho, mesmo que você tenha dormido.',
@@ -1564,6 +1569,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Agendar não bloqueia ninguém na hora. Até a janela abrir, todo mundo trabalha normalmente.',
       'O bloqueio é do sistema inteiro. Não existe manutenção de uma Conta só; para isso, use a revogação de acesso em Administração.',
       'O motivo aparece para quem ainda nem entrou, na tela de login. Não escreva nada ali que você não publicaria.',
+      'A tela que o cliente vê diz "Manutenção ligada agora" quando você liga sem "Início", e "Manutenção programada, em andamento" quando ela veio de um agendamento.',
       'A trava falha ABERTA de propósito: se o banco não responder, o sistema abre em vez de trancar. Uma soluçada nunca deixa a base de clientes do lado de fora.',
       'Se a tela quebrar com a manutenção ligada, dá para desligar por SQL. O comando está em docs/RUNBOOK_modo_manutencao.md.',
     ],
@@ -1576,6 +1582,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     whatItDoes:
       'Registra o teto de uso planejado para cada nível da hierarquia: números de WhatsApp, mensagens por mês, chatbots e pessoas da equipe. Hoje é só registro: nenhuma parte do sistema confere esses valores, e ninguém é impedido de criar nada por causa deles. A aplicação de verdade vem com o novo desenho dos níveis e acessos.',
     howToConfigure: [
+      'Abra pelo menu, no grupo Admin, em "Limites de uso" (ou pela busca rápida).',
       'Ache a linha do nível e do limite na tabela: ela já traz todos os níveis.',
       'Preencha o limite. Campo vazio significa sem limite, não zero.',
       'Clique em Salvar na linha. O valor fica gravado para quando os limites passarem a valer.',
@@ -1666,14 +1673,14 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     minRole: 'superadmin',
     title: 'Administração › Relatórios',
     whatItDoes:
-      'É o tamanho da plataforma em números: quantas pessoas têm login, quantas estão ativas e quantas há de cada cargo. Serve para saber quanto o ConvoFlow cresceu, não para acompanhar um cliente.',
+      'É o tamanho da plataforma em números: quantas pessoas têm login, quantas estão ativas, quantos superadmins existem e quantas Contas e Lojas estão cadastradas. Serve para saber quanto o ConvoFlow cresceu, não para acompanhar um cliente.',
     howToConfigure: [
       'Leia os dois cartões do topo: Total de Usuários (todo mundo cadastrado) e Usuários Ativos (quem pode entrar hoje).',
-      'Na tabela "Resumo do Sistema", cada linha é uma contagem com a explicação ao lado: Usuários Cadastrados, Superadmins, Contas (Gerentes) e Lojas (Gestores). "Contas" e "Lojas" contam PESSOAS com esses cargos, inclusive excluídas: uma Loja sem Gestor não entra, e um Gestor excluído entra.',
+      'Na tabela "Resumo do Sistema", cada linha é uma contagem com a explicação ao lado: Usuários Cadastrados, Superadmins, Contas e Lojas. "Contas" e "Lojas" contam as Contas e as Lojas cadastradas, não as pessoas: uma Loja ainda sem Gestor entra, e uma Loja com dois Gestores conta uma vez só.',
       'Para investigar uma Conta específica, saia daqui: a aba Usuários mostra a pessoa e o acesso; o seletor de Conta no topo mostra o Dashboard dela.',
     ],
     example:
-      'Fim do mês: 14 Contas, 31 Lojas, 118 usuários, 97 ativos. A diferença entre cadastrados e ativos é o que ainda não aceitou convite ou foi suspenso. Vale uma olhada na aba Usuários.',
+      'Fim do mês: 14 Contas, 31 Lojas, 118 usuários, 97 ativos. A diferença entre cadastrados e ativos é quem ainda não aceitou convite ou foi suspenso. Vale uma olhada na aba Usuários.',
     tips: [
       'Não há exportação nem período: são contagens do momento. Para série histórica, anote mês a mês.',
       'Usuários Ativos conta quem está com a caixa "Usuário ativo" ligada; convite ainda não aceito e pessoa suspensa ficam fora. A diferença para o total é onde procurar quem travou no caminho.',

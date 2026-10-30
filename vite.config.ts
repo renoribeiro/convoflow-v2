@@ -147,6 +147,12 @@ export default defineConfig(({ mode }) => {
               handler: 'NetworkOnly',
             },
             {
+              // Busca de endereço da "Localização" das Conversas (OpenStreetMap):
+              // sempre da rede, sem cache. Ver src/lib/conversations/localizacao.ts.
+              urlPattern: /^https:\/\/nominatim\.openstreetmap\.org\/.*/i,
+              handler: 'NetworkOnly',
+            },
+            {
               // Link assinado da mídia das Conversas (bucket privado, vale 1 h):
               // foto, áudio e documento do cliente NUNCA ficam no cache do
               // navegador, e cada link novo seria uma entrada a mais. Vem ANTES

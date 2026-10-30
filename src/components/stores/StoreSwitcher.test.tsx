@@ -53,6 +53,15 @@ vi.mock('@/integrations/supabase/client', () => {
         filters[col] = val;
         return chain;
       },
+      // "id.eq.X,parent_tenant_id.eq.Y": a Loja ativa do Gerente é conferida
+      // e lida numa ida só (lote 6f, B14). Vale se casar com qualquer um.
+      or: (expr: string) => {
+        filters.__or = expr.split(',').map((c) => {
+          const [col, , val] = c.split('.');
+          return [col, val] as const;
+        });
+        return chain;
+      },
       maybeSingle: async () => {
         if (table === 'profiles') {
           return {
@@ -64,6 +73,10 @@ vi.mock('@/integrations/supabase/client', () => {
           const row = TENANTS[filters.id as string];
           if (!row) return { data: null, error: null };
           if ('parent_tenant_id' in filters && row.parent_tenant_id !== filters.parent_tenant_id) {
+            return { data: null, error: null };
+          }
+          const ou = filters.__or as ReadonlyArray<readonly [string, string]> | undefined;
+          if (ou && !ou.some(([col, val]) => (row as Record<string, unknown>)[col] === val)) {
             return { data: null, error: null };
           }
           return { data: row, error: null };

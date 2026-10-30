@@ -6,9 +6,8 @@ import { render, screen, cleanup, waitFor } from '@testing-library/react';
  * A árvore de rotas DE VERDADE do src/App.tsx, com os guardas de verdade.
  *
  * POR QUE EXISTE. Os outros testes montam cada tela dentro de um MemoryRouter
- * próprio. Nenhum deles passa pelo <BrowserRouter> do App.tsx, pelo AuthGuard,
- * pelo RoleGuard, pelo ModuleGuard nem pela troca para o paywall do
- * DashboardLayout. Uma atualização do React Router (ou do Vite) que mudasse o
+ * próprio. Nenhum deles passa pelo <BrowserRouter> do App.tsx, pela
+ * PortaDeEntrada (sessão, manutenção e paywall) nem pela TelaGuard. Uma atualização do React Router (ou do Vite) que mudasse o
  * casamento de rotas ou o redirecionamento passaria em todos eles.
  *
  * O QUE É DE MENTIRA. As telas viram uma "tela falsa" (src/test/telaFalsa.tsx)
@@ -17,7 +16,7 @@ import { render, screen, cleanup, waitFor } from '@testing-library/react';
  * `estado`, abaixo. A Sidebar e o Navbar saem: não decidem rota.
  *
  * O QUE É DE VERDADE. App.tsx inteiro (rotas, Navigate, Suspense, lazy),
- * AuthGuard, RoleGuard, ModuleGuard, DashboardLayout, LojaOnlyNotice e NotFound.
+ * PortaDeEntrada, TelaGuard, DashboardLayout, LojaOnlyNotice e NotFound.
  *
  * O comportamento real das telas que recebem link de fora (DefinirSenha lendo o
  * token, Ajuda rolando até o tópico, volta do Stripe e do Instagram) é coberto
@@ -95,8 +94,12 @@ vi.mock('@/components/auth/PaywallScreen', () => ({
 vi.mock('@/components/layout/Sidebar', () => ({ Sidebar: () => null }));
 vi.mock('@/components/layout/Navbar', () => ({ Navbar: () => null }));
 vi.mock('@/components/maintenance/MaintenanceBanner', () => ({ MaintenanceBanner: () => null }));
-vi.mock('@/components/maintenance/MaintenanceGuard', () => ({
-  MaintenanceGuard: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+// Manutenção desligada: a porta de entrada (PortaDeEntrada) passa direto por ela.
+vi.mock('@/hooks/useMaintenanceMode', () => ({
+  useMaintenanceMode: () => ({
+    loading: false, active: false, scheduled: false, reason: null, startsAt: null, endsAt: null,
+    unreadable: false, refetch: () => {},
+  }),
 }));
 vi.mock('@/contexts/ChatbotContext', () => ({
   ChatbotProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,

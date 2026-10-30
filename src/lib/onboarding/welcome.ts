@@ -51,3 +51,7 @@ export const CHECKLIST_SUBTITLE: Record<OnboardingRole, string> = {
 
 export const CHECKLIST_DONE_TITLE = 'Tudo pronto por aqui';
 export const CHECKLIST_DONE_BODY = 'O básico está configurado. Se quiser rever algo, a Ajuda tem todos os tutoriais.';
+
+/** Aviso ao esconder a lista: o caminho de volta (lote 6f, decisão D11). */
+export const CHECKLIST_COMO_VOLTAR =
+  'Lista escondida. Para ver de novo, abra a Ajuda e clique em Ver tutorial de novo, no topo.';

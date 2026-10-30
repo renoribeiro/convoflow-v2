@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -26,7 +26,7 @@ interface TenantContextType {
   error: string | null;
   /**
    * Recarrega perfil e Conta. Com `{ silent: true }` relê só a linha da
-   * Conta/Loja aberta, sem passar por `loading` — o AuthGuard troca o painel
+   * Conta/Loja aberta, sem passar por `loading` — a PortaDeEntrada troca o painel
    * inteiro por um carregando enquanto `loading` é true, e um rename não
    * justifica desmontar a tela em que a pessoa está. Com `perfil: true` (só
    * no silencioso) relê também o perfil de quem está logado: o nome e a foto
@@ -52,9 +52,25 @@ interface TenantContextType {
   setActiveTenant: (tenantId: string | null) => void;
   /** True para superadmin (qualquer Conta) e gerente (suas Lojas): pode trocar a Conta/Loja ativa. */
   canSwitchTenant: boolean;
+  /**
+   * Troca de Loja/Conta no ar. A Loja anterior continua na tela até a nova
+   * chegar; o painel não volta ao carregando (lote 6f, B14).
+   */
+  trocandoLoja: boolean;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
+
+// A id guardada no navegador entra num filtro `or` do PostgREST: só letras,
+// algarismos e hífen (uuid), para vírgula, ponto ou parêntese não mudarem o filtro.
+const ID_SEGURO = /^[0-9a-z-]+$/i;
+
+interface LojaResolvida {
+  tenant: Tenant | null;
+  /** A Conta/Loja guardada no navegador não vale para quem está logado. */
+  descartarAtiva: boolean;
+  erro: string | null;
+}
 
 /**
  * A Conta ativa fica no localStorage e sobrevive à troca de usuário, então
@@ -65,28 +81,46 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
  *   - superadmin: pode entrar em qualquer Conta.
  *   - gerente: só a própria Conta ou uma Loja filha dela.
  *   - demais roles: nunca — o tenant vem sempre do próprio perfil.
+ *
+ * Para o gerente, conferir e ler são UMA ida ao banco (lote 6f, B14): a linha
+ * só volta se for a Conta dele ou uma Loja filha. Antes eram duas em fila.
  */
-const canUseActiveTenant = async (
-  role: UserRole | null,
-  ownTenantId: string | null,
-  activeTenantId: string,
-): Promise<boolean> => {
-  if (role === 'superadmin') return true;
-  if (role !== 'gerente' || !ownTenantId) return false;
-  if (activeTenantId === ownTenantId) return true;
+const resolverLoja = async (perfil: Profile, ativa: string | null): Promise<LojaResolvida> => {
+  const papel = normalizeRole(perfil.role as AnyUserRole | undefined);
+  const propria = perfil.tenant_id;
+  const ler = async (id: string): Promise<LojaResolvida> => {
+    const { data, error } = await supabase.from('tenants').select('*').eq('id', id).maybeSingle();
+    if (error) {
+      console.error('[TenantContext] Erro ao buscar tenant (profile preservado):', error);
+      return { tenant: null, descartarAtiva: false, erro: `Erro ao buscar Conta: ${error.message}` };
+    }
+    return { tenant: data, descartarAtiva: false, erro: null };
+  };
 
-  const { data, error } = await supabase
-    .from('tenants')
-    .select('id')
-    .eq('id', activeTenantId)
-    .eq('parent_tenant_id', ownTenantId)
-    .maybeSingle();
+  if (ativa && papel === 'superadmin') return ler(ativa);
 
-  if (error) {
-    console.error('[TenantContext] Erro ao validar Conta ativa:', error);
-    return false;
+  if (ativa && papel === 'gerente' && propria && ID_SEGURO.test(ativa)) {
+    const { data, error } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', ativa)
+      .or(`id.eq.${propria},parent_tenant_id.eq.${propria}`)
+      .maybeSingle();
+    if (error) console.error('[TenantContext] Erro ao validar Conta ativa:', error);
+    if (!error && data) return { tenant: data, descartarAtiva: false, erro: null };
   }
-  return !!data;
+
+  // Chave órfã (tipicamente sobrou de outro usuário no mesmo navegador) ou
+  // cargo que não troca de Loja: descarta e segue com a Conta do próprio perfil.
+  const descartarAtiva = !!ativa;
+  if (descartarAtiva) {
+    console.warn(
+      '[TenantContext] Conta ativa persistida não pertence a este usuário; descartando.',
+      ativa,
+    );
+  }
+  if (!propria) return { tenant: null, descartarAtiva, erro: null };
+  return { ...(await ler(propria)), descartarAtiva };
 };
 
 export const useTenant = () => {
@@ -108,8 +142,39 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Quem já está com o painel aberto e só trocou de Loja não volta ao
+  // carregando (lote 6f, B14): a Loja nova entra no lugar da velha quando
+  // chega, e só a tela do meio é montada de novo (ver DashboardLayout).
+  const perfilDe = useRef<{ userId: string; perfil: Profile } | null>(null);
+  const ultimaLeitura = useRef(0);
+  const [trocandoLoja, setTrocandoLoja] = useState(false);
+
+  const aplicarLoja = (r: LojaResolvida) => {
+    if (r.descartarAtiva) {
+      clearActiveTenant();
+      setImpersonatedTenantId(null);
+    }
+    setError(r.erro);
+    setTenant(r.tenant);
+  };
+
+  const trocarLoja = async (ativa: string | null) => {
+    const atual = perfilDe.current;
+    if (!atual) return;
+    const leitura = ++ultimaLeitura.current;
+    setTrocandoLoja(true);
+    const r = await resolverLoja(atual.perfil, ativa);
+    // Duas trocas seguidas: vale a última.
+    if (leitura !== ultimaLeitura.current) return;
+    aplicarLoja(r);
+    setTrocandoLoja(false);
+  };
+
   const loadTenantData = async () => {
+    const leitura = ++ultimaLeitura.current;
+    setTrocandoLoja(false);
     if (!user) {
+      perfilDe.current = null;
       setTenant(null);
       setProfile(null);
       setLoading(false);
@@ -125,9 +190,11 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
+    if (leitura !== ultimaLeitura.current) return;
 
     if (profileError) {
       console.error('[TenantContext] Erro ao buscar perfil:', profileError);
+      perfilDe.current = null;
       setError(`Erro ao buscar perfil: ${profileError.message}`);
       setProfile(null);
       setTenant(null);
@@ -137,12 +204,14 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     if (!profileData) {
       console.warn('[TenantContext] Profile não encontrado para user:', user.id);
+      perfilDe.current = null;
       setProfile(null);
       setTenant(null);
       setLoading(false);
       return;
     }
 
+    perfilDe.current = { userId: user.id, perfil: profileData };
     setProfile(profileData);
 
     // Resolver o tenant efetivo.
@@ -150,56 +219,14 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     // específica (impersonação) — nesse caso usamos o tenant escolhido. O RLS
     // já libera o superadmin a ler qualquer tenant (policies "Super admins can
     // access all ..."), então basta filtrar as queries por esse tenant_id.
-    // Para qualquer outra role o impersonatedTenantId é ignorado.
     // Superadmin (qualquer Conta) e Gerente (suas próprias Lojas) podem trocar a
     // Conta/Loja ativa. Para gestor/atendente o tenant é sempre o próprio.
-    const switchRole = normalizeRole(profileData.role as AnyUserRole | undefined);
-
-    let effectiveTenantId = profileData.tenant_id;
-
-    if (impersonatedTenantId) {
-      const permitido = await canUseActiveTenant(
-        switchRole,
-        profileData.tenant_id,
-        impersonatedTenantId,
-      );
-
-      if (permitido) {
-        effectiveTenantId = impersonatedTenantId;
-      } else {
-        // Chave órfã — tipicamente sobrou de outro usuário no mesmo navegador.
-        // Descarta e segue com a Conta do próprio perfil.
-        console.warn(
-          '[TenantContext] Conta ativa persistida não pertence a este usuário; descartando.',
-          impersonatedTenantId,
-        );
-        clearActiveTenant();
-        setImpersonatedTenantId(null);
-      }
-    }
-
-    if (!effectiveTenantId) {
-      setTenant(null);
-      setLoading(false);
-      return;
-    }
-
-    // Buscar tenant — falha aqui NÃO deve apagar o profile já carregado.
-    // Profile carregado é mais importante que tenant (auth/permissions usam o profile).
-    const { data: tenantData, error: tenantError } = await supabase
-      .from('tenants')
-      .select('*')
-      .eq('id', effectiveTenantId)
-      .maybeSingle();
-
-    if (tenantError) {
-      console.error('[TenantContext] Erro ao buscar tenant (profile preservado):', tenantError);
-      setError(`Erro ao buscar Conta: ${tenantError.message}`);
-      setTenant(null);
-    } else {
-      setTenant(tenantData);
-    }
-
+    // Falha ao ler a Loja NÃO apaga o profile já carregado: auth e permissões
+    // usam o profile.
+    const r = await resolverLoja(profileData, impersonatedTenantId);
+    if (leitura !== ultimaLeitura.current) return;
+    aplicarLoja(r);
+    setTrocandoLoja(false);
     setLoading(false);
   };
 
@@ -217,7 +244,10 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         .eq('user_id', quem)
         .maybeSingle();
       if (perfilError) console.error('[TenantContext] Erro ao reler o perfil:', perfilError);
-      else if (perfil) setProfile(prev => (prev && prev.user_id === quem ? perfil : prev));
+      else if (perfil) {
+        if (perfilDe.current?.userId === quem) perfilDe.current = { userId: quem, perfil };
+        setProfile(prev => (prev && prev.user_id === quem ? perfil : prev));
+      }
     }
 
     const id = tenant?.id;
@@ -237,9 +267,9 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const setActiveTenant = (tenantId: string | null) => {
     writeActiveTenant(tenantId);
-    // Dispara o useEffect (deps inclui impersonatedTenantId) → recarrega o
-    // tenant efetivo. Como o queryKey das queries inclui tenant?.id, o
-    // TanStack Query refetcha automaticamente os dados da nova Conta.
+    // Dispara o useEffect (deps inclui impersonatedTenantId) → troca a Loja
+    // sem voltar ao carregando (trocarLoja). Como o queryKey das queries inclui
+    // tenant?.id, o TanStack Query busca sozinho os dados da nova Loja.
     setImpersonatedTenantId(tenantId);
   };
 
@@ -290,18 +320,13 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   };
 
   useEffect(() => {
-    let cancelled = false;
-
-    const load = async () => {
-      if (cancelled) return;
-      await loadTenantData();
-    };
-
-    load();
-
-    return () => {
-      cancelled = true;
-    };
+    // Mesmo usuário, perfil em mãos: é troca de Loja, não entrada.
+    if (user && perfilDe.current?.userId === user.id) {
+      void trocarLoja(impersonatedTenantId);
+      return;
+    }
+    void loadTenantData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, impersonatedTenantId]);
 
   const isImpersonating = !!impersonatedTenantId
@@ -321,6 +346,7 @@ export const TenantProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     isImpersonating,
     canSwitchTenant,
     setActiveTenant,
+    trocandoLoja,
   };
 
   return (

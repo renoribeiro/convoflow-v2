@@ -78,15 +78,18 @@ const NavItemLink = ({
   // código-fonte dentro do atributo `class`. Os trechos separados por espaço
   // viram classes de verdade — `text-primary-foreground` (quase preto) e os
   // `before:*` da barra do item ativo passavam a valer para todos os itens.
+  // Item com outro item embaixo do mesmo caminho só acende no próprio
+  // endereço: Administração não acende em Gestão de Usuários (achado 133).
+  const exato = item.href === '/dashboard' || item.href === '/dashboard/admin';
   const isActive = !!useMatch({
     path: item.href,
-    end: item.href === '/dashboard',
+    end: exato,
   });
 
   const inner = (
     <NavLink
       to={item.href}
-      end={item.href === '/dashboard'}
+      end={exato}
       onClick={onNavigate}
       // No tablet e com a barra recolhida só o ícone aparece: o nome vai para
       // o leitor de tela por aqui (antes o link ficava sem nome nenhum).

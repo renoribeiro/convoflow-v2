@@ -60,9 +60,13 @@ export const MAINTENANCE_QUERY_KEY = ['maintenance', 'state'] as const;
  */
 const INTERVALO_MS = 60_000;
 
-export function useMaintenanceMode(): MaintenanceState {
+export function useMaintenanceMode(opcoes?: { enabled?: boolean }): MaintenanceState {
   const consulta = useQuery({
     queryKey: MAINTENANCE_QUERY_KEY,
+    // A porta de entrada liga só depois de a sessão ser lida: o AuthContext
+    // limpa o cache na primeira notícia da sessão, e uma consulta que saísse
+    // antes ficaria órfã.
+    enabled: opcoes?.enabled ?? true,
     // A faixa padrão do queryClient (5 min) é longa demais aqui: são 5 minutos
     // de clientes trancados depois que a manutenção já acabou.
     staleTime: 30_000,

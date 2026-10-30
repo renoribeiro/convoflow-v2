@@ -115,15 +115,33 @@ describe('nada de piscar o paywall', () => {
     expect(result.current.unlocked).toBe(false);
   });
 
-  it('enquanto o tenant ainda carrega, fica em loading e não consulta', () => {
+  it('enquanto o perfil ainda carrega, fica em loading e não consulta', () => {
     tenantLoading = true;
     tenant = null;
+    profile = null;
 
     const { result } = renderHook(() => useTenantAccess(), { wrapper: makeWrapper() });
 
     expect(result.current.loading).toBe(true);
     expect(result.current.locked).toBe(false);
     expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  // Lote 6f, B14: a pergunta sai junto com a leitura da Loja, não depois dela.
+  // A decisão continua esperando a Loja: nem bloqueio, nem liberado antes.
+  it('com o perfil em mãos e a Loja carregando, já pergunta pela Conta do perfil, mas não decide', async () => {
+    tenantLoading = true;
+    tenant = null;
+    mockRpc.mockResolvedValue({
+      data: [{ unlocked: false, source: 'locked' }],
+      error: null,
+    });
+
+    const { result } = renderHook(() => useTenantAccess(), { wrapper: makeWrapper() });
+
+    await waitFor(() => expect(mockRpc).toHaveBeenCalledWith('tenant_access_state', { p_tenant_id: 'loja-teste' }));
+    expect(result.current.loading).toBe(true);
+    expect(result.current.locked).toBe(false);
   });
 
   it('enquanto o cargo não carregou, fica em loading', () => {

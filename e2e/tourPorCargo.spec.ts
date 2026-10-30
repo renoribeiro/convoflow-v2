@@ -122,7 +122,16 @@ async function percorrer(page: Page, t: Tour, celular: boolean) {
 
 async function fazerAgora(page: Page, passo: string) {
   await page.goto('/dashboard');
+  await abrirPasso(page, passo);
   await page.locator(`[data-passo="${passo}"]`).getByRole('button', { name: 'Fazer agora' }).click();
+}
+
+/** No celular a lista mostra só os 2 próximos (lote 6f, B12): abre o resto. */
+async function abrirPasso(page: Page, passo: string) {
+  await page.locator('#primeiros-passos-titulo').waitFor();
+  if (!(await page.locator(`[data-passo="${passo}"]`).isVisible())) {
+    await page.locator('[data-tour="primeiros-passos"]').getByRole('button', { name: 'Ver todos' }).click();
+  }
 }
 
 const TELAS = [
@@ -165,6 +174,7 @@ for (const tela of TELAS) {
       const page = await abrir(context, 'gerente', { lojaEmFoco: false });
       await page.goto('/dashboard');
       await page.getByRole('dialog').getByRole('button', { name: 'Agora não' }).click();
+      await abrirPasso(page, 'funil');
       await page.locator('[data-passo="funil"]').getByRole('button', { name: 'Fazer agora' }).click();
       await percorrer(page, tour('escolher-loja'), tela.celular);
       await context.close();

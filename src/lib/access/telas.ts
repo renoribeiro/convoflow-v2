@@ -68,8 +68,10 @@ export const TELAS: readonly Tela[] = [
   { chave: 'store-comparison', nome: 'Comparar Lojas', grupo: 'equipe', modulo: null, capacidade: 'stores.compare', foraDoMenuDoSuperadmin: true },
 
   { chave: 'admin', nome: 'Administração', grupo: 'admin', modulo: null, capacidade: 'platform.ops' },
-  { chave: 'admin/users', nome: 'Gestão de Usuários', grupo: 'fora_do_menu', modulo: null, capacidade: 'platform.ops' },
-  { chave: 'admin/usage-limits', nome: 'Limites de uso', grupo: 'fora_do_menu', modulo: null, capacidade: 'platform.ops' },
+  // No menu do superadmin desde o lote 6f (achado 133): antes só a busca
+  // rápida chegava nelas.
+  { chave: 'admin/users', nome: 'Gestão de Usuários', grupo: 'admin', modulo: null, capacidade: 'platform.ops' },
+  { chave: 'admin/usage-limits', nome: 'Limites de uso', grupo: 'admin', modulo: null, capacidade: 'platform.ops' },
 
   { chave: 'profile', nome: 'Meu Perfil', grupo: 'fora_do_menu', modulo: null, capacidade: null },
   { chave: 'notifications', nome: 'Notificações', grupo: 'fora_do_menu', modulo: null, capacidade: null },
