@@ -9,9 +9,9 @@ import { useRecentConversations } from '@/hooks/useRecentConversations';
 
 
 const statusColors = {
-  new: 'bg-status-info text-white',
-  in_progress: 'bg-status-warning text-white',
-  waiting: 'bg-status-success text-white',
+  new: 'bg-info text-info-foreground',
+  in_progress: 'bg-warning text-warning-foreground',
+  waiting: 'bg-success text-success-foreground',
   closed: 'bg-muted text-muted-foreground'
 };
 

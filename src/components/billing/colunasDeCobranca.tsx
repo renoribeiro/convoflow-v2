@@ -44,7 +44,7 @@ export function colunasDeCobranca({
           <span className="flex flex-col gap-0.5">
             <Badge
               variant={s === 'paga' ? 'default' : 'outline'}
-              className={s === 'paga' ? 'bg-green-100 text-green-800 hover:bg-green-100' : s === 'teste' ? '' : 'border-amber-300 text-amber-900'}
+              className={s === 'paga' ? 'bg-success/10 text-success hover:bg-success/10' : s === 'teste' ? '' : 'border-warning/30 text-warning'}
             >
               {SITUACAO_LABEL[s]}
             </Badge>

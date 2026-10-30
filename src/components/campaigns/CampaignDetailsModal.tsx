@@ -41,22 +41,22 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  active: 'bg-green-100 text-green-800 border-green-200',
-  paused: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  scheduled: 'bg-blue-100 text-blue-800 border-blue-200',
-  completed: 'bg-purple-100 text-purple-800 border-purple-200',
-  cancelled: 'bg-red-100 text-red-800 border-red-200',
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
+  active: 'bg-success/10 text-success border-success/30',
+  paused: 'bg-warning/10 text-warning border-warning/30',
+  scheduled: 'bg-info/10 text-info border-info/30',
+  completed: 'bg-accent/10 text-accent border-accent/30',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/30',
+  draft: 'bg-muted text-foreground border-border',
 };
 
 const EXEC_STATUS_CLASS: Record<string, string> = {
-  sent: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
-  read: 'bg-purple-100 text-purple-800',
-  replied: 'bg-teal-100 text-teal-800',
-  failed: 'bg-red-100 text-red-800',
-  pending: 'bg-gray-100 text-gray-600',
-  scheduled: 'bg-sky-100 text-sky-800',
+  sent: 'bg-info/10 text-info',
+  delivered: 'bg-success/10 text-success',
+  read: 'bg-accent/10 text-accent',
+  replied: 'bg-success/10 text-success',
+  failed: 'bg-destructive/10 text-destructive',
+  pending: 'bg-muted text-muted-foreground',
+  scheduled: 'bg-info/10 text-info',
 };
 
 const EXEC_STATUS_LABEL: Record<string, string> = {
@@ -234,13 +234,13 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                   <div>
                     <p className="text-xs text-muted-foreground mb-2">Prévia da mensagem</p>
                     <div className="flex justify-end">
-                      <div className="max-w-xs bg-green-100 dark:bg-green-900 rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
+                      <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
                         {campaign.message_template
                           .replace(/{name}/g, 'João')
                           .replace(/{first_name}/g, 'João')
                           .replace(/{phone}/g, '5511999990001')
                           .replace(/{email}/g, 'joao@exemplo.com')}
-                        <div className="text-xs text-green-700 dark:text-green-400 text-right mt-1">
+                        <div className="text-xs text-muted-foreground text-right mt-1">
                           10:30 ✓✓
                         </div>
                       </div>
@@ -287,41 +287,41 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                   label="Enviadas"
                   value={metrics.sent}
                   sub={`${rate(metrics.sent, metrics.total)}% do total`}
-                  icon={<Send className="h-6 w-6 text-blue-500" />}
+                  icon={<Send className="h-6 w-6 text-info" />}
                 />
                 <MetricCard
                   label="Entregues"
                   value={metrics.delivered}
                   sub={`${rate(metrics.delivered, metrics.sent)}% de enviadas`}
-                  icon={<CheckCircle className="h-6 w-6 text-green-500" />}
+                  icon={<CheckCircle className="h-6 w-6 text-success" />}
                 />
                 <MetricCard
                   label="Lidas"
                   value={metrics.read}
                   sub={`${rate(metrics.read, metrics.delivered)}% de entregues`}
-                  icon={<Eye className="h-6 w-6 text-purple-500" />}
+                  icon={<Eye className="h-6 w-6 text-accent" />}
                 />
                 <MetricCard
                   label="Respondidas"
                   value={metrics.replied}
                   sub={`${rate(metrics.replied, metrics.sent)}% de enviadas`}
-                  icon={<Reply className="h-6 w-6 text-teal-500" />}
+                  icon={<Reply className="h-6 w-6 text-success" />}
                 />
                 <MetricCard
                   label="Falhas"
                   value={metrics.failed}
                   sub={`${rate(metrics.failed, metrics.total)}% do total`}
-                  icon={<XCircle className="h-6 w-6 text-red-500" />}
+                  icon={<XCircle className="h-6 w-6 text-destructive" />}
                 />
                 <MetricCard
                   label="Pendentes"
                   value={metrics.pending}
-                  icon={<Hourglass className="h-6 w-6 text-orange-400" />}
+                  icon={<Hourglass className="h-6 w-6 text-warning" />}
                 />
                 <MetricCard
                   label="Taxa de entrega"
                   value={`${rate(metrics.delivered, metrics.sent)}%`}
-                  icon={<CheckCircle className="h-6 w-6 text-green-400" />}
+                  icon={<CheckCircle className="h-6 w-6 text-success" />}
                   isText
                 />
               </div>
@@ -400,7 +400,7 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                                 </Badge>
                                 {(ex.status === 'failed' || ex.status === 'skipped') && ex.error_message && (
                                   <p
-                                    className={`text-[10px] max-w-[200px] truncate ${ex.status === 'failed' ? 'text-red-600' : 'text-muted-foreground'}`}
+                                    className={`text-[10px] max-w-[200px] truncate ${ex.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'}`}
                                     title={motivoDaFalhaGravada(ex.error_message)}
                                   >
                                     {motivoDaFalhaGravada(ex.error_message)}

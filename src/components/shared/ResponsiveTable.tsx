@@ -302,7 +302,7 @@ export function ResponsiveTable<T>({
             className={cn(
               STICKY_ACTIONS,
               'group-hover/row:bg-muted',
-              stickyShadow && 'shadow-[-8px_0_10px_-8px_rgba(0,0,0,0.25)]',
+              stickyShadow && 'shadow-[-8px_0_10px_-8px_hsl(var(--overlay)/0.25)]',
             )}
             onClick={(e) => e.stopPropagation()}
           >
@@ -323,7 +323,7 @@ export function ResponsiveTable<T>({
             </TableHead>
           ))}
           {actions && (
-            <TableHead className={cn(STICKY_ACTIONS, stickyShadow && 'shadow-[-8px_0_10px_-8px_rgba(0,0,0,0.25)]')}>
+            <TableHead className={cn(STICKY_ACTIONS, stickyShadow && 'shadow-[-8px_0_10px_-8px_hsl(var(--overlay)/0.25)]')}>
               {actionsHeader ?? <span className="sr-only">Ações</span>}
             </TableHead>
           )}

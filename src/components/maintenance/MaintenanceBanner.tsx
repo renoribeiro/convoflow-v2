@@ -52,10 +52,10 @@ export const MaintenanceBanner = () => {
 
   if (scheduled) {
     return (
-      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-900 dark:text-blue-100 backdrop-blur">
+      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-info/30 bg-info/10 px-4 py-2 text-sm text-info backdrop-blur">
         <CalendarClock className="h-4 w-4 flex-shrink-0" />
         <span className="font-medium">Manutenção agendada</span>
-        <span className="text-blue-900/80 dark:text-blue-100/80">
+        <span className="text-info">
           Começa {inicio ?? 'em breve'}
           {faltaInicio ? ` (${faltaInicio})` : ''}
           {retorno ? ` e termina ${retorno}` : ''}. Ninguém está bloqueado ainda.
@@ -71,16 +71,16 @@ export const MaintenanceBanner = () => {
   }
 
   return (
-    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-amber-500/40 bg-amber-500/15 px-4 py-2 text-sm text-amber-950 dark:text-amber-100 backdrop-blur">
+    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-warning/40 bg-warning/15 px-4 py-2 text-sm text-warning backdrop-blur">
       <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
         {/* O pulso é o que diferencia "está ligado AGORA" de mais uma faixa
             colorida na tela. Cliente trancado merece um aviso que se mexe. */}
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
-        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-600" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75 text-warning-foreground" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-warning text-warning-foreground" />
       </span>
       <Wrench className="h-4 w-4 flex-shrink-0" />
       <span className="font-semibold">Manutenção LIGADA</span>
-      <span className="text-amber-950/85 dark:text-amber-100/85">
+      <span className="text-warning">
         Todos os clientes estão bloqueados neste momento; só você entra.
         {retorno
           ? ` Volta sozinho ${retorno}${faltaRetorno ? ` (${faltaRetorno})` : ''}.`

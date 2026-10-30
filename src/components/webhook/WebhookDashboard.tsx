@@ -193,17 +193,17 @@ export function WebhookDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle className="h-4 w-4 text-success" />;
       case 'error':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
       default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = (httpStatus: number) => {
     if (httpStatus >= 200 && httpStatus < 300) {
-      return <Badge variant="default" className="bg-green-100 text-green-800">Recebido</Badge>;
+      return <Badge variant="default" className="bg-success/10 text-success">Recebido</Badge>;
     } else if (httpStatus >= 400) {
       return <Badge variant="destructive">Erro</Badge>;
     }
@@ -231,7 +231,7 @@ export function WebhookDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-info"></div>
       </div>
     );
   }
@@ -369,7 +369,7 @@ export function WebhookDashboard() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Erros:</span>
-                          <span className="font-medium text-red-600">{instance.error_count}</span>
+                          <span className="font-medium text-destructive">{instance.error_count}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>Último aviso:</span>

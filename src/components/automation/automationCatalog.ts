@@ -30,68 +30,31 @@ import {
   Settings,
   type LucideIcon,
 } from 'lucide-react';
+import { CORES_DA_AUTOMACAO, pinturaDaCategoria, type PinturaDaCategoria } from '@/lib/cores/coresDeCategoria';
 
 export type StepCategory = 'trigger' | 'action' | 'condition' | 'delay';
 
+/**
+ * Lote 7 ("Cores e tema escuro"): a cor de cada categoria mora em
+ * src/lib/cores/coresDeCategoria.ts e chega às telas já ajustada pelo
+ * contraste (pinturaDaCategoria): fundo cheio com ícone branco legível,
+ * cartão suave, rótulo na tinta legível do tema e anel de seleção.
+ */
 export interface CategoryStyle {
   label: string;
-  /** fundo do círculo do ícone (ícone branco dentro) */
-  iconBg: string;
-  /** borda do card (inclui dark:) */
-  border: string;
-  /** fundo sutil do card (inclui dark:) */
-  cardBg: string;
-  /** texto de destaque (inclui dark:) */
-  text: string;
-  /** anel quando selecionado */
-  ring: string;
-  /** cor da linha do conector */
-  connector: string;
-  /** ponto/legenda */
-  dot: string;
+  /** a cor da categoria (código de cor; exceção legítima à regra de tokens) */
+  cor: string;
+  /** estilos prontos: `cheio` (círculo do ícone), `suave` (cartão), `texto` (rótulo, com CLASSE_DA_TINTA), `anel` */
+  pintura: PinturaDaCategoria;
 }
 
+const categoria = (label: string, cor: string): CategoryStyle => ({ label, cor, pintura: pinturaDaCategoria(cor) });
+
 export const CATEGORY_STYLES: Record<StepCategory, CategoryStyle> = {
-  trigger: {
-    label: 'Gatilho',
-    iconBg: 'bg-emerald-500',
-    border: 'border-emerald-300 dark:border-emerald-700',
-    cardBg: 'bg-emerald-50 dark:bg-emerald-950/40',
-    text: 'text-emerald-700 dark:text-emerald-300',
-    ring: 'ring-emerald-400',
-    connector: 'bg-emerald-300 dark:bg-emerald-700',
-    dot: 'bg-emerald-500',
-  },
-  action: {
-    label: 'Ação',
-    iconBg: 'bg-blue-500',
-    border: 'border-blue-300 dark:border-blue-800',
-    cardBg: 'bg-blue-50 dark:bg-blue-950/40',
-    text: 'text-blue-700 dark:text-blue-300',
-    ring: 'ring-blue-400',
-    connector: 'bg-slate-300 dark:bg-slate-700',
-    dot: 'bg-blue-500',
-  },
-  condition: {
-    label: 'Condição',
-    iconBg: 'bg-amber-500',
-    border: 'border-amber-300 dark:border-amber-800',
-    cardBg: 'bg-amber-50 dark:bg-amber-950/40',
-    text: 'text-amber-700 dark:text-amber-300',
-    ring: 'ring-amber-400',
-    connector: 'bg-slate-300 dark:bg-slate-700',
-    dot: 'bg-amber-500',
-  },
-  delay: {
-    label: 'Espera',
-    iconBg: 'bg-slate-500',
-    border: 'border-slate-300 dark:border-slate-700',
-    cardBg: 'bg-slate-50 dark:bg-slate-900/50',
-    text: 'text-slate-700 dark:text-slate-300',
-    ring: 'ring-slate-400',
-    connector: 'bg-slate-300 dark:bg-slate-700',
-    dot: 'bg-slate-500',
-  },
+  trigger: categoria('Gatilho', CORES_DA_AUTOMACAO.trigger),
+  action: categoria('Ação', CORES_DA_AUTOMACAO.action),
+  condition: categoria('Condição', CORES_DA_AUTOMACAO.condition),
+  delay: categoria('Espera', CORES_DA_AUTOMACAO.delay),
 };
 
 export type FieldType =

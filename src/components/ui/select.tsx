@@ -10,24 +10,64 @@ const SelectGroup = SelectPrimitive.Group
 
 const SelectValue = SelectPrimitive.Value
 
+/**
+ * A caixa é um <button>, e botão não ganha nome pelo <label for>: o leitor de
+ * tela anunciava só "caixa de seleção" (lote 7, checagem das janelas). Sem
+ * aria-label próprio, a caixa aponta aria-labelledby para o rótulo e para ela
+ * mesma (o valor escolhido continua sendo lido). O rótulo é o <label for> do
+ * `id` dela; sem isso, o <label> logo antes dela (o padrão das telas, que
+ * muitas vezes não liga um ao outro).
+ */
+function acharRotulo(el: HTMLElement, id: string | undefined): HTMLLabelElement | null {
+  if (id) {
+    const alvo = typeof CSS !== "undefined" && CSS.escape ? CSS.escape(id) : id
+    const porFor = document.querySelector<HTMLLabelElement>(`label[for="${alvo}"]`)
+    if (porFor) return porFor
+  }
+  const antes = el.previousElementSibling
+  if (antes instanceof HTMLLabelElement) {
+    const destino = antes.htmlFor ? document.getElementById(antes.htmlFor) : null
+    if (!destino || destino === el) return antes
+  }
+  return null
+}
+
+let contadorDeRotulos = 0
+function useRotuloDoCampo(alvo: React.RefObject<HTMLButtonElement>, id: string | undefined, temNome: boolean) {
+  React.useEffect(() => {
+    const el = alvo.current
+    if (!el || temNome) return
+    const rotulo = acharRotulo(el, id)
+    if (!rotulo) return
+    if (!rotulo.id) rotulo.id = `rotulo-da-caixa-${++contadorDeRotulos}`
+    if (!el.id) el.id = `${rotulo.id}-caixa`
+    el.setAttribute("aria-labelledby", `${rotulo.id} ${el.id}`)
+  }, [alvo, id, temNome])
+}
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-))
+>(({ className, children, ...props }, ref) => {
+  const interno = React.useRef<HTMLButtonElement>(null)
+  React.useImperativeHandle(ref, () => interno.current as HTMLButtonElement)
+  useRotuloDoCampo(interno, props.id, Boolean(props["aria-label"] || props["aria-labelledby"]))
+  return (
+    <SelectPrimitive.Trigger
+      ref={interno}
+      className={cn(
+        "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown className="h-4 w-4 opacity-50" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+})
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
 const SelectScrollUpButton = React.forwardRef<

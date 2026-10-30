@@ -43,20 +43,20 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
 }) => {
   return (
     <Card className={`transition-all duration-200 ${
-      module.is_enabled ? 'border-green-200 bg-green-50/50' : 'border-gray-200 bg-gray-50/50'
+      module.is_enabled ? 'border-success/30 bg-success/10' : 'border-border bg-muted/50'
     }`}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-2 rounded-lg ${
-              module.is_enabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+              module.is_enabled ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
             }`}>
               {module.is_enabled ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </div>
             <div>
               <CardTitle className="text-base">{module.display_name}</CardTitle>
               <CardDescription className="text-sm">
-                Rota: <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">
+                Rota: <code className="text-xs bg-muted px-1 py-0.5 rounded">
                   {module.route_path}
                 </code>
               </CardDescription>
@@ -73,7 +73,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
                 checked={module.is_enabled}
                 onCheckedChange={() => onToggle(module.id, module.is_enabled)}
                 disabled={isUpdating}
-                className="data-[state=checked]:bg-green-600"
+                className="data-[state=checked]:bg-success"
               />
             )}
           </div>
@@ -82,7 +82,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({
       
       {module.description && (
         <CardContent className="pt-0">
-          <p className="text-sm text-gray-600">{module.description}</p>
+          <p className="text-sm text-muted-foreground">{module.description}</p>
         </CardContent>
       )}
     </Card>
@@ -139,7 +139,7 @@ export const ModuleSettings: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-amber-500" />
+            <AlertCircle className="w-5 h-5 text-warning" />
             Acesso Restrito
           </CardTitle>
           <CardDescription>
@@ -170,7 +170,7 @@ export const ModuleSettings: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         </CardContent>
       </Card>
@@ -181,7 +181,7 @@ export const ModuleSettings: React.FC = () => {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-600">
+          <CardTitle className="flex items-center gap-2 text-destructive">
             <AlertCircle className="w-5 h-5" />
             Erro ao Carregar Módulos
           </CardTitle>
@@ -217,27 +217,27 @@ export const ModuleSettings: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
+            <div className="flex items-center gap-3 p-3 bg-success/10 rounded-lg border border-success/30">
+              <CheckCircle2 className="w-5 h-5 text-success" />
               <div>
-                <p className="text-sm font-medium text-green-900">Módulos Ativos</p>
-                <p className="text-lg font-bold text-green-700">{enabledCount}</p>
+                <p className="text-sm font-medium text-success">Módulos Ativos</p>
+                <p className="text-lg font-bold text-success">{enabledCount}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <EyeOff className="w-5 h-5 text-gray-600" />
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border">
+              <EyeOff className="w-5 h-5 text-muted-foreground" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Módulos Inativos</p>
-                <p className="text-lg font-bold text-gray-700">{totalCount - enabledCount}</p>
+                <p className="text-sm font-medium text-foreground">Módulos Inativos</p>
+                <p className="text-lg font-bold text-foreground">{totalCount - enabledCount}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <Eye className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-3 p-3 bg-info/10 rounded-lg border border-info/30">
+              <Eye className="w-5 h-5 text-info" />
               <div>
-                <p className="text-sm font-medium text-blue-900">Total de Módulos</p>
-                <p className="text-lg font-bold text-blue-700">{totalCount}</p>
+                <p className="text-sm font-medium text-info">Total de Módulos</p>
+                <p className="text-lg font-bold text-info">{totalCount}</p>
               </div>
             </div>
           </div>
@@ -255,7 +255,7 @@ export const ModuleSettings: React.FC = () => {
             <div className="flex-1">
               <Label htmlFor="search">Buscar módulos</Label>
               <div className="relative mt-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
                 <Input
                   id="search"
                   placeholder="Buscar por nome, rota ou descrição..."
@@ -332,8 +332,8 @@ export const ModuleSettings: React.FC = () => {
         {filteredModules.length === 0 ? (
           <Card>
             <CardContent className="py-8">
-              <div className="text-center text-gray-500">
-                <Eye className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+              <div className="text-center text-muted-foreground">
+                <Eye className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium">Nenhum módulo encontrado</p>
                 <p className="text-sm">
                   {searchTerm ? 'Tente ajustar os filtros de busca.' : 'Não há módulos configurados.'}

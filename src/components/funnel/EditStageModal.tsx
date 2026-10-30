@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
 import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
-import { CORES_DE_ETAPA } from '@/lib/funnel/corDaEtapa';
+import { CORES_DE_ETAPA, corDaEtapa } from '@/lib/funnel/corDaEtapa';
 
 interface Stage {
   id: string;
@@ -125,9 +125,8 @@ export const EditStageModal = ({ isOpen, onClose, stage, onStageUpdated }: EditS
                     {colorOptions.map((color) => (
                       <Badge
                         key={color.value}
-                        className={`cursor-pointer ${color.class} ${
-                          stageColor === color.value ? 'ring-2 ring-primary' : ''
-                        }`}
+                        className={`cursor-pointer ${corDaEtapa(color.value).className} ${stageColor === color.value ? 'ring-2 ring-primary' : ''}`}
+                        style={corDaEtapa(color.value).style}
                         onClick={() => setStageColor(color.value)}
                       >
                         {color.name}

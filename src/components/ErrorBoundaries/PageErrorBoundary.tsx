@@ -35,15 +35,15 @@ const PageErrorFallback: React.FC<{
     <div className="min-h-[60vh] flex items-center justify-center p-6">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <AlertTriangle className="h-8 w-8 text-red-600" />
+          <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+            <AlertTriangle className="h-8 w-8 text-destructive" />
           </div>
-          <CardTitle className="text-xl text-gray-900">
+          <CardTitle className="text-xl text-foreground">
             Não foi possível abrir {pageName}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-gray-600 text-center">
+          <p className="text-muted-foreground text-center">
             Algo deu errado ao carregar a tela. Recarregue a página; se continuar,
             volte e tente de novo ou fale com o suporte do ConvoFlow.
           </p>

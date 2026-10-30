@@ -57,7 +57,7 @@ export const FeatureHelpBody: React.FC<Props> = ({
     {entry.tips && entry.tips.length > 0 && (
       <section className="space-y-2">
         <h4 className="flex items-center gap-2 font-medium text-foreground">
-          <Lightbulb className="h-4 w-4 text-amber-500" />
+          <Lightbulb className="h-4 w-4 text-warning" />
           Dicas
         </h4>
         <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">

@@ -63,9 +63,9 @@ const INTERVALO_WEBHOOK_MS = 2_000;
 
 /** Cor do selo por situação da assinatura. */
 const BADGE_CLASS: Record<BadgeTone, string> = {
-  ativo: 'bg-green-500 hover:bg-green-600',
-  teste: 'bg-blue-500 hover:bg-blue-600',
-  pendente: 'bg-amber-500 hover:bg-amber-600',
+  ativo: 'bg-success hover:bg-success/90 text-success-foreground',
+  teste: 'bg-info hover:bg-info/90 text-info-foreground',
+  pendente: 'bg-warning hover:bg-warning/90 text-warning-foreground',
   nenhum: '',
 };
 
@@ -392,8 +392,8 @@ export const SubscriptionSettings = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-full ${temAssinatura ? 'bg-green-100' : 'bg-gray-100'}`}>
-              <CreditCard className={`w-6 h-6 ${temAssinatura ? 'text-green-600' : 'text-gray-600'}`} />
+            <div className={`p-3 rounded-full ${temAssinatura ? 'bg-success/10' : 'bg-muted'}`}>
+              <CreditCard className={`w-6 h-6 ${temAssinatura ? 'text-success' : 'text-muted-foreground'}`} />
             </div>
             <div>
               <h3 className="font-semibold text-lg">{situacao.title}</h3>
@@ -420,19 +420,19 @@ export const SubscriptionSettings = () => {
             </div>
             <ul className="space-y-2 text-sm">
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> {INCLUDED_SLOTS} Lojas incluídas
+                <Check className="w-4 h-4 text-success" /> {INCLUDED_SLOTS} Lojas incluídas
               </li>
               {PLAN_FEATURES.map((f) => (
                 <li key={f} className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" /> {f}
+                  <Check className="w-4 h-4 text-success" /> {f}
                 </li>
               ))}
               <li className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-500" /> Loja adicional por {SLOT_PRICE_LABEL}/mês
+                <Check className="w-4 h-4 text-success" /> Loja adicional por {SLOT_PRICE_LABEL}/mês
               </li>
               {API_ADDON_RELEASED ? (
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-green-500" /> API e integrações por {API_ADDON_PRICE_LABEL}/mês
+                  <Check className="w-4 h-4 text-success" /> API e integrações por {API_ADDON_PRICE_LABEL}/mês
                 </li>
               ) : null}
             </ul>
@@ -491,7 +491,7 @@ export const SubscriptionSettings = () => {
               <Button
                 onClick={handleSubscribe}
                 disabled={loading || !podeIrAoCheckout}
-                className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
+                className="bg-success hover:bg-success/90 w-full md:w-auto text-success-foreground"
               >
                 {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Assinar por {PLAN_PRICE_LABEL}/mês

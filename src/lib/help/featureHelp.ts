@@ -519,7 +519,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'O botão "Filtros" abre os recortes que se somam às pílulas: só não lidas, só arquivadas (as ativas somem da lista), um período pela data da última mensagem (o dia "Até" entra inteiro) e as etiquetas do contato. Gestor e Gerente veem um recorte a mais, "Responsável pela conversa". Cada um vale na hora, assim que você marca; "Fechar" só fecha a janela e "Limpar" desliga todos.',
       'Para ver só as conversas de quem tem uma etiqueta, abra "Filtros" e marque a etiqueta em "Etiquetas do contato". Marque várias para ver quem tem qualquer uma delas. As marcadas aparecem acima das pílulas, cada uma com um "x" para tirar; a lista e o número da pílula passam a contar só essas conversas.',
       'Para ficar responsável por uma conversa, abra-a e clique em "Sem responsável", no cabeçalho, e depois em "Assumir". O seu nome passa a aparecer na conversa, para todo mundo da Loja.',
-      'Para passar a conversa a um colega, clique no responsável no cabeçalho e em "Transferir…", escolha a pessoa na lista e pronto: ela recebe um aviso no sino. Dá para transferir para você mesmo uma conversa que está com outra pessoa.',
+      'Para passar a conversa a um colega, clique no responsável no cabeçalho e em "Transferir…", escolha a pessoa na lista e pronto: ela recebe um aviso no sino. Numa conversa que está com outra pessoa não existe "Assumir": para ficar com ela, use "Transferir…" e escolha você (o próprio menu lembra disso). Se o cabeçalho diz "pessoa que saiu do time", o responsável foi suspenso, excluído ou saiu da Loja; transfira a conversa para quem vai cuidar dela.',
       'Use as pílulas "Minhas" e "Sem responsável" para ver só o que está com você ou o que ninguém pegou ainda. O número delas é o total da fila, como em "Todas": não depende de quanto você rolou.',
       'Como Gestor ou Gerente, para acompanhar o trabalho de uma pessoa, abra "Filtros" e marque o nome dela em "Responsável pela conversa": a lista e os números das pílulas passam a contar só as conversas que estão com ela. Marque várias pessoas para ver o que está com qualquer uma delas. Os nomes marcados aparecem acima das pílulas, cada um com um "x" para tirar. Quem saiu do time mas ainda tem conversa aparece na lista com o motivo ao lado do nome, por exemplo "Maria (suspenso)".',
       'O filtro por responsável e as pílulas "Minhas" / "Sem responsável" não se somam, porque olham a mesma coisa: marcar alguém em "Filtros" devolve a pílula a "Todas", e clicar em "Minhas" ou "Sem responsável" tira os nomes marcados. As outras pílulas ("Aguardando", "Não lidas", "Responsável indisponível"...) somam normalmente ao filtro por responsável.',
@@ -1483,7 +1483,8 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Duas Lojas com 300 contatos cada: a primeira tem 280 conversas e a segunda 90. O problema da segunda é atendimento, não geração de contato.',
     tips: [
       'Muitas mensagens com poucas conversas costuma ser campanha disparando sem ninguém responder as respostas.',
-      'Os números são o total de sempre de cada Loja, sem período: Loja nova sempre parece menor. A linha "Total" soma todas.',
+      'Os números são o total desde o início de cada Loja, sem período (a tela diz isso embaixo do título da tabela): Loja nova sempre parece menor. A linha "Total" soma todas.',
+      'Se aparecer "Não foi possível carregar a comparação.", a leitura dos números falhou, não as Lojas: clique em "Tentar de novo".',
       'A tela é do Gerente. Gestor e Atendente enxergam apenas a própria Loja.',
     ],
     category: 'tela',

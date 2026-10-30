@@ -79,9 +79,9 @@ const mapExecutionStatus = (status: string | null | undefined) => {
 const getStatusIcon = (status: string | null | undefined) => {
   const mappedStatus = mapExecutionStatus(status);
   switch (mappedStatus) {
-    case 'success': return <CheckCircle className="w-4 h-4 text-green-600" />;
-    case 'failed': return <XCircle className="w-4 h-4 text-red-600" />;
-    case 'pending': return <Clock className="w-4 h-4 text-yellow-600" />;
+    case 'success': return <CheckCircle className="w-4 h-4 text-success" />;
+    case 'failed': return <XCircle className="w-4 h-4 text-destructive" />;
+    case 'pending': return <Clock className="w-4 h-4 text-warning" />;
     default: return null;
   }
 };
@@ -89,18 +89,18 @@ const getStatusIcon = (status: string | null | undefined) => {
 const getStatusBadge = (status: string | null | undefined) => {
   const mappedStatus = mapExecutionStatus(status);
   switch (mappedStatus) {
-    case 'success': return <Badge className="bg-green-100 text-green-800">Concluído</Badge>;
+    case 'success': return <Badge className="bg-success/10 text-success">Concluído</Badge>;
     case 'failed': return <Badge variant="destructive">Falhou</Badge>;
-    case 'pending': return <Badge className="bg-yellow-100 text-yellow-800">Processando</Badge>;
+    case 'pending': return <Badge className="bg-warning/10 text-warning">Processando</Badge>;
     default: return null;
   }
 };
 
 const getMethodIcon = (method: string) => {
   switch (method) {
-    case 'email': return <Mail className="w-4 h-4 text-blue-600" />;
-    case 'whatsapp': return <MessageSquare className="w-4 h-4 text-green-600" />;
-    case 'dashboard': return <FileText className="w-4 h-4 text-purple-600" />;
+    case 'email': return <Mail className="w-4 h-4 text-info" />;
+    case 'whatsapp': return <MessageSquare className="w-4 h-4 text-success" />;
+    case 'dashboard': return <FileText className="w-4 h-4 text-accent" />;
     default: return null;
   }
 };
@@ -222,10 +222,10 @@ export const DeliveryLog = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold text-green-600">{stats.success}</p>
+                  <p className="text-2xl font-bold text-success">{stats.success}</p>
                 )}
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -238,10 +238,10 @@ export const DeliveryLog = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold text-red-600">{stats.failed}</p>
+                  <p className="text-2xl font-bold text-destructive">{stats.failed}</p>
                 )}
               </div>
-              <XCircle className="w-8 h-8 text-red-600" />
+              <XCircle className="w-8 h-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -254,10 +254,10 @@ export const DeliveryLog = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-16" />
                 ) : (
-                  <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                  <p className="text-2xl font-bold text-warning">{stats.pending}</p>
                 )}
               </div>
-              <Clock className="w-8 h-8 text-yellow-600" />
+              <Clock className="w-8 h-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -344,7 +344,7 @@ export const DeliveryLog = () => {
                     <div className="flex items-start space-x-3 min-w-0">
                       <div className="flex items-center space-x-2 pt-0.5">
                         {getStatusIcon(execution.status)}
-                        <FileText className="w-4 h-4 text-blue-600" />
+                        <FileText className="w-4 h-4 text-info" />
                       </div>
 
                       <div className="min-w-0 space-y-1">
@@ -356,12 +356,12 @@ export const DeliveryLog = () => {
                           <div className="flex flex-wrap items-center gap-2 pt-1">
                             {p.delivery?.email && (
                               <Badge variant="outline" className="gap-1 font-normal">
-                                <Mail className="w-3 h-3 text-blue-600" /> E-mail
+                                <Mail className="w-3 h-3 text-info" /> E-mail
                               </Badge>
                             )}
                             {p.delivery?.whatsapp && (
                               <Badge variant="outline" className="gap-1 font-normal">
-                                <MessageSquare className="w-3 h-3 text-green-600" /> WhatsApp
+                                <MessageSquare className="w-3 h-3 text-success" /> WhatsApp
                               </Badge>
                             )}
                           </div>
@@ -382,7 +382,7 @@ export const DeliveryLog = () => {
                         )}
 
                         {execution.error_message && (
-                          <p className="text-sm text-red-600 mt-1">Erro: {execution.error_message}</p>
+                          <p className="text-sm text-destructive mt-1">Erro: {execution.error_message}</p>
                         )}
                       </div>
                     </div>

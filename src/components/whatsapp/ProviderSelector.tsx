@@ -119,7 +119,7 @@ const OpcaoCard = ({ option, selected: isSelected, onChange, disabled }: OpcaoCa
               <CardTitle className="text-base flex flex-wrap items-center gap-2">
                 {option.title}
                 {option.badge && (
-                  <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">{option.badge}</Badge>
+                  <Badge className="bg-success hover:bg-success text-success-foreground">{option.badge}</Badge>
                 )}
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">{option.subtitle}</CardDescription>

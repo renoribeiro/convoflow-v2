@@ -24,12 +24,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  active: 'bg-green-100 text-green-800',
-  paused: 'bg-yellow-100 text-yellow-800',
-  scheduled: 'bg-blue-100 text-blue-800',
-  completed: 'bg-purple-100 text-purple-800',
-  cancelled: 'bg-red-100 text-red-800',
-  draft: 'bg-gray-100 text-gray-700',
+  active: 'bg-success/10 text-success',
+  paused: 'bg-warning/10 text-warning',
+  scheduled: 'bg-info/10 text-info',
+  completed: 'bg-accent/10 text-accent',
+  cancelled: 'bg-destructive/10 text-destructive',
+  draft: 'bg-muted text-foreground',
 };
 
 function rate(numerator: number, denominator: number): string {
@@ -146,7 +146,7 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-3">
             <Select value={period} onValueChange={setPeriod}>
-              <SelectTrigger className="w-44">
+              <SelectTrigger className="w-44" aria-label="Período">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -156,7 +156,7 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-48">
+              <SelectTrigger className="w-48" aria-label="Situação da campanha">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -175,26 +175,26 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
 
           {/* Global metric cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <MetricCard label="Total Enviadas" value={totalSent} icon={<Send className="h-8 w-8 text-blue-500" />} loading={isLoading} />
+            <MetricCard label="Total Enviadas" value={totalSent} icon={<Send className="h-8 w-8 text-info" />} loading={isLoading} />
             <MetricCard
               label="Entregues"
               value={totalDelivered}
               sub={`${rate(totalDelivered, totalSent)}% taxa`}
-              icon={<CheckCircle className="h-8 w-8 text-green-500" />}
+              icon={<CheckCircle className="h-8 w-8 text-success" />}
               loading={isLoading}
             />
             <MetricCard
               label="Lidas"
               value={totalRead}
               sub={`${rate(totalRead, totalDelivered)}% taxa`}
-              icon={<Users className="h-8 w-8 text-purple-500" />}
+              icon={<Users className="h-8 w-8 text-accent" />}
               loading={isLoading}
             />
             <MetricCard
               label="Respondidas"
               value={totalReplied}
               sub={`${rate(totalReplied, totalSent)}% taxa`}
-              icon={<MessageSquare className="h-8 w-8 text-orange-500" />}
+              icon={<MessageSquare className="h-8 w-8 text-warning" />}
               loading={isLoading}
             />
           </div>
@@ -206,10 +206,10 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
                 <CardTitle>Funil de Conversão</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <FunnelBar label="Enviadas" value={totalSent} max={totalSent} color="bg-blue-500" />
-                <FunnelBar label="Entregues" value={totalDelivered} max={totalSent} color="bg-green-500" />
-                <FunnelBar label="Lidas" value={totalRead} max={totalSent} color="bg-purple-500" />
-                <FunnelBar label="Respondidas" value={totalReplied} max={totalSent} color="bg-orange-500" />
+                <FunnelBar label="Enviadas" value={totalSent} max={totalSent} color="bg-info" />
+                <FunnelBar label="Entregues" value={totalDelivered} max={totalSent} color="bg-success" />
+                <FunnelBar label="Lidas" value={totalRead} max={totalSent} color="bg-accent" />
+                <FunnelBar label="Respondidas" value={totalReplied} max={totalSent} color="bg-warning" />
               </CardContent>
             </Card>
           )}
@@ -220,7 +220,7 @@ export const CampaignReportsModal = ({ isOpen, onClose }: CampaignReportsModalPr
               <div className="flex items-center justify-between">
                 <CardTitle>Performance por Campanha</CardTitle>
                 <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40" aria-label="Ordenar campanhas por">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

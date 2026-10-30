@@ -84,7 +84,7 @@ export function StripeConnectionStatus() {
             <CardTitle className="flex flex-wrap items-center gap-2">
               Conexão com o Stripe
               {consulta.isLoading ? null : status?.connected ? (
-                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                <Badge className="bg-success/10 text-success hover:bg-success/10">
                   <CheckCircle2 className="mr-1 h-3 w-3" /> Conectado
                 </Badge>
               ) : (
@@ -193,7 +193,7 @@ export function StripeConnectionStatus() {
               </Button>
             ) : null}
             {apiCriada ? (
-              <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/20" data-testid="api-ids">
+              <div className="space-y-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm" data-testid="api-ids">
                 {(
                   [
                     [apiCriada.productEnv, apiCriada.productId],
@@ -244,7 +244,7 @@ export function StripeConnectionStatus() {
             ) : status.webhook.enabled === false ? (
               <p className="text-sm text-destructive">O endpoint existe, mas está desativado no Stripe.</p>
             ) : (
-              <p className="text-sm text-green-700">Endpoint encontrado e ativo.</p>
+              <p className="text-sm text-success">Endpoint encontrado e ativo.</p>
             )
           ) : null}
           <ul className="space-y-1 text-sm" aria-label="Eventos do webhook">
@@ -258,7 +258,7 @@ export function StripeConnectionStatus() {
                   ) : falta ? (
                     <XCircle className="h-4 w-4 text-destructive" aria-label="falta" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4 text-green-600" aria-label="ok" />
+                    <CheckCircle2 className="h-4 w-4 text-success" aria-label="ok" />
                   )}
                   <code className="text-xs">{evento}</code>
                 </li>
@@ -266,7 +266,7 @@ export function StripeConnectionStatus() {
             })}
           </ul>
           {podeMarcar ? (
-            <div className="space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm dark:bg-amber-950/20">
+            <div className="space-y-2 rounded-md border border-warning/30 bg-warning/10 p-3 text-sm">
               <p>
                 Faltam {status?.webhook.missingEvents.length} evento(s). Sem eles, o que chega por esses eventos não é
                 gravado (por exemplo, o reembolso na lista de cobranças).
@@ -297,7 +297,7 @@ function Produto({ check, titulo = 'Atendente extra' }: { check: ProductCheck; t
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">{titulo}</span>
         {check.found && check.active !== false ? (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">OK</Badge>
+          <Badge className="bg-success/10 text-success hover:bg-success/10">OK</Badge>
         ) : (
           <Badge variant="destructive">Problema</Badge>
         )}
@@ -324,7 +324,7 @@ function Preco({ titulo, check }: { titulo: string; check: PriceCheck }) {
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">{titulo}</span>
         {check.found && check.active !== false ? (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">OK</Badge>
+          <Badge className="bg-success/10 text-success hover:bg-success/10">OK</Badge>
         ) : (
           <Badge variant="destructive">Problema</Badge>
         )}

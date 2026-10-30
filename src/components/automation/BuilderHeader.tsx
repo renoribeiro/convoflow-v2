@@ -64,12 +64,12 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
             className={cn(
               'flex items-center gap-2 rounded-full border px-3 py-1.5 transition-all',
               active
-                ? 'border-emerald-300 bg-emerald-50 shadow-[0_0_0_3px_rgba(16,185,129,0.15)] dark:border-emerald-800 dark:bg-emerald-950/40'
+                ? 'border-success/30 bg-success/10 shadow-[0_0_0_3px_hsl(var(--success)/0.15)]'
                 : 'border-input bg-muted/40',
             )}
           >
             <Switch checked={active} onCheckedChange={onActiveChange} />
-            <span className={cn('text-xs font-medium', active ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground')}>
+            <span className={cn('text-xs font-medium', active ? 'text-success' : 'text-muted-foreground')}>
               {active ? 'Ativo' : 'Inativo'}
             </span>
           </label>
@@ -80,7 +80,7 @@ export const BuilderHeader: React.FC<BuilderHeaderProps> = ({
           {stat && stat.executions > 0 && (
             <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
               <span className="inline-flex items-center gap-1"><Activity className="h-3.5 w-3.5" /> {stat.executions} execuções</span>
-              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400"><CheckCircle2 className="h-3.5 w-3.5" /> {stat.successRate}%</span>
+              <span className="inline-flex items-center gap-1 text-success"><CheckCircle2 className="h-3.5 w-3.5" /> {stat.successRate}%</span>
             </div>
           )}
 

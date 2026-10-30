@@ -46,16 +46,23 @@ export default {
 			 * cor clara. `bg-primary`, `border-primary` etc. não mudam.
 			 */
 			textColor: {
-				primary: { DEFAULT: 'hsl(var(--primary-ink))' },
-				accent: { DEFAULT: 'hsl(var(--accent-ink))' },
-				warning: { DEFAULT: 'hsl(var(--warning-ink))' },
-				info: 'hsl(var(--info-ink))',
+				primary: { DEFAULT: 'hsl(var(--primary-ink))', foreground: 'hsl(var(--primary-foreground))' },
+				accent: { DEFAULT: 'hsl(var(--accent-ink))', foreground: 'hsl(var(--accent-foreground))' },
+				warning: { DEFAULT: 'hsl(var(--warning-ink))', foreground: 'hsl(var(--warning-foreground))' },
+				info: { DEFAULT: 'hsl(var(--info-ink))', foreground: 'hsl(var(--info-foreground))' },
+				// Lote 7: o verde e o vermelho também têm tinta própria de texto. O
+				// vermelho cheio do tema escuro dava 3,5:1 sobre o card.
+				success: { DEFAULT: 'hsl(var(--success-ink))', foreground: 'hsl(var(--success-foreground))' },
+				destructive: { DEFAULT: 'hsl(var(--destructive-ink))', foreground: 'hsl(var(--destructive-foreground))' },
+				error: 'hsl(var(--destructive-ink))',
 				brand: {
 					primary: 'hsl(var(--primary-ink))',
 					secondary: 'hsl(var(--accent-ink))',
 				},
 				status: {
+					success: 'hsl(var(--success-ink))',
 					warning: 'hsl(var(--warning-ink))',
+					error: 'hsl(var(--destructive-ink))',
 					info: 'hsl(var(--info-ink))',
 				},
 			},
@@ -87,14 +94,33 @@ export default {
 				// nested under `status.*` for backwards compatibility).
 				success: {
 					DEFAULT: 'hsl(var(--success))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--success-foreground))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--warning-foreground))'
 				},
 				error: 'hsl(var(--error))',
-				info: 'hsl(var(--info))',
+				info: {
+					DEFAULT: 'hsl(var(--info))',
+					foreground: 'hsl(var(--info-foreground))'
+				},
+				// Lote 7: véu das janelas, papel branco (QR Code) e séries dos gráficos.
+				overlay: 'hsl(var(--overlay))',
+				papel: {
+					DEFAULT: 'hsl(var(--papel))',
+					foreground: 'hsl(var(--papel-foreground))'
+				},
+				chart: {
+					1: 'hsl(var(--chart-1))',
+					2: 'hsl(var(--chart-2))',
+					3: 'hsl(var(--chart-3))',
+					4: 'hsl(var(--chart-4))',
+					5: 'hsl(var(--chart-5))',
+					6: 'hsl(var(--chart-6))',
+					7: 'hsl(var(--chart-7))',
+					8: 'hsl(var(--chart-8))'
+				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
@@ -125,6 +151,7 @@ export default {
 				brand: {
 					primary: 'hsl(var(--brand-primary))',
 					secondary: 'hsl(var(--brand-secondary))',
+					'secondary-dark': 'hsl(var(--brand-secondary-dark))',
 					light: 'hsl(var(--brand-light))',
 					dark: 'hsl(var(--brand-dark))'
 				},

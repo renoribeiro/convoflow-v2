@@ -36,13 +36,13 @@ const getIconByType = (type: string) => {
 
 const getColorByCategory = (category: string) => {
   const colors = {
-    performance: 'bg-blue-100 text-blue-800',
-    financeiro: 'bg-green-100 text-green-800',
-    marketing: 'bg-purple-100 text-purple-800',
-    trafego: 'bg-orange-100 text-orange-800',
-    conversao: 'bg-red-100 text-red-800',
+    performance: 'bg-info/10 text-info',
+    financeiro: 'bg-success/10 text-success',
+    marketing: 'bg-accent/10 text-accent',
+    trafego: 'bg-warning/10 text-warning',
+    conversao: 'bg-destructive/10 text-destructive',
   };
-  return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  return colors[category as keyof typeof colors] || 'bg-muted text-foreground';
 };
 
 // O banco guarda a categoria em inglês (o construtor grava `performance`,
@@ -101,11 +101,11 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Nome</label>
+                  <label className="text-sm font-medium text-muted-foreground">Nome</label>
                   <p className="mt-1 font-medium">{template.name}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Tipo</label>
+                  <label className="text-sm font-medium text-muted-foreground">Tipo</label>
                   <div className="mt-1 flex items-center gap-2">
                     <IconComponent className="h-4 w-4" />
                     <span>{nomeDoTipo(template.type)}</span>
@@ -114,13 +114,13 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
               </div>
               
               <div>
-                <label className="text-sm font-medium text-gray-500">Descrição</label>
-                <p className="mt-1 text-gray-700">{template.description || 'Nenhuma descrição disponível'}</p>
+                <label className="text-sm font-medium text-muted-foreground">Descrição</label>
+                <p className="mt-1 text-foreground">{template.description || 'Nenhuma descrição disponível'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Categoria</label>
+                  <label className="text-sm font-medium text-muted-foreground">Categoria</label>
                   <div className="mt-1">
                     <Badge className={getColorByCategory(template.category)}>
                       <Tag className="w-3 h-3 mr-1" />
@@ -129,7 +129,7 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
                   </div>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Visibilidade</label>
+                  <label className="text-sm font-medium text-muted-foreground">Visibilidade</label>
                   <div className="mt-1">
                     <Badge variant={template.is_public ? 'default' : 'secondary'}>
                       <Eye className="w-3 h-3 mr-1" />
@@ -151,19 +151,19 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">{template.usage_count || 0}</div>
-                  <div className="text-sm text-blue-600">Vezes usado</div>
+                <div className="text-center p-4 bg-info/10 rounded-lg">
+                  <div className="text-2xl font-bold text-info">{template.usage_count || 0}</div>
+                  <div className="text-sm text-info">Vezes usado</div>
                 </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">{template.sections?.length || 0}</div>
-                  <div className="text-sm text-green-600">Seções</div>
+                <div className="text-center p-4 bg-success/10 rounded-lg">
+                  <div className="text-2xl font-bold text-success">{template.sections?.length || 0}</div>
+                  <div className="text-sm text-success">Seções</div>
                 </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
+                <div className="text-center p-4 bg-accent/10 rounded-lg">
+                  <div className="text-2xl font-bold text-accent">
                     {template.created_at ? format(new Date(template.created_at), 'dd/MM/yyyy', { locale: ptBR }) : '—'}
                   </div>
-                  <div className="text-sm text-purple-600">Criado em</div>
+                  <div className="text-sm text-accent">Criado em</div>
                 </div>
               </div>
             </CardContent>
@@ -181,13 +181,13 @@ export function ViewTemplateModal({ isOpen, onClose, template }: ViewTemplateMod
               <CardContent>
                 <div className="space-y-3">
                   {template.sections.map((section: any, index: number) => (
-                    <div key={index} className="p-3 bg-gray-50 rounded-lg">
+                    <div key={index} className="p-3 bg-muted rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-gray-800">{section.title || `Seção ${index + 1}`}</h4>
+                        <h4 className="font-medium text-foreground">{section.title || `Seção ${index + 1}`}</h4>
                         <Badge variant="outline">{nomeDoTipo(section.type)}</Badge>
                       </div>
                       {section.description && (
-                        <p className="text-sm text-gray-600">{section.description}</p>
+                        <p className="text-sm text-muted-foreground">{section.description}</p>
                       )}
                     </div>
                   ))}

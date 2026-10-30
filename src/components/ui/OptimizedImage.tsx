@@ -35,7 +35,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     src,
     alt,
     fallbackSrc = '/placeholder.svg',
-    placeholderColor = '#e2e8f0',
+    placeholderColor = 'hsl(var(--muted))',
     aspectRatio = 'auto',
     priority = false,
     className,
@@ -189,16 +189,17 @@ export const OptimizedAvatar: React.FC<OptimizedAvatarProps> = ({
             .toUpperCase()
         : '?';
 
-    // Generate consistent background color from name
+    // Cor fixa por nome, escura o bastante para a letra branca (lote 7: com
+    // 60% de luz a letra branca sumia nos tons amarelos).
     const bgColor = name
-        ? `hsl(${name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360}, 70%, 60%)`
-        : '#6b7280';
+        ? `hsl(${name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 360}, 55%, 30%)`
+        : 'hsl(var(--muted-foreground))';
 
     if (!src || hasError) {
         return (
             <div
                 className={cn(
-                    'flex items-center justify-center rounded-full font-medium text-white',
+                    'flex items-center justify-center rounded-full font-medium text-papel',
                     avatarSizes[size],
                     className
                 )}

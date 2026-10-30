@@ -18,8 +18,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        whatsapp: "bg-brand-primary text-primary-foreground hover:bg-brand-secondary hover:text-white hover:shadow-soft",
-        success: "bg-gradient-success text-white hover:shadow-medium hover:scale-[1.02]",
+        whatsapp: "bg-brand-primary text-primary-foreground hover:bg-brand-secondary hover:text-accent-foreground hover:shadow-soft",
+        success: "bg-gradient-success text-success-foreground hover:shadow-medium hover:scale-[1.02]",
         premium: "bg-gradient-primary text-primary-foreground hover:shadow-strong hover:scale-[1.02] relative overflow-hidden",
       },
       size: {

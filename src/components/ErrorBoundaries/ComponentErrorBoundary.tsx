@@ -21,8 +21,8 @@ const MinimalErrorFallback: React.FC<{
   onRetry?: () => void;
   showRetry?: boolean;
 }> = ({ componentName = 'componente', onRetry, showRetry = true }) => (
-  <div className="flex items-center justify-center p-2 text-sm text-gray-500 bg-gray-50 rounded border border-gray-200">
-    <AlertTriangle className="h-4 w-4 mr-2 text-amber-500" />
+  <div className="flex items-center justify-center p-2 text-sm text-muted-foreground bg-muted rounded border border-border">
+    <AlertTriangle className="h-4 w-4 mr-2 text-warning" />
     <span>Erro no {componentName}</span>
     {showRetry && onRetry && (
       <Button
@@ -43,15 +43,15 @@ const CardErrorFallback: React.FC<{
   onRetry?: () => void;
   showRetry?: boolean;
 }> = ({ componentName = 'componente', onRetry, showRetry = true }) => (
-  <Card className="border-red-200 bg-red-50">
+  <Card className="border-destructive/30 bg-destructive/10">
     <CardHeader className="pb-3">
-      <CardTitle className="text-sm flex items-center text-red-700">
+      <CardTitle className="text-sm flex items-center text-destructive">
         <AlertTriangle className="h-4 w-4 mr-2" />
         Erro no {componentName}
       </CardTitle>
     </CardHeader>
     <CardContent className="pt-0">
-      <p className="text-sm text-red-600 mb-3">
+      <p className="text-sm text-destructive mb-3">
         Este {componentName} encontrou um problema e não pode ser exibido.
       </p>
       {showRetry && onRetry && (
@@ -59,7 +59,7 @@ const CardErrorFallback: React.FC<{
           variant="outline"
           size="sm"
           onClick={onRetry}
-          className="border-red-300 text-red-700 hover:bg-red-100"
+          className="border-destructive/30 text-destructive hover:bg-destructive/10"
         >
           <RefreshCw className="h-4 w-4 mr-2" />
           Tentar Novamente
@@ -86,7 +86,7 @@ const AlertErrorFallback: React.FC<{
             variant="ghost"
             size="sm"
             onClick={onRetry}
-            className="ml-2 h-8 px-2 text-red-700 hover:bg-red-100"
+            className="ml-2 h-8 px-2 text-destructive hover:bg-destructive/10"
           >
             <RefreshCw className="h-4 w-4" />
           </Button>

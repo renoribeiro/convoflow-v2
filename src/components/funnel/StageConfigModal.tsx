@@ -19,7 +19,7 @@ import { useTenant } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { useQueryClient } from '@tanstack/react-query';
-import { CORES_DE_ETAPA } from '@/lib/funnel/corDaEtapa';
+import { CORES_DE_ETAPA, corDaEtapa } from '@/lib/funnel/corDaEtapa';
 
 interface Stage {
   id: string;
@@ -50,7 +50,7 @@ const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: 
     transition,
   };
 
-  const colorClass = colorOptions.find(c => c.value === stage.color)?.class || 'bg-gray-100 text-gray-800';
+  const pintura = corDaEtapa(stage.color);
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
@@ -61,7 +61,7 @@ const SortableStageItem = ({ stage, onEdit, onDelete }: { stage: Stage; onEdit: 
               <div {...listeners} className="cursor-grab">
                 <GripVertical className="w-4 h-4 text-muted-foreground" />
               </div>
-              <Badge className={colorClass}>
+              <Badge className={pintura.className} style={pintura.style}>
                 {stage.name}
               </Badge>
             </div>
@@ -292,9 +292,8 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
                     {colorOptions.map((color) => (
                       <Badge
                         key={color.value}
-                        className={`cursor-pointer ${color.class} ${
-                          newStageColor === color.value ? 'ring-2 ring-primary' : ''
-                        }`}
+                        className={`cursor-pointer ${corDaEtapa(color.value).className} ${newStageColor === color.value ? 'ring-2 ring-primary' : ''}`}
+                        style={corDaEtapa(color.value).style}
                         onClick={() => setNewStageColor(color.value)}
                       >
                         {color.name}
@@ -336,9 +335,8 @@ export const StageConfigModal = ({ isOpen, onClose }: StageConfigModalProps) => 
                       {colorOptions.map((color) => (
                         <Badge
                           key={color.value}
-                          className={`cursor-pointer ${color.class} ${
-                            editingStage.color === color.value ? 'ring-2 ring-primary' : ''
-                          }`}
+                          className={`cursor-pointer ${corDaEtapa(color.value).className} ${editingStage.color === color.value ? 'ring-2 ring-primary' : ''}`}
+                        style={corDaEtapa(color.value).style}
                           onClick={() => setEditingStage({ ...editingStage, color: color.value })}
                         >
                           {color.name}

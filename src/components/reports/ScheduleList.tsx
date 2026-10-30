@@ -233,12 +233,12 @@ export const ScheduleList = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-success">
                     {schedules.filter(s => s.is_active).length}
                   </p>
                 )}
               </div>
-              <Clock className="w-8 h-8 text-green-600" />
+              <Clock className="w-8 h-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -251,12 +251,12 @@ export const ScheduleList = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-info">
                     {schedules.filter(s => getFrequencyFromCron(s.cron_expression) === 'daily').length}
                   </p>
                 )}
               </div>
-              <Mail className="w-8 h-8 text-blue-600" />
+              <Mail className="w-8 h-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -269,12 +269,12 @@ export const ScheduleList = () => {
                 {isLoading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-success">
                     {schedules.filter(s => getFrequencyFromCron(s.cron_expression) === 'weekly').length}
                   </p>
                 )}
               </div>
-              <MessageSquare className="w-8 h-8 text-green-600" />
+              <MessageSquare className="w-8 h-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -423,7 +423,7 @@ export const ScheduleList = () => {
         confirmText="Excluir agendamento"
         variant="destructive"
         isLoading={deleteScheduleMutation.isPending}
-        icon={<Trash2 className="h-5 w-5 text-red-500" />}
+        icon={<Trash2 className="h-5 w-5 text-destructive" />}
       />
 
       <ScheduleModal

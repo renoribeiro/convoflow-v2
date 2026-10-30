@@ -435,7 +435,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
   const renderConsentimento = (contact: Contact) => (
     <div className="flex flex-col gap-1">
       {contact.is_blocked ? (
-        <Badge variant="secondary" className="bg-red-100 text-red-800 w-fit">
+        <Badge variant="secondary" className="bg-destructive/10 text-destructive w-fit">
           Bloqueado
         </Badge>
       ) : contact.opt_in_mass_message ? (
@@ -446,7 +446,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           disabled={consentMutation.isPending}
           className="w-fit"
         >
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer w-fit">
+          <Badge className="bg-success/10 text-success hover:bg-success/20 cursor-pointer w-fit">
             Aceita campanhas
           </Badge>
         </button>
@@ -458,7 +458,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
           disabled={consentMutation.isPending}
           className="w-fit"
         >
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 cursor-pointer w-fit">
+          <Badge variant="secondary" className="bg-warning/10 text-warning hover:bg-warning/20 cursor-pointer w-fit">
             Não quer campanhas
           </Badge>
         </button>
@@ -470,7 +470,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
             onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_in', atual: false })}
             disabled={consentMutation.isPending}
           >
-            <Badge variant="outline" className="hover:bg-green-50 cursor-pointer text-xs">
+            <Badge variant="outline" className="hover:bg-success/10 cursor-pointer text-xs">
               + Aceita campanhas
             </Badge>
           </button>
@@ -480,7 +480,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
             onClick={() => setConsentAlvo({ contactId: contact.id, nome: contact.name || 'este contato', campo: 'opt_out', atual: false })}
             disabled={consentMutation.isPending}
           >
-            <Badge variant="outline" className="hover:bg-yellow-50 cursor-pointer text-xs">
+            <Badge variant="outline" className="hover:bg-warning/10 cursor-pointer text-xs">
               Não quer campanhas
             </Badge>
           </button>
@@ -678,7 +678,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
                   )}
                   <DropdownMenuItem
                     onClick={() => handleDeleteClick(contact.id, displayName(contact))}
-                    className="text-red-600"
+                    className="text-destructive"
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -717,7 +717,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         cancelText="Cancelar"
         variant="destructive"
         isLoading={deleteMutation.isPending}
-        icon={<Trash2 className="h-5 w-5 text-red-500" />}
+        icon={<Trash2 className="h-5 w-5 text-destructive" />}
       />
 
       {consentAlvo && (
@@ -756,7 +756,7 @@ export const ContactsTable = ({ filters, whatsappInstanceId, channel = 'all', ca
         cancelText="Cancelar"
         variant="destructive"
         isLoading={unlinkMutation.isPending}
-        icon={<Unlink className="h-5 w-5 text-red-500" />}
+        icon={<Unlink className="h-5 w-5 text-destructive" />}
       />
     </div>
   );

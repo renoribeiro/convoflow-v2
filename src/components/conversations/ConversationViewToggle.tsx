@@ -13,8 +13,8 @@ interface ConversationViewToggleProps {
 }
 
 /** Mesmo par de cores da pílula ativa dos filtros rápidos. */
-const ACTIVE_BG = '#DAE27C';
-const ACTIVE_FG = '#211E0B';
+const ACTIVE_BG = 'hsl(var(--primary))';
+const ACTIVE_FG = 'hsl(var(--primary-foreground))';
 
 /**
  * Id próprio da animação. NÃO reaproveitar o das `QuickFilterPills`: os dois

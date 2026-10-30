@@ -251,9 +251,9 @@ export const RotationSettings = () => {
         {ineligible.total > 0 && (
           <div
             role="status"
-            className="flex items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50 p-3 dark:border-amber-500/40 dark:bg-amber-950/30"
+            className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-3"
           >
-            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-warning" />
             <div className="space-y-1 text-sm">
               <p className="font-medium">
                 {ineligible.total === 1

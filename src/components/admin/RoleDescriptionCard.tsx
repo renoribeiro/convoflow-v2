@@ -63,7 +63,7 @@ const ItemList = ({ title, items, tone }: ItemListProps) => {
               className={cn(
                 'mt-0.5 h-3 w-3 shrink-0',
                 tone === 'can'
-                  ? 'text-green-600 dark:text-green-500'
+                  ? 'text-success'
                   : 'text-muted-foreground',
               )}
             />

@@ -215,7 +215,7 @@ function SequenceBuilderModal({
                     </div>
                     {steps.length > 1 && (
                       <Button variant="ghost" size="sm" onClick={() => removeStep(i)}>
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     )}
                   </div>
@@ -448,7 +448,7 @@ export function SequencesManager() {
                     size="sm"
                     onClick={() => setSequenciaParaExcluir({ id: seq.id, name: seq.name })}
                   >
-                    <Trash2 className="w-4 h-4 mr-1 text-red-500" /> Excluir
+                    <Trash2 className="w-4 h-4 mr-1 text-destructive" /> Excluir
                   </Button>
                 </div>
               </CardContent>

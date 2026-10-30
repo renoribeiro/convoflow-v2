@@ -535,7 +535,7 @@ export const ConversationsList = ({
                   </Badge>
                 )}
                 {conversation.contact_source && (
-                  <Badge key={`fonte-${conversation.contact_source}`} variant="secondary" className="text-xs truncate max-w-[80px]">
+                  <Badge key={`fonte-${conversation.contact_source}`} variant="outline" className="border-0 bg-muted text-foreground text-xs font-medium truncate max-w-[80px]">
                     {conversation.contact_source}
                   </Badge>
                 )}

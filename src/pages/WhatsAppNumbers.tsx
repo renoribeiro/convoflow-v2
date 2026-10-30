@@ -28,6 +28,7 @@ import { SAFE_INSTANCE_SELECT, rebuildSafeInstanceRow } from '@/lib/whatsapp/saf
 import { useMetaApi } from '@/hooks/useMetaApi';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
+import { ChannelLogo } from '@/components/conversations/ChannelLogo';
 import { CreateInstanceModal } from '@/components/whatsapp/CreateInstanceModal';
 import { EscolherLojaDoNumero } from '@/components/whatsapp/EscolherLojaDoNumero';
 import { consumirConectarNumero } from '@/lib/whatsapp/conectarPendente';
@@ -90,37 +91,37 @@ interface WhatsAppInstance {
 }
 
 const PROVIDER_BADGE: Record<ProviderType, { label: string; className: string }> = {
-  official: { label: 'API Oficial', className: 'bg-emerald-600 hover:bg-emerald-600 text-white' },
-  waha: { label: 'QR Code', className: 'bg-sky-600 hover:bg-sky-600 text-white' },
-  evolution: { label: 'QR Code', className: 'bg-slate-600 hover:bg-slate-600 text-white' },
+  official: { label: 'API Oficial', className: 'bg-success hover:bg-success text-success-foreground' },
+  waha: { label: 'QR Code', className: 'bg-info hover:bg-info text-info-foreground' },
+  evolution: { label: 'QR Code', className: 'bg-muted hover:bg-muted text-foreground' },
   // Instância de Instagram (fatia 2) é criada por procedimento manual, sem tela
   // própria. Sem esta entrada o mapa devolve undefined e a página inteira cai.
-  instagram: { label: 'Instagram', className: 'bg-fuchsia-600 hover:bg-fuchsia-600 text-white' },
+  instagram: { label: 'Instagram', className: 'bg-accent hover:bg-accent text-accent-foreground' },
 };
 
 // Instagram não tem open/connecting: o que diz se a conexão atende é a
 // validade do acesso (connection_config.tokenExpiresAt) e o estado da
 // renovação automática. Só exibição — ver src/lib/instagram/connection.ts.
 const INSTAGRAM_STATE_DOT: Record<InstagramConnectionState, string> = {
-  valid: 'bg-green-500',
-  unknown: 'bg-green-500',
-  expiring: 'bg-yellow-500',
-  needs_reconnect: 'bg-red-500',
-  expired: 'bg-red-500',
+  valid: 'bg-success',
+  unknown: 'bg-success',
+  expiring: 'bg-warning',
+  needs_reconnect: 'bg-destructive',
+  expired: 'bg-destructive',
 };
 
 function instagramStateIcon(state: InstagramConnectionState) {
   switch (state) {
     case 'valid':
     case 'unknown':
-      return <Wifi className="h-4 w-4 text-green-600" />;
+      return <Wifi className="h-4 w-4 text-success" />;
     case 'expiring':
-      return <AlertCircle className="h-4 w-4 text-yellow-600" />;
+      return <AlertCircle className="h-4 w-4 text-warning" />;
     case 'needs_reconnect':
-      return <AlertCircle className="h-4 w-4 text-red-600" />;
+      return <AlertCircle className="h-4 w-4 text-destructive" />;
     case 'expired':
     default:
-      return <WifiOff className="h-4 w-4 text-red-600" />;
+      return <WifiOff className="h-4 w-4 text-destructive" />;
   }
 }
 
@@ -281,12 +282,12 @@ export default function WhatsAppNumbers() {
     switch (status) {
       case 'open':
       case 'connected':
-        return 'bg-green-500';
+        return 'bg-success';
       case 'connecting':
-        return 'bg-yellow-500';
+        return 'bg-warning';
       case 'close':
       default:
-        return 'bg-red-500';
+        return 'bg-destructive';
     }
   };
 
@@ -294,12 +295,12 @@ export default function WhatsAppNumbers() {
     switch (status) {
       case 'open':
       case 'connected':
-        return <Wifi className="h-4 w-4 text-green-600" />;
+        return <Wifi className="h-4 w-4 text-success" />;
       case 'connecting':
-        return <RefreshCw className="h-4 w-4 text-yellow-600 animate-spin" />;
+        return <RefreshCw className="h-4 w-4 text-warning animate-spin" />;
       case 'close':
       default:
-        return <WifiOff className="h-4 w-4 text-red-600" />;
+        return <WifiOff className="h-4 w-4 text-destructive" />;
     }
   };
 
@@ -593,7 +594,7 @@ export default function WhatsAppNumbers() {
                   <p className="text-xs text-muted-foreground" data-testid="total-breakdown">{totalCard.breakdown}</p>
                 )}
               </div>
-              <Smartphone className="h-8 w-8 text-blue-500" />
+              <Smartphone className="h-8 w-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -749,7 +750,7 @@ export default function WhatsAppNumbers() {
                             variant="ghost"
                             size="icon"
                             onClick={() => setDesconectarAlvo(instance)}
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                             title="Desconectar"
                             aria-label="Desconectar"
                           >
@@ -812,7 +813,7 @@ export default function WhatsAppNumbers() {
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(instance)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                           title="Excluir número"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -837,7 +838,7 @@ export default function WhatsAppNumbers() {
             <Card>
               <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 space-y-0">
                 <CardTitle className="flex items-center gap-2">
-                  <Instagram className="h-5 w-5 text-[#E4405F]" aria-hidden />
+                  <ChannelLogo channel="instagram" className="h-5 w-5" />
                   Contas do Instagram
                 </CardTitle>
                 {igActions.showConnect && (
@@ -908,9 +909,9 @@ export default function WhatsAppNumbers() {
                                 data-testid="instagram-validity"
                                 className={
                                   ig.state === 'expired' || ig.state === 'needs_reconnect'
-                                    ? 'text-red-600'
+                                    ? 'text-destructive'
                                     : ig.state === 'expiring'
-                                      ? 'text-yellow-700'
+                                      ? 'text-warning'
                                       : undefined
                                 }
                               >
@@ -952,7 +953,7 @@ export default function WhatsAppNumbers() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setIgToggle(account)}
-                                className={account.is_active ? 'text-red-600 hover:text-red-700' : undefined}
+                                className={account.is_active ? 'text-destructive hover:bg-destructive/10 hover:text-destructive' : undefined}
                               >
                                 <Power className="h-4 w-4 mr-1" />
                                 {account.is_active ? 'Desligar' : 'Religar'}
@@ -975,7 +976,7 @@ export default function WhatsAppNumbers() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => handleDelete(account)}
-                                className="text-red-600 hover:text-red-700"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                 title="Excluir conta do Instagram"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -1020,7 +1021,7 @@ export default function WhatsAppNumbers() {
         comoDesfazer="conecte de novo pelo botão de QR Code do número, com o celular em mãos."
         confirmText="Desconectar número"
         variant="destructive"
-        icon={<WifiOff className="h-5 w-5 text-red-500" />}
+        icon={<WifiOff className="h-5 w-5 text-destructive" />}
       />
 
       {/* PIN gerado no registro: só fecha com clique em "Já guardei o PIN". */}
@@ -1120,7 +1121,7 @@ export default function WhatsAppNumbers() {
                 <AlertDialogAction
                   onClick={(e) => { e.preventDefault(); void confirmInstagramToggle(); }}
                   disabled={igToggling}
-                  className={igToggle.is_active ? 'bg-red-600 hover:bg-red-700' : undefined}
+                  className={igToggle.is_active ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : undefined}
                 >
                   {igToggling ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
                   {t.action}

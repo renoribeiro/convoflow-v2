@@ -42,9 +42,9 @@ interface FalhaDeEnvio {
 }
 
 const TOM: Record<LeadTone, string> = {
-  ok: 'bg-green-100 text-green-800 border-green-200 dark:bg-green-950 dark:text-green-300',
-  neutral: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300',
-  attention: 'bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-950 dark:text-amber-300',
+  ok: 'bg-success/10 text-success border-success/30',
+  neutral: 'bg-info/10 text-info border-info/30',
+  attention: 'bg-warning/10 text-warning border-warning/30',
   muted: 'bg-muted text-muted-foreground',
 };
 

@@ -35,22 +35,22 @@ export const WhatsAppStatus = () => {
   const getStatusIcon = (status: string) => {
     switch (normalizeStatus(status)) {
       case 'connected':
-        return <Wifi className="h-4 w-4 text-emerald-600" />;
+        return <Wifi className="h-4 w-4 text-success" />;
       case 'connecting':
-        return <Loader2 className="h-4 w-4 text-amber-600 animate-spin" />;
+        return <Loader2 className="h-4 w-4 text-warning animate-spin" />;
       default:
-        return <WifiOff className="h-4 w-4 text-red-600" />;
+        return <WifiOff className="h-4 w-4 text-destructive" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (normalizeStatus(status)) {
       case 'connected':
-        return 'bg-emerald-600';
+        return 'bg-success text-success-foreground hover:bg-success';
       case 'connecting':
-        return 'bg-amber-600';
+        return 'bg-warning text-warning-foreground hover:bg-warning';
       default:
-        return 'bg-red-600';
+        return 'bg-destructive text-destructive-foreground hover:bg-destructive';
     }
   };
 
@@ -114,7 +114,7 @@ export const WhatsAppStatus = () => {
                     <h4 className="font-medium text-foreground">{instance.name}</h4>
                     <Badge 
                       variant="secondary" 
-                      className={`text-xs ${getStatusColor(instance.status)} text-white`}
+                      className={`text-xs ${getStatusColor(instance.status)}`}
                     >
                       {getStatusText(instance.status)}
                     </Badge>

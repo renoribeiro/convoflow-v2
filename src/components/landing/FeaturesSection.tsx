@@ -18,55 +18,55 @@ export const FeaturesSection = () => {
       icon: Bot,
       title: 'Chatbots Inteligentes',
       description: 'Crie chatbots personalizados que respondem sozinhos e separam os contatos com interesse, 24 horas por dia.',
-      color: 'bg-blue-500'
+      color: 'bg-chart-2/20'
     },
     {
       icon: MessageSquare,
       title: 'Multi-atendimento',
       description: 'Gerencie múltiplas conversas simultaneamente com interface intuitiva e organizada.',
-      color: 'bg-brand-primary'
+      color: 'bg-primary/30'
     },
     {
       icon: BarChart3,
       title: 'Analytics Avançado',
       description: 'Relatórios detalhados sobre performance, conversões e métricas de engajamento.',
-      color: 'bg-purple-500'
+      color: 'bg-chart-6/25'
     },
     {
       icon: Users,
       title: 'Gestão de Equipe',
       description: 'Organize sua equipe, distribua conversas e monitore performance individual.',
-      color: 'bg-orange-500'
+      color: 'bg-chart-4/20'
     },
     {
       icon: Zap,
       title: 'Automação completa',
       description: 'Automações que recebem cada contato novo, mostram quem tem interesse e mandam a mensagem certa na hora certa.',
-      color: 'bg-yellow-500'
+      color: 'bg-chart-7/25'
     },
     {
       icon: Shield,
       title: 'Segurança Avançada',
       description: 'Criptografia em trânsito e em repouso, dados no Brasil e conformidade com a LGPD.',
-      color: 'bg-red-500'
+      color: 'bg-chart-8/20'
     },
     {
       icon: Clock,
       title: 'Respostas Instantâneas',
       description: 'Templates prontos e respostas rápidas para agilizar o atendimento.',
-      color: 'bg-indigo-500'
+      color: 'bg-chart-2/20'
     },
     {
       icon: Target,
       title: 'Segmentação Inteligente',
       description: 'Organize contatos por tags, comportamento e histórico de interações.',
-      color: 'bg-pink-500'
+      color: 'bg-chart-6/25'
     },
     {
       icon: Smartphone,
       title: 'Multi-dispositivos',
       description: 'Acesse de qualquer lugar: desktop, tablet ou smartphone com sincronização.',
-      color: 'bg-green-500'
+      color: 'bg-chart-1/20'
     }
   ];
 
@@ -101,7 +101,7 @@ export const FeaturesSection = () => {
               className="group p-6 rounded-xl border border-border hover:border-brand-primary/50 transition-all duration-300 hover:shadow-lg bg-card"
             >
               <div className={`w-12 h-12 rounded-lg ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                <feature.icon className="w-6 h-6 text-white" />
+                <feature.icon className="w-6 h-6 text-foreground" />
               </div>
               
               <h3 className="text-xl font-semibold text-foreground mb-3 group-hover:text-brand-primary transition-colors">

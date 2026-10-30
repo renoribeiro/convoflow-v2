@@ -105,3 +105,32 @@ export function estiloDaTinta(cor: string | null | undefined): Record<string, st
 }
 
 export const CLASSE_DA_TINTA = 'text-[var(--tinta-clara)] dark:text-[var(--tinta-escura)]';
+
+/**
+ * Fundo CHEIO na cor de uma categoria (cabeçalho do bloco do chatbot, círculo
+ * do ícone na automação), com texto e ícone brancos por cima. Lote 7: a cor é
+ * escurecida só até o branco passar no contraste mínimo, igual nos dois temas
+ * (o fundo é dela, não do tema). O verde-esmeralda puro dava 3,8:1 com branco.
+ */
+const BRANCO: Rgb = [1, 1, 1];
+export function fundoParaTextoBranco(cor: string): string | null {
+  const rgb = hexParaRgb(cor);
+  return rgb ? paraHex(ajustar(rgb, BRANCO, -0.02)) : null;
+}
+
+export function estiloDoFundoCheio(cor: string | null | undefined): Record<string, string> {
+  const fundo = cor ? fundoParaTextoBranco(cor) : null;
+  return fundo ? { backgroundColor: fundo, color: '#ffffff' } : {};
+}
+
+/**
+ * Pintura SUAVE de uma categoria (cartão do passo da automação): fundo bem
+ * claro da própria cor e a borda. O texto do cartão fica com as cores do tema;
+ * o rótulo da categoria usa estiloDaTinta.
+ */
+export function estiloDoFundoSuave(cor: string | null | undefined): Record<string, string> {
+  const rgb = cor ? hexParaRgb(cor) : null;
+  if (!rgb) return {};
+  const seis = paraHex(rgb);
+  return { backgroundColor: `${seis}14`, borderColor: `${seis}66` };
+}

@@ -87,7 +87,7 @@ export const FunnelBoard = () => {
   const stages: FunnelStage[] = stagesData.map(stage => ({
     id: stage.id,
     name: stage.name,
-    color: stage.color || 'bg-gray-100 text-gray-800',
+    color: stage.color || 'bg-muted text-foreground',
     leads: contactsData?.filter(contact => {
       // Mesma pessoa vinculada nos dois canais: um cartão só, o do WhatsApp
       // (é nele que a etapa e as automações valem).
@@ -333,7 +333,7 @@ export const FunnelBoard = () => {
     return (
       <div className="flex gap-6 overflow-x-auto pb-4 px-2">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="min-w-[300px] bg-gray-50 rounded-lg p-4">
+          <div key={i} className="min-w-[300px] bg-muted rounded-lg p-4">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-3">
               <Skeleton className="h-20 w-full" />

@@ -7,6 +7,7 @@ import React from 'react';
 import { Trash2, CheckCircle2, AlertTriangle, ChevronRight, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CATEGORY_STYLES, type StepCategory } from './automationCatalog';
+import { CLASSE_DA_TINTA } from '@/lib/cores/tintaLegivel';
 import type { LucideIcon } from 'lucide-react';
 
 interface StepCardProps {
@@ -54,22 +55,26 @@ const StepCardBase: React.FC<StepCardProps> = ({
         'animate-in fade-in slide-in-from-top-1',
         'hover:shadow-md hover:-translate-y-0.5 motion-reduce:transform-none',
         'focus-visible:ring-2 focus-visible:ring-offset-2',
-        s.border,
-        s.cardBg,
-        selected && cn('ring-2 ring-offset-2 shadow-md', s.ring),
-        isTrigger && 'w-80 bg-gradient-to-br from-emerald-50 to-card dark:from-emerald-950/50 dark:to-card',
+        selected && 'ring-2 ring-offset-2 shadow-md',
+        isTrigger && 'w-80',
       )}
+      style={{
+        ...s.pintura.suave,
+        ...(selected ? s.pintura.anel : {}),
+        // O gatilho abre o fluxo: degradê da cor dele para o fundo do cartão.
+        ...(isTrigger ? { backgroundImage: `linear-gradient(to bottom right, ${s.cor}26, hsl(var(--card)) 70%)` } : {}),
+      }}
     >
       <div className="flex items-start gap-3 p-3.5">
         {/* Ícone em círculo colorido */}
-        <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm', s.iconBg)}>
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full shadow-sm" style={s.pintura.cheio}>
           <Icon className="h-5 w-5" />
         </div>
 
         {/* Conteúdo */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className={cn('text-[10px] font-semibold uppercase tracking-wide', s.text)}>{s.label}</span>
+            <span className={cn('text-[10px] font-semibold uppercase tracking-wide', CLASSE_DA_TINTA)} style={s.pintura.texto}>{s.label}</span>
             {isTrigger && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
           </div>
           <p className="truncate text-sm font-semibold text-foreground">{title}</p>
@@ -80,12 +85,12 @@ const StepCardBase: React.FC<StepCardProps> = ({
           {/* Rodapé: status + runs */}
           <div className="mt-2 flex items-center gap-2">
             {status === 'complete' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success">
                 <CheckCircle2 className="h-3 w-3" /> Configurado
               </span>
             )}
             {status === 'incomplete' && (
-              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-warning">
                 <AlertTriangle className="h-3 w-3" /> Incompleto
               </span>
             )}

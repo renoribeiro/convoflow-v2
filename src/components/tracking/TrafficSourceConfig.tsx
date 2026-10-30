@@ -323,7 +323,7 @@ export const TrafficSourceConfig = ({ pedidoNovaFonte = 0 }: TrafficSourceConfig
               confirmText="Excluir fonte"
               variant="destructive"
               isLoading={deleteSource.isPending}
-              icon={<Trash2 className="h-5 w-5 text-red-500" />}
+              icon={<Trash2 className="h-5 w-5 text-destructive" />}
             />
           );
         }

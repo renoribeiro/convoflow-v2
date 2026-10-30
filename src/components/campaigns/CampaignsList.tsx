@@ -55,12 +55,12 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const STATUS_CLASS: Record<string, string> = {
-  active: 'bg-green-100 text-green-800 border-green-200',
-  paused: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  scheduled: 'bg-blue-100 text-blue-800 border-blue-200',
-  completed: 'bg-purple-100 text-purple-800 border-purple-200',
-  cancelled: 'bg-red-100 text-red-800 border-red-200',
-  draft: 'bg-gray-100 text-gray-700 border-gray-200',
+  active: 'bg-success/10 text-success border-success/30',
+  paused: 'bg-warning/10 text-warning border-warning/30',
+  scheduled: 'bg-info/10 text-info border-info/30',
+  completed: 'bg-accent/10 text-accent border-accent/30',
+  cancelled: 'bg-destructive/10 text-destructive border-destructive/30',
+  draft: 'bg-muted text-foreground border-border',
 };
 
 const MESSAGE_TYPE_ICON: Record<string, React.ReactNode> = {
@@ -232,7 +232,7 @@ export const CampaignsList = ({ status, onEdit, onNova }: CampaignsListProps) =>
         confirmText="Excluir campanha"
         variant="destructive"
         isLoading={deleteCampaign.isPending}
-        icon={<Trash2 className="h-5 w-5 text-red-500" />}
+        icon={<Trash2 className="h-5 w-5 text-destructive" />}
       />
 
       <ConfirmationDialog
@@ -270,7 +270,7 @@ export const CampaignsList = ({ status, onEdit, onNova }: CampaignsListProps) =>
         cancelText="Voltar"
         variant="destructive"
         isLoading={setCampaignStatus.isPending}
-        icon={<XCircle className="h-5 w-5 text-red-500" />}
+        icon={<XCircle className="h-5 w-5 text-destructive" />}
       />
 
       <CampaignDetailsModal
@@ -375,7 +375,7 @@ function CampaignCard({
               size="sm"
               onClick={() => onDispatchNow(campaign.id)}
               disabled={isDispatching}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-success hover:bg-success/90 text-success-foreground"
             >
               <Send className="h-4 w-4 mr-1" />
               {isDispatching ? 'Disparando...' : 'Disparar agora'}
@@ -422,7 +422,7 @@ function CampaignCard({
               {podeAgir && (isActive || isPaused || isScheduled) && (
                 <DropdownMenuItem
                   onClick={() => onCancel(campaign.id)}
-                  className="text-red-600"
+                  className="text-destructive"
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Cancelar
@@ -433,7 +433,7 @@ function CampaignCard({
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={() => onDelete(campaign.id, campaign.name)}
-                    className="text-red-600"
+                    className="text-destructive"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Excluir
@@ -475,7 +475,7 @@ function CampaignCard({
           </span>
           <div className="flex items-center gap-3">
             {isScheduled && campaign.scheduled_at && (
-              <span className="text-blue-600 font-medium">
+              <span className="text-info font-medium">
                 Agendada {countdownLabel(campaign.scheduled_at)}
               </span>
             )}

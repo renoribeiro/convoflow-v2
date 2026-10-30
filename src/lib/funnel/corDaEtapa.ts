@@ -11,13 +11,19 @@
  */
 import { CLASSE_DA_TINTA, estiloDaTinta } from '@/lib/cores/tintaLegivel';
 
+/**
+ * As cores oferecidas em "Configurar etapas". O nome é o que vai para o banco;
+ * o código de cor é o que pinta. Lote 7: o nome passa pelo mesmo ajuste de
+ * contraste do código de cor (fundo claro da cor, texto na tinta legível de
+ * cada tema), no lugar das classes fixas de antes.
+ */
 export const CORES_DE_ETAPA = [
-  { name: 'Azul', value: 'blue', class: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800' },
-  { name: 'Verde', value: 'green', class: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950 dark:text-green-200 dark:border-green-800' },
-  { name: 'Amarelo', value: 'yellow', class: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800' },
-  { name: 'Laranja', value: 'orange', class: 'bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-800' },
-  { name: 'Roxo', value: 'purple', class: 'bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-950 dark:text-purple-200 dark:border-purple-800' },
-  { name: 'Rosa', value: 'pink', class: 'bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-950 dark:text-pink-200 dark:border-pink-800' },
+  { name: 'Azul', value: 'blue', hex: '#3b82f6' },
+  { name: 'Verde', value: 'green', hex: '#16a34a' },
+  { name: 'Amarelo', value: 'yellow', hex: '#eab308' },
+  { name: 'Laranja', value: 'orange', hex: '#f97316' },
+  { name: 'Roxo', value: 'purple', hex: '#9333ea' },
+  { name: 'Rosa', value: 'pink', hex: '#ec4899' },
 ] as const;
 
 const NEUTRA = 'bg-muted text-foreground border-border';
@@ -33,11 +39,11 @@ export function corDaEtapa(cor: string | null | undefined): PinturaDaEtapa {
   const valor = (cor ?? '').trim();
   if (!valor) return { className: NEUTRA };
   const nomeada = CORES_DE_ETAPA.find((c) => c.value === valor);
-  if (nomeada) return { className: nomeada.class };
-  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(valor)) {
+  const codigo = nomeada ? nomeada.hex : valor;
+  if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(codigo)) {
     // Fundo claro da própria cor; o texto é a mesma cor ajustada até passar
     // no contraste mínimo (a cor pura não passava em metade das cores).
-    const seis = valor.length === 4 ? `#${[...valor.slice(1)].map((x) => x + x).join('')}` : valor;
+    const seis = codigo.length === 4 ? `#${[...codigo.slice(1)].map((x) => x + x).join('')}` : codigo;
     return { className: CLASSE_DA_TINTA, style: { backgroundColor: `${seis}26`, borderColor: seis, ...estiloDaTinta(seis) } };
   }
   if (/\bbg-/.test(valor)) return { className: valor };

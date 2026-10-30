@@ -2,49 +2,38 @@
  * Paleta de cores para gráficos (recharts) derivada da marca ConvoFlow.
  *
  * Fonte da verdade para TODAS as séries de dados em gráficos/analytics.
- * Não use hex hardcoded em componentes de gráfico — importe daqui.
+ * Não use cor escrita à mão em componentes de gráfico: importe daqui.
  *
- * Marca base:
- *   Primária #DAE27C (lima) · Secundária #7777D8 (lilás) · Apoio #49511D (oliva)
+ * Desde o lote 7 ("Cores e tema escuro") cada cor é um token (--chart-1 a
+ * --chart-8 e os de situação em src/index.css), que troca sozinho entre o tema
+ * claro e o escuro. No claro a lima pura sumia no branco; agora a série 1 é a
+ * lima escura no claro e a lima da marca no escuro. O recharts aceita
+ * `hsl(var(--x))` em fill e stroke.
  */
+const token = (nome: string) => `hsl(var(--${nome}))`;
 
 /** Cores-âncora da marca. */
 export const BRAND_CHART = {
-  primary: "#DAE27C", // Lima
-  secondary: "#7777D8", // Lilás
-  support: "#49511D", // Oliva
+  primary: token('chart-1'), // Lima
+  secondary: token('chart-2'), // Lilás
+  support: token('chart-3'), // Oliva
 } as const;
 
 /**
  * Série de cores para múltiplos conjuntos de dados (pizza, barras agrupadas, etc.).
  * 8 tons distinguíveis ancorados na identidade (lima → lilás → oliva + complementares).
  */
-export const CHART_SERIES: string[] = [
-  "#DAE27C", // 1. Lima (primária)
-  "#7777D8", // 2. Lilás (secundária)
-  "#49511D", // 3. Oliva (apoio)
-  "#B0B85C", // 4. Lima escura
-  "#A89FE6", // 5. Lilás claro
-  "#8A8F3E", // 6. Oliva média
-  "#C9A24B", // 7. Dourado quente (complementar)
-  "#5D8C7B", // 8. Verde-azulado suave (complementar frio)
-];
+export const CHART_SERIES: string[] = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => token(`chart-${n}`));
 
-/** Cores semânticas de status, alinhadas aos tokens CSS (--success/--warning/--error/--info). */
+/** Cores semânticas de situação: os mesmos tokens das telas (--success/--warning/--error/--info). */
 export const CHART_STATUS = {
-  success: "#6E9A37", // verde-lima (hsl 84 46% 40%)
-  warning: "#EB9A0A", // âmbar (hsl 38 92% 48%)
-  error: "#DF4444", // vermelho (hsl 0 75% 55%)
-  info: "#6B6BD6", // lilás-azul (hsl 240 55% 62%)
-  neutral: "#9CA08A", // cinza-oliva neutro
+  success: token('success'),
+  warning: token('warning'),
+  error: token('destructive'),
+  info: token('info'),
+  neutral: token('muted-foreground'),
 } as const;
 
 /** Retorna a cor da série pelo índice, repetindo ciclicamente quando necessário. */
 export const getChartColor = (index: number): string =>
   CHART_SERIES[index % CHART_SERIES.length] ?? CHART_SERIES[0]!;
-
-/**
- * Paleta padrão de etiquetas/tags (defaults no código; registros já salvos no banco
- * mantêm a cor escolhida pelo usuário).
- */
-export const TAG_PALETTE: string[] = CHART_SERIES;

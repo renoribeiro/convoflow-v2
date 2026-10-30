@@ -310,7 +310,7 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
           <>
             <motion.div
               key="sidebar-backdrop"
-              className="fixed inset-0 z-40 bg-black/40 md:hidden"
+              className="fixed inset-0 z-40 bg-overlay/40 md:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

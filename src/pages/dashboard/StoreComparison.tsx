@@ -1,5 +1,5 @@
 import { EmptyState } from '@/components/shared/EmptyState';
-import { BarChart3 } from 'lucide-react';
+import { AlertTriangle, BarChart3, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ResponsiveTable, type ResponsiveColumn } from '@/components/shared/ResponsiveTable';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,7 +13,7 @@ const numberFmt = new Intl.NumberFormat('pt-BR');
  * RoleGuard (gerente; superadmin também acessa por bypass).
  */
 const StoreComparison = () => {
-  const { metrics, isLoading } = useStoreComparison();
+  const { metrics, isLoading, error, tentarDeNovo } = useStoreComparison();
 
   const totals = metrics.reduce(
     (acc, m) => ({
@@ -45,7 +45,8 @@ const StoreComparison = () => {
       <Card>
         <CardHeader>
           <CardTitle>Visão comparativa</CardTitle>
-          <CardDescription>Contatos, conversas e mensagens por Loja.</CardDescription>
+          {/* Achado 75: os números são o total desde o início, sem período. */}
+          <CardDescription>Contatos, conversas e mensagens por Loja, no total desde o início de cada uma.</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -54,6 +55,13 @@ const StoreComparison = () => {
                 <Skeleton key={i} className="h-10 w-full rounded" />
               ))}
             </div>
+          ) : error ? (
+            <EmptyState
+              icon={<AlertTriangle />}
+              title="Não foi possível carregar a comparação."
+              description="As Lojas continuam lá; foi a leitura dos números que falhou. Tente de novo em alguns segundos."
+              action={{ label: 'Tentar de novo', onClick: tentarDeNovo, icon: <RefreshCw className="h-4 w-4" /> }}
+            />
           ) : metrics.length === 0 ? (
             <EmptyState
               icon={<BarChart3 />}

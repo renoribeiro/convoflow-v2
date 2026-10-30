@@ -590,7 +590,7 @@ export function MessageBubble({
       <div
         className={`group max-w-[78%] p-3 transition-shadow ${
           isOutbound
-            ? 'bg-primary text-foreground rounded-lg rounded-tr-sm'
+            ? 'superficie-lima rounded-lg rounded-tr-sm'
             : 'bg-muted text-foreground rounded-lg rounded-tl-sm'
         } ${isActiveMatch ? 'ring-2 ring-primary/50' : ''}`}
         onDoubleClick={() => onReply?.(message)}

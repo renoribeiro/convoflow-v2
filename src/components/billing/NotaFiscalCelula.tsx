@@ -27,12 +27,12 @@ import {
 } from '@/lib/billing/cobrancas';
 
 const COR_DO_STATUS: Partial<Record<NotaStatus, string>> = {
-  emitida: 'border-green-300 bg-green-100 text-green-800',
+  emitida: 'border-success/30 bg-success/10 text-success',
   cancelada: 'border-muted-foreground/30 text-muted-foreground',
-  erro: 'border-red-300 bg-red-50 text-red-800',
-  certificado_vencido: 'border-red-300 bg-red-50 text-red-800',
-  cancelar_manual: 'border-amber-300 bg-amber-50 text-amber-900',
-  aguardando_prefeitura: 'border-amber-300 bg-amber-50 text-amber-900',
+  erro: 'border-destructive/30 bg-destructive/10 text-destructive',
+  certificado_vencido: 'border-destructive/30 bg-destructive/10 text-destructive',
+  cancelar_manual: 'border-warning/30 bg-warning/10 text-warning',
+  aguardando_prefeitura: 'border-warning/30 bg-warning/10 text-warning',
 };
 
 /**
@@ -114,7 +114,7 @@ export function NotaFiscalCelula({ cobranca, ehSuperadmin }: { cobranca: Cobranc
         <span className="text-xs text-muted-foreground">NFS-e {nota.numero_nfse}</span>
       ) : null}
       {ehSuperadmin && nota?.ultimo_erro_mensagem && status !== 'emitida' ? (
-        <span className="max-w-xs text-xs text-red-700">
+        <span className="max-w-xs text-xs text-destructive">
           {nota.ultimo_erro_codigo ? `${nota.ultimo_erro_codigo}: ` : ''}
           {nota.ultimo_erro_mensagem}
         </span>
@@ -138,7 +138,7 @@ export function NotaFiscalCelula({ cobranca, ehSuperadmin }: { cobranca: Cobranc
             </Button>
           ) : null}
           {podeCancelar ? (
-            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-red-700" disabled={ocupado} onClick={() => setConfirmando(true)}>
+            <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-destructive" disabled={ocupado} onClick={() => setConfirmando(true)}>
               <XCircle className="mr-1 h-3.5 w-3.5" /> Cancelar nota
             </Button>
           ) : null}

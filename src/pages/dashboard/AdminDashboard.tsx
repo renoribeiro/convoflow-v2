@@ -114,10 +114,10 @@ const extrairMensagemDeErro = async (error: unknown): Promise<string> => {
 
 /** Cor do selo de acesso (o "bloqueado" usa a variante destructive). */
 const SELO_DE_ACESSO: Record<Exclude<AccessLabelTone, 'bloqueado'>, string> = {
-  pago: 'bg-green-500 hover:bg-green-600',
-  teste: 'bg-blue-500 hover:bg-blue-600',
-  pendente: 'bg-amber-500 hover:bg-amber-600',
-  manual: 'bg-purple-500 hover:bg-purple-600',
+  pago: 'bg-success hover:bg-success/90 text-success-foreground',
+  teste: 'bg-info hover:bg-info/90 text-info-foreground',
+  pendente: 'bg-warning hover:bg-warning/90 text-warning-foreground',
+  manual: 'bg-accent hover:bg-accent/90 text-accent-foreground',
 };
 
 interface Subscription {
@@ -551,7 +551,7 @@ const AdminDashboard = () => {
 
     const apiLiberada = !!t?.api_addon_manual;
     const seloApi = apiLiberada ? (
-      <Badge variant="outline" className="border-purple-300 text-purple-700" title="API liberada pelo superadmin para esta Conta">
+      <Badge variant="outline" className="border-accent/30 text-accent" title="API liberada pelo superadmin para esta Conta">
         API liberada
       </Badge>
     ) : null;
@@ -666,7 +666,7 @@ const AdminDashboard = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className={liberado ? "text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600" : "text-purple-600 border-purple-200 hover:bg-purple-50 hover:text-purple-700"}
+                  className={liberado ? "text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive" : "text-accent border-accent/30 hover:bg-accent/10 hover:text-accent"}
                   onClick={() => {
                     if (!user.tenant_id) {
                       toast.error('Usuário não possui uma Conta associada.');
@@ -931,7 +931,7 @@ const AdminDashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Usuários Ativos</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <CheckCircle className="h-4 w-4 text-success" />
               </CardHeader>
               <CardContent>
                 {usersLoading ? (

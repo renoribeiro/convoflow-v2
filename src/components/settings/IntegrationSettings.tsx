@@ -298,7 +298,7 @@ export const IntegrationSettings = () => {
                             <div className="flex items-center gap-3 mb-2">
                               <h4 className="font-medium">{webhook.name}</h4>
                               {webhook.is_active ? (
-                                <Badge variant="default" className="bg-green-500">Ligado</Badge>
+                                <Badge variant="default" className="bg-success text-success-foreground">Ligado</Badge>
                               ) : (
                                 <Badge variant="secondary">Desligado</Badge>
                               )}

@@ -24,7 +24,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
-import { TAG_PALETTE } from '@/lib/chartColors';
+import { TAG_PALETTE } from '@/lib/cores/paletaDeEtiquetas';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -409,10 +409,10 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                   }}
                   onBlur={() => validateField('name', formData.name)}
                   disabled={isLoading}
-                  className={validationErrors.name ? 'border-red-500' : ''}
+                  className={validationErrors.name ? 'border-destructive' : ''}
                 />
                 {validationErrors.name && (
-                  <p className="text-sm text-red-500 mt-1">{validationErrors.name}</p>
+                  <p className="text-sm text-destructive mt-1">{validationErrors.name}</p>
                 )}
               </div>
               {channel === 'instagram' ? (
@@ -445,11 +445,11 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                     onBlur={() => validateField('phone', formData.phone)}
                     required
                     disabled={isLoading}
-                    className={validationErrors.phone ? 'border-red-500' : ''}
+                    className={validationErrors.phone ? 'border-destructive' : ''}
                     placeholder="55 11 99999-9999"
                   />
                   {validationErrors.phone && (
-                    <p className="text-sm text-red-500 mt-1">{validationErrors.phone}</p>
+                    <p className="text-sm text-destructive mt-1">{validationErrors.phone}</p>
                   )}
                 </div>
               )}
@@ -470,11 +470,11 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                   if (formData.email) validateField('email', formData.email);
                 }}
                 disabled={isLoading}
-                className={validationErrors.email ? 'border-red-500' : ''}
+                className={validationErrors.email ? 'border-destructive' : ''}
                 placeholder="exemplo@email.com"
               />
               {validationErrors.email && (
-                <p className="text-sm text-red-500 mt-1">{validationErrors.email}</p>
+                <p className="text-sm text-destructive mt-1">{validationErrors.email}</p>
               )}
             </div>
 
@@ -489,7 +489,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                     onValueChange={(value) => setFormData({ ...formData, current_stage_id: value })}
                     disabled={isLoading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Etapa do funil">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -515,7 +515,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                     onValueChange={(value) => setFormData({ ...formData, lead_source_id: value })}
                     disabled={isLoading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Fonte do contato">
                       <SelectValue placeholder="Selecione..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -567,7 +567,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                     onValueChange={addTag}
                     disabled={isLoading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger aria-label="Adicionar etiqueta existente">
                       <SelectValue placeholder="Adicionar etiqueta existente..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -592,6 +592,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                   <div className="flex gap-2">
                     <Input
                       placeholder="Nome da nova etiqueta..."
+                      aria-label="Nova etiqueta"
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       disabled={isLoading || isSavingTag}
@@ -608,6 +609,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                       size="sm"
                       onClick={createNewTag}
                       disabled={!newTagName.trim() || isLoading || isSavingTag}
+                      aria-label="Criar etiqueta"
                     >
                       {isSavingTag ? (
                         <Loader2 className="h-4 w-4 animate-spin" />

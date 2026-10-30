@@ -32,13 +32,13 @@ export const MaintenanceLoginNotice = () => {
   return (
     <div
       role="status"
-      className="mb-4 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm"
+      className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm"
     >
-      <p className="flex items-center gap-2 font-medium text-amber-950 dark:text-amber-100">
+      <p className="flex items-center gap-2 font-medium text-warning">
         <Wrench className="h-4 w-4 flex-shrink-0" />
         Sistema em manutenção
       </p>
-      <p className="mt-1 text-amber-950/85 dark:text-amber-100/85">
+      <p className="mt-1 text-warning">
         {reason ? `${reason} ` : 'Estamos trabalhando no sistema neste momento. '}
         {retorno
           ? `A previsão de retorno é ${retorno}.`

@@ -150,8 +150,8 @@ const Automation = () => {
 
   const statusBadge = (flow: AutomationFlow, stat?: FlowStat) => {
     if (!flow.active) return <Badge variant="secondary" className="text-xs">Inativo</Badge>;
-    if (stat && stat.failed > 0) return <Badge className="bg-red-100 text-red-700 text-xs hover:bg-red-100 dark:bg-red-950 dark:text-red-300">Com erros</Badge>;
-    return <Badge className="bg-emerald-100 text-emerald-700 text-xs hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300">Ativo</Badge>;
+    if (stat && stat.failed > 0) return <Badge className="bg-destructive/10 text-destructive text-xs hover:bg-destructive/10">Com erros</Badge>;
+    return <Badge className="bg-success/10 text-success text-xs hover:bg-success/10">Ativo</Badge>;
   };
 
   if (showBuilder) {
@@ -172,9 +172,9 @@ const Automation = () => {
       <div className="grid gap-4 md:grid-cols-4">
         {[
           { title: 'Total de automações', value: totalFlows, icon: Workflow, color: 'text-muted-foreground', hint: 'Automações criadas' },
-          { title: 'Ativas', value: activeFlows, icon: Play, color: 'text-emerald-600', hint: 'Rodando sozinhas' },
-          { title: 'Inativas', value: inactiveFlows, icon: Pause, color: 'text-amber-600', hint: 'Pausadas ou em configuração' },
-          { title: 'Taxa de Sucesso', value: overallSuccess, icon: TrendingUp, color: 'text-sky-600', hint: 'Execuções bem-sucedidas' },
+          { title: 'Ativas', value: activeFlows, icon: Play, color: 'text-success', hint: 'Rodando sozinhas' },
+          { title: 'Inativas', value: inactiveFlows, icon: Pause, color: 'text-warning', hint: 'Pausadas ou em configuração' },
+          { title: 'Taxa de Sucesso', value: overallSuccess, icon: TrendingUp, color: 'text-info', hint: 'Execuções bem-sucedidas' },
         ].map((m) => (
           <Card key={m.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -265,7 +265,7 @@ const Automation = () => {
               <Card key={flow.id} className="group transition-shadow hover:shadow-md">
                 <CardHeader className="pb-3">
                   <div className="flex items-start gap-3">
-                    <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white', s.iconBg)}>
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full" style={s.pintura.cheio}>
                       <Icon className="h-5 w-5" />
                     </div>
                     <div className="min-w-0 flex-1">
@@ -335,7 +335,7 @@ const Automation = () => {
                     const s = CATEGORY_STYLES.trigger;
                     return (
                       <div className="flex items-center gap-2.5">
-                        <div className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white', s.iconBg)}><Icon className="h-4 w-4" /></div>
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full" style={s.pintura.cheio}><Icon className="h-4 w-4" /></div>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{flow.name}</p>
                           <p className="text-xs text-muted-foreground">{entry?.label || 'Personalizado'}</p>
@@ -361,7 +361,7 @@ const Automation = () => {
                   cell: (flow) => {
                     const stat = byFlow.get(flow.id);
                     return stat && stat.executions > 0 ? (
-                      <span className={cn('inline-flex items-center gap-1', stat.failed > 0 ? 'text-amber-600' : 'text-emerald-600')}>
+                      <span className={cn('inline-flex items-center gap-1', stat.failed > 0 ? 'text-warning' : 'text-success')}>
                         {stat.failed > 0 ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle2 className="h-3 w-3" />}{stat.successRate}%
                       </span>
                     ) : <span className="text-muted-foreground">--</span>;

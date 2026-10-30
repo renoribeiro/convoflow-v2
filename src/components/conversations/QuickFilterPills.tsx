@@ -47,8 +47,8 @@ function countHint(count: QuickFilterCount | undefined): string {
 }
 
 /** Verde-limão da pílula ativa e o quase-preto que fica legível em cima dele. */
-const ACTIVE_BG = '#DAE27C';
-const ACTIVE_FG = '#211E0B';
+const ACTIVE_BG = 'hsl(var(--primary))';
+const ACTIVE_FG = 'hsl(var(--primary-foreground))';
 
 /** Id compartilhado da animação — o fundo "desliza" entre as pílulas. */
 const ACTIVE_LAYOUT_ID = 'conversations-quick-filter-active';
@@ -187,7 +187,7 @@ export const QuickFilterPills = ({
                           className="h-4 min-w-[1rem] justify-center rounded-full border-transparent px-1 text-[10px] font-semibold"
                           style={
                             isActive
-                              ? { backgroundColor: 'rgba(33, 30, 11, 0.14)', color: ACTIVE_FG }
+                              ? { backgroundColor: 'hsl(var(--primary-foreground) / 0.14)', color: ACTIVE_FG }
                               : undefined
                           }
                         >

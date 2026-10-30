@@ -9,9 +9,10 @@ import { ctaSubtitle } from '@/lib/landing/socialProof';
 
 export const CTASection = () => {
   return (
-    // Começa no lilás escuro (o da tinta, 240 45% 48%), fixo nos dois temas:
-    // texto branco sobre o lilás claro da marca dava 3,8:1, abaixo do AA.
-    <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-r from-[hsl(240_45%_48%)] to-brand-dark relative overflow-hidden">
+    // Começa no lilás escuro (--brand-secondary-dark), fixo nos dois temas:
+    // texto claro sobre o lilás claro da marca dava 3,8:1, abaixo do AA.
+    // superficie-carvao: dentro da faixa valem as tintas claras (lote 7).
+    <section className="superficie-carvao py-12 sm:py-16 md:py-20 bg-gradient-to-r from-brand-secondary-dark to-brand-dark relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-30" 
            style={{
@@ -24,9 +25,9 @@ export const CTASection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
-          className="text-center text-white"
+          className="text-center text-foreground"
         >
-          <div className="inline-flex items-center bg-white/20 rounded-full px-4 sm:px-6 py-2 mb-6 sm:mb-8">
+          <div className="inline-flex items-center bg-foreground/20 rounded-full px-4 sm:px-6 py-2 mb-6 sm:mb-8">
             <Zap className="w-4 h-4 mr-2" />
             <span className="text-xs sm:text-sm font-medium">
               Transforme seu WhatsApp hoje mesmo
@@ -51,7 +52,7 @@ export const CTASection = () => {
               <Button 
                 size="xl" 
                 variant="secondary"
-                className="bg-white text-brand-dark hover:bg-white/90 group w-full sm:w-auto"
+                className="bg-papel text-brand-dark hover:bg-papel/90 group w-full sm:w-auto"
               >
                 {startCtaLabel()}
                 <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
@@ -64,7 +65,7 @@ export const CTASection = () => {
             >
               <Button 
                 size="xl" 
-                className="bg-business-dark text-white hover:bg-business-dark/90 w-full sm:w-auto"
+                className="bg-background text-foreground hover:bg-background/90 w-full sm:w-auto"
               >
                 Falar com Especialista
                 <Mail className="ml-2 h-5 w-5" />

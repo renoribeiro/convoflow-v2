@@ -2,6 +2,7 @@ import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { estiloDoFundoCheio } from '@/lib/cores/tintaLegivel';
 import type { ChatbotNodeType } from '@/types/chatbot-flow.types';
 import { BLOCK_BY_TYPE } from '@/lib/chatbot/flowConstants';
 
@@ -51,15 +52,15 @@ const BaseNode: React.FC<BaseNodeProps> = ({
       )}
 
       {/* Header */}
-      <div className={cn('flex items-center justify-between px-3 py-2 rounded-t-lg', block.headerClass)}>
-        <div className="flex items-center gap-1.5 text-white">
+      <div className="flex items-center justify-between px-3 py-2 rounded-t-lg" style={estiloDoFundoCheio(block.headerCor)}>
+        <div className="flex items-center gap-1.5">
           <span className="text-sm">{block.emoji}</span>
           <span className="text-xs font-semibold leading-tight truncate">{block.label}</span>
         </div>
         {onDelete && (
           <button
             onClick={() => onDelete(id)}
-            className="text-white/70 hover:text-white transition-colors ml-1"
+            className="opacity-70 hover:opacity-100 transition-opacity ml-1"
             title="Remover nó"
           >
             <X className="h-3 w-3" />

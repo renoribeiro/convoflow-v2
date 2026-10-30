@@ -165,7 +165,7 @@ export const ChatbotsList = ({ onEdit, onTest }: ChatbotsListProps) => {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${bot.isActive ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                <div className={`p-2 rounded-lg ${bot.isActive ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'}`}>
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
@@ -211,7 +211,7 @@ export const ChatbotsList = ({ onEdit, onTest }: ChatbotsListProps) => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem 
                     onClick={() => handleDeleteClick(bot.id, bot.name)}
-                    className="text-red-600"
+                    className="text-destructive"
                     disabled={isDeleting}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -319,7 +319,7 @@ export const ChatbotsList = ({ onEdit, onTest }: ChatbotsListProps) => {
         cancelText="Cancelar"
         variant="destructive"
         isLoading={isDeleting}
-        icon={<Trash2 className="h-5 w-5 text-red-500" />}
+        icon={<Trash2 className="h-5 w-5 text-destructive" />}
       />
     </>
   );

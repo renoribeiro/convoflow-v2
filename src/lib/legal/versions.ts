@@ -20,9 +20,11 @@
 export const TERMS_VERSION = '2026-10-27';
 
 /**
- * PrivacyPolicy.tsx — "Última atualização: 27 de outubro de 2026" (lote 3 de textos: o prazo de resposta é
+ * PrivacyPolicy.tsx — "Última atualização: 30 de outubro de 2026" (lote 7: seção 5, o endereço digitado
+ * para enviar localização nas Conversas vai só ele para a busca do OpenStreetMap; antes, 27/10/2026,
+ * lote 3 de textos: o prazo de resposta é
  * o mesmo da página de exclusão de dados, 5 dias úteis para confirmar e 15 corridos para responder, e
  * "email" sem hífen; antes, 26/10/2026, seção 6: conexões não oficiais, Evolution
  * e WAHA; antes, 25/10/2026: API e integrações, seções 5, 6, 7 e 8).
  */
-export const PRIVACY_VERSION = '2026-10-27';
+export const PRIVACY_VERSION = '2026-10-30';

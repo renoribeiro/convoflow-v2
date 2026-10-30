@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { corDaEtapa } from './corDaEtapa';
 
 describe('corDaEtapa (achado 54)', () => {
-  it('nome gravado por "Configurar etapas" vira classe da cor', () => {
-    expect(corDaEtapa('blue').className).toContain('bg-blue-100');
-    expect(corDaEtapa('blue').style).toBeUndefined();
+  it('nome gravado por "Configurar etapas" pinta pela cor dele, com o ajuste de contraste (lote 7)', () => {
+    const p = corDaEtapa('blue');
+    expect(p.style).toMatchObject({ backgroundColor: '#3b82f626', borderColor: '#3b82f6' });
+    expect(p.style?.['--tinta-clara']).toMatch(/^#[0-9a-f]{6}$/);
+    expect(p.className).toContain('var(--tinta-clara)');
   });
 
   it('código de cor pinta por estilo, nunca monta "blue20"', () => {

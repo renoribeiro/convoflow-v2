@@ -148,15 +148,15 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
                 )}
                 {configured === true && (
                   <>
-                    <ShieldCheck className="h-4 w-4 text-green-600" /> Chave configurada: sim
+                    <ShieldCheck className="h-4 w-4 text-success" /> Chave configurada: sim
                   </>
                 )}
                 {configured === false && (
                   <>
-                    <ShieldAlert className="h-4 w-4 text-red-600" /> Chave configurada: não
+                    <ShieldAlert className="h-4 w-4 text-destructive" /> Chave configurada: não
                   </>
                 )}
-                {checkError && <span className="text-red-600">{checkError}</span>}
+                {checkError && <span className="text-destructive">{checkError}</span>}
               </p>
               <p className="text-xs text-muted-foreground">
                 A chave fica guardada no cofre do ConvoFlow e nenhuma tela a mostra, nem em parte.

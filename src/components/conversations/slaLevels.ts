@@ -68,20 +68,22 @@ export const SLA_LEVEL_META: Record<
   Exclude<SlaLevel, 'ok'>,
   { label: string; dotClass: string; textClass: string }
 > = {
+  // Lote 7: as três cores saem dos tokens de aviso e erro. O degrau do meio
+  // (era laranja) é o texto de aviso com o ponto vermelho.
   atencao: {
     label: 'Atenção',
-    dotClass: 'bg-amber-500',
-    textClass: 'text-amber-600 dark:text-amber-400',
+    dotClass: 'bg-warning',
+    textClass: 'text-warning',
   },
   atrasada: {
     label: 'Atrasada',
-    dotClass: 'bg-orange-500',
-    textClass: 'text-orange-600 dark:text-orange-400',
+    dotClass: 'bg-destructive',
+    textClass: 'text-warning',
   },
   critica: {
     label: 'Crítica',
-    dotClass: 'bg-red-500',
-    textClass: 'text-red-600 dark:text-red-400',
+    dotClass: 'bg-destructive',
+    textClass: 'text-destructive',
   },
 };
 

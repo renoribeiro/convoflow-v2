@@ -30,6 +30,7 @@ import {
   type CatalogEntry,
   type CatalogField,
 } from './automationCatalog';
+import { CLASSE_DA_TINTA } from '@/lib/cores/tintaLegivel';
 import { validateConfig } from './stepValidation';
 
 interface StepConfigPanelProps {
@@ -187,12 +188,12 @@ export const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
   return (
     <div className="flex h-full flex-col">
       {/* Cabeçalho */}
-      <div className={cn('flex items-center gap-3 border-b p-4', s.cardBg)}>
-        <div className={cn('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white shadow-sm', s.iconBg)}>
+      <div className="flex items-center gap-3 border-b p-4" style={{ backgroundColor: s.pintura.suave.backgroundColor }}>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm" style={s.pintura.cheio}>
           <entry.Icon className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className={cn('text-[10px] font-semibold uppercase tracking-wide', s.text)}>{s.label}</p>
+          <p className={cn('text-[10px] font-semibold uppercase tracking-wide', CLASSE_DA_TINTA)} style={s.pintura.texto}>{s.label}</p>
           <p className="truncate text-sm font-semibold">{entry.label}</p>
         </div>
         {entry.helpKey && <FeatureHelp helpKey={entry.helpKey} />}
@@ -206,9 +207,9 @@ export const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
 
         {isSendMessage && (
           <>
-            <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 dark:border-amber-800 dark:bg-amber-950/40">
-              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
-              <p className="text-[11px] text-amber-800 dark:text-amber-200">
+            <div className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2.5">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+              <p className="text-[11px] text-warning">
                 Fora da janela de 24h, o WhatsApp só permite <strong>templates aprovados</strong>.
               </p>
             </div>
@@ -232,8 +233,8 @@ export const StepConfigPanel: React.FC<StepConfigPanelProps> = ({
         {/* Condições: deixa claro o comportamento "se falso, encerra" */}
         {entry.category === 'condition' && (
           <div className="rounded-md border bg-muted/40 p-2.5 text-[11px] text-muted-foreground">
-            <p><span className="font-medium text-emerald-600 dark:text-emerald-400">✓ Se verdadeiro:</span> a automação continua.</p>
-            <p><span className="font-medium text-red-500">✕ Se falso:</span> a automação é encerrada aqui.</p>
+            <p><span className="font-medium text-success">✓ Se verdadeiro:</span> a automação continua.</p>
+            <p><span className="font-medium text-destructive">✕ Se falso:</span> a automação é encerrada aqui.</p>
           </div>
         )}
       </div>

@@ -88,6 +88,8 @@ describe('ConversationOwnerControl', () => {
 
     await screen.findByRole('menuitem', { name: /transferir/i });
     expect(screen.queryByRole('menuitem', { name: /assumir/i })).not.toBeInTheDocument();
+    // Achado 49: o menu diz como ficar com a conversa de outra pessoa.
+    expect(screen.getByTestId('dica-ficar-com-a-conversa')).toHaveTextContent('Transferir…" e escolha você');
     expect(assumeMutate).not.toHaveBeenCalled();
   });
 

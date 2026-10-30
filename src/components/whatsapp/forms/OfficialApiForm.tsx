@@ -54,8 +54,8 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess, av
 
   return (
     <div className="space-y-4">
-      <Alert className="border-emerald-200 bg-emerald-50/60">
-        <ShieldCheck className="h-4 w-4 text-emerald-700" />
+      <Alert className="border-success/30 bg-success/10">
+        <ShieldCheck className="h-4 w-4 text-success" />
         <AlertTitle>API oficial da Meta</AlertTitle>
         <AlertDescription className="text-xs">
           {embeddedSignupAvailable ? (
@@ -89,7 +89,7 @@ export const OfficialApiForm = ({ values, onChange, loading, onSignupSuccess, av
         <div className="space-y-2">
           <Button
             type="button"
-            className="w-full bg-blue-700 hover:bg-blue-800 text-white"
+            className="w-full bg-info hover:bg-info/90 text-info-foreground"
             onClick={handleEmbeddedSignup}
             disabled={isDisabled}
           >

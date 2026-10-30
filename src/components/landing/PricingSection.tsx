@@ -5,6 +5,10 @@ import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import { salesTrialOn, signupEntryPath, startCtaLabel } from '@/lib/signup/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS } from '@/lib/billing/trialOffer';
+// Achado 8 do checkup: os preços saem das mesmas constantes do pagamento, não
+// são escritos à mão aqui (mudou num lugar, muda na página de vendas também).
+import { INCLUDED_SLOTS, PLAN_PRICE_LABEL, SLOT_PRICE_LABEL } from '@/lib/billing/checkout';
+import { API_ADDON_PRICE_LABEL } from '@/lib/api/release';
 
 export const PricingSection = () => {
   const navigate = useNavigate();
@@ -13,8 +17,8 @@ export const PricingSection = () => {
   const comTeste = salesTrialOn();
 
   const features = [
-    '5 Lojas incluídas (extra por R$ 99,90/mês)',
-    'API e integrações por R$ 99,90/mês (opcional, por Conta)',
+    `${INCLUDED_SLOTS} Lojas incluídas (extra por ${SLOT_PRICE_LABEL}/mês)`,
+    `API e integrações por ${API_ADDON_PRICE_LABEL}/mês (opcional, por Conta)`,
     '1 gestor e 2 atendentes por Loja (mais sob consulta)',
     'API Oficial do WhatsApp ou conexão por QR Code',
     'Chatbots ilimitados',
@@ -81,14 +85,14 @@ export const PricingSection = () => {
               ) : null}
               <div className="mb-6">
                 <div className="text-4xl sm:text-5xl md:text-6xl font-bold text-foreground mb-2">
-                  R$ 499,90
+                  {PLAN_PRICE_LABEL}
                   <span className="text-xl sm:text-2xl text-muted-foreground font-normal">/mês</span>
                 </div>
                 <div className="text-sm sm:text-base text-muted-foreground px-4 sm:px-0">
-                  Um plano por Conta, com 5 Lojas incluídas
+                  Um plano por Conta, com {INCLUDED_SLOTS} Lojas incluídas
                 </div>
                 <div className="text-xs sm:text-sm text-muted-foreground px-4 sm:px-0 mt-1">
-                  Loja adicional por R$ 99,90/mês · API e integrações por R$ 99,90/mês
+                  Loja adicional por {SLOT_PRICE_LABEL}/mês · API e integrações por {API_ADDON_PRICE_LABEL}/mês
                 </div>
               </div>
 

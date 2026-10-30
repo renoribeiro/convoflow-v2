@@ -46,20 +46,21 @@ const getSourceIcon = (sourceType: string) => {
   return iconMap[sourceType.toLowerCase()] || Globe;
 };
 
-// Mapeamento de cores por tipo de fonte
+// Mapeamento de cores por tipo de fonte. Lote 7: as séries dos gráficos
+// (--chart-*), em quadrado suave; o ícone fica na cor do texto.
 const getSourceColor = (sourceType: string) => {
   const colorMap: Record<string, string> = {
-    'facebook': 'bg-blue-500',
-    'instagram': 'bg-purple-500',
-    'google': 'bg-green-500',
-    'organic': 'bg-orange-500',
-    'direct': 'bg-gray-500',
-    'email': 'bg-red-500',
-    'social': 'bg-pink-500',
-    'paid': 'bg-yellow-500',
-    'referral': 'bg-indigo-500',
+    'facebook': 'bg-chart-2/20',
+    'instagram': 'bg-chart-6/25',
+    'google': 'bg-chart-1/20',
+    'organic': 'bg-chart-4/20',
+    'direct': 'bg-muted',
+    'email': 'bg-chart-8/20',
+    'social': 'bg-chart-5/20',
+    'paid': 'bg-chart-7/25',
+    'referral': 'bg-chart-3/20',
   };
-  return colorMap[sourceType.toLowerCase()] || 'bg-gray-500';
+  return colorMap[sourceType.toLowerCase()] || 'bg-muted';
 };
 
 interface TrackingDashboardProps {
@@ -138,8 +139,8 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-blue-600" />
+                <div className="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
+                  <Users className="w-6 h-6 text-info" />
                 </div>
               </div>
             </CardContent>
@@ -167,7 +168,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
                   <Target className="w-6 h-6 text-success" />
                 </div>
               </div>
@@ -196,8 +197,8 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-accent" />
                 </div>
               </div>
             </CardContent>
@@ -225,8 +226,8 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
                   </div>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-orange-600" />
+                <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
+                  <Eye className="w-6 h-6 text-warning" />
                 </div>
               </div>
             </CardContent>
@@ -256,13 +257,13 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse" />
+                      <div className="w-8 h-8 bg-muted rounded-lg animate-pulse" />
                       <div className="space-y-1">
-                        <div className="w-20 h-3 bg-gray-200 rounded animate-pulse" />
-                        <div className="w-32 h-2 bg-gray-200 rounded animate-pulse" />
+                        <div className="w-20 h-3 bg-muted rounded animate-pulse" />
+                        <div className="w-32 h-2 bg-muted rounded animate-pulse" />
                       </div>
                     </div>
-                    <div className="w-12 h-6 bg-gray-200 rounded animate-pulse" />
+                    <div className="w-12 h-6 bg-muted rounded animate-pulse" />
                   </div>
                 ))}
               </div>
@@ -282,7 +283,7 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
                     <div key={source.id} className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div className={`w-8 h-8 ${colorClass} rounded-lg flex items-center justify-center`}>
-                          <IconComponent className="w-4 h-4 text-white" />
+                          <IconComponent className="w-4 h-4 text-foreground" />
                         </div>
                         <div>
                           <p className="font-medium text-sm">{source.name}</p>

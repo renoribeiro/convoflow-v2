@@ -232,7 +232,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 <p className="text-sm text-muted-foreground">Total de contatos</p>
                 {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.totalLeads.toLocaleString('pt-BR')}</p>}
               </div>
-              <Users className="w-8 h-8 text-blue-500" />
+              <Users className="w-8 h-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -244,7 +244,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 <p className="text-sm text-muted-foreground">Conversões</p>
                 {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.totalConversions.toLocaleString('pt-BR')}</p>}
               </div>
-              <Target className="w-8 h-8 text-green-500" />
+              <Target className="w-8 h-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -256,7 +256,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 <p className="text-sm text-muted-foreground">Receita total</p>
                 {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">R$ {metrics.totalRevenue.toLocaleString('pt-BR')}</p>}
               </div>
-              <DollarSign className="w-8 h-8 text-yellow-500" />
+              <DollarSign className="w-8 h-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -268,7 +268,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 <p className="text-sm text-muted-foreground">Taxa de conversão</p>
                 {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">{metrics.avgConversionRate.toFixed(1)}%</p>}
               </div>
-              <TrendingUp className="w-8 h-8 text-purple-500" />
+              <TrendingUp className="w-8 h-8 text-accent" />
             </div>
           </CardContent>
         </Card>
@@ -280,7 +280,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                 <p className="text-sm text-muted-foreground">Valor médio por venda</p>
                 {carregandoValores ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold">R$ {metrics.avgTicket.toFixed(0)}</p>}
               </div>
-              <Activity className="w-8 h-8 text-red-500" />
+              <Activity className="w-8 h-8 text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -352,12 +352,15 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                   <ResponsiveContainer width="100%" height={400}>
                     <FunnelChart>
                       <Tooltip />
+                      {/* Lote 7: lima da marca com o número em carvão, legível nos dois temas. */}
                       <Funnel
                         dataKey="value"
                         data={funnelData}
+                        fill="hsl(var(--primary))"
+                        stroke="hsl(var(--card))"
                         isAnimationActive
                       >
-                        <LabelList position="center" fill="#fff" stroke="none" />
+                        <LabelList position="center" fill="hsl(var(--primary-foreground))" stroke="none" />
                       </Funnel>
                     </FunnelChart>
                   </ResponsiveContainer>
@@ -407,7 +410,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                         labelLine={false}
                         label={({ source, percentage }) => `${source} (${percentage}%)`}
                         outerRadius={80}
-                        fill="#8884d8"
+                        fill={CHART_SERIES[1]}
                         dataKey="leads"
                       >
                         {sourceData.map((entry, index) => (

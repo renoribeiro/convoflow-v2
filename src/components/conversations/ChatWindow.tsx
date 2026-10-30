@@ -1852,8 +1852,8 @@ export const ChatWindow = ({
                   }
                   rows={1}
                   // min-w-0: sem ele o campo não encolhe e empurra o botão de
-                  // enviar para fora da tela no celular.
-                  className={`min-w-0 flex-1 min-h-[40px] resize-none py-2 ${isSending ? 'opacity-70' : ''}`}
+                  // enviar para fora da tela no celular. 44 px no celular: alvo de toque (lote 7).
+                  className={`min-w-0 flex-1 min-h-[44px] md:min-h-[40px] resize-none py-2 ${isSending ? 'opacity-70' : ''}`}
                   style={{ maxHeight: MAX_TEXTAREA_HEIGHT }}
                   /* `readOnly`, e não `disabled`: elemento desabilitado perde o foco
                      e não o recupera sozinho ao ser reabilitado. Bloqueia a digitação

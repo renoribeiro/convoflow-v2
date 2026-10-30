@@ -681,7 +681,7 @@ export const CampaignWizard = ({
           value={state.whatsapp_instance_id}
           onValueChange={(v) => set('whatsapp_instance_id', v)}
         >
-          <SelectTrigger>
+          <SelectTrigger aria-label="Número de WhatsApp">
             <SelectValue placeholder="Escolha o número que vai enviar" />
           </SelectTrigger>
           <SelectContent>
@@ -848,9 +848,9 @@ export const CampaignWizard = ({
           {/* WhatsApp preview bubble */}
           {state.message_template && (
             <div className="mt-3 flex justify-end">
-              <div className="max-w-xs bg-green-100 dark:bg-green-900 rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
+              <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
                 {state.message_template.replace(/{name}/g, 'João').replace(/{first_name}/g, 'João').replace(/{phone}/g, '5511999990001').replace(/{email}/g, 'joao@exemplo.com')}
-                <div className="text-xs text-green-700 dark:text-green-400 text-right mt-1">10:30 ✓✓</div>
+                <div className="text-xs text-muted-foreground text-right mt-1">10:30 ✓✓</div>
               </div>
             </div>
           )}
@@ -1000,7 +1000,7 @@ export const CampaignWizard = ({
               <AlertDescription>
                 <strong>{state.csvRows.length}</strong> contatos válidos
                 {state.csvInvalid.length > 0 && (
-                  <span className="text-orange-600 ml-2">
+                  <span className="text-warning ml-2">
                     / {state.csvInvalid.length} inválidos
                   </span>
                 )}
@@ -1010,7 +1010,7 @@ export const CampaignWizard = ({
           {state.csvInvalid.length > 0 && (
             <div className="max-h-32 overflow-y-auto space-y-1">
               {state.csvInvalid.slice(0, 10).map((e, i) => (
-                <p key={i} className="text-xs text-red-600">
+                <p key={i} className="text-xs text-destructive">
                   Linha {e.row}: {e.reason}
                 </p>
               ))}
@@ -1108,8 +1108,8 @@ export const CampaignWizard = ({
               />
             </div>
             <Select value={state.contactStageFilter} onValueChange={(v) => set('contactStageFilter', v)}>
-              <SelectTrigger className="w-44">
-                <SelectValue placeholder="Estágio" />
+              <SelectTrigger className="w-44" aria-label="Filtrar por etapa">
+                <SelectValue placeholder="Etapa" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os estágios</SelectItem>
@@ -1384,13 +1384,13 @@ export const CampaignWizard = ({
           <div>
             <Label className="mb-2 block">Prévia da Mensagem</Label>
             <div className="flex justify-end">
-              <div className="max-w-xs bg-green-100 dark:bg-green-900 rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
+              <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
                 {state.message_template
                   .replace(/{name}/g, 'João')
                   .replace(/{first_name}/g, 'João')
                   .replace(/{phone}/g, '5511999990001')
                   .replace(/{email}/g, 'joao@exemplo.com')}
-                <div className="text-xs text-green-700 dark:text-green-400 text-right mt-1">
+                <div className="text-xs text-muted-foreground text-right mt-1">
                   10:30 ✓✓
                 </div>
               </div>
@@ -1661,7 +1661,7 @@ function DragDropCsv({ fileName, onFile }: DragDropCsvProps) {
     >
       {fileName ? (
         <div className="flex flex-col items-center gap-1">
-          <CheckCircle className="h-8 w-8 text-green-500" />
+          <CheckCircle className="h-8 w-8 text-success" />
           <p className="text-sm font-medium">{fileName}</p>
           <p className="text-xs text-muted-foreground">Clique para substituir</p>
         </div>

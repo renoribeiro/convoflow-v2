@@ -49,9 +49,9 @@ export const SupabaseDebug = () => {
   };
 
   return (
-    <Card className="mb-4 border-blue-200 bg-blue-50">
+    <Card className="mb-4 border-info/30 bg-info/10">
       <CardHeader>
-        <CardTitle className="text-sm text-blue-800 flex items-center justify-between">
+        <CardTitle className="text-sm text-info flex items-center justify-between">
           Debug: Cliente Supabase
           <Button size="sm" onClick={checkSession} disabled={loading}>
             {loading ? 'Verificando...' : 'Atualizar'}
@@ -68,7 +68,7 @@ export const SupabaseDebug = () => {
         </div>
         
         {sessionInfo && (
-          <div className="p-2 bg-white rounded border">
+          <div className="p-2 bg-card rounded border">
             <strong>Sessão:</strong>
             <pre className="text-xs mt-1 overflow-auto max-h-32">
               {JSON.stringify(sessionInfo, null, 2)}
@@ -77,7 +77,7 @@ export const SupabaseDebug = () => {
         )}
         
         {userInfo && (
-          <div className="p-2 bg-white rounded border">
+          <div className="p-2 bg-card rounded border">
             <strong>Usuário:</strong>
             <pre className="text-xs mt-1 overflow-auto max-h-32">
               {JSON.stringify(userInfo, null, 2)}

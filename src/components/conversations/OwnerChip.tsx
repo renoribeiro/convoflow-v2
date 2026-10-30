@@ -10,7 +10,7 @@ import {
 } from '@/hooks/useTeamDirectory';
 
 interface OwnerChipProps {
-  /** Membro resolvido pelo diretório. `undefined` com `assignedProfileId` = pessoa fora do diretório. */
+  /** Membro resolvido pelo diretório. `undefined` com `assignedProfileId` = pessoa que saiu do time. */
   member: TeamMember | undefined;
   /** profiles.id gravado na conversa; null = sem responsável. */
   assignedProfileId: string | null;
@@ -116,7 +116,7 @@ export const OwnerChip = ({
         size === 'sm' ? 'px-1.5' : 'px-2',
         className,
       )}
-      title={member ? `Responsável: ${memberDisplayName(member)}` : 'Responsável fora do diretório'}
+      title={member ? `Responsável: ${memberDisplayName(member)}` : 'Responsável: pessoa que saiu do time'}
     >
       <Avatar className={cn('flex-shrink-0', avatarClass)}>
         {member?.avatar_url && <AvatarImage src={member.avatar_url} alt={memberDisplayName(member)} />}

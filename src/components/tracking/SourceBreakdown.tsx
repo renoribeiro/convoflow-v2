@@ -17,7 +17,9 @@ const RADIAN = Math.PI / 180;
 const renderCustomizedLabel = ({
   cx, cy, midAngle, innerRadius, outerRadius, percent
 }: any) => {
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  // Lote 7: o número fica logo fora da fatia, na cor do texto. Dentro dela,
+  // branco sumia nas fatias claras (lima e lilás do tema escuro).
+  const radius = outerRadius + 14;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -25,7 +27,7 @@ const renderCustomizedLabel = ({
     <text
       x={x}
       y={y}
-      fill="white"
+      fill="hsl(var(--foreground))"
       textAnchor={x > cx ? 'start' : 'end'}
       dominantBaseline="central"
       className="text-xs font-medium"
@@ -64,7 +66,7 @@ export const SourceBreakdown = ({ data, isLoading }: SourceBreakdownProps) => {
                 labelLine={false}
                 label={renderCustomizedLabel}
                 outerRadius={100}
-                fill="#8884d8"
+                fill={CHART_SERIES[1]}
                 dataKey="value"
               >
                 {chartData.map((entry, index) => (

@@ -92,10 +92,10 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-destructive/10 text-destructive';
+      case 'medium': return 'bg-warning/10 text-warning';
+      case 'low': return 'bg-success/10 text-success';
+      default: return 'bg-muted text-foreground';
     }
   };
 
@@ -137,19 +137,19 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={goToPreviousMonth}>
+                <Button variant="outline" size="sm" onClick={goToPreviousMonth} aria-label="Mês anterior">
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
                 <h3 className="text-lg font-semibold capitalize">
                   {formatMonth(currentDate)}
                 </h3>
-                <Button variant="outline" size="sm" onClick={goToNextMonth}>
+                <Button variant="outline" size="sm" onClick={goToNextMonth} aria-label="Próximo mês">
                   <ChevronRight className="w-4 h-4" />
                 </Button>
               </div>
               
               <Select value={viewType} onValueChange={(value: 'month' | 'week') => setViewType(value)}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-32" aria-label="Ver o calendário por">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -199,13 +199,13 @@ export const FollowupCalendarModal = ({ isOpen, onClose }: FollowupCalendarModal
                               key={index}
                               className={`
                                 min-h-[80px] p-1 border rounded cursor-pointer hover:bg-muted/50 transition-colors
-                                ${!day.isCurrentMonth ? 'opacity-40' : ''}
+                                ${!day.isCurrentMonth ? 'bg-muted/40 text-muted-foreground' : ''}
                                 ${isSelected ? 'bg-primary/10 border-primary' : 'border-border'}
-                                ${isToday ? 'bg-blue-50 border-blue-300' : ''}
+                                ${isToday ? 'bg-info/10 border-info/30' : ''}
                               `}
                               onClick={() => setSelectedDate(day.dateString)}
                             >
-                              <div className={`text-sm font-medium mb-1 ${isToday ? 'text-blue-600' : ''}`}>
+                              <div className={`text-sm font-medium mb-1 ${isToday ? 'text-info' : ''}`}>
                                 {day.date.getDate()}
                               </div>
                               <div className="space-y-1">

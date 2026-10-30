@@ -61,7 +61,7 @@ export const AddStepPopover: React.FC<AddStepPopoverProps> = ({ onSelect, childr
                       onSelect={() => handlePick(item.key)}
                       className="flex items-start gap-2.5 py-2"
                     >
-                      <div className={cn('mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-white', s.iconBg)}>
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md" style={s.pintura.cheio}>
                         <item.Icon className="h-4 w-4" />
                       </div>
                       <div className="min-w-0 flex-1">

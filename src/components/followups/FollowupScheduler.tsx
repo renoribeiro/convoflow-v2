@@ -317,7 +317,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
         }}
         disabled={contactsLoading || editando}
       >
-        <SelectTrigger className={errors.contactId ? 'border-red-500' : ''}>
+        <SelectTrigger aria-label="Contato" className={errors.contactId ? 'border-destructive' : ''}>
           <SelectValue placeholder={contactsLoading ? 'Carregando contatos...' : 'Selecione um contato'} />
         </SelectTrigger>
         <SelectContent>
@@ -346,7 +346,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
           )}
         </SelectContent>
       </Select>
-      {errors.contactId && <p className="text-sm text-red-500">{errors.contactId}</p>}
+      {errors.contactId && <p className="text-sm text-destructive">{errors.contactId}</p>}
     </div>
   );
 
@@ -361,7 +361,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
               className={cn(
                 'w-full justify-start text-left font-normal',
                 !formData.date && 'text-muted-foreground',
-                errors.date && 'border-red-500',
+                errors.date && 'border-destructive',
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
@@ -385,7 +385,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
             />
           </PopoverContent>
         </Popover>
-        {errors.date && <p className="text-sm text-red-500 mt-1">{errors.date}</p>}
+        {errors.date && <p className="text-sm text-destructive mt-1">{errors.date}</p>}
       </div>
       <div>
         <div className="flex items-center gap-1.5">
@@ -405,10 +405,10 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
               setFormData((p) => ({ ...p, time: e.target.value }));
               setErrors((p) => ({ ...p, time: '' }));
             }}
-            className={`pl-10 ${errors.time ? 'border-red-500' : ''}`}
+            className={`pl-10 ${errors.time ? 'border-destructive' : ''}`}
           />
         </div>
-        {errors.time && <p className="text-sm text-red-500 mt-1">{errors.time}</p>}
+        {errors.time && <p className="text-sm text-destructive mt-1">{errors.time}</p>}
       </div>
     </div>
   );
@@ -421,6 +421,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
             <Repeat className="w-5 h-5" /> Recorrência
           </CardTitle>
           <Switch
+            aria-label="Recorrência"
             checked={formData.recurring}
             onCheckedChange={(checked) => setFormData((p) => ({ ...p, recurring: checked }))}
           />
@@ -435,7 +436,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                 value={formData.recurringType}
                 onValueChange={(v) => setFormData((p) => ({ ...p, recurringType: v }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Frequência"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="daily">Diário</SelectItem>
                   <SelectItem value="weekly">Semanal</SelectItem>
@@ -454,10 +455,10 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                 onChange={(e) =>
                   setFormData((p) => ({ ...p, recurringCount: parseInt(e.target.value) || 1 }))
                 }
-                className={errors.recurringCount ? 'border-red-500' : ''}
+                className={errors.recurringCount ? 'border-destructive' : ''}
               />
               {errors.recurringCount && (
-                <p className="text-sm text-red-500 mt-1">{errors.recurringCount}</p>
+                <p className="text-sm text-destructive mt-1">{errors.recurringCount}</p>
               )}
             </div>
           </div>
@@ -515,8 +516,8 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
               className={cn(
                 'flex items-start gap-2 rounded-md border p-3 text-sm',
                 windowOpen
-                  ? 'border-green-200 bg-green-50 text-green-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-800',
+                  ? 'border-success/30 bg-success/10 text-success'
+                  : 'border-warning/30 bg-warning/10 text-warning',
               )}
             >
               {windowOpen ? (
@@ -554,7 +555,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                     setErrors((p) => ({ ...p, sequenceId: '' }));
                   }}
                 >
-                  <SelectTrigger className={errors.sequenceId ? 'border-red-500' : ''}>
+                  <SelectTrigger aria-label="Sequência" className={errors.sequenceId ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Selecione a sequência" />
                   </SelectTrigger>
                   <SelectContent>
@@ -568,7 +569,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                   </SelectContent>
                 </Select>
               )}
-              {errors.sequenceId && <p className="text-sm text-red-500">{errors.sequenceId}</p>}
+              {errors.sequenceId && <p className="text-sm text-destructive">{errors.sequenceId}</p>}
             </div>
           )}
 
@@ -591,7 +592,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                       key={type.id}
                       className={`cursor-pointer transition-all hover:shadow-md ${
                         formData.type === type.id ? 'ring-2 ring-primary' : ''
-                      } ${errors.type ? 'border-red-500' : ''}`}
+                      } ${errors.type ? 'border-destructive' : ''}`}
                       onClick={() => {
                         setFormData((p) => ({ ...p, type: type.id }));
                         setErrors((p) => ({ ...p, type: '' }));
@@ -605,7 +606,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                   );
                 })}
               </div>
-              {errors.type && <p className="text-sm text-red-500 mt-1">{errors.type}</p>}
+              {errors.type && <p className="text-sm text-destructive mt-1">{errors.type}</p>}
             </div>
           )}
 
@@ -621,9 +622,9 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                   setErrors((p) => ({ ...p, task: '' }));
                 }}
                 placeholder="Descreva o que deve ser feito..."
-                className={errors.task ? 'border-red-500' : ''}
+                className={errors.task ? 'border-destructive' : ''}
               />
-              {errors.task && <p className="text-sm text-red-500 mt-1">{errors.task}</p>}
+              {errors.task && <p className="text-sm text-destructive mt-1">{errors.task}</p>}
               <div className="mt-2">
                 <p className="text-sm text-muted-foreground mb-2">Modelos sugeridos:</p>
                 <div className="flex flex-wrap gap-1">
@@ -680,7 +681,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                     dicaDasVariaveis="Pode usar {{primeiro_nome}}, {{contact_name}} ou {{telefone}}: o contato recebe o dele."
                     idBase="followup-tpl"
                   />
-                  {errors.template && <p className="text-sm text-red-500 mt-2">{errors.template}</p>}
+                  {errors.template && <p className="text-sm text-destructive mt-2">{errors.template}</p>}
                 </div>
               )}
             </div>
@@ -699,9 +700,9 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                 }}
                 placeholder="Olá {{primeiro_nome}}, tudo bem? ..."
                 rows={4}
-                className={errors.messageBody ? 'border-red-500' : ''}
+                className={errors.messageBody ? 'border-destructive' : ''}
               />
-              {errors.messageBody && <p className="text-sm text-red-500 mt-1">{errors.messageBody}</p>}
+              {errors.messageBody && <p className="text-sm text-destructive mt-1">{errors.messageBody}</p>}
               <p className="text-xs text-muted-foreground mt-1">
                 Variáveis: {'{{contact_name}}'}, {'{{primeiro_nome}}'}, {'{{telefone}}'}
               </p>
@@ -719,7 +720,7 @@ export const FollowupScheduler = ({ onClose, followup = null }: FollowupSchedule
                 value={formData.priority}
                 onValueChange={(v) => setFormData((p) => ({ ...p, priority: v }))}
               >
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Prioridade"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="high">Alta</SelectItem>
                   <SelectItem value="medium">Média</SelectItem>

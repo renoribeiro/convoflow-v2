@@ -171,7 +171,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ id, data, selected }) => {
             position={Position.Bottom}
             id="true"
             style={{ left: '30%' }}
-            className="!w-3 !h-3 !border-2 !border-green-500 !bg-background"
+            className="!w-3 !h-3 !border-2 !border-success !bg-background"
             title="Verdadeiro"
           />
           <Handle
@@ -179,7 +179,7 @@ export const ConditionNode: React.FC<NodeProps> = ({ id, data, selected }) => {
             position={Position.Bottom}
             id="false"
             style={{ left: '70%' }}
-            className="!w-3 !h-3 !border-2 !border-red-500 !bg-background"
+            className="!w-3 !h-3 !border-2 !border-destructive !bg-background"
             title="Falso"
           />
         </>
@@ -198,8 +198,8 @@ export const ConditionNode: React.FC<NodeProps> = ({ id, data, selected }) => {
         )}
       </p>
       <div className="flex justify-between text-[10px] mt-2 text-muted-foreground">
-        <span className="text-green-600">✓ Verdadeiro</span>
-        <span className="text-red-600">✗ Falso</span>
+        <span className="text-success">✓ Verdadeiro</span>
+        <span className="text-destructive">✗ Falso</span>
       </div>
     </BaseNode>
   );

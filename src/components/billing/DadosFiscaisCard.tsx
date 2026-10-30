@@ -41,11 +41,11 @@ export function DadosFiscaisCard({ contaId, podeEditar, obrigatorio = false, ema
     <span className="flex flex-wrap items-center gap-2">
       <FileText className="h-5 w-5" /> Dados para a nota fiscal
       {completos ? (
-        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+        <Badge className="bg-success/10 text-success hover:bg-success/10">
           <CheckCircle2 className="mr-1 h-3 w-3" /> Preenchidos
         </Badge>
       ) : obrigatorio ? (
-        <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">Obrigatório para assinar</Badge>
+        <Badge className="bg-warning/10 text-warning hover:bg-warning/10">Obrigatório para assinar</Badge>
       ) : null}
     </span>
   );

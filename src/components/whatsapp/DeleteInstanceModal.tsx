@@ -249,7 +249,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
         return (
           <div key={row.key} className="flex items-center justify-between px-3 py-1.5">
             <span className="text-muted-foreground">{row.label}</span>
-            <span className={n > 0 ? 'font-semibold text-red-700' : 'font-medium'}>{fmt(n)}</span>
+            <span className={n > 0 ? 'font-semibold text-destructive' : 'font-medium'}>{fmt(n)}</span>
           </div>
         );
       })}
@@ -260,7 +260,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
     <Dialog open={open} onOpenChange={(o) => { if (!deleting) onOpenChange(o); }}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-red-600">
+          <DialogTitle className="flex items-center gap-2 text-destructive">
             <Trash2 className="h-5 w-5" />
             {texts.title}
           </DialogTitle>
@@ -328,10 +328,10 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
 
           {refusedWithHistory && loaded?.counts && (
             <>
-              <Alert className="border-red-200 bg-red-50">
-                <AlertTriangle className="h-4 w-4 text-red-600" />
-                <AlertTitle className="text-red-800">{texts.refusedTitle}</AlertTitle>
-                <AlertDescription className="text-red-800">{texts.refusedBody}</AlertDescription>
+              <Alert className="border-destructive/30 bg-destructive/10">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
+                <AlertTitle className="text-destructive">{texts.refusedTitle}</AlertTitle>
+                <AlertDescription className="text-destructive">{texts.refusedBody}</AlertDescription>
               </Alert>
               {renderCounts(loaded.counts)}
               <div className="rounded-lg border bg-muted/40 p-3 text-sm space-y-2">
@@ -382,10 +382,10 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
 
           {canDelete && loaded?.counts && (
             <>
-              <Alert className="border-emerald-200 bg-emerald-50">
-                <ShieldCheck className="h-4 w-4 text-emerald-700" />
-                <AlertTitle className="text-emerald-900">{texts.emptyTitle}</AlertTitle>
-                <AlertDescription className="text-emerald-900">
+              <Alert className="border-success/30 bg-success/10">
+                <ShieldCheck className="h-4 w-4 text-success" />
+                <AlertTitle className="text-success">{texts.emptyTitle}</AlertTitle>
+                <AlertDescription className="text-success">
                   Nenhuma conversa, mensagem, contato, chatbot, campanha ou follow up depende dela. Excluir não
                   apaga histórico nenhum.
                 </AlertDescription>

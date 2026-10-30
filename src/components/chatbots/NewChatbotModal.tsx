@@ -199,7 +199,7 @@ export const NewChatbotModal = ({ isOpen, onClose }: NewChatbotModalProps) => {
                       <div className="border rounded-lg p-3 bg-primary/5">
                         <div className="flex items-start gap-2">
                           <Bot className="w-6 h-6 text-primary mt-1" />
-                          <div className="bg-white rounded-lg p-2 shadow-sm flex-1">
+                          <div className="bg-card rounded-lg p-2 shadow-sm flex-1">
                             <p className="text-sm">
                               {welcomeMessage || 'Mensagem de boas-vindas aparecerá aqui...'}
                             </p>

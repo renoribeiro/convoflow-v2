@@ -23,8 +23,8 @@ export const FlowConnector: React.FC<FlowConnectorProps> = ({ onInsert, active =
         className={cn(
           'w-0.5 flex-1 rounded-full',
           active
-            ? 'bg-gradient-to-b from-emerald-400 to-emerald-500 bg-[length:100%_8px] motion-safe:animate-pulse'
-            : 'bg-slate-300 dark:bg-slate-700',
+            ? 'bg-gradient-to-b from-success/40 to-success bg-[length:100%_8px] motion-safe:animate-pulse'
+            : 'bg-muted-foreground/30',
         )}
       />
       {/* Botão "+" central */}

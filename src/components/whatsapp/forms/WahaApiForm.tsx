@@ -27,8 +27,8 @@ interface Props {
 export const WahaApiForm = ({ values, onChange, loading }: Props) => {
   return (
     <div className="space-y-4">
-      <Alert className="border-sky-200 bg-sky-50/60">
-        <ServerCog className="h-4 w-4 text-sky-700" />
+      <Alert className="border-info/30 bg-info/10">
+        <ServerCog className="h-4 w-4 text-info" />
         <AlertTitle>QR Code no seu servidor WAHA</AlertTitle>
         <AlertDescription className="text-xs">
           Ao salvar, o servidor do ConvoFlow confere o endereço, cria (ou atualiza) a sessão no seu

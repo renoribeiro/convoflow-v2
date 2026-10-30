@@ -70,8 +70,8 @@ export const EvolutionApiForm = ({
 
   return (
     <div className="space-y-4">
-      <Alert className="border-slate-200 bg-slate-50/60">
-        <Info className="h-4 w-4 text-slate-700" />
+      <Alert className="border-border bg-muted/60">
+        <Info className="h-4 w-4 text-foreground" />
         <AlertDescription className="text-xs">
           Você não precisa configurar nada: o ConvoFlow já tem o servidor. Dê um nome ao número,
           clique em Criar e abrir QR Code e leia o QR Code com o celular dele.
@@ -114,11 +114,11 @@ export const EvolutionApiForm = ({
         </p>
       </div>
 
-      <Card className="border-blue-200 bg-blue-50/50">
+      <Card className="border-info/30 bg-info/10">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Webhook className="h-4 w-4 text-blue-600" />
+              <Webhook className="h-4 w-4 text-info" />
               <CardTitle className="text-sm">Receber as mensagens automaticamente</CardTitle>
               <DicaDoCampo rotulo="Receber as mensagens automaticamente" texto="Ligado, o ConvoFlow registra no servidor o endereço de entrega deste número, e as mensagens entram assim que ele conectar. Deixe ligado." />
             </div>
@@ -148,7 +148,7 @@ export const EvolutionApiForm = ({
                 </Badge>
               )}
               {webhookStatus === 'success' && (
-                <Badge variant="default" className="text-xs bg-green-600">
+                <Badge variant="default" className="text-xs bg-success">
                   <CheckCircle className="h-3 w-3 mr-1" /> Configurado
                 </Badge>
               )}
@@ -161,16 +161,16 @@ export const EvolutionApiForm = ({
 
             <div className="space-y-1">
               <Label className="text-xs font-medium">Endereço de entrega no ConvoFlow:</Label>
-              <div className="bg-white border rounded px-2 py-1">
-                <code className="text-xs text-gray-600 break-all">{webhookUrl}</code>
+              <div className="bg-card border rounded px-2 py-1">
+                <code className="text-xs text-muted-foreground break-all">{webhookUrl}</code>
               </div>
             </div>
 
             <details className="group">
-              <summary className="text-xs font-medium cursor-pointer text-blue-600 hover:text-blue-800">
+              <summary className="text-xs font-medium cursor-pointer text-info hover:text-info">
                 Detalhes técnicos (para o suporte)
               </summary>
-              <div className="mt-2 space-y-2 pl-4 border-l-2 border-blue-200">
+              <div className="mt-2 space-y-2 pl-4 border-l-2 border-info/30">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Tentativas de configurar:</Label>
@@ -202,7 +202,7 @@ export const EvolutionApiForm = ({
                     />
                   </div>
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Eventos: QRCODE_UPDATED, CONNECTION_UPDATE, MESSAGES_UPSERT, MESSAGES_UPDATE,
                   SEND_MESSAGE
                 </p>

@@ -260,20 +260,20 @@ export const FollowupsList = ({ status, filters, onNovo }: FollowupsListProps) =
             <CardContent className="p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                  <div className="w-10 h-10 bg-muted rounded-full" />
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-24" />
-                    <div className="h-3 bg-gray-200 rounded w-32" />
+                    <div className="h-4 bg-muted rounded w-24" />
+                    <div className="h-3 bg-muted rounded w-32" />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <div className="h-6 bg-gray-200 rounded w-16" />
-                  <div className="h-6 bg-gray-200 rounded w-20" />
+                  <div className="h-6 bg-muted rounded w-16" />
+                  <div className="h-6 bg-muted rounded w-20" />
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-full" />
-                <div className="h-3 bg-gray-200 rounded w-32" />
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-3 bg-muted rounded w-32" />
               </div>
             </CardContent>
           </Card>

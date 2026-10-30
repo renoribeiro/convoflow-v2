@@ -287,7 +287,7 @@ export default function TermsOfService() {
                   </div>
                 </section>
 
-                <section className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border border-green-200 dark:border-green-900">
+                <section className="bg-success/10 p-6 rounded-lg border border-success/30">
                   <h2 className="text-xl font-semibold mb-4">6. Uso do WhatsApp Business Platform (Meta)</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     Quando você conecta um número pela API oficial, o envio e o recebimento de mensagens do ConvoFlow

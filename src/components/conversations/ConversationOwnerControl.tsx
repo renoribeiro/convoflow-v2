@@ -5,6 +5,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -76,11 +77,14 @@ export const ConversationOwnerControl = ({
   const canTransfer = !transferBlocked;
   const hasActions = isUnassigned || canTransfer;
 
+  // Achado 49: quem saiu do time (suspenso, excluído, fora da Loja) não está
+  // mais na lista de pessoas; o nome dele não chega aqui.
+  const semNome = 'pessoa que saiu do time';
   const holderLabel = isUnassigned
     ? 'Ninguém assumiu esta conversa'
     : isMine
       ? 'Esta conversa está com você'
-      : `Responsável: ${holder ? memberDisplayName(holder) : 'pessoa fora do diretório'}`;
+      : `Responsável: ${holder ? memberDisplayName(holder) : semNome}`;
 
   if (!hasActions) {
     return (
@@ -131,7 +135,7 @@ export const ConversationOwnerControl = ({
                 aria-label={
                   isUnassigned
                     ? 'Sem responsável: assumir ou transferir'
-                    : `Responsável: ${holder ? memberDisplayName(holder) : 'fora do diretório'}`
+                    : `Responsável: ${holder ? memberDisplayName(holder) : semNome}`
                 }
                 disabled={busy}
               >
@@ -155,7 +159,7 @@ export const ConversationOwnerControl = ({
               ? 'Ninguém assumiu esta conversa'
               : isMine
                 ? 'Esta conversa está com você'
-                : `Responsável: ${holder ? memberDisplayName(holder) : 'pessoa fora do diretório'}`}
+                : `Responsável: ${holder ? memberDisplayName(holder) : semNome}`}
           </TooltipContent>
         </Tooltip>
 
@@ -171,6 +175,13 @@ export const ConversationOwnerControl = ({
               <ArrowRightLeft className="mr-2 h-4 w-4" />
               Transferir…
             </DropdownMenuItem>
+          )}
+          {/* Achado 49: com outra pessoa não existe "Assumir"; quem quer ficar
+              com a conversa transfere para si mesmo. */}
+          {!isUnassigned && !isMine && canTransfer && (
+            <DropdownMenuLabel className="max-w-[16rem] text-xs font-normal text-muted-foreground" data-testid="dica-ficar-com-a-conversa">
+              Para ficar com ela, clique em "Transferir…" e escolha você.
+            </DropdownMenuLabel>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

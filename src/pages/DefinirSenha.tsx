@@ -21,6 +21,15 @@ import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 export const TEXTO_MUITAS_TENTATIVAS = 'Muitas tentativas. Espere alguns minutos e tente de novo.';
 const ESPERA_ENTRE_ENVIOS_MS = 60_000;
 
+/**
+ * Validade do código de 6 dígitos (achado 18). Quem decide é o Supabase Auth
+ * (auth.email.otp_expiry). Conferido em 2026-10-30 com
+ * `npx supabase config diff --project-ref <ref>`: 86400 segundos. Os emails
+ * de convite e de nova senha (docs/email_*.html) dizem o mesmo. Mudou lá,
+ * mude aqui e nos emails.
+ */
+export const VALIDADE_DO_CODIGO_HORAS = 24;
+
 /** Erro do código que não é "vencido ou inválido": frase fixa, sem o inglês do Supabase. */
 const CODIGO_ERRO_GENERICO = 'Não deu certo agora. Tente de novo em alguns minutos.';
 
@@ -269,7 +278,7 @@ export const DefinirSenha = () => {
   } else if (etapa === 'codigo') {
     titulo = 'Digite o código';
     descricao = enviadoPara
-      ? `Enviamos um código de 6 dígitos para ${enviadoPara}. Ele vale por 24 horas.`
+      ? `Enviamos um código de 6 dígitos para ${enviadoPara}. Ele vale por ${VALIDADE_DO_CODIGO_HORAS} horas.`
       : 'Digite o seu email e o código de 6 dígitos que chegou para você.';
   } else {
     titulo = alertaDoLink ? 'Peça um código novo' : 'Esqueci minha senha';

@@ -65,9 +65,9 @@ interface LojaDaConta {
 }
 
 const TOM_DO_SELO = {
-  ok: 'bg-green-100 text-green-800 hover:bg-green-100',
-  aviso: 'bg-amber-100 text-amber-800 hover:bg-amber-100',
-  ruim: 'bg-red-100 text-red-800 hover:bg-red-100',
+  ok: 'bg-success/10 text-success hover:bg-success/10',
+  aviso: 'bg-warning/10 text-warning hover:bg-warning/10',
+  ruim: 'bg-destructive/10 text-destructive hover:bg-destructive/10',
   neutro: 'bg-muted text-muted-foreground hover:bg-muted',
 } as const;
 

@@ -129,15 +129,15 @@ const formatFileSize = (bytes: number): string => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'bg-green-50 text-green-700 border-green-200';
+      return 'bg-success/10 text-success border-success/30';
     case 'running':
-      return 'bg-blue-50 text-blue-700 border-blue-200';
+      return 'bg-info/10 text-info border-info/30';
     case 'failed':
-      return 'bg-red-50 text-red-700 border-red-200';
+      return 'bg-destructive/10 text-destructive border-destructive/30';
     case 'scheduled':
-      return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+      return 'bg-warning/10 text-warning border-warning/30';
     default:
-      return 'bg-gray-50 text-gray-700 border-gray-200';
+      return 'bg-muted text-foreground border-border';
   }
 };
 
@@ -545,7 +545,7 @@ export const BackupManager = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className="bg-green-50 text-green-700 border-green-200">
+          <Badge className="bg-success/10 text-success border-success/30">
             <HardDrive className="h-3 w-3 mr-1" />
             Espaço: 45.2 GB disponível
           </Badge>

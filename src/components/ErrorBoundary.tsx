@@ -109,18 +109,18 @@ class ErrorBoundary extends Component<Props, State> {
       // Renderizar UI de erro baseada no nível
       if (level === 'critical') {
         return (
-          <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+          <div className="min-h-screen flex items-center justify-center bg-muted p-6">
             <Card className="max-w-lg w-full">
               <CardHeader className="text-center">
-                <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                  <AlertTriangle className="h-6 w-6 text-destructive" />
                 </div>
-                <CardTitle className="text-xl text-gray-900">
+                <CardTitle className="text-xl text-foreground">
                   Ops! Algo deu errado
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-gray-600 text-center">
+                <p className="text-muted-foreground text-center">
                   Encontramos um erro inesperado. Nossa equipe foi notificada e está trabalhando para resolver o problema.
                 </p>
 
@@ -132,7 +132,7 @@ class ErrorBoundary extends Component<Props, State> {
                       <div className="space-y-2">
                         <p className="font-mono text-xs">{error.message}</p>
                         {errorId && (
-                          <p className="text-xs text-gray-500">ID: {errorId}</p>
+                          <p className="text-xs text-muted-foreground">ID: {errorId}</p>
                         )}
                       </div>
                     </AlertDescription>
@@ -174,7 +174,7 @@ class ErrorBoundary extends Component<Props, State> {
                   <p>Esta página encontrou um problema e não pode ser carregada.</p>
 
                   {showDetails && error && (
-                    <div className="p-2 bg-gray-100 rounded text-xs font-mono">
+                    <div className="p-2 bg-muted rounded text-xs font-mono">
                       {error.message}
                     </div>
                   )}
@@ -208,7 +208,7 @@ class ErrorBoundary extends Component<Props, State> {
 
       // Nível 'component' - erro mais simples
       return (
-        <div className="flex items-center justify-center p-4 border border-red-200 bg-red-50 rounded-lg">
+        <div className="flex items-center justify-center p-4 border border-destructive/30 bg-destructive/10 rounded-lg">
           <Alert variant="destructive" className="border-0 bg-transparent">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="ml-2">
@@ -273,8 +273,8 @@ export const ListErrorBoundary: React.FC<{ children: ReactNode }> = ({ children 
     level="component"
     fallback={
       <div className="text-center py-8">
-        <AlertTriangle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-500">Erro ao carregar dados</p>
+        <AlertTriangle className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-muted-foreground">Erro ao carregar dados</p>
         <Button variant="outline" size="sm" className="mt-2" onClick={() => window.location.reload()}>
           <RefreshCw className="h-4 w-4 mr-2" />
           Recarregar

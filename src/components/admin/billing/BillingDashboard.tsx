@@ -333,10 +333,10 @@ function Cartao({
 
 function ContasDaContaAntiga({ contas }: { contas: LegacyConta[] }) {
   return (
-    <Card className="border-amber-300" data-testid="contas-conta-antiga">
+    <Card className="border-warning/30" data-testid="contas-conta-antiga">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertTriangle className="h-4 w-4 text-warning" />
           Fora da conta atual do Stripe
         </CardTitle>
         <CardDescription>
@@ -355,7 +355,7 @@ function ContasDaContaAntiga({ contas }: { contas: LegacyConta[] }) {
               key: 'rotulo',
               header: 'Onde está',
               card: 'badge',
-              cell: () => <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-100">Conta antiga do Stripe</Badge>,
+              cell: () => <Badge className="bg-warning/10 text-warning hover:bg-warning/10">Conta antiga do Stripe</Badge>,
             },
             { key: 'status', header: 'Situação gravada', cell: (c) => statusLabel(c.subscriptionStatus) },
             {

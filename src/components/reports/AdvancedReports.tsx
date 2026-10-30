@@ -77,6 +77,7 @@ import {
   useReportStatistics
 } from '@/hooks/useReports';
 import { DashboardCardSkeleton } from '@/components/shared/Skeleton';
+import { CHART_SERIES } from '@/lib/chartColors';
 
 interface ReportTemplate {
   id: string;
@@ -226,7 +227,7 @@ const mockReportData = {
   ]
 };
 
-const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1', '#d084d0', '#ffb347'];
+const COLORS = CHART_SERIES;
 
 const ReportChart = ({ data, config, title }: {
   data: any[];
@@ -307,7 +308,7 @@ const ReportChart = ({ data, config, title }: {
                 labelLine={false}
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill={CHART_SERIES[1]}
                 dataKey={config.metrics[0]}
               >
                 {data.map((entry, index) => (
@@ -372,7 +373,7 @@ const ReportMetrics = ({ data }: { data: any[] }) => {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <Target className="h-5 w-5 text-blue-500" />
+            <Target className="h-5 w-5 text-info" />
             <div>
               <p className="text-sm text-muted-foreground">Total</p>
               <p className="text-2xl font-bold">{metrics.total?.toLocaleString() || 0}</p>
@@ -384,7 +385,7 @@ const ReportMetrics = ({ data }: { data: any[] }) => {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <BarChart3 className="h-5 w-5 text-green-500" />
+            <BarChart3 className="h-5 w-5 text-success" />
             <div>
               <p className="text-sm text-muted-foreground">Média</p>
               <p className="text-2xl font-bold">{metrics.average?.toFixed(1) || 0}</p>
@@ -396,7 +397,7 @@ const ReportMetrics = ({ data }: { data: any[] }) => {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <TrendingUp className="h-5 w-5 text-orange-500" />
+            <TrendingUp className="h-5 w-5 text-warning" />
             <div>
               <p className="text-sm text-muted-foreground">Máximo</p>
               <p className="text-2xl font-bold">{metrics.max?.toLocaleString() || 0}</p>
@@ -408,7 +409,7 @@ const ReportMetrics = ({ data }: { data: any[] }) => {
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center space-x-2">
-            <TrendingDown className="h-5 w-5 text-red-500" />
+            <TrendingDown className="h-5 w-5 text-destructive" />
             <div>
               <p className="text-sm text-muted-foreground">Mínimo</p>
               <p className="text-2xl font-bold">{metrics.min?.toLocaleString() || 0}</p>
@@ -714,7 +715,7 @@ const ReportTemplateCard = ({ template, onUse, onEdit, onDelete }: {
               variant="outline" 
               size="sm" 
               onClick={() => onDelete(template.id)}
-              className="text-red-600 hover:text-red-700"
+              className="text-destructive hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" />
             </Button>

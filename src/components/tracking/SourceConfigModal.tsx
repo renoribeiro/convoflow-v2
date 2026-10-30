@@ -209,9 +209,10 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label>URL Gerada</Label>
+                  <Label htmlFor="url-gerada">URL Gerada</Label>
                   <div className="flex items-center space-x-2">
                     <Input
+                      id="url-gerada"
                       value={generateUTMParameters()}
                       readOnly
                       className="bg-muted"
@@ -220,6 +221,7 @@ export const SourceConfigModal = ({ open, onOpenChange, source, onSave }: Source
                       variant="outline"
                       size="icon"
                       onClick={() => copyToClipboard(generateUTMParameters())}
+                      aria-label="Copiar a URL gerada"
                     >
                       <Copy className="w-4 h-4" />
                     </Button>

@@ -28,7 +28,7 @@ const countFor = async (table: CountableTable, tenantId: string): Promise<number
  * contagem por loja — o nº de lojas é pequeno (5 + extras).
  */
 export const useStoreComparison = () => {
-  const { stores, isLoading: storesLoading } = useMyStores();
+  const { stores, isLoading: storesLoading, error: storesError, refetch: refetchStores } = useMyStores();
   const ids = stores.map((s) => s.id);
 
   const query = useQuery({
@@ -47,9 +47,14 @@ export const useStoreComparison = () => {
       ),
   });
 
+  // Achado 75: erro ao ler as Lojas ou ao contar não pode virar "nenhuma Loja".
   return {
     metrics: query.data ?? [],
     isLoading: storesLoading || query.isLoading,
-    error: query.error,
+    error: storesError ?? query.error,
+    tentarDeNovo: () => {
+      void refetchStores();
+      void query.refetch();
+    },
   };
 };

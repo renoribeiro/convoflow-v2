@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 27 de outubro de 2026 • Conforme LGPD
+                Última atualização: 30 de outubro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -87,7 +87,7 @@ export default function PrivacyPolicy() {
                       </ul>
                     </div>
 
-                    <div className="p-4 bg-background rounded border-l-4 border-amber-500">
+                    <div className="p-4 bg-background rounded border-l-4 border-warning">
                       <h3 className="font-medium mb-2">ConvoFlow como Operador</h3>
                       <p className="text-muted-foreground text-sm mb-2">
                         Em relação aos dados dos <strong>clientes finais</strong> (as pessoas com quem a loja cliente
@@ -204,30 +204,34 @@ export default function PrivacyPolicy() {
                   </p>
                   
                   <div className="space-y-3">
-                    <div className="p-3 border-l-4 border-green-500 bg-green-50 dark:bg-green-950/20">
-                      <strong className="text-green-700 dark:text-green-400">Parceiros Essenciais:</strong>
+                    <div className="p-3 border-l-4 border-success bg-success/10">
+                      <strong className="text-success">Parceiros Essenciais:</strong>
                       <span className="text-muted-foreground"> WhatsApp Business API, provedores de pagamento, infraestrutura cloud</span>
                     </div>
-                    <div className="p-3 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
-                      <strong className="text-yellow-700 dark:text-yellow-400">Obrigações Legais:</strong>
+                    <div className="p-3 border-l-4 border-warning bg-warning/10">
+                      <strong className="text-warning">Obrigações Legais:</strong>
                       <span className="text-muted-foreground"> Quando exigido por autoridades competentes</span>
                     </div>
-                    <div className="p-3 border-l-4 border-slate-500 bg-slate-50 dark:bg-slate-900/40">
-                      <strong className="text-slate-700 dark:text-slate-300">Nota Fiscal:</strong>
+                    <div className="p-3 border-l-4 border-border bg-muted">
+                      <strong className="text-foreground">Nota Fiscal:</strong>
                       <span className="text-muted-foreground"> Para emitir a nota fiscal de serviço, enviamos à Receita Federal e à Prefeitura de Fortaleza, pelo Sistema Nacional da NFS-e, o CPF ou CNPJ, o nome ou razão social, o endereço e o email informados para a nota, junto com o valor e a descrição do serviço. Guardamos a nota e o seu arquivo pelo prazo exigido pela legislação fiscal (5 anos).</span>
                     </div>
-                    <div className="p-3 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-950/20">
-                      <strong className="text-purple-700 dark:text-purple-400">Por instrução da loja cliente:</strong>
+                    <div className="p-3 border-l-4 border-border bg-muted">
+                      <strong className="text-foreground">Endereço para localização:</strong>
+                      <span className="text-muted-foreground"> Quando você digita um endereço para enviar uma localização nas Conversas, só esse endereço digitado vai para o serviço de busca do OpenStreetMap, para achar o ponto no mapa.</span>
+                    </div>
+                    <div className="p-3 border-l-4 border-accent bg-accent/10">
+                      <strong className="text-accent">Por instrução da loja cliente:</strong>
                       <span className="text-muted-foreground"> Quando a loja cliente liga o complemento "API e integrações", cria uma chave de API, cadastra um webhook ou exporta dados, entregamos os dados escolhidos por ela aos destinatários que ela escolheu (por exemplo, ferramentas de automação ou agentes de inteligência artificial). Essa entrega é instrução da loja, controladora dos dados dos clientes dela (seção 2); o tratamento feito por esses destinatários é responsabilidade da loja e deles.</span>
                     </div>
-                    <div className="p-3 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-                      <strong className="text-blue-700 dark:text-blue-400">Transferência de Negócio:</strong>
+                    <div className="p-3 border-l-4 border-info bg-info/10">
+                      <strong className="text-info">Transferência de Negócio:</strong>
                       <span className="text-muted-foreground"> Em caso de fusão, aquisição ou venda (com notificação prévia)</span>
                     </div>
                   </div>
                 </section>
 
-                <section className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border border-green-200 dark:border-green-900">
+                <section className="bg-success/10 p-6 rounded-lg border border-success/30">
                   <h2 className="text-xl font-semibold mb-4">6. Integração com WhatsApp Business e Meta Platforms</h2>
                   <p className="text-muted-foreground leading-relaxed mb-4">
                     O ConvoFlow se integra à <strong>WhatsApp Business Platform</strong> (Meta Cloud API) e à infraestrutura

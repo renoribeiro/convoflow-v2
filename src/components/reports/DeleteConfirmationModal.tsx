@@ -73,12 +73,12 @@ export function DeleteConfirmationModal({ isOpen, onClose, onConfirm, template }
             </div>
           </div>
 
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+          <div className="bg-warning/10 border border-warning/30 rounded-lg p-3">
             <div className="flex items-start gap-2">
-              <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium text-amber-800">Impactos da exclusão:</p>
-                <ul className="mt-1 text-amber-700 space-y-1">
+                <p className="font-medium text-warning">Impactos da exclusão:</p>
+                <ul className="mt-1 text-warning space-y-1">
                   <li>• O modelo é apagado de vez</li>
                   <li>• Os agendamentos deste modelo são apagados junto, e as entregas dele somem da aba Entregas</li>
                   <li>• Configurações e seções serão perdidas</li>

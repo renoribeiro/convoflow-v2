@@ -81,7 +81,7 @@ export const TestimonialsSection = () => {
                     key={i}
                     className={
                       i < testimonial.rating
-                        ? 'w-4 h-4 text-yellow-500 fill-current'
+                        ? 'w-4 h-4 text-warning fill-current'
                         : 'w-4 h-4 text-muted-foreground/40'
                     }
                   />

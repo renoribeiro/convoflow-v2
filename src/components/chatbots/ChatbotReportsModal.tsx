@@ -72,7 +72,7 @@ export const ChatbotReportsModal = ({ isOpen, onClose }: ChatbotReportsModalProp
                     <p className="text-sm font-medium text-muted-foreground">Total de Interações</p>
                     <p className="text-2xl font-bold">{metrics.totalInteractions.toLocaleString()}</p>
                   </div>
-                  <MessageSquare className="h-8 w-8 text-blue-500" />
+                  <MessageSquare className="h-8 w-8 text-info" />
                 </div>
               </CardContent>
             </Card>
@@ -82,9 +82,9 @@ export const ChatbotReportsModal = ({ isOpen, onClose }: ChatbotReportsModalProp
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Usuários Ativos</p>
-                    <p className="text-2xl font-bold text-green-600">{metrics.activeUsers}</p>
+                    <p className="text-2xl font-bold text-success">{metrics.activeUsers}</p>
                   </div>
-                  <Users className="h-8 w-8 text-green-500" />
+                  <Users className="h-8 w-8 text-success" />
                 </div>
               </CardContent>
             </Card>
@@ -94,9 +94,9 @@ export const ChatbotReportsModal = ({ isOpen, onClose }: ChatbotReportsModalProp
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Taxa de Resposta</p>
-                    <p className="text-2xl font-bold text-purple-600">{metrics.responseRate}%</p>
+                    <p className="text-2xl font-bold text-accent">{metrics.responseRate}%</p>
                   </div>
-                  <BarChart3 className="h-8 w-8 text-purple-500" />
+                  <BarChart3 className="h-8 w-8 text-accent" />
                 </div>
               </CardContent>
             </Card>
@@ -106,9 +106,9 @@ export const ChatbotReportsModal = ({ isOpen, onClose }: ChatbotReportsModalProp
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Tempo Médio</p>
-                    <p className="text-2xl font-bold text-orange-600">{metrics.avgResponseTime}s</p>
+                    <p className="text-2xl font-bold text-warning">{metrics.avgResponseTime}s</p>
                   </div>
-                  <Zap className="h-8 w-8 text-orange-500" />
+                  <Zap className="h-8 w-8 text-warning" />
                 </div>
               </CardContent>
             </Card>

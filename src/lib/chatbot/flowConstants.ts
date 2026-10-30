@@ -9,6 +9,7 @@ import type {
   ChatbotNodeType,
   ChatbotNodeDataMap,
 } from '@/types/chatbot-flow.types';
+import { CORES_DO_CHATBOT } from '@/lib/cores/coresDeCategoria';
 
 export type NodeCategory =
   | 'inicio'
@@ -23,8 +24,12 @@ export interface BlockDefinition {
   emoji: string;
   category: NodeCategory;
   description: string;
-  /** Tailwind class for the node header (category colour). */
-  headerClass: string;
+  /**
+   * Cor da categoria no cabeçalho do bloco (código de cor de
+   * src/lib/cores/coresDeCategoria.ts). Pinte com estiloDoFundoCheio, que
+   * escurece a cor até o texto branco ficar legível (lote 7).
+   */
+  headerCor: string;
   /** Whether the user can drag/create more than one of this node. */
   singleton?: boolean;
 }
@@ -38,19 +43,19 @@ export const NODE_CATEGORIES: { key: NodeCategory; label: string }[] = [
 ];
 
 /**
- * Category → header colour. Per spec:
+ * Categoria → cor do cabeçalho:
  *  - mensagens: verde escuro
- *  - perguntas/interação: azul / roxo
+ *  - perguntas/interação: azul (a condição é roxa)
  *  - ações: laranja
  *  - finalizar: vermelho
- *  - início: verde (primary)
+ *  - início: verde
  */
-export const CATEGORY_HEADER_CLASS: Record<NodeCategory, string> = {
-  inicio: 'bg-emerald-600',
-  mensagens: 'bg-green-700',
-  interacao: 'bg-blue-600',
-  acoes: 'bg-orange-500',
-  finalizar: 'bg-red-600',
+export const CATEGORY_HEADER_COR: Record<NodeCategory, string> = {
+  inicio: CORES_DO_CHATBOT.inicio,
+  mensagens: CORES_DO_CHATBOT.mensagens,
+  interacao: CORES_DO_CHATBOT.interacao,
+  acoes: CORES_DO_CHATBOT.acoes,
+  finalizar: CORES_DO_CHATBOT.finalizar,
 };
 
 export const BLOCK_DEFINITIONS: BlockDefinition[] = [
@@ -60,7 +65,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '🟢',
     category: 'inicio',
     description: 'Ponto de partida do fluxo (apenas 1 por chatbot)',
-    headerClass: CATEGORY_HEADER_CLASS.inicio,
+    headerCor: CATEGORY_HEADER_COR.inicio,
     singleton: true,
   },
   {
@@ -69,7 +74,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '💬',
     category: 'mensagens',
     description: 'Envia uma mensagem de texto',
-    headerClass: CATEGORY_HEADER_CLASS.mensagens,
+    headerCor: CATEGORY_HEADER_COR.mensagens,
   },
   {
     type: 'ask_question',
@@ -78,7 +83,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     category: 'mensagens',
     description: 'Pergunta e aguarda a resposta do usuário',
     // questions get the blue header per spec
-    headerClass: CATEGORY_HEADER_CLASS.interacao,
+    headerCor: CATEGORY_HEADER_COR.interacao,
   },
   {
     type: 'show_options',
@@ -86,7 +91,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '🔘',
     category: 'interacao',
     description: 'Menu com opções para o usuário escolher',
-    headerClass: CATEGORY_HEADER_CLASS.interacao,
+    headerCor: CATEGORY_HEADER_COR.interacao,
   },
   {
     type: 'condition',
@@ -94,7 +99,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '🔀',
     category: 'interacao',
     description: 'Segue por um caminho ou outro conforme uma variável',
-    headerClass: 'bg-purple-600',
+    headerCor: CORES_DO_CHATBOT.condicao,
   },
   {
     type: 'transfer_agent',
@@ -102,7 +107,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '👤',
     category: 'acoes',
     description: 'Transfere a conversa para um atendente humano',
-    headerClass: CATEGORY_HEADER_CLASS.acoes,
+    headerCor: CATEGORY_HEADER_COR.acoes,
   },
   {
     type: 'set_variable',
@@ -110,7 +115,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '📝',
     category: 'acoes',
     description: 'Salva um valor em uma variável da sessão',
-    headerClass: CATEGORY_HEADER_CLASS.acoes,
+    headerCor: CATEGORY_HEADER_COR.acoes,
   },
   {
     type: 'update_contact',
@@ -118,7 +123,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '🔄',
     category: 'acoes',
     description: 'Atualiza um campo do contato',
-    headerClass: CATEGORY_HEADER_CLASS.acoes,
+    headerCor: CATEGORY_HEADER_COR.acoes,
   },
   {
     type: 'move_funnel',
@@ -126,7 +131,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '📊',
     category: 'acoes',
     description: 'Move o contato para uma etapa do funil',
-    headerClass: CATEGORY_HEADER_CLASS.acoes,
+    headerCor: CATEGORY_HEADER_COR.acoes,
   },
   {
     type: 'end_flow',
@@ -134,7 +139,7 @@ export const BLOCK_DEFINITIONS: BlockDefinition[] = [
     emoji: '🔴',
     category: 'finalizar',
     description: 'Finaliza o fluxo e a sessão',
-    headerClass: CATEGORY_HEADER_CLASS.finalizar,
+    headerCor: CATEGORY_HEADER_COR.finalizar,
   },
 ];
 

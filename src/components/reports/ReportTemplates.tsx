@@ -29,17 +29,17 @@ const getIconByType = (type: string) => {
 // Mapeamento de cores por categoria
 const getColorByCategory = (category: string) => {
   switch (category?.toLowerCase()) {
-    case 'performance': return 'bg-blue-500';
+    case 'performance': return 'bg-info/10 text-info';
     case 'financial':
-    case 'financeiro': return 'bg-purple-500';
+    case 'financeiro': return 'bg-accent/10 text-accent';
     case 'traffic':
-    case 'tráfego': return 'bg-green-500';
+    case 'tráfego': return 'bg-success/10 text-success';
     case 'conversion':
-    case 'conversão': return 'bg-orange-500';
-    case 'marketing': return 'bg-pink-500';
-    case 'analytics': return 'bg-indigo-500';
-    case 'crm': return 'bg-teal-500';
-    default: return 'bg-gray-500';
+    case 'conversão': return 'bg-warning/10 text-warning';
+    case 'marketing': return 'bg-accent/10 text-accent';
+    case 'analytics': return 'bg-info/10 text-info';
+    case 'crm': return 'bg-success/10 text-success';
+    default: return 'bg-muted text-muted-foreground';
   }
 };
 
@@ -226,7 +226,7 @@ export const ReportTemplates = ({ onCriar }: ReportTemplatesProps = {}) => {
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                       <div className={`w-10 h-10 ${colorClass} rounded-lg flex items-center justify-center`}>
-                        <IconComponent className="w-5 h-5 text-white" />
+                        <IconComponent className="w-5 h-5" />
                       </div>
                       <div>
                         <CardTitle className="text-lg">{template.name}</CardTitle>
@@ -304,7 +304,7 @@ export const ReportTemplates = ({ onCriar }: ReportTemplatesProps = {}) => {
                         </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleDeleteTemplate(template)}
-                          className="text-red-600 focus:text-red-600"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="w-4 h-4 mr-2" />
                           Excluir

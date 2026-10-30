@@ -47,9 +47,9 @@ export const StorageDebug = () => {
   };
 
   return (
-    <Card className="mb-4 border-purple-200 bg-purple-50">
+    <Card className="mb-4 border-accent/30 bg-accent/10">
       <CardHeader>
-        <CardTitle className="text-sm text-purple-800 flex items-center justify-between">
+        <CardTitle className="text-sm text-accent flex items-center justify-between">
           Debug: Storage do Navegador
           <div className="space-x-2">
             <Button size="sm" onClick={checkStorage}>
@@ -64,14 +64,14 @@ export const StorageDebug = () => {
       <CardContent className="space-y-3 text-sm">
         {storageData && (
           <>
-            <div className="p-2 bg-white rounded border">
+            <div className="p-2 bg-card rounded border">
               <strong>localStorage:</strong>
               <pre className="text-xs mt-1 overflow-auto max-h-32">
                 {JSON.stringify(storageData.localStorage, null, 2)}
               </pre>
             </div>
             
-            <div className="p-2 bg-white rounded border">
+            <div className="p-2 bg-card rounded border">
               <strong>sessionStorage:</strong>
               <pre className="text-xs mt-1 overflow-auto max-h-32">
                 {JSON.stringify(storageData.sessionStorage, null, 2)}

@@ -321,7 +321,7 @@ export const PaywallScreen = () => {
               <ul className="space-y-2 text-sm">
                 {PLAN_FEATURES.map((f) => (
                   <li key={f} className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-500 flex-shrink-0" /> {f}
+                    <Check className="h-4 w-4 text-success flex-shrink-0" /> {f}
                   </li>
                 ))}
               </ul>
@@ -344,7 +344,7 @@ export const PaywallScreen = () => {
               <Button
                 onClick={handleAssinar}
                 disabled={enviando || faltamDadosFiscais}
-                className="w-full bg-green-600 hover:bg-green-700"
+                className="w-full bg-success hover:bg-success/90 text-success-foreground"
               >
                 {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                 Começar teste grátis
@@ -424,7 +424,7 @@ export const PaywallScreen = () => {
             <ul className="space-y-2 text-sm">
               {PLAN_FEATURES.map((f) => (
                 <li key={f} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-500 flex-shrink-0" /> {f}
+                  <Check className="h-4 w-4 text-success flex-shrink-0" /> {f}
                 </li>
               ))}
             </ul>
@@ -450,7 +450,7 @@ export const PaywallScreen = () => {
             <Button
               onClick={handleAssinar}
               disabled={enviando || faltamDadosFiscais}
-              className="w-full bg-green-600 hover:bg-green-700"
+              className="w-full bg-success hover:bg-success/90 text-success-foreground"
             >
               {enviando ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
               Assinar agora por {PLAN_PRICE_LABEL}/mês

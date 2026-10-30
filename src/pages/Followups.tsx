@@ -79,7 +79,7 @@ export default function Followups() {
                   <p className="text-2xl font-bold">{stats.total}</p>
                 )}
               </div>
-              <Clock className="h-8 w-8 text-blue-500" />
+              <Clock className="h-8 w-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -92,10 +92,10 @@ export default function Followups() {
                 {loading ? (
                   <div className="h-8 w-16 bg-muted rounded animate-pulse" />
                 ) : (
-                  <p className="text-2xl font-bold text-orange-600">{stats.pending}</p>
+                  <p className="text-2xl font-bold text-warning">{stats.pending}</p>
                 )}
               </div>
-              <AlertCircle className="h-8 w-8 text-orange-500" />
+              <AlertCircle className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -108,10 +108,10 @@ export default function Followups() {
                 {loading ? (
                   <div className="h-8 w-16 bg-muted rounded animate-pulse" />
                 ) : (
-                  <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                  <p className="text-2xl font-bold text-success">{stats.completed}</p>
                 )}
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -124,10 +124,10 @@ export default function Followups() {
                 {loading ? (
                   <div className="h-8 w-16 bg-muted rounded animate-pulse" />
                 ) : (
-                  <p className="text-2xl font-bold text-purple-600">{stats.scheduled}</p>
+                  <p className="text-2xl font-bold text-accent">{stats.scheduled}</p>
                 )}
               </div>
-              <Send className="h-8 w-8 text-purple-500" />
+              <Send className="h-8 w-8 text-accent" />
             </div>
           </CardContent>
         </Card>
@@ -140,10 +140,10 @@ export default function Followups() {
                 {loading ? (
                   <div className="h-8 w-16 bg-muted rounded animate-pulse" />
                 ) : (
-                  <p className="text-2xl font-bold text-red-600">{stats.overdue}</p>
+                  <p className="text-2xl font-bold text-destructive">{stats.overdue}</p>
                 )}
               </div>
-              <AlertCircle className="h-8 w-8 text-red-500" />
+              <AlertCircle className="h-8 w-8 text-destructive" />
             </div>
           </CardContent>
         </Card>

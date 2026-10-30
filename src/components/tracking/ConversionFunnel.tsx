@@ -13,8 +13,8 @@ export const ConversionFunnel = ({ metrics, isLoading }: ConversionFunnelProps) 
   const totalConversions = metrics?.totalConversions || 0;
 
   const funnelData = [
-    { stage: 'Contatos identificados', count: totalLeads, percentage: 100, color: 'bg-blue-500' },
-    { stage: 'Conversões', count: totalConversions, percentage: totalLeads > 0 ? (totalConversions / totalLeads) * 100 : 0, color: 'bg-green-500' },
+    { stage: 'Contatos identificados', count: totalLeads, percentage: 100, color: 'bg-info text-info-foreground' },
+    { stage: 'Conversões', count: totalConversions, percentage: totalLeads > 0 ? (totalConversions / totalLeads) * 100 : 0, color: 'bg-success text-success-foreground' },
   ];
 
   return (

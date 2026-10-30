@@ -21,6 +21,7 @@ import SetVariablePanel from './SetVariablePanel';
 import UpdateContactPanel from './UpdateContactPanel';
 import MoveFunnelPanel from './MoveFunnelPanel';
 import EndFlowPanel from './EndFlowPanel';
+import { estiloDoFundoCheio } from '@/lib/cores/tintaLegivel';
 
 interface NodeConfigPanelProps {
   node: Node;
@@ -102,11 +103,11 @@ const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   return (
     <div className="h-full flex flex-col">
       {/* Panel header */}
-      <div className={`flex items-center gap-2 px-4 py-3 ${block.headerClass}`}>
+      <div className="flex items-center gap-2 px-4 py-3" style={estiloDoFundoCheio(block.headerCor)}>
         <span>{block.emoji}</span>
-        <span className="text-sm font-semibold text-white">{block.label}</span>
-        <div className="ml-auto text-white">
-          <FeatureHelp helpKey={type} className="text-white/80 hover:text-white hover:bg-white/20" />
+        <span className="text-sm font-semibold">{block.label}</span>
+        <div className="ml-auto">
+          <FeatureHelp helpKey={type} className="text-current opacity-80 hover:opacity-100 hover:bg-background/20" />
         </div>
       </div>
       <Separator />

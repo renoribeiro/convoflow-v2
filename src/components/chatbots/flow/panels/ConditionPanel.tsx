@@ -94,11 +94,11 @@ const ConditionPanel: React.FC<Props> = ({ data, variables, onChange }) => {
 
       <div className="pt-1 text-xs text-muted-foreground space-y-0.5">
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-success inline-block" />
           Saída <strong>Verdadeiro</strong>: conecte ao próximo nó quando a condição for satisfeita
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-destructive inline-block" />
           Saída <strong>Falso</strong>: conecte ao próximo nó quando não for satisfeita
         </div>
       </div>

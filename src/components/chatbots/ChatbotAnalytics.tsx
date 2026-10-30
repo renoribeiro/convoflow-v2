@@ -121,7 +121,7 @@ export const ChatbotAnalytics: React.FC<ChatbotAnalyticsProps> = ({ chatbotId })
                 <p className="text-sm font-medium text-muted-foreground">Total de Interações</p>
                 <p className="text-2xl font-bold">{analytics.totalInteractions.toLocaleString()}</p>
               </div>
-              <MessageSquare className="h-8 w-8 text-blue-500" />
+              <MessageSquare className="h-8 w-8 text-info" />
             </div>
           </CardContent>
         </Card>
@@ -131,9 +131,9 @@ export const ChatbotAnalytics: React.FC<ChatbotAnalyticsProps> = ({ chatbotId })
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Taxa de Sucesso</p>
-                <p className="text-2xl font-bold text-green-600">{analytics.successRate.toFixed(1)}%</p>
+                <p className="text-2xl font-bold text-success">{analytics.successRate.toFixed(1)}%</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-500" />
+              <TrendingUp className="h-8 w-8 text-success" />
             </div>
           </CardContent>
         </Card>
@@ -143,9 +143,9 @@ export const ChatbotAnalytics: React.FC<ChatbotAnalyticsProps> = ({ chatbotId })
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Tempo de Resposta</p>
-                <p className="text-2xl font-bold text-orange-600">{analytics.averageResponseTime.toFixed(1)}s</p>
+                <p className="text-2xl font-bold text-warning">{analytics.averageResponseTime.toFixed(1)}s</p>
               </div>
-              <Clock className="h-8 w-8 text-orange-500" />
+              <Clock className="h-8 w-8 text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -155,9 +155,9 @@ export const ChatbotAnalytics: React.FC<ChatbotAnalyticsProps> = ({ chatbotId })
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Chatbots Ativos</p>
-                <p className="text-2xl font-bold text-purple-600">{chatbots.filter(bot => bot.isActive).length}</p>
+                <p className="text-2xl font-bold text-accent">{chatbots.filter(bot => bot.isActive).length}</p>
               </div>
-              <Bot className="h-8 w-8 text-purple-500" />
+              <Bot className="h-8 w-8 text-accent" />
             </div>
           </CardContent>
         </Card>

@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { CHART_SERIES } from '@/lib/chartColors';
 
 interface SystemMetrics {
   timestamp: string;
@@ -204,17 +205,17 @@ const MetricCard = ({ title, value, unit, icon: Icon, trend, status }: {
 }) => {
   const getStatusColor = () => {
     switch (status) {
-      case 'good': return 'text-green-600';
-      case 'warning': return 'text-yellow-600';
-      case 'critical': return 'text-red-600';
-      default: return 'text-gray-600';
+      case 'good': return 'text-success';
+      case 'warning': return 'text-warning';
+      case 'critical': return 'text-destructive';
+      default: return 'text-muted-foreground';
     }
   };
 
   const getTrendIcon = () => {
     switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4 text-red-500" />;
-      case 'down': return <TrendingDown className="h-4 w-4 text-green-500" />;
+      case 'up': return <TrendingUp className="h-4 w-4 text-destructive" />;
+      case 'down': return <TrendingDown className="h-4 w-4 text-success" />;
       default: return null;
     }
   };
@@ -239,8 +240,8 @@ const MetricCard = ({ title, value, unit, icon: Icon, trend, status }: {
             <Progress 
               value={value} 
               className={`h-2 ${
-                status === 'critical' ? 'bg-red-100' :
-                status === 'warning' ? 'bg-yellow-100' : 'bg-green-100'
+                status === 'critical' ? 'bg-destructive/10' :
+                status === 'warning' ? 'bg-warning/10' : 'bg-success/10'
               }`}
             />
           </div>
@@ -253,19 +254,19 @@ const MetricCard = ({ title, value, unit, icon: Icon, trend, status }: {
 const ServiceStatusCard = ({ service }: { service: ServiceStatus }) => {
   const getStatusIcon = () => {
     switch (service.status) {
-      case 'healthy': return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'warning': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
-      case 'critical': return <XCircle className="h-5 w-5 text-red-500" />;
-      case 'offline': return <XCircle className="h-5 w-5 text-gray-500" />;
+      case 'healthy': return <CheckCircle className="h-5 w-5 text-success" />;
+      case 'warning': return <AlertTriangle className="h-5 w-5 text-warning" />;
+      case 'critical': return <XCircle className="h-5 w-5 text-destructive" />;
+      case 'offline': return <XCircle className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getStatusBadge = () => {
     const variants = {
-      healthy: 'bg-green-100 text-green-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      critical: 'bg-red-100 text-red-800',
-      offline: 'bg-gray-100 text-gray-800'
+      healthy: 'bg-success/10 text-success',
+      warning: 'bg-warning/10 text-warning',
+      critical: 'bg-destructive/10 text-destructive',
+      offline: 'bg-muted text-foreground'
     };
 
     return (
@@ -316,19 +317,19 @@ const ServiceStatusCard = ({ service }: { service: ServiceStatus }) => {
 const AlertCard = ({ alert }: { alert: AlertItem }) => {
   const getAlertIcon = () => {
     switch (alert.type) {
-      case 'info': return <Eye className="h-4 w-4 text-blue-500" />;
-      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
-      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
-      case 'critical': return <AlertTriangle className="h-4 w-4 text-red-600" />;
+      case 'info': return <Eye className="h-4 w-4 text-info" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-warning" />;
+      case 'error': return <XCircle className="h-4 w-4 text-destructive" />;
+      case 'critical': return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
   };
 
   const getAlertBadge = () => {
     const variants = {
-      info: 'bg-blue-100 text-blue-800',
-      warning: 'bg-yellow-100 text-yellow-800',
-      error: 'bg-red-100 text-red-800',
-      critical: 'bg-red-200 text-red-900'
+      info: 'bg-info/10 text-info',
+      warning: 'bg-warning/10 text-warning',
+      error: 'bg-destructive/10 text-destructive',
+      critical: 'bg-destructive/20 text-destructive'
     };
 
     return (
@@ -349,7 +350,7 @@ const AlertCard = ({ alert }: { alert: AlertItem }) => {
           <div className="flex items-center space-x-2">
             {getAlertBadge()}
             {alert.resolved && (
-              <Badge className="bg-green-100 text-green-800">RESOLVIDO</Badge>
+              <Badge className="bg-success/10 text-success">RESOLVIDO</Badge>
             )}
           </div>
         </div>
@@ -427,8 +428,8 @@ const SystemOverview = () => {
                   labelFormatter={(value) => new Date(value).toLocaleString()}
                   formatter={(value: number, name: string) => [`${value.toFixed(1)}%`, name === 'cpu_usage' ? 'CPU' : 'Memória']}
                 />
-                <Area type="monotone" dataKey="cpu_usage" stackId="1" stroke="#8884d8" fill="#8884d8" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="memory_usage" stackId="2" stroke="#82ca9d" fill="#82ca9d" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="cpu_usage" stackId="1" stroke={CHART_SERIES[1]} fill={CHART_SERIES[1]} fillOpacity={0.6} />
+                <Area type="monotone" dataKey="memory_usage" stackId="2" stroke={CHART_SERIES[4]} fill={CHART_SERIES[4]} fillOpacity={0.6} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -454,8 +455,8 @@ const SystemOverview = () => {
                   labelFormatter={(value) => new Date(value).toLocaleString()}
                   formatter={(value: number, name: string) => [`${value.toFixed(1)} MB/s`, name === 'network_in' ? 'Entrada' : 'Saída']}
                 />
-                <Line type="monotone" dataKey="network_in" stroke="#8884d8" strokeWidth={2} />
-                <Line type="monotone" dataKey="network_out" stroke="#82ca9d" strokeWidth={2} />
+                <Line type="monotone" dataKey="network_in" stroke={CHART_SERIES[1]} strokeWidth={2} />
+                <Line type="monotone" dataKey="network_out" stroke={CHART_SERIES[4]} strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -488,7 +489,7 @@ const ServicesStatus = () => {
               <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} />
               <YAxis />
               <Tooltip formatter={(value: number) => [`${value}ms`, 'Tempo de Resposta']} />
-              <Bar dataKey="response_time" fill="#8884d8" />
+              <Bar dataKey="response_time" fill={CHART_SERIES[1]} />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
@@ -545,7 +546,7 @@ const AlertsPanel = () => {
       {filteredAlerts.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+            <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhum alerta encontrado</h3>
             <p className="text-muted-foreground">
               {filter === 'active' ? 'Não há alertas ativos no momento.' : 

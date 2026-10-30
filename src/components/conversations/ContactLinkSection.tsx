@@ -151,7 +151,7 @@ export function ContactLinkSection({ contact, link, onOpenConversation }: Contac
         cancelText="Cancelar"
         variant="destructive"
         isLoading={unlinkMutation.isPending}
-        icon={<Unlink className="h-5 w-5 text-red-500" />}
+        icon={<Unlink className="h-5 w-5 text-destructive" />}
       />
     </div>
   );

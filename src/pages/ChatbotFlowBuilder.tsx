@@ -57,7 +57,7 @@ import {
   BLOCK_DEFINITIONS,
   BLOCK_BY_TYPE,
   NODE_CATEGORIES,
-  CATEGORY_HEADER_CLASS,
+  CATEGORY_HEADER_COR,
   defaultNodeData,
 } from '@/lib/chatbot/flowConstants';
 import { NODE_TYPES } from '@/components/chatbots/flow/nodes/FlowNodes';
@@ -68,6 +68,7 @@ import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { FlowEdgeContext, EDGE_TYPES } from '@/components/chatbots/flow/edges/DeletableEdge';
 import type { ChatbotNodeType, ChatbotNodeData, ChatbotVariableRow } from '@/types/chatbot-flow.types';
 import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
+import { estiloDoFundoCheio } from '@/lib/cores/tintaLegivel';
 
 // ---------------------------------------------------------------------------
 // History stack
@@ -632,7 +633,7 @@ const ChatbotFlowBuilder: React.FC = () => {
         if (blocks.length === 0) return null;
         return (
           <div key={cat.key}>
-            <p className={`text-[10px] font-bold px-1 py-0.5 mb-1 rounded text-white ${CATEGORY_HEADER_CLASS[cat.key]}`}>
+            <p className="text-[10px] font-bold px-1 py-0.5 mb-1 rounded" style={estiloDoFundoCheio(CATEGORY_HEADER_COR[cat.key])}>
               {cat.label}
             </p>
             {blocks.map((block) => {
@@ -716,7 +717,7 @@ const ChatbotFlowBuilder: React.FC = () => {
         )}
 
         {isDirty && (
-          <Badge variant="outline" className="text-orange-500 border-orange-500 text-xs">
+          <Badge variant="outline" className="text-warning border-warning text-xs">
             Não salvo
           </Badge>
         )}
@@ -798,7 +799,7 @@ const ChatbotFlowBuilder: React.FC = () => {
             <Controls className="!bottom-4 !left-4" />
             <MiniMap
               className="!bottom-4 !right-4 !border !rounded-md !bg-card"
-              nodeColor="#888"
+              nodeColor="hsl(var(--muted-foreground))"
             />
           </ReactFlow>
           </FlowEdgeContext.Provider>

@@ -49,7 +49,7 @@ export const TutorialBody: React.FC<Props> = ({ tutorial, className }) => {
               <p className="text-muted-foreground">{step.body}</p>
 
               {step.note && (
-                <p className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-2.5 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                <p className="flex gap-2 rounded-md border border-warning/30 bg-warning/10 p-2.5 text-xs text-warning">
                   <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   <span>{step.note}</span>
                 </p>

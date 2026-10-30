@@ -185,16 +185,16 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
         <div className="space-y-4">
           {connected && (
             <div className="flex flex-col items-center justify-center py-8 space-y-3">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
-              <p className="font-medium text-green-700">Conectado com sucesso!</p>
-              <p className="text-sm text-gray-600">Fechando...</p>
+              <CheckCircle2 className="h-12 w-12 text-success" />
+              <p className="font-medium text-success">Conectado com sucesso!</p>
+              <p className="text-sm text-muted-foreground">Fechando...</p>
             </div>
           )}
 
           {(loading || preparing) && !connected && !qrCode && !pairingCode && !error && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-              <p className="text-sm text-gray-600">
+              <Loader2 className="h-8 w-8 animate-spin text-info" />
+              <p className="text-sm text-muted-foreground">
                 {preparing ? 'Preparando o QR Code...' : 'Conectando o número...'}
               </p>
             </div>
@@ -202,7 +202,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
 
           {error && !connected && !loading && (
             <div className="flex flex-col items-center justify-center py-8 space-y-4">
-              <div className="text-red-500 text-center">
+              <div className="text-destructive text-center">
                 <p className="font-medium">Não foi possível conectar o número</p>
                 <p className="text-sm mt-1">{error}</p>
               </div>
@@ -217,9 +217,9 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
             <div className="space-y-6">
               {/* Código de Pareamento */}
               {pairingCode && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="bg-info/10 border border-info/30 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-medium text-blue-900">Código de Pareamento</h3>
+                    <h3 className="font-medium text-info">Código de Pareamento</h3>
                     <Button
                       onClick={copyPairingCode}
                       variant="outline"
@@ -230,10 +230,10 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
                       Copiar
                     </Button>
                   </div>
-                  <div className="bg-white border rounded p-3 font-mono text-lg text-center tracking-wider">
+                  <div className="bg-card border rounded p-3 font-mono text-lg text-center tracking-wider">
                     {pairingCode}
                   </div>
-                  <p className="text-sm text-blue-700 mt-2">
+                  <p className="text-sm text-info mt-2">
                     Digite este código no WhatsApp em <strong>Aparelhos conectados</strong> &gt; <strong>Conectar com código</strong>
                   </p>
                 </div>
@@ -242,8 +242,8 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
               {/* QR Code */}
               {qrCode && (
                 <div className="flex flex-col items-center space-y-4">
-                  <h3 className="font-medium text-gray-900">Ou escaneie o QR Code</h3>
-                  <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+                  <h3 className="font-medium text-foreground">Ou escaneie o QR Code</h3>
+                  <div className="bg-papel p-4 rounded-lg border-2 border-border">
                     <img
                       src={qrCode}
                       alt="QR Code para conexão WhatsApp"
@@ -252,14 +252,14 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
                   </div>
 
                   <div className="text-center space-y-2">
-                    <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                       <Smartphone className="h-4 w-4" />
                       <span>Abra o WhatsApp no seu celular</span>
                     </div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Vá em <strong>Configurações</strong> &gt; <strong>Aparelhos conectados</strong> &gt; <strong>Conectar um aparelho</strong>
                     </p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Aponte a câmera para este QR Code
                     </p>
                   </div>

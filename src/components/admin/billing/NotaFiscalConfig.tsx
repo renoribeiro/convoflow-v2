@@ -94,7 +94,7 @@ export function NotaFiscalConfig() {
         {config.isLoading ? (
           <p className="text-sm text-muted-foreground">Carregando…</p>
         ) : config.error || !dados ? (
-          <p className="text-sm text-red-700">Não foi possível carregar a configuração da nota fiscal.</p>
+          <p className="text-sm text-destructive">Não foi possível carregar a configuração da nota fiscal.</p>
         ) : (
           <dl className="grid gap-3 text-sm sm:grid-cols-3">
             <div data-testid="nfse-ambiente">
@@ -113,7 +113,7 @@ export function NotaFiscalConfig() {
               <dd className="mt-1">
                 {dados.certificado_valido_ate ? formatDate(dados.certificado_valido_ate) : '—'}
                 {certificadoEmRisco ? (
-                  <p className="flex items-center gap-1 text-xs text-amber-800">
+                  <p className="flex items-center gap-1 text-xs text-warning">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     {diasDoCertificado! < 0 ? 'Vencido: renove o certificado.' : `Vence em ${diasDoCertificado} dia(s): renove o certificado.`}
                   </p>
@@ -162,7 +162,7 @@ export function NotaFiscalConfig() {
               Salvar
             </Button>
           </div>
-          {valor === null ? <p className="text-xs text-red-700">Use de 0,00 a 99,99, com até duas casas.</p> : null}
+          {valor === null ? <p className="text-xs text-destructive">Use de 0,00 a 99,99, com até duas casas.</p> : null}
           <p className="text-xs text-muted-foreground">
             Vai em toda nota, no campo de tributos aproximados (Lei 12.741). Padrão 6,00: Anexo III do Simples, primeira
             faixa. Se o Fator R ficar abaixo de 28%, a empresa cai no Anexo V: use 15,50. O anexo do mês aparece no extrato
