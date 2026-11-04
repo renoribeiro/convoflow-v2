@@ -124,7 +124,7 @@ describe('Renomear conta do Instagram', () => {
     expect(dialogText()).not.toMatch(/inst[aâ]ncia/i);
   });
 
-  it('WhatsApp continua com os textos de sempre', () => {
+  it('WhatsApp pela API oficial: textos de número, sem nome no servidor', () => {
     const qc = new QueryClient();
     render(
       <QueryClientProvider client={qc}>
@@ -137,6 +137,8 @@ describe('Renomear conta do Instagram', () => {
     );
     expect(screen.getByText('Renomear número')).toBeInTheDocument();
     expect(screen.getByLabelText('Nome do número')).toBeInTheDocument();
-    expect(dialogText()).toContain('Chave técnica:');
+    // Número da API oficial não tem nome no servidor de conexão (2026-11-04).
+    expect(dialogText()).not.toContain('Nome no servidor');
+    expect(dialogText()).not.toContain('Chave');
   });
 });

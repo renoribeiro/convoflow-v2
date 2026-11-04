@@ -37,6 +37,9 @@ import { RenameInstanceModal } from '@/components/whatsapp/RenameInstanceModal';
 import { QRCodeModal } from '@/components/whatsapp/QRCodeModal';
 import { WebhookConfigModal } from '@/components/whatsapp/WebhookConfigModal';
 import { ViewInstanceModal } from '@/components/whatsapp/ViewInstanceModal';
+import { NomeNoServidor } from '@/components/whatsapp/NomeNoServidor';
+import { temNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
+import { tipoDeConexao } from '@/lib/whatsapp/tipoDeConexao';
 import { WebhookDashboard } from '@/components/webhook/WebhookDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
@@ -90,13 +93,15 @@ interface WhatsAppInstance {
   connection_config?: Record<string, any>;
 }
 
+// O selo diz o tipo de conexão com o provedor (decisão do dono, 2026-11-04):
+// a agência precisa saber se o número está na Evolution, no WAHA ou na Meta.
 const PROVIDER_BADGE: Record<ProviderType, { label: string; className: string }> = {
-  official: { label: 'API Oficial', className: 'bg-success hover:bg-success text-success-foreground' },
-  waha: { label: 'QR Code', className: 'bg-info hover:bg-info text-info-foreground' },
-  evolution: { label: 'QR Code', className: 'bg-muted hover:bg-muted text-foreground' },
+  official: { label: tipoDeConexao('official'), className: 'bg-success hover:bg-success text-success-foreground' },
+  waha: { label: tipoDeConexao('waha'), className: 'bg-info hover:bg-info text-info-foreground' },
+  evolution: { label: tipoDeConexao('evolution'), className: 'bg-muted hover:bg-muted text-foreground' },
   // Instância de Instagram (fatia 2) é criada por procedimento manual, sem tela
   // própria. Sem esta entrada o mapa devolve undefined e a página inteira cai.
-  instagram: { label: 'Instagram', className: 'bg-accent hover:bg-accent text-accent-foreground' },
+  instagram: { label: tipoDeConexao('instagram'), className: 'bg-accent hover:bg-accent text-accent-foreground' },
 };
 
 // Instagram não tem open/connecting: o que diz se a conexão atende é a
@@ -690,6 +695,9 @@ export default function WhatsAppNumbers() {
                         {instance.profile_name && (
                           <p>Perfil: {instance.profile_name}</p>
                         )}
+                        {temNomeNoServidor(instance.provider) && instance.instance_key && (
+                          <NomeNoServidor nome={instance.instance_key} provider={instance.provider} variante="cartao" />
+                        )}
                         {instance.last_connected_at && (
                           <p>Última conexão: {format(new Date(instance.last_connected_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
                         )}
@@ -1172,6 +1180,7 @@ export default function WhatsAppNumbers() {
             onOpenChange={setShowQRModal}
             instanceId={selectedInstance.id}
             instanceName={selectedInstance.name}
+            serverName={selectedInstance.instance_key}
             onSuccess={() => {
               resetModals();
               refetch();

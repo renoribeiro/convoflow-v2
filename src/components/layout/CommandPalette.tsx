@@ -25,9 +25,10 @@ import { ICONES_DAS_TELAS } from '@/lib/access/iconesDasTelas';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { channelOfProvider } from '@/lib/conversations/channel';
 import { contactIdentifier, contactLabel, contactSearchOrFilter } from '@/lib/contacts/identity';
-import { useTenant } from '@/contexts/TenantContext';
+import { useTenant, useCan } from '@/contexts/TenantContext';
 import { supabase } from '@/integrations/supabase/client';
 import { estadoDoNumeroTexto } from '@/lib/whatsapp/connectionSections';
+import { temNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
 import { destinoDoContatoNaBusca } from '@/lib/contacts/destinoNaBusca';
 import { logger } from '@/lib/logger';
 
@@ -87,6 +88,7 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
   const { tenantId } = useTenant();
   const { ctx } = useAcessoTelas();
   const { instances } = useWhatsAppInstances();
+  const podeVerNomeNoServidor = useCan('whatsapp.configure');
   // Conta do Instagram não é "sessão WhatsApp": cada canal no seu grupo.
   const whatsappInstances = instances.filter((i) => channelOfProvider(i.provider) === 'whatsapp');
   const instagramAccounts = instances.filter((i) => channelOfProvider(i.provider) === 'instagram');
@@ -220,13 +222,21 @@ export const CommandPalette = ({ open, onOpenChange }: CommandPaletteProps) => {
                   onSelect={() => handleSelectInstance(instance.id)}
                 >
                   <Phone className="mr-2 h-4 w-4 text-muted-foreground" />
-                  <div className="flex flex-col">
+                  <div className="flex min-w-0 flex-col">
                     <span>{instance.name}</span>
-                    {instance.number && (
-                      <span className="text-xs text-muted-foreground">
-                        {instance.number} · {estadoDoNumeroTexto(instance.status)}
-                      </span>
-                    )}
+                    {(() => {
+                      // O nome no servidor (o do painel da Evolution) só para
+                      // quem cuida dos números; para o Atendente nada muda.
+                      const partes = [
+                        instance.number ? `${instance.number} · ${estadoDoNumeroTexto(instance.status)}` : null,
+                        podeVerNomeNoServidor && temNomeNoServidor(instance.provider) && instance.instanceKey
+                          ? `Nome no servidor: ${instance.instanceKey}`
+                          : null,
+                      ].filter(Boolean);
+                      return partes.length > 0 ? (
+                        <span className="text-xs text-muted-foreground [overflow-wrap:anywhere]">{partes.join(' · ')}</span>
+                      ) : null;
+                    })()}
                   </div>
                 </CommandItem>
               ))}

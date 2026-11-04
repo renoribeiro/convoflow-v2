@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { problemaNoNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
 
 /**
  * Discriminated-union schema for the "Nova Instância" wizard.
@@ -17,8 +18,8 @@ const nameField = z
 /**
  * Regra do nome exibido de uma instância — a MESMA da criação, exportada para
  * o "Renomear" não inventar outra. O nome é só rótulo: a identidade da
- * instância é `instance_key`, que nunca muda depois de criada (é ela que o
- * servidor Evolution e os webhooks conhecem).
+ * instância é `instance_key` (o nome no servidor de conexão), que nunca muda
+ * depois de criada (é ela que o servidor Evolution e os webhooks conhecem).
  */
 export const instanceNameSchema = nameField;
 
@@ -59,12 +60,15 @@ const wahaSchema = z.object({
 const evolutionSchema = z.object({
   provider: z.literal('evolution'),
   name: nameField,
+  // O nome no servidor de conexão (src/lib/whatsapp/nomeNoServidor.ts). A
+  // mesma regra roda no servidor, que também confere se o nome está livre.
   instance_key: z
     .string()
     .trim()
-    .min(3, 'O código interno precisa de pelo menos 3 caracteres.')
-    .max(100, 'O código interno pode ter no máximo 100 caracteres.')
-    .regex(/^[A-Za-z0-9_-]+$/, 'Use apenas letras, números, _ e -'),
+    .superRefine((v, ctx) => {
+      const problema = problemaNoNomeNoServidor(v);
+      if (problema) ctx.addIssue({ code: z.ZodIssueCode.custom, message: problema });
+    }),
   // Sem serverUrl/apiKey de propósito: o servidor Evolution é da plataforma, e
   // a chave global dele é chave-mestra de TODAS as instâncias — inclusive as de
   // outros clientes. Ela vive como secret na edge function `evolution-provision`

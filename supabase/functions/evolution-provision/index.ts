@@ -4,6 +4,14 @@ import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { credentialsForVault } from '../_shared/instance-credentials.ts';
 import { decideConnectTarget, targetTenantIdFor } from '../_shared/connect-target.ts';
+import {
+  EVOLUTION_INSTANCE_NAME_PATTERN,
+  MENSAGEM_NOME_EM_USO_NO_CONVOFLOW,
+  MENSAGEM_NOME_EM_USO_NO_SERVIDOR,
+  MENSAGEM_NOME_INVALIDO,
+  nomeEmUsoNaCriacao,
+  situacaoDoNomeNaEvolution,
+} from '../_shared/evolution-instance-name.ts';
 
 /**
  * Cria uma instância no servidor Evolution da plataforma.
@@ -52,8 +60,6 @@ const WEBHOOK_EVENTS = [
   'CONTACTS_UPDATE',
 ];
 
-/** Mesma regra do schema Zod do formulário. O servidor não confia no cliente. */
-const INSTANCE_KEY_PATTERN = /^[A-Za-z0-9_-]{3,100}$/;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -142,15 +148,11 @@ Deno.serve(async (req: Request) => {
     );
   }
 
+  // O nome no servidor de conexão (o do painel da Evolution). Mesma regra do
+  // formulário (_shared/evolution-instance-name.ts); o servidor não confia no cliente.
   const instanceKey = (body.instance_key || '').trim();
-  if (!INSTANCE_KEY_PATTERN.test(instanceKey)) {
-    return jsonResponse(
-      {
-        ok: false,
-        error: 'Código interno inválido. Use de 3 a 100 caracteres, só letras, números, _ e -.',
-      },
-      400,
-    );
+  if (!EVOLUTION_INSTANCE_NAME_PATTERN.test(instanceKey)) {
+    return jsonResponse({ ok: false, reason: 'nome_invalido', error: MENSAGEM_NOME_INVALIDO }, 400);
   }
 
   const displayName = (body.name || '').trim() || instanceKey;
@@ -168,10 +170,7 @@ Deno.serve(async (req: Request) => {
     .maybeSingle();
 
   if (existing) {
-    return jsonResponse(
-      { ok: false, error: 'Já existe um número com esse código interno. Clique em Gerar para criar outro.' },
-      409,
-    );
+    return jsonResponse({ ok: false, reason: 'nome_em_uso', error: MENSAGEM_NOME_EM_USO_NO_CONVOFLOW }, 409);
   }
 
   const evolutionRequest = async (path: string, init: RequestInit = {}): Promise<Response> =>
@@ -184,11 +183,22 @@ Deno.serve(async (req: Request) => {
       },
     });
 
-  const describeFailure = async (res: Response): Promise<string> => {
-    const raw = await res.text().catch(() => '');
-    if (res.status === 401) return 'O servidor Evolution recusou a chave da plataforma (401).';
-    if (res.status === 403) return 'O servidor Evolution recusou o acesso (403).';
-    return `O servidor Evolution respondeu ${res.status}. ${raw.slice(0, 300)}`.trim();
+  // O servidor Evolution é um só para todos os clientes e pode ter número que
+  // o ConvoFlow não conhece. Nome tomado lá é recusado aqui, antes de criar,
+  // com frase que diz o que fazer; antes a tela mostrava "recusou o acesso (403)".
+  const situacaoDoNome = await situacaoDoNomeNaEvolution(evolutionRequest, instanceKey);
+  if (situacaoDoNome === 'em_uso') {
+    logger.warn('evolution-provision: nome já em uso no servidor Evolution', { instanceKey });
+    return jsonResponse({ ok: false, reason: 'nome_em_uso', error: MENSAGEM_NOME_EM_USO_NO_SERVIDOR }, 409);
+  }
+  if (situacaoDoNome === 'desconhecido') {
+    logger.warn('evolution-provision: não deu para conferir o nome no servidor; a criação confere', { instanceKey });
+  }
+
+  const describeFailure = (status: number, raw: string): string => {
+    if (status === 401) return 'O servidor Evolution recusou a chave da plataforma (401).';
+    if (status === 403) return 'O servidor Evolution recusou o acesso (403).';
+    return `O servidor Evolution respondeu ${status}. ${raw.slice(0, 300)}`.trim();
   };
 
   // ---------------------------------------------------------------- criar
@@ -220,9 +230,14 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!createRes.ok) {
-      const detail = await describeFailure(createRes);
+      const raw = await createRes.text().catch(() => '');
+      // Nome tomado entre a conferência e a criação (ou conferência sem resposta).
+      if (nomeEmUsoNaCriacao(createRes.status, raw)) {
+        logger.warn('evolution-provision: a Evolution recusou o nome por já estar em uso', { instanceKey });
+        return jsonResponse({ ok: false, reason: 'nome_em_uso', error: MENSAGEM_NOME_EM_USO_NO_SERVIDOR }, 409);
+      }
       logger.error('Falha ao criar instância na Evolution', { instanceKey, status: createRes.status });
-      return jsonResponse({ ok: false, error: detail }, 502);
+      return jsonResponse({ ok: false, error: describeFailure(createRes.status, raw) }, 502);
     }
 
     createPayload = await createRes.json();

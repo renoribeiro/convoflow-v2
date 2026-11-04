@@ -149,7 +149,7 @@ export const TOURS: Tour[] = [
       {
         target: 'whatsapp-nova-instancia',
         title: 'Clique em Conectar número',
-        body: 'Com a Conta aberta, a janela pede a Loja primeiro. Escolha Conectar pelo QR Code ou API oficial da Meta e clique em Continuar. Na API oficial, clique em Conectar com a Meta e siga a janela da Meta.',
+        body: 'Com a Conta aberta, a janela pede a Loja antes. Escolha Conectar pelo QR Code ou API oficial da Meta e clique em Continuar. No QR Code, confira o nome no servidor. Na Meta, use Conectar com a Meta.',
       },
     ],
   },

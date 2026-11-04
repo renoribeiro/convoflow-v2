@@ -16,6 +16,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { instanceNameSchema } from '@/lib/validations/whatsappInstance';
+import { temNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
+import { NomeNoServidor } from './NomeNoServidor';
 
 /**
  * Renomeia o rótulo de uma instância.
@@ -23,7 +25,8 @@ import { instanceNameSchema } from '@/lib/validations/whatsappInstance';
  * O que muda é SÓ `whatsapp_instances.name`. A `instance_key` é a identidade da
  * instância — é ela que o servidor Evolution conhece, que chega nos webhooks e
  * que amarra conversas, campanhas e chatbots. Trocá-la seria criar uma
- * instância órfã no servidor e outra vazia aqui. Por isso o campo nem aparece.
+ * instância órfã no servidor e outra vazia aqui. Por isso ela aparece só para
+ * ler e copiar, como "Nome no servidor de conexão" (2026-11-04).
  *
  * Quem pode: quem tem `whatsapp.configure` (gerente e gestor). A regra real é a
  * policy `whatsapp_instances_tenant_update` no banco; o botão que abre este
@@ -165,14 +168,15 @@ export const RenameInstanceModal = ({
             autoFocus
             maxLength={50}
           />
-          {fieldError ? (
-            <p className="text-xs text-destructive">{fieldError}</p>
-          ) : isInstagram ? null : (
-            <p className="text-xs text-muted-foreground">
-              Chave técnica: <code className="px-1">{instance.instance_key}</code> (essa não muda).
-            </p>
-          )}
+          {fieldError && <p className="text-xs text-destructive">{fieldError}</p>}
         </div>
+
+        {!isInstagram && temNomeNoServidor(instance.provider) && (
+          <div className="space-y-1">
+            <NomeNoServidor nome={instance.instance_key} provider={instance.provider} variante="janela" />
+            <p className="text-xs text-muted-foreground">Este não muda ao renomear.</p>
+          </div>
+        )}
 
         <DialogFooter className="gap-2 sm:gap-2">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>

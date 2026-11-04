@@ -11,6 +11,7 @@ import { ptBR } from 'date-fns/locale';
 import { Smartphone, KeyRound, Calendar, Phone, User, Loader2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { instanceAction } from '@/services/whatsapp/instanceActions';
 import { useToast } from '@/hooks/use-toast';
+import { NomeNoServidor } from './NomeNoServidor';
 
 interface ViewInstance {
   id: string;
@@ -35,7 +36,8 @@ interface ViewInstanceModalProps {
 /**
  * Detalhes de um número Evolution ou WAHA.
  *
- * Mostra se há chave salva ("Chave configurada: sim ou não") e deixa trocá-la.
+ * Mostra o nome no servidor de conexão (o do painel da Evolution, com botão de
+ * copiar), se há chave salva ("Chave configurada: sim ou não") e deixa trocá-la.
  * Nunca mostra a chave nem o endereço do servidor, nem mascarados: os dois
  * moram no cofre e só o servidor os lê (whatsapp-instance-action, ações
  * `credential` e `replace_key`). A troca só vale se a chave nova abrir ESTE
@@ -93,7 +95,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
             {instance.name}
           </DialogTitle>
           <DialogDescription>
-            {isWaha ? 'Número WAHA (servidor seu)' : 'Número Evolution (servidor da plataforma)'}
+            {isWaha ? 'Seu servidor (WAHA)' : 'QR Code (Evolution), no servidor do ConvoFlow'}
           </DialogDescription>
         </DialogHeader>
 
@@ -103,10 +105,7 @@ export const ViewInstanceModal = ({ open, onOpenChange, instance, onKeyReplaced 
               <div className="flex items-center gap-2">
                 <Badge variant={conectado ? 'default' : 'secondary'}>{conectado ? 'Conectado' : 'Desconectado'}</Badge>
               </div>
-              <p>
-                <span className="font-medium">Código interno do número:</span>{' '}
-                <code className="bg-muted px-2 py-0.5 rounded text-xs">{instance.instance_key}</code>
-              </p>
+              <NomeNoServidor nome={instance.instance_key} provider={instance.provider} variante="janela" />
               {instance.profile_name && (
                 <p className="flex items-center gap-2">
                   <User className="h-4 w-4 text-muted-foreground" />

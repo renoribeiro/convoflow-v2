@@ -12,6 +12,7 @@ import { instanceAction, isConnectedState } from '@/services/whatsapp/instanceAc
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { NomeNoServidor } from './NomeNoServidor';
 
 interface QRCodeModalProps {
   open: boolean;
@@ -20,6 +21,8 @@ interface QRCodeModalProps {
   instanceId: string;
   /** Nome que aparece na janela. */
   instanceName: string;
+  /** O nome no servidor de conexão (`instance_key`), mostrado embaixo do nome. */
+  serverName?: string;
   onSuccess?: () => void;
 }
 
@@ -39,6 +42,7 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
   onOpenChange,
   instanceId,
   instanceName,
+  serverName,
   onSuccess,
 }) => {
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -180,6 +184,9 @@ export const QRCodeModal: React.FC<QRCodeModalProps> = ({
           <DialogDescription>
             Conecte o número <strong>{instanceName}</strong> escaneando o QR Code ou usando o código de pareamento
           </DialogDescription>
+          {serverName && (
+            <NomeNoServidor nome={serverName} variante="cartao" className="text-sm text-muted-foreground" />
+          )}
         </DialogHeader>
 
         <div className="space-y-4">

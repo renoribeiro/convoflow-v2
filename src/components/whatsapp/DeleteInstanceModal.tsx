@@ -9,6 +9,9 @@ import { logger } from '@/lib/logger';
 import { mensagemDaEdgeFunction } from '@/lib/edgeFunctionError';
 import { SUPORTE_EMAIL } from '@/lib/billing/checkout';
 import { instagramAccountHandle } from '@/lib/whatsapp/connectionSections';
+import { tipoDeConexao } from '@/lib/whatsapp/tipoDeConexao';
+import { temNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
+import { NomeNoServidor } from './NomeNoServidor';
 import { Loader2, AlertTriangle, Trash2, ShieldCheck } from 'lucide-react';
 
 /**
@@ -238,8 +241,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
   const canDelete = !!loaded && loaded.ok === true;
   const refusedWithHistory = !!loaded && !loaded.ok && loaded.reason === 'has_history';
   const refusedOther = !!loaded && !loaded.ok && loaded.reason !== 'has_history';
-  const providerLabel =
-    instance.provider === 'official' ? 'API Oficial (Meta)' : instance.provider === 'waha' ? 'WAHA' : 'Evolution';
+  const providerLabel = tipoDeConexao(instance.provider);
   const instagramHandle = isInstagram ? instagramAccountHandle(instance) : null;
 
   const renderCounts = (counts: DeleteInstanceCounts) => (
@@ -285,10 +287,9 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
               </>
             ) : (
               <>
-                <div className="flex justify-between gap-4">
-                  <span className="font-medium">Chave</span>
-                  <code className="bg-background px-2 py-0.5 rounded text-xs">{instance.instance_key}</code>
-                </div>
+                {temNomeNoServidor(instance.provider) && (
+                  <NomeNoServidor nome={instance.instance_key} provider={instance.provider} variante="janela" className="py-1" />
+                )}
                 {instance.phone_number && (
                   <div className="flex justify-between gap-4">
                     <span className="font-medium">Número</span>
@@ -296,7 +297,7 @@ export const DeleteInstanceModal = ({ open, onOpenChange, instance, onSuccess }:
                   </div>
                 )}
                 <div className="flex justify-between gap-4">
-                  <span className="font-medium">Provedor</span>
+                  <span className="font-medium">Tipo de conexão</span>
                   <span>{providerLabel}</span>
                 </div>
               </>

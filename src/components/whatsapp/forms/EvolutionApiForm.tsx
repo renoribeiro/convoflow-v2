@@ -17,26 +17,44 @@ import {
 } from 'lucide-react';
 import { env } from '@/lib/env';
 import { Avancado } from './Avancado';
+import {
+  gerarNomeNoServidor,
+  normalizarNomeNoServidor,
+  problemaNoNomeNoServidor,
+  sufixoAleatorio,
+} from '@/lib/whatsapp/nomeNoServidor';
 
 export interface EvolutionFormValues {
   name: string;
+  /** O nome no servidor de conexão (o do painel da Evolution). */
   instance_key: string;
+  /** As 4 letras sorteadas no fim do nome no servidor; ficam as mesmas enquanto a pessoa digita. */
+  sufixo: string;
+  /** A pessoa mudou o nome no servidor em "Avançado": o nome do número para de reescrevê-lo. */
+  nomeNoServidorManual: boolean;
   enableWebhookAutomation: boolean;
   retryAttempts: number;
   retryDelay: number;
 }
 
-/** Código interno pronto: quem só quer ler o QR Code não precisa abrir "Avançado" (lote 6e). */
-export const gerarCodigoInterno = () =>
-  `instance_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-
-export const initialEvolutionValues = (): EvolutionFormValues => ({
-  name: '',
-  instance_key: gerarCodigoInterno(),
-  enableWebhookAutomation: true,
-  retryAttempts: 3,
-  retryDelay: 2000,
-});
+/**
+ * O nome no servidor nasce do nome digitado ("WhatsApp Vendas" vira
+ * "whatsapp_vendas_k3f9") e aparece logo abaixo do campo do nome; em
+ * "Avançado" dá para trocar (decisão do dono, 2026-11-04). Até o lote 6e era
+ * um código "instance_" com números, escondido.
+ */
+export const initialEvolutionValues = (): EvolutionFormValues => {
+  const sufixo = sufixoAleatorio();
+  return {
+    name: '',
+    instance_key: gerarNomeNoServidor('', sufixo),
+    sufixo,
+    nomeNoServidorManual: false,
+    enableWebhookAutomation: true,
+    retryAttempts: 3,
+    retryDelay: 2000,
+  };
+};
 
 export type EvolutionWebhookStatus = 'idle' | 'configuring' | 'success' | 'error';
 
@@ -60,7 +78,18 @@ export const EvolutionApiForm = ({
   avancado,
   onAvancadoChange,
 }: Props) => {
-  const generateInstanceKey = () => onChange({ instance_key: gerarCodigoInterno() });
+  const mudarNome = (name: string) =>
+    onChange(
+      values.nomeNoServidorManual ? { name } : { name, instance_key: gerarNomeNoServidor(name, values.sufixo) },
+    );
+
+  const gerarDeNovo = () => {
+    const sufixo = sufixoAleatorio();
+    onChange({ sufixo, nomeNoServidorManual: false, instance_key: gerarNomeNoServidor(values.name, sufixo) });
+  };
+
+  const problemaNoNome = values.nomeNoServidorManual ? problemaNoNomeNoServidor(values.instance_key) : null;
+  const mostraNomeGerado = values.name.trim() !== '' || values.nomeNoServidorManual;
 
   // O webhook que a Evolution vai chamar e sempre a edge function do proprio
   // Supabase deste ambiente. Antes isto lia env.get('EVOLUTION_WEBHOOK_URL'),
@@ -84,34 +113,57 @@ export const EvolutionApiForm = ({
           id="evo-name"
           placeholder="Ex: WhatsApp Vendas"
           value={values.name}
-          onChange={(e) => onChange({ name: e.target.value })}
+          onChange={(e) => mudarNome(e.target.value)}
           disabled={loading}
         />
+        <div className="flex items-start gap-1.5 text-xs text-muted-foreground" data-testid="nome-no-servidor-gerado">
+          <p className="min-w-0">
+            Nome no servidor de conexão:{' '}
+            {mostraNomeGerado ? (
+              <code className="rounded bg-muted px-1 py-0.5 text-foreground [overflow-wrap:anywhere]">{values.instance_key}</code>
+            ) : (
+              'aparece quando você digitar o nome.'
+            )}{' '}
+            É o nome do painel da Evolution. Para mudar, abra Avançado.
+          </p>
+          <DicaDoCampo
+            rotulo="Nome no servidor de conexão"
+            texto="É o nome deste número no painel da Evolution e nas automações de fora. Não é senha."
+          />
+        </div>
       </div>
 
       <Avancado
         id="evo-avancado"
         aberto={avancado}
         onAbertoChange={onAvancadoChange}
-        resumo="Código interno e entrega das mensagens. Já vem pronto: só mexa se o suporte pedir."
+        resumo="Nome no servidor de conexão e entrega das mensagens. Já vem pronto: mude só se a sua agência usa outro padrão de nome."
       >
       <div className="space-y-2">
-        <Label htmlFor="evo-key">Código interno do número *</Label>
+        <Label htmlFor="evo-key">Nome no servidor de conexão *</Label>
         <div className="flex gap-2">
           <Input
             id="evo-key"
-            placeholder="Ex: vendas_001"
+            placeholder="Ex: whatsapp_vendas_k3f9"
             value={values.instance_key}
-            onChange={(e) => onChange({ instance_key: e.target.value })}
+            onChange={(e) =>
+              onChange({ instance_key: normalizarNomeNoServidor(e.target.value), nomeNoServidorManual: true })
+            }
+            aria-invalid={problemaNoNome ? true : undefined}
             disabled={loading}
           />
-          <Button type="button" variant="outline" onClick={generateInstanceKey} disabled={loading}>
-            Gerar
+          <Button type="button" variant="outline" onClick={gerarDeNovo} disabled={loading}>
+            Gerar de novo
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Um código só deste número, que o ConvoFlow usa por dentro. Clique em Gerar ou use letras, números, _ e -.
-        </p>
+        {problemaNoNome ? (
+          <p className="text-xs text-destructive">{problemaNoNome}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Letras minúsculas sem acento, números, _ e -. Ele não muda depois que o número é criado.
+            Gerar de novo volta a montar o nome a partir do nome do número.
+          </p>
+        )}
       </div>
 
       <Card className="border-info/30 bg-info/10">

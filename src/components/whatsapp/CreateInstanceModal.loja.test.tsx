@@ -15,7 +15,7 @@ const CONTA = 'aaaaaaaa-0000-4000-8000-000000000001';
 const LOJA = 'aaaaaaaa-0000-4000-8000-000000000002';
 const LOJA_2 = 'aaaaaaaa-0000-4000-8000-000000000005';
 
-const { state, setActiveTenant, createEvolution, createWaha, createMeta } = vi.hoisted(() => ({
+const { state, setActiveTenant, createEvolution, createWaha, createMeta, mockToast } = vi.hoisted(() => ({
   state: {
     tenant: null as null | { id: string; name: string; kind: string },
     stores: [] as { id: string; name: string; parent_tenant_id: string }[],
@@ -24,6 +24,7 @@ const { state, setActiveTenant, createEvolution, createWaha, createMeta } = vi.h
   createEvolution: vi.fn(async () => ({ instance_id: 'inst-novo' })),
   createWaha: vi.fn(async () => {}),
   createMeta: vi.fn(async () => {}),
+  mockToast: vi.fn(),
 }));
 
 vi.mock('@/contexts/TenantContext', () => ({
@@ -39,7 +40,7 @@ vi.mock('@/hooks/useMetaApi', () => ({ useMetaApi: () => ({ createInstance: crea
 vi.mock('@/hooks/useMetaEmbeddedSignup', () => ({
   useMetaEmbeddedSignup: () => ({ isAvailable: false, startSignup: vi.fn(), loading: false }),
 }));
-vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));
+vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }) }));
 vi.mock('sonner', () => ({ toast: { info: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 vi.mock('./QRCodeModal', () => ({ QRCodeModal: () => null }));
 
@@ -56,6 +57,9 @@ function abrir() {
     </MemoryRouter>,
   );
 }
+
+/** O campo de "Avançado" (o "?" ao lado tem nome parecido: por isso o papel). */
+const campoNomeNoServidor = () => screen.getByRole('textbox', { name: /Nome no servidor de conexão/ });
 
 function escolherProvedor(titulo: RegExp) {
   fireEvent.click(screen.getByText(titulo));
@@ -114,10 +118,12 @@ describe('Loja em foco: diz onde fica e manda a Loja nos três caminhos', () => 
     escolherProvedor(/Conectar pelo QR Code/);
     fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Vendas' } });
     fireEvent.click(screen.getByRole('button', { name: /Avançado/ }));
-    fireEvent.change(screen.getByLabelText(/Código interno do número/), { target: { value: 'loja-centro-vendas' } });
+    // Em "Avançado" o nome no servidor é trocado; o que não serve vira _ e minúscula.
+    fireEvent.change(campoNomeNoServidor(), { target: { value: 'Loja Centro-Vendas' } });
+    expect(campoNomeNoServidor()).toHaveValue('loja_centro-vendas');
     fireEvent.click(screen.getByRole('button', { name: /Criar e abrir QR Code/ }));
     await waitFor(() => expect(createEvolution).toHaveBeenCalled());
-    expect(createEvolution).toHaveBeenCalledWith('loja-centro-vendas', undefined, expect.objectContaining({ tenantId: LOJA }));
+    expect(createEvolution).toHaveBeenCalledWith('loja_centro-vendas', undefined, expect.objectContaining({ tenantId: LOJA }));
   });
 
   it('WAHA', async () => {
@@ -162,19 +168,56 @@ describe('Duas opções e o Avançado (lote 6e, achado 106, decisão D12)', () =
     expect(screen.getByText('QR Code no seu servidor WAHA')).toBeInTheDocument();
   });
 
-  it('QR Code só com o nome: o código interno já vem pronto e os campos técnicos ficam fechados', async () => {
+  it('QR Code só com o nome: o nome no servidor nasce dele, aparece embaixo, e os campos técnicos ficam fechados', async () => {
     abrir();
     escolherProvedor(/Conectar pelo QR Code/);
-    expect(screen.queryByLabelText(/Código interno do número/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /Nome no servidor de conexão/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/Endereço de entrega/)).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Vendas' } });
+    expect(screen.getByTestId('nome-no-servidor-gerado')).toHaveTextContent('aparece quando você digitar o nome');
+    fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'WhatsApp Vendas' } });
+    expect(screen.getByTestId('nome-no-servidor-gerado')).toHaveTextContent(/Nome no servidor de conexão: whatsapp_vendas_[a-z0-9]{4}/);
     fireEvent.click(screen.getByRole('button', { name: /Criar e abrir QR Code/ }));
     await waitFor(() => expect(createEvolution).toHaveBeenCalled());
     expect(createEvolution).toHaveBeenCalledWith(
-      expect.stringMatching(/^instance_\d+_[a-z0-9]+$/),
+      expect.stringMatching(/^whatsapp_vendas_[a-z0-9]{4}$/),
       undefined,
-      expect.objectContaining({ tenantId: LOJA, displayName: 'Vendas' }),
+      expect.objectContaining({ tenantId: LOJA, displayName: 'WhatsApp Vendas' }),
     );
+  });
+
+  it('o sufixo fica o mesmo enquanto se digita; acento e espaço saem do nome no servidor', () => {
+    abrir();
+    escolherProvedor(/Conectar pelo QR Code/);
+    const nome = screen.getByLabelText(/Nome do número/);
+    fireEvent.change(nome, { target: { value: 'Recepção' } });
+    const primeiro = screen.getByTestId('nome-no-servidor-gerado').textContent!.match(/recepcao_([a-z0-9]{4})/)![1];
+    fireEvent.change(nome, { target: { value: 'Recepção Ótica' } });
+    expect(screen.getByTestId('nome-no-servidor-gerado')).toHaveTextContent(`recepcao_otica_${primeiro}`);
+  });
+
+  it('nome trocado em Avançado não é reescrito pelo nome do número; Gerar de novo volta a montar', () => {
+    abrir();
+    escolherProvedor(/Conectar pelo QR Code/);
+    const nome = screen.getByLabelText(/Nome do número/);
+    fireEvent.change(nome, { target: { value: 'Vendas' } });
+    fireEvent.click(screen.getByRole('button', { name: /Avançado/ }));
+    fireEvent.change(campoNomeNoServidor(), { target: { value: 'agencia_cliente_01' } });
+    fireEvent.change(nome, { target: { value: 'Vendas Centro' } });
+    expect(campoNomeNoServidor()).toHaveValue('agencia_cliente_01');
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar de novo' }));
+    expect((campoNomeNoServidor() as HTMLInputElement).value).toMatch(/^vendas_centro_[a-z0-9]{4}$/);
+  });
+
+  it('nome no servidor curto demais: diz o que fazer e não cria', async () => {
+    abrir();
+    escolherProvedor(/Conectar pelo QR Code/);
+    fireEvent.change(screen.getByLabelText(/Nome do número/), { target: { value: 'Vendas' } });
+    fireEvent.click(screen.getByRole('button', { name: /Avançado/ }));
+    fireEvent.change(campoNomeNoServidor(), { target: { value: 'ab' } });
+    expect(screen.getByText('O nome no servidor de conexão precisa de pelo menos 3 caracteres.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Criar e abrir QR Code/ }));
+    await waitFor(() => expect(mockToast).toHaveBeenCalled());
+    expect(createEvolution).not.toHaveBeenCalled();
   });
 
   it('API oficial sem a conexão automática: os campos manuais já aparecem abertos', () => {

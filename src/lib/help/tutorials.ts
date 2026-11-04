@@ -174,7 +174,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Confira o que volta para o ConvoFlow',
         body:
-          'Quando a Meta termina, aparece o aviso "Conta Meta conectada", a janela fecha e o número entra na lista com o selo "API Oficial" e o estado "Conectado". Nos bastidores o ConvoFlow já inscreveu o número na API e o registrou para envio. Numa reconexão o aviso é "Número reconectado": o número continua o mesmo na lista, com o histórico no lugar, e o registro do número não é refeito.',
+          'Quando a Meta termina, aparece o aviso "Conta Meta conectada", a janela fecha e o número entra na lista com o selo "API oficial da Meta" e o estado "Conectado". Nos bastidores o ConvoFlow já inscreveu o número na API e o registrou para envio. Numa reconexão o aviso é "Número reconectado": o número continua o mesmo na lista, com o histórico no lugar, e o registro do número não é refeito.',
         note:
           'Se aparecer "Este número já está conectado em outra Conta ou Loja que você não administra", nada foi alterado e a Meta nem chegou a ser chamada: o número existe no ConvoFlow em uma Conta ou Loja fora do seu alcance. Se ele é seu, escreva para contato@convoflow.com.br.',
       },
@@ -203,9 +203,10 @@ export const ALL_TUTORIALS: Tutorial[] = [
   },
 
   // ------------------------------------------------------------------ 2a
-  // QR Code pelo servidor do ConvoFlow. Conferido em 2026-10-29 contra
+  // QR Code pelo servidor do ConvoFlow. Conferido em 2026-11-04 contra
   // CreateInstanceModal, ProviderSelector, EvolutionApiForm, QRCodeModal e
-  // evolution-provision (duas opções e "Avançado" desde o lote 6e).
+  // evolution-provision (duas opções e "Avançado" desde o lote 6e; o nome no
+  // servidor de conexão nasce do nome do número desde 2026-11-04).
   {
     id: 'conectar-evolution',
     title: 'Conectar número pelo QR Code',
@@ -236,16 +237,16 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'O servidor de WhatsApp é o do ConvoFlow e já vem configurado: você não informa endereço nem chave.',
       },
       {
-        title: 'Preencha "Nome do número"',
+        title: 'Preencha "Nome do número" e confira o nome no servidor',
         body:
-          'O nome é o rótulo que aparece nas telas, de 3 a 50 letras (ex.: "WhatsApp Vendas"). O resto já vem pronto: o código interno do número e a entrega das mensagens ficam em "Avançado", e você não precisa abrir.',
+          'O nome é o rótulo que aparece nas telas, de 3 a 50 letras (ex.: "WhatsApp Vendas"). Logo abaixo aparece o "Nome no servidor de conexão", montado a partir dele (ex.: "whatsapp_vendas_k3f9"): é o nome do número no painel da Evolution e nas automações de fora. Se a sua agência usa outro padrão, abra "Avançado" e troque; senão, não precisa abrir. A entrega das mensagens também fica lá, já pronta.',
       },
       {
         title: 'Clique em "Criar e abrir QR Code"',
         body:
-          'Aparece "Número criado" e a janela do QR Code abre sozinha. As mensagens do número entram no ConvoFlow assim que ele conectar.',
+          'Aparece "Número criado" e a janela do QR Code abre sozinha, com o nome do número e o nome no servidor. Na lista, o número tem o selo "QR Code (Evolution)" e a linha "Nome no servidor", com o botão de copiar. As mensagens do número entram no ConvoFlow assim que ele conectar.',
         note:
-          'Se aparecer que já existe um número com esse código interno, abra "Avançado" e clique em "Gerar". Se o aviso disser para falar com o suporte, o número foi criado mas o endereço de entrega não: escreva para contato@convoflow.com.br.',
+          'Se aparecer que o nome já está em uso no servidor de conexão, nada foi criado: abra "Avançado", clique em "Gerar de novo" ou escolha outro nome, e clique de novo em "Criar e abrir QR Code". Se o aviso disser para falar com o suporte, o número foi criado mas o endereço de entrega não: escreva para contato@convoflow.com.br.',
       },
       {
         title: 'Leia o QR Code com o celular do número',
@@ -270,8 +271,8 @@ export const ALL_TUTORIALS: Tutorial[] = [
   },
 
   // ------------------------------------------------------------------ 2a'
-  // QR Code num servidor WAHA do cliente. Conferido em 2026-10-27 contra
-  // WahaApiForm, QRCodeModal e _shared/waha-provision.ts.
+  // QR Code num servidor WAHA do cliente. Conferido em 2026-11-04 contra
+  // WahaApiForm, QRCodeModal, WhatsAppNumbers e _shared/waha-provision.ts.
   {
     id: 'conectar-waha',
     title: 'Conectar número no seu servidor (WAHA)',
@@ -308,7 +309,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Clique em "Salvar número"',
         body:
-          'O ConvoFlow testa se o servidor responde, cria a sessão nele com o endereço de entrega e uma senha só deste número, e guarda endereço, chave e senha no cofre. Aparece "Número WAHA criado". Se o servidor recusar a chave, não responder ou não criar a sessão, a janela diz o motivo e nada é salvo.',
+          'O ConvoFlow testa se o servidor responde, cria a sessão nele com o endereço de entrega e uma senha só deste número, e guarda endereço, chave e senha no cofre. Aparece "Número WAHA criado", e o número entra na lista com o selo "Seu servidor (WAHA)" e a linha "Nome no servidor", que é o nome da sessão. Se o servidor recusar a chave, não responder ou não criar a sessão, a janela diz o motivo e nada é salvo.',
       },
       {
         title: 'Clique em "Conectar pelo QR Code", na linha do número',

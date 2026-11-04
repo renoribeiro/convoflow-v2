@@ -189,7 +189,9 @@ function row(table: string, i: number, role: MockRole): Record<string, unknown> 
     });
   }
   if (table === 'whatsapp_instances') {
-    Object.assign(r, { id: i === 0 ? IDS.instance : uid(i, 'i'), status: i === 0 ? 'connected' : 'disconnected', name: `Atendimento ${i + 1}`, phone_number: '+55 11 98765-4321' });
+    // Nome no servidor como o que a tela gera (2026-11-04): as medidas de
+    // largura do cartão e das janelas usam um nome realista, não "Valor N".
+    Object.assign(r, { id: i === 0 ? IDS.instance : uid(i, 'i'), status: i === 0 ? 'connected' : 'disconnected', name: `Atendimento ${i + 1}`, instance_key: `atendimento_${i + 1}_k3f9`, phone_number: '+55 11 98765-4321' });
   }
   if (table === 'contacts') Object.assign(r, { id: uid(i % 8, 'c'), name: PEOPLE[i % PEOPLE.length] });
   if (table === 'conversations') Object.assign(r, { id: uid(i, 'd'), contact_id: uid(i % 8, 'c') });
