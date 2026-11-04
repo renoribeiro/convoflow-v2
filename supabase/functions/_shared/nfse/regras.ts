@@ -100,10 +100,93 @@ export function cobrancaNoEscopo(ambiente: Ambiente, tenantId: string | null, co
   return !!tenantId && contasTeste.includes(tenantId);
 }
 
+/** Pagamento de cliente de verdade: qualquer um que não seja de Conta de teste, inclusive sem Conta identificada. */
+export function cobrancaDeCliente(tenantId: string | null, contasTeste: readonly string[]): boolean {
+  return !tenantId || !contasTeste.includes(tenantId);
+}
+
+/**
+ * A regra da emissão em produção (decisão do dono, 2026-11-04): só com o
+ * ambiente em produção nos DOIS lugares e a liberação ligada. Os dados de
+ * Fortaleza não entram aqui: são só informação.
+ */
+export function emissaoEmProducaoPermitida(s: { ambienteSupabase: Ambiente; ambienteVercel: Ambiente | null; liberada: boolean }): boolean {
+  return s.ambienteSupabase === 'producao' && s.ambienteVercel === 'producao' && s.liberada === true;
+}
+
+export interface Desacordo {
+  codigo: 'ambientes_diferentes' | 'producao_sem_liberacao' | 'liberada_no_teste';
+  titulo: string;
+  mensagem: string;
+}
+
+const NOME_DO_AMBIENTE: Record<Ambiente, string> = { restrita: 'teste', producao: 'produção' };
+
+/**
+ * Ambiente e liberação que não combinam. `ambienteVercel` null = não deu para
+ * saber (o aviso do certificado cobre esse caso). Null de volta = tudo combina.
+ */
+export function desacordoDaEmissao(s: { ambienteSupabase: Ambiente; ambienteVercel: Ambiente | null; liberada: boolean }): Desacordo | null {
+  if (s.ambienteVercel === null) return null;
+  if (s.ambienteVercel !== s.ambienteSupabase) {
+    return {
+      codigo: 'ambientes_diferentes',
+      titulo: 'Ambiente da nota fiscal diferente nos dois lugares',
+      mensagem: `O ambiente da nota fiscal está em ${NOME_DO_AMBIENTE[s.ambienteSupabase]} no Supabase e em ${NOME_DO_AMBIENTE[s.ambienteVercel]} na Vercel. Enquanto os dois não forem iguais, nenhuma nota sai. Acerte NFSE_AMBIENTE nos dois lugares.`,
+    };
+  }
+  if (s.ambienteSupabase === 'producao' && !s.liberada) {
+    return {
+      codigo: 'producao_sem_liberacao',
+      titulo: 'Produção ligada, emissão desligada',
+      mensagem: 'O ambiente da nota fiscal está em produção, mas a chave "Emissão em produção liberada" está desligada. Nenhuma nota sai até você ligar a chave em Faturamento.',
+    };
+  }
+  if (s.ambienteSupabase === 'restrita' && s.liberada) {
+    return {
+      codigo: 'liberada_no_teste',
+      titulo: 'Emissão liberada, ambiente de teste',
+      mensagem: 'A chave "Emissão em produção liberada" está ligada, mas o ambiente da nota fiscal é de teste. Nenhuma nota de cliente sai até trocar NFSE_AMBIENTE na Vercel e no Supabase.',
+    };
+  }
+  return null;
+}
+
+export interface LeituraDeFortaleza {
+  /** aderenteEmissorNacional, como o sistema guarda. Null = ainda não lido. */
+  emissorNacional: boolean | null;
+  /** situacaoEmissaoPadraoContribuintesRFB. Null = ainda não lido. */
+  situacaoRfb: number | null;
+}
+
+export interface MudancaDeFortaleza {
+  campo: 'aderenteEmissorNacional' | 'situacaoEmissaoPadraoContribuintesRFB';
+  de: number;
+  para: number;
+}
+
+const numeroDoSimNao = (v: boolean | null): number | null => (v === null ? null : v ? 1 : 0);
+
+/** Os campos de Fortaleza que mudaram. A primeira leitura de um campo não é mudança: só guarda o valor. */
+export function mudancasDeFortaleza(antes: LeituraDeFortaleza, depois: LeituraDeFortaleza): MudancaDeFortaleza[] {
+  const pares: Array<[MudancaDeFortaleza['campo'], number | null, number | null]> = [
+    ['aderenteEmissorNacional', numeroDoSimNao(antes.emissorNacional), numeroDoSimNao(depois.emissorNacional)],
+    ['situacaoEmissaoPadraoContribuintesRFB', antes.situacaoRfb, depois.situacaoRfb],
+  ];
+  const mudancas: MudancaDeFortaleza[] = [];
+  for (const [campo, de, para] of pares) {
+    if (de !== null && para !== null && de !== para) mudancas.push({ campo, de, para });
+  }
+  return mudancas;
+}
+
 /** Data do dia em Fortaleza, AAAA-MM-DD. */
 export function diaEmFortaleza(d: Date): string {
   return new Date(d.getTime() - FUSO_MS).toISOString().slice(0, 10);
 }
+
+/** Depois de quantas horas um pagamento de cliente sem nota vira aviso, em qualquer ambiente. */
+export const HORAS_PARA_ALERTA_DE_ESPERA = 24;
 
 /** Avisos do certificado: 30, 15, 7 e 1 dia antes. Devolve o maior limite já alcançado. */
 export const AVISOS_CERTIFICADO_DIAS = [30, 15, 7, 1] as const;

@@ -60,6 +60,26 @@ function idDe(v: unknown): string | null {
   return null;
 }
 
+/**
+ * Onde ler TODAS as linhas de uma fatura. A fatura em si só traz as primeiras
+ * (o limite padrão de uma lista é 10). Sem `expand`: na versão 2024-12-18.acacia
+ * a linha já traz `price` inteiro, com o id do produto, e `lines.data.price` não
+ * é um campo expansível.
+ * https://docs.stripe.com/api/invoice-line-item/retrieve
+ */
+export function enderecoDasLinhasDaFatura(invoiceId: string): string {
+  return `https://api.stripe.com/v1/invoices/${encodeURIComponent(invoiceId)}/lines?limit=100`;
+}
+
+/** A lista que o endereço acima devolve → os itens. Lista cortada para aqui: o texto da nota sairia faltando item. */
+export function itensDasLinhasDaFatura(
+  lista: unknown,
+  ids: { precoLojaExtra?: string | null; produtoAtendente?: string | null; produtoApi?: string | null },
+): ItensDaFatura {
+  if ((lista as Obj | null)?.has_more === true) throw new Error('a fatura tem mais de 100 linhas');
+  return resumoDaFatura({ lines: lista }, ids);
+}
+
 /** As linhas da fatura (lines.data) → Lojas e atendentes extras, API e se houve ajuste proporcional. */
 export function resumoDaFatura(
   invoice: unknown,

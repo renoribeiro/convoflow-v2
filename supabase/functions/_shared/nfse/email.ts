@@ -12,7 +12,7 @@ function escaparHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-function reais(centavos: number): string {
+export function reais(centavos: number): string {
   const [int = '0', dec = '00'] = (centavos / 100).toFixed(2).split('.');
   return `R$ ${int.replace(/\B(?=(\d{3})+(?!\d))/g, '.')},${dec}`;
 }

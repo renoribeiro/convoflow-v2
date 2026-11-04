@@ -74,6 +74,9 @@ async function lerParametros(deps, adn) {
     resultado: 'ok',
     aderenteEmissorNacional: Number(p.aderenteEmissorNacional) === 1,
     aderenteAmbienteNacional: Number(p.aderenteAmbienteNacional) === 1,
+    // A documentação da API só lista os valores (0, 1, -1), sem dizer o que são:
+    // vai como veio, para o aviso de mudança e para o cartão do Faturamento.
+    situacaoEmissaoPadraoContribuintesRFB: Number.isInteger(p.situacaoEmissaoPadraoContribuintesRFB) ? p.situacaoEmissaoPadraoContribuintesRFB : null,
     aliquota,
   };
 }

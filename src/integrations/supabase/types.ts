@@ -3320,36 +3320,42 @@ export type Database = {
           atualizado_em: string
           certificado_valido_ate: string | null
           diario_rodado_em: string | null
+          emissao_producao_liberada: boolean
           id: boolean
           p_tot_trib_sn: number
           prefeitura_emissor_nacional: boolean | null
           prefeitura_lida_em: string | null
           prefeitura_producao_emissor_nacional: boolean | null
           prefeitura_producao_lida_em: string | null
+          prefeitura_producao_situacao_rfb: number | null
         }
         Insert: {
           ambiente_ativo?: string
           atualizado_em?: string
           certificado_valido_ate?: string | null
           diario_rodado_em?: string | null
+          emissao_producao_liberada?: boolean
           id?: boolean
           p_tot_trib_sn?: number
           prefeitura_emissor_nacional?: boolean | null
           prefeitura_lida_em?: string | null
           prefeitura_producao_emissor_nacional?: boolean | null
           prefeitura_producao_lida_em?: string | null
+          prefeitura_producao_situacao_rfb?: number | null
         }
         Update: {
           ambiente_ativo?: string
           atualizado_em?: string
           certificado_valido_ate?: string | null
           diario_rodado_em?: string | null
+          emissao_producao_liberada?: boolean
           id?: boolean
           p_tot_trib_sn?: number
           prefeitura_emissor_nacional?: boolean | null
           prefeitura_lida_em?: string | null
           prefeitura_producao_emissor_nacional?: boolean | null
           prefeitura_producao_lida_em?: string | null
+          prefeitura_producao_situacao_rfb?: number | null
         }
         Relationships: []
       }
@@ -6799,6 +6805,10 @@ export type Database = {
           p_waba_id: string
         }
         Returns: Json
+      }
+      nfse_definir_emissao_producao: {
+        Args: { p_liberada: boolean }
+        Returns: boolean
       }
       nfse_definir_p_tot_trib_sn: {
         Args: { p_valor: number }

@@ -28,7 +28,10 @@ export interface RespostaNfse {
   diasRestantes?: number;
   aderenteEmissorNacional?: boolean;
   aderenteAmbienteNacional?: boolean;
+  situacaoEmissaoPadraoContribuintesRFB?: number | null;
   aliquota?: number | null;
+  /** Só na recusa por ambiente diferente: o ambiente que a função da Vercel tem. */
+  ambienteFuncao?: string;
 }
 
 export type AcaoNfse = 'emitir' | 'consultar_dps' | 'consultar_nfse' | 'cancelar' | 'parametros' | 'parametros_producao' | 'certificado';
@@ -73,7 +76,8 @@ export function criarClienteNfse(opts: {
         return { resultado: 'rejeitada', erros: [{ codigo: 'PEDIDO_INVALIDO', descricao: `Campo inválido: ${String(json.campo ?? '?')}` }] };
       }
       const motivo = json && typeof json.erro === 'string' ? json.erro : `HTTP ${res.status}`;
-      return { resultado: 'incerta', detalhe: `função recusou: ${motivo}` };
+      const ambienteFuncao = res.status === 409 && typeof json?.ambiente === 'string' ? json.ambiente : undefined;
+      return { resultado: 'incerta', detalhe: `função recusou: ${motivo}`, ...(ambienteFuncao ? { ambienteFuncao } : {}) };
     },
   };
 }

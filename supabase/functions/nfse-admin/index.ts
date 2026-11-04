@@ -81,12 +81,18 @@ serve(async (req) => {
       if (cfg.ambiente === 'restrita' && !(cobranca.tenant_id && cfg.contasTeste.includes(cobranca.tenant_id))) {
         return erro(409, 'No ambiente de teste só a Conta de teste recebe nota.');
       }
+      if (cfg.ambiente === 'producao' && (await portas.banco.config()).emissao_producao_liberada !== true) {
+        return erro(409, 'A emissão em produção está desligada. Ligue "Emissão em produção liberada" no cartão Nota fiscal automática e tente de novo.');
+      }
       const { data: n } = await servico.from('notas_fiscais').select('id').eq('charge_id', cobranca.id).eq('ambiente', cfg.ambiente).maybeSingle();
       if (n) await portas.banco.atualizarNota(n.id, { status: 'aguardando_emissao', proxima_tentativa_em: null, travada_ate: null });
       await portas.banco.atualizarCobranca(cobranca.id, { nota_status: 'aguardando_emissao' });
       const resultado = await processarCobranca(portas, cobranca.id);
       const depois = await portas.banco.cobranca(cobranca.id);
       logger.info('nfse-admin: reemitir', { cobranca: cobranca.id, resultado });
+      if (resultado === 'ambiente_nao_confirmado') {
+        return erro(503, 'Não deu para confirmar o ambiente da nota fiscal. Confira se ele é o mesmo na Vercel e no Supabase e tente de novo.');
+      }
       return json(200, { ok: true, resultado, nota_status: depois?.nota_status });
     }
 

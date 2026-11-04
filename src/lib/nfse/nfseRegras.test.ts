@@ -6,11 +6,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   avisoDeCertificado,
+  cobrancaDeCliente,
   cobrancaNoEscopo,
   decisaoDeCancelamento,
   dentroDoPrazoDeCancelamento,
+  desacordoDaEmissao,
   diaEmFortaleza,
   dpsJaUsada,
+  emissaoEmProducaoPermitida,
+  mudancasDeFortaleza,
   percentualParaLeiaute,
   prazoCancelamentoAutomatico,
   proximaTentativa,
@@ -132,6 +136,69 @@ describe('texto do serviço (xDescServ)', () => {
       ajuste_proporcional: true,
     });
     expect(resumoDaFatura({}, {})).toEqual({ lojas_extras: 0, atendentes_extras: 0, ajuste_proporcional: false });
+  });
+});
+
+describe('liberação da produção', () => {
+  const ambientes = ['restrita', 'producao'] as const;
+
+  it('só permite com produção nos dois lugares e a chave ligada, em todas as combinações', () => {
+    const permitidas: string[] = [];
+    for (const ambienteSupabase of ambientes) {
+      for (const ambienteVercel of [...ambientes, null]) {
+        for (const liberada of [false, true]) {
+          if (emissaoEmProducaoPermitida({ ambienteSupabase, ambienteVercel, liberada })) permitidas.push(`${ambienteSupabase}/${ambienteVercel}/${liberada}`);
+        }
+      }
+    }
+    expect(permitidas).toEqual(['producao/producao/true']);
+  });
+
+  it('diz o desacordo de cada combinação', () => {
+    const codigo = (ambienteSupabase: 'restrita' | 'producao', ambienteVercel: 'restrita' | 'producao' | null, liberada: boolean) =>
+      desacordoDaEmissao({ ambienteSupabase, ambienteVercel, liberada })?.codigo ?? null;
+    expect(codigo('restrita', 'restrita', false)).toBeNull();
+    expect(codigo('producao', 'producao', true)).toBeNull();
+    expect(codigo('restrita', 'restrita', true)).toBe('liberada_no_teste');
+    expect(codigo('producao', 'producao', false)).toBe('producao_sem_liberacao');
+    expect(codigo('producao', 'restrita', false)).toBe('ambientes_diferentes');
+    expect(codigo('producao', 'restrita', true)).toBe('ambientes_diferentes');
+    expect(codigo('restrita', 'producao', false)).toBe('ambientes_diferentes');
+    expect(codigo('restrita', 'producao', true)).toBe('ambientes_diferentes');
+    // Sem saber o ambiente da Vercel, quem avisa é a leitura do certificado.
+    expect(codigo('producao', null, false)).toBeNull();
+  });
+
+  it('os textos dos avisos não têm hífen nem travessão', () => {
+    for (const s of [
+      { ambienteSupabase: 'restrita', ambienteVercel: 'restrita', liberada: true },
+      { ambienteSupabase: 'producao', ambienteVercel: 'producao', liberada: false },
+      { ambienteSupabase: 'producao', ambienteVercel: 'restrita', liberada: true },
+    ] as const) {
+      const d = desacordoDaEmissao(s)!;
+      expect(d.titulo + d.mensagem).not.toMatch(HIFENS);
+    }
+  });
+
+  it('cliente de verdade é quem não é Conta de teste, inclusive sem Conta identificada', () => {
+    expect(cobrancaDeCliente('conta-a', ['conta-t'])).toBe(true);
+    expect(cobrancaDeCliente(null, ['conta-t'])).toBe(true);
+    expect(cobrancaDeCliente('conta-t', ['conta-t'])).toBe(false);
+  });
+});
+
+describe('mudança nos campos de Fortaleza', () => {
+  it('acha os campos que mudaram, com o valor antigo e o novo', () => {
+    expect(mudancasDeFortaleza({ emissorNacional: false, situacaoRfb: 1 }, { emissorNacional: true, situacaoRfb: 0 })).toEqual([
+      { campo: 'aderenteEmissorNacional', de: 0, para: 1 },
+      { campo: 'situacaoEmissaoPadraoContribuintesRFB', de: 1, para: 0 },
+    ]);
+    expect(mudancasDeFortaleza({ emissorNacional: false, situacaoRfb: 1 }, { emissorNacional: false, situacaoRfb: 1 })).toEqual([]);
+  });
+
+  it('primeira leitura ou leitura que não trouxe o campo não é mudança', () => {
+    expect(mudancasDeFortaleza({ emissorNacional: false, situacaoRfb: null }, { emissorNacional: false, situacaoRfb: 1 })).toEqual([]);
+    expect(mudancasDeFortaleza({ emissorNacional: null, situacaoRfb: 1 }, { emissorNacional: true, situacaoRfb: null })).toEqual([]);
   });
 });
 

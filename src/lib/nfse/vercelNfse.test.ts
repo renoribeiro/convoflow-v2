@@ -22,6 +22,7 @@ import { executarAcao, errosDaResposta } from '../../../api/_lib/nfse/acoes.js';
 import { ErroDeRede } from '../../../api/_lib/nfse/sefin.js';
 import { atender } from '../../../api/nfse.js';
 import { cabecalhosAssinados } from '../../../supabase/functions/_shared/nfse/hmac.ts';
+import { criarClienteNfse } from '../../../supabase/functions/_shared/nfse/cliente-vercel.ts';
 
 const CNPJ = '11222333000181';
 const AGORA = new Date('2026-10-16T15:00:00Z');
@@ -250,9 +251,9 @@ describe('ações contra a Sefin (HTTP simulado)', () => {
   it('parâmetros de Fortaleza: convênio e alíquota do 01.05.01.002', async () => {
     const r = await executarAcao({ acao: 'parametros' }, deps(async (_m, url) =>
       String(url).endsWith('/convenio')
-        ? { status: 200, json: { parametrosConvenio: { aderenteEmissorNacional: 0, aderenteAmbienteNacional: 1 } } }
+        ? { status: 200, json: { parametrosConvenio: { aderenteEmissorNacional: 0, aderenteAmbienteNacional: 1, situacaoEmissaoPadraoContribuintesRFB: 1 } } }
         : { status: 200, json: { aliquotas: { '01.05.01.002': [{ Aliq: 5, DtFim: null }] } } }));
-    expect(r).toEqual({ resultado: 'ok', aderenteEmissorNacional: false, aderenteAmbienteNacional: true, aliquota: 5 });
+    expect(r).toEqual({ resultado: 'ok', aderenteEmissorNacional: false, aderenteAmbienteNacional: true, situacaoEmissaoPadraoContribuintesRFB: 1, aliquota: 5 });
   });
 });
 
@@ -270,11 +271,36 @@ describe('Fortaleza em produção, lida no ambiente de teste', () => {
           : { status: 404, json: null };
       },
     });
-    expect(r).toEqual({ resultado: 'ok', aderenteEmissorNacional: true, aderenteAmbienteNacional: true, aliquota: null });
+    // Sem o campo no convênio, vai null: o worker não confunde com mudança.
+    expect(r).toEqual({ resultado: 'ok', aderenteEmissorNacional: true, aderenteAmbienteNacional: true, situacaoEmissaoPadraoContribuintesRFB: null, aliquota: null });
     expect(urls).toEqual([
       'GET https://adn.nfse.gov.br/parametrizacao/2304400/convenio',
       'GET https://adn.nfse.gov.br/parametrizacao/2304400/01.05.01.002/historicoaliquotas',
     ]);
+  });
+});
+
+describe('cliente da função (Supabase para a Vercel)', () => {
+  const pedir = (status: number, corpo: unknown) =>
+    criarClienteNfse({
+      url: 'https://local/api/nfse',
+      segredo: 'x'.repeat(32),
+      ambiente: 'producao',
+      fetch: (async () => new Response(JSON.stringify(corpo), { status })) as unknown as typeof fetch,
+    }).chamar('certificado');
+
+  it('na recusa por ambiente diferente, devolve o ambiente que a função tem', async () => {
+    expect(await pedir(409, { erro: 'ambiente_diferente', ambiente: 'restrita' })).toEqual({
+      resultado: 'incerta',
+      detalhe: 'função recusou: ambiente_diferente',
+      ambienteFuncao: 'restrita',
+    });
+  });
+
+  it('outra recusa não inventa ambiente', async () => {
+    const r = await pedir(503, { erro: 'certificado_indisponivel', ambiente: 'restrita' });
+    expect(r.resultado).toBe('incerta');
+    expect(r.ambienteFuncao).toBeUndefined();
   });
 });
 

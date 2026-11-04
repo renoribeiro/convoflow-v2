@@ -5,9 +5,10 @@
 // com o segredo do cron). Também aceita a chave secreta do projeto, para rodar
 // à mão. Não tem tela: o superadmin age pelo nfse-admin.
 //
-// Um ciclo: checagem diária (certificado, Fortaleza, conciliação, paradas),
-// cancelamentos por reembolso, emissão das cobranças na fila e e-mails que
-// faltam. As regras estão em _shared/nfse/worker-core.ts.
+// Um ciclo: checagem diária (certificado, ambiente e liberação, Fortaleza,
+// conciliação, paradas, clientes esperando), cancelamentos por reembolso,
+// emissão das cobranças na fila e e-mails que faltam. Em produção a emissão só
+// roda com a chave do dono ligada. As regras estão em _shared/nfse/worker-core.ts.
 //
 // Corpo opcional (só quem passa pelo backend-gate):
 //   {charge_id}                  processa só essa cobrança

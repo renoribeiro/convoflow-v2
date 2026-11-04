@@ -16,20 +16,27 @@
 //      conferindo valor e tomador; se não bater, para e avisa.
 //   4. Uma cobrança por vez: trava (travada_ate) tomada por UPDATE condicional.
 //   5. Restrita só emite para as Contas de teste, e o e-mail vai só para o
-//      endereço de teste. Produção só emite com Fortaleza ligada no Emissor
-//      Nacional; desligada = aguardando_prefeitura + aviso.
+//      endereço de teste. Produção só emite com o ambiente em produção nos DOIS
+//      lugares e a chave "Emissão em produção liberada" ligada; os campos de
+//      Fortaleza são só informação (decisão do dono, 2026-11-04).
 //   6. Reembolso total dentro do prazo (dia 10 do mês seguinte) cancela;
 //      fora do prazo ou parcial = cancelar_manual + aviso.
 // =============================================================================
 
 import {
+  ambienteValido,
   avisoDeCertificado,
   cancelamentoForaDoPrazo,
+  cobrancaDeCliente,
   cobrancaNoEscopo,
   decisaoDeCancelamento,
   dentroDoPrazoDeCancelamento,
+  desacordoDaEmissao,
   diaEmFortaleza,
   dpsJaUsada,
+  emissaoEmProducaoPermitida,
+  HORAS_PARA_ALERTA_DE_ESPERA,
+  mudancasDeFortaleza,
   percentualParaLeiaute,
   proximaTentativa,
   situacaoDoReembolso,
@@ -41,7 +48,7 @@ import {
 import { dataBr, descricaoDoServico, ultimoDiaDoPeriodo, type ItensDaFatura } from './descricao.ts';
 import type { ClienteNfse, ErroSefin, RespostaNfse } from './cliente-vercel.ts';
 import { valor } from './xml-leitura.ts';
-import { emailDaNota, VALIDADE_LINK_S } from './email.ts';
+import { emailDaNota, reais, VALIDADE_LINK_S } from './email.ts';
 
 // -----------------------------------------------------------------------------
 // Linhas do banco
@@ -110,6 +117,9 @@ export interface Config {
   diario_rodado_em: string | null;
   prefeitura_producao_emissor_nacional?: boolean | null;
   prefeitura_producao_lida_em?: string | null;
+  prefeitura_producao_situacao_rfb?: number | null;
+  /** A chave do dono. Só o RPC nfse_definir_emissao_producao muda. */
+  emissao_producao_liberada: boolean;
 }
 
 // -----------------------------------------------------------------------------
@@ -139,6 +149,11 @@ export interface PortaBanco {
   pagasSemTentativa(ambiente: Ambiente, ate: Date): Promise<Cobranca[]>;
   /** Na fila desde antes de `ate`. */
   paradas(ate: Date): Promise<Cobranca[]>;
+  /**
+   * Pagas (> 0), antes de `ate`, ainda sem estado final, de TODAS as Contas e em
+   * qualquer ambiente. Só serve para avisar: nada daqui é emitido.
+   */
+  esperandoNota(ate: Date): Promise<Cobranca[]>;
 }
 
 export interface PortaArquivos {
@@ -153,8 +168,7 @@ export interface PortaEmail {
 }
 
 export interface PortaAvisos {
-  /** Sino + e-mail aos superadmins, uma vez por `chave`. Devolve true se avisou agora. */
-  /** Sem `emails`, o e-mail vai aos superadmins; com `emails`, vai só a esses endereços (o sino vai sempre aos superadmins). */
+  /** Sino + e-mail aos superadmins, uma vez por `chave`. Devolve true se avisou agora. `emails` são endereços a mais. */
   superadmin(chave: string, titulo: string, mensagem: string, opts?: { emails?: string[] }): Promise<boolean>;
 }
 
@@ -162,7 +176,7 @@ export interface Portas {
   ambiente: Ambiente;
   contasTeste: string[];
   emailTeste: string | null;
-  /** Para onde vai o aviso de "Fortaleza ligou" (secret NFSE_EMAIL_AVISOS). */
+  /** Quem recebe também o aviso de mudança nos campos de Fortaleza (secret NFSE_EMAIL_AVISOS). */
   emailAvisos?: string | null;
   agora: () => Date;
   banco: PortaBanco;
@@ -185,14 +199,17 @@ export type Resultado =
   | 'erro'
   | 'incerta'
   | 'sem_nota'
-  | 'aguardando_prefeitura'
+  | 'nao_liberada'
+  | 'ambiente_nao_confirmado'
   | 'certificado_vencido';
 
 const TRAVA_MS = 10 * 60_000;
 
-/** Aviso único de que Fortaleza ligou o Emissor Nacional em produção. */
-export const ALERTA_FORTALEZA_LIGOU = 'prefeitura:producao:ligou';
-export const MENSAGEM_FORTALEZA_LIGOU = 'Fortaleza ligou o Emissor Nacional. Já dá para ligar a nota fiscal em produção.';
+/** Como cada campo de Fortaleza aparece no aviso. */
+const NOME_DO_CAMPO_DE_FORTALEZA = {
+  aderenteEmissorNacional: 'Emissor Nacional (aderenteEmissorNacional)',
+  situacaoEmissaoPadraoContribuintesRFB: 'Emissão padrão da Receita (situacaoEmissaoPadraoContribuintesRFB)',
+} as const;
 
 // -----------------------------------------------------------------------------
 // Ajudantes
@@ -417,6 +434,12 @@ export async function processarCobranca(p: Portas, cobrancaId: string): Promise<
     return 'sem_nota';
   }
 
+  // Antes de reservar o número: sem liberação, a cobrança não gasta número.
+  if (p.ambiente === 'producao') {
+    const parada = await conferirLiberacao(p);
+    if (parada) return parada;
+  }
+
   const nota = await p.banco.reservarNota(cobranca.id, p.ambiente);
   const agora = p.agora();
   if (!(await p.banco.travar(nota.id, new Date(agora.getTime() + TRAVA_MS), agora))) return 'ocupada';
@@ -442,15 +465,7 @@ export async function processarCobranca(p: Portas, cobrancaId: string): Promise<
   }
   const municipioTomador = municipioDoTomador(dados);
 
-  // Produção: Fortaleza precisa estar no Emissor Nacional. Relê no máximo 1 vez por dia.
   const config = await p.banco.config();
-  const prefeitura = await prefeituraLigada(p, config);
-  if (prefeitura === false) {
-    await p.banco.atualizarNota(nota.id, { status: 'aguardando_prefeitura', travada_ate: null });
-    await p.banco.atualizarCobranca(cobranca.id, { nota_status: 'aguardando_prefeitura' });
-    await avisarPrefeituraDesligada(p);
-    return 'aguardando_prefeitura';
-  }
 
   // Envio anterior sem resposta certa: consulta antes de mandar de novo.
   if (nota.verificar_antes_de_reenviar) {
@@ -536,31 +551,31 @@ export async function processarCobranca(p: Portas, cobrancaId: string): Promise<
 }
 
 // -----------------------------------------------------------------------------
-// Fortaleza
+// Liberação da produção e leitura de Fortaleza
 // -----------------------------------------------------------------------------
 
-/** true/false pelo convênio; relê se a leitura tem mais de 24 h. null = não deu para saber (segue). */
-async function prefeituraLigada(p: Portas, config: Config): Promise<boolean | null> {
-  const lida = config.prefeitura_lida_em ? new Date(config.prefeitura_lida_em).getTime() : 0;
-  if (config.prefeitura_emissor_nacional !== null && p.agora().getTime() - lida < 24 * 3600_000) {
-    return config.prefeitura_emissor_nacional;
-  }
-  return lerPrefeitura(p);
+/**
+ * A porta da produção: a chave do dono ligada e a função da Vercel confirmando
+ * o mesmo ambiente. A resposta 'ok' da ação certificado só vem quando os dois
+ * ambientes são iguais (a função recusa com 409 o que difere). Sem confirmação,
+ * não emite. Null = pode seguir.
+ */
+async function conferirLiberacao(p: Portas): Promise<'nao_liberada' | 'ambiente_nao_confirmado' | null> {
+  const config = await p.banco.config();
+  if (config.emissao_producao_liberada !== true) return 'nao_liberada';
+  const c = await p.nfse.chamar('certificado');
+  const ambienteVercel = c.resultado === 'ok' ? p.ambiente : ambienteValido(c.ambienteFuncao) ? c.ambienteFuncao : null;
+  if (emissaoEmProducaoPermitida({ ambienteSupabase: p.ambiente, ambienteVercel, liberada: true })) return null;
+  p.log('nfse: produção sem confirmação da função da Vercel', { detalhe: c.detalhe ?? c.resultado });
+  return 'ambiente_nao_confirmado';
 }
 
+/** Lê o convênio do ambiente atual. Só informação. */
 async function lerPrefeitura(p: Portas): Promise<boolean | null> {
   const r = await p.nfse.chamar('parametros');
   if (r.resultado !== 'ok' || typeof r.aderenteEmissorNacional !== 'boolean') return null;
   await p.banco.atualizarConfig({ prefeitura_emissor_nacional: r.aderenteEmissorNacional, prefeitura_lida_em: p.agora().toISOString() });
   return r.aderenteEmissorNacional;
-}
-
-async function avisarPrefeituraDesligada(p: Portas): Promise<void> {
-  await p.avisos.superadmin(
-    `prefeitura:${p.ambiente}:${diaEmFortaleza(p.agora())}`,
-    'Fortaleza ainda fora do Emissor Nacional',
-    `O convênio de Fortaleza (${p.ambiente === 'producao' ? 'produção' : 'teste'}) ainda diz "Emissor Nacional desligado". As cobranças ficam em "Aguardando a Prefeitura" e saem sozinhas quando ela ligar. O sistema confere todo dia.`,
-  );
 }
 
 // -----------------------------------------------------------------------------
@@ -661,8 +676,11 @@ export async function rodarDiario(p: Portas, config: Config): Promise<Record<str
   const hoje = diaEmFortaleza(p.agora());
   const out: Record<string, unknown> = {};
 
-  // Certificado
+  // Certificado. A resposta também diz em que ambiente a função da Vercel está:
+  // 'ok' só vem com os dois iguais; a recusa por ambiente traz o dela.
   const c = await p.nfse.chamar('certificado');
+  const ambienteVercel = c.resultado === 'ok' ? p.ambiente : ambienteValido(c.ambienteFuncao) ? c.ambienteFuncao : null;
+  const ambientesDiferentes = ambienteVercel !== null && ambienteVercel !== p.ambiente;
   if (c.resultado === 'ok' && c.validoAte && typeof c.diasRestantes === 'number') {
     await p.banco.atualizarConfig({ certificado_valido_ate: c.validoAte });
     const aviso = avisoDeCertificado(c.diasRestantes);
@@ -685,41 +703,50 @@ export async function rodarDiario(p: Portas, config: Config): Promise<Record<str
         await p.banco.atualizarCobranca(cob.id, { nota_status: 'aguardando_emissao' });
       }
     }
-  } else {
+  } else if (!ambientesDiferentes) {
     out.certificado = c.detalhe ?? c.resultado;
     await p.avisos.superadmin(`cert:leitura:${hoje}`, 'Não consegui conferir o certificado da nota fiscal', `A função da Vercel respondeu: ${c.detalhe ?? c.resultado}. Confira as variáveis NFSE_* na Vercel.`);
   }
 
-  // Fortaleza
-  const ligada = await lerPrefeitura(p);
-  out.prefeitura = ligada;
-  if (ligada === true) {
-    for (const cob of await p.banco.cobrancasNoEstado(['aguardando_prefeitura'])) {
-      await p.banco.atualizarCobranca(cob.id, { nota_status: 'aguardando_emissao' });
-    }
-  } else if (ligada === false && p.ambiente === 'producao') {
-    await avisarPrefeituraDesligada(p);
-  }
+  // Ambiente e liberação combinam? Avisa todo dia enquanto não combinarem.
+  const liberada = config.emissao_producao_liberada === true;
+  const desacordo = desacordoDaEmissao({ ambienteSupabase: p.ambiente, ambienteVercel, liberada });
+  out.desacordo = desacordo?.codigo ?? null;
+  if (desacordo) await p.avisos.superadmin(`desacordo:${desacordo.codigo}:${hoje}`, desacordo.titulo, desacordo.mensagem);
 
-  // Fortaleza em PRODUÇÃO, lida em qualquer ambiente. Ligou: avisa uma vez só
-  // (a chave do alerta não tem data). Não liga a produção: isso é do dono.
+  // Fortaleza no ambiente de teste. Na produção, a leitura de baixo já é a mesma.
+  if (p.ambiente === 'restrita') out.prefeitura = await lerPrefeitura(p);
+
+  // Fortaleza em PRODUÇÃO, lida em qualquer ambiente. Só informação: nada aqui
+  // liga ou desliga a emissão. Avisa quando um dos dois campos muda de valor.
   const prod = await p.nfse.chamar('parametros_producao');
   if (prod.resultado === 'ok' && typeof prod.aderenteEmissorNacional === 'boolean') {
+    const situacaoRfb = typeof prod.situacaoEmissaoPadraoContribuintesRFB === 'number' ? prod.situacaoEmissaoPadraoContribuintesRFB : null;
     await p.banco.atualizarConfig({
       prefeitura_producao_emissor_nacional: prod.aderenteEmissorNacional,
       prefeitura_producao_lida_em: p.agora().toISOString(),
+      ...(situacaoRfb === null ? {} : { prefeitura_producao_situacao_rfb: situacaoRfb }),
     });
     out.prefeituraProducao = prod.aderenteEmissorNacional;
-    if (prod.aderenteEmissorNacional) {
-      out.avisoProducao = await p.avisos.superadmin(
-        ALERTA_FORTALEZA_LIGOU,
-        'Fortaleza ligou o Emissor Nacional',
-        MENSAGEM_FORTALEZA_LIGOU,
+    out.situacaoRfb = situacaoRfb;
+    const mudancas = mudancasDeFortaleza(
+      { emissorNacional: config.prefeitura_producao_emissor_nacional ?? null, situacaoRfb: config.prefeitura_producao_situacao_rfb ?? null },
+      { emissorNacional: prod.aderenteEmissorNacional, situacaoRfb },
+    );
+    out.mudancasFortaleza = mudancas.length;
+    for (const m of mudancas) {
+      await p.avisos.superadmin(
+        `fortaleza:${m.campo}:${m.de}:${m.para}:${hoje}`,
+        'Fortaleza mudou um dado da nota fiscal',
+        `O dado ${NOME_DO_CAMPO_DE_FORTALEZA[m.campo]} de Fortaleza mudou de ${m.de} para ${m.para}. Isso não liga nem desliga a emissão: ela depende só do ambiente e da chave em Faturamento.`,
         { emails: p.emailAvisos ? [p.emailAvisos] : [] },
       );
     }
   } else {
     out.prefeituraProducao = prod.detalhe ?? prod.resultado;
+    if (!ambientesDiferentes) {
+      await p.avisos.superadmin(`fortaleza:leitura:${hoje}`, 'Não consegui ler os dados de Fortaleza', `A leitura diária respondeu: ${prod.detalhe ?? prod.resultado}. Sem ela, o sistema não percebe mudança nos dados de Fortaleza.`);
+    }
   }
 
   // Toda cobrança paga tem tentativa de nota
@@ -738,6 +765,28 @@ export async function rodarDiario(p: Portas, config: Config): Promise<Record<str
   out.paradas = paradas.length;
   if (paradas.length) {
     await p.avisos.superadmin(`paradas:${hoje}`, 'Nota fiscal parada há mais de 6 horas', `${paradas.length} cobrança(s) paga(s) há mais de 6 horas ainda sem nota. Veja Faturamento › Cobranças.`);
+  }
+
+  // Pagamento de cliente de verdade esperando nota, em qualquer ambiente. Olha
+  // todas as Contas e só avisa: quem emite continua sendo o ciclo, com o escopo dele.
+  const esperando = (await p.banco.esperandoNota(new Date(p.agora().getTime() - HORAS_PARA_ALERTA_DE_ESPERA * 3600_000))).filter(
+    (cob) => cobrancaDeCliente(cob.tenant_id, p.contasTeste) && situacaoDoReembolso(cob.amount_paid_cents, cob.amount_refunded_cents) !== 'total',
+  );
+  out.clientesEsperando = esperando.length;
+  if (esperando.length) {
+    const total = esperando.reduce((soma, cob) => soma + Number(cob.amount_paid_cents), 0);
+    const maisAntigo = esperando.reduce((a, b) => (new Date(b.paid_at) < new Date(a.paid_at) ? b : a));
+    const motivo =
+      p.ambiente === 'restrita'
+        ? ' As notas não saem enquanto o ambiente for de teste.'
+        : !liberada
+          ? ' As notas não saem enquanto a chave "Emissão em produção liberada" estiver desligada.'
+          : '';
+    await p.avisos.superadmin(
+      `espera:${hoje}`,
+      'Pagamento de cliente sem nota há mais de 24 horas',
+      `${esperando.length} pagamento(s) de cliente, somando ${reais(total)}, esperam nota há mais de 24 horas. O mais antigo é de ${dataBr(maisAntigo.paid_at)}.${motivo} Veja Faturamento, Cobranças.`,
+    );
   }
 
   await p.banco.atualizarConfig({ diario_rodado_em: hoje });
@@ -770,7 +819,7 @@ export async function rodarCiclo(p: Portas, opts: { limite?: number } = {}): Pro
       r = 'erro';
     }
     resultados[r] = (resultados[r] ?? 0) + 1;
-    if (r === 'aguardando_prefeitura' || r === 'certificado_vencido') break; // o resto da fila esperaria igual
+    if (r === 'nao_liberada' || r === 'ambiente_nao_confirmado' || r === 'certificado_vencido') break; // o resto da fila esperaria igual
   }
   out.emissao = resultados;
 

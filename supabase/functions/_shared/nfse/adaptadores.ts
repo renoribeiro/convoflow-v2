@@ -10,7 +10,7 @@
 //   NFSE_HMAC_SECRET     o segredo dividido com a Vercel
 //   NFSE_CONTAS_TESTE    ids das Contas de teste (vírgula): a restrita só emite para elas
 //   NFSE_EMAIL_TESTE     na restrita, o e-mail da nota vai SÓ para este endereço
-//   NFSE_EMAIL_AVISOS    quem recebe o e-mail de "Fortaleza ligou o Emissor Nacional"
+//   NFSE_EMAIL_AVISOS    quem recebe também o e-mail de mudança nos campos de Fortaleza
 //   NFSE_FROM_EMAIL      remetente (cai para REPORT_FROM_EMAIL)
 //   RESEND_API_KEY, STRIPE_SECRET_KEY, STRIPE_PRICE_STORE_SLOT, STRIPE_PRODUCT_ATTENDANT (já existiam)
 // =============================================================================
@@ -20,7 +20,7 @@ import { sendViaResend } from '../report-core.ts';
 import { criarClienteNfse } from './cliente-vercel.ts';
 import { gerarDanfsePdf } from './danfse-pdf.ts';
 import { modeloDoDanfse } from './danfse-modelo.ts';
-import { resumoDaFatura } from './descricao.ts';
+import { enderecoDasLinhasDaFatura, itensDasLinhasDaFatura } from './descricao.ts';
 import { ambienteValido, STATUS_FINAIS, STATUS_NA_FILA, type Ambiente, type StatusCobranca } from './regras.ts';
 import type { Cobranca, Config, DadosFiscais, Nota, PortaBanco, Portas } from './worker-core.ts';
 
@@ -196,6 +196,20 @@ export function bancoSupabase(db: SupabaseClient, contasTeste: string[], ambient
       if (error) falhou('paradas', error);
       return (data ?? []) as Cobranca[];
     },
+    async esperandoNota(ate) {
+      // Sem noEscopo de propósito: é o que enxerga os clientes de verdade na
+      // restrita. Só serve para avisar; nada daqui vai para a emissão.
+      const { data, error } = await db
+        .from('billing_charges')
+        .select('*')
+        .gt('amount_paid_cents', 0)
+        .lt('paid_at', ate.toISOString())
+        .not('nota_status', 'in', `(${STATUS_FINAIS.join(',')})`)
+        .order('paid_at', { ascending: true })
+        .limit(500);
+      if (error) falhou('esperando nota', error);
+      return (data ?? []) as Cobranca[];
+    },
   };
 }
 
@@ -271,15 +285,13 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
             action_label: 'Abrir Faturamento',
             metadata: { source: 'nfse', chave },
           });
-          if (!opts?.emails) {
-            const { data } = await db.auth.admin.getUserById(uid);
-            if (data?.user?.email) emails.push(data.user.email);
-          }
+          const { data } = await db.auth.admin.getUserById(uid);
+          if (data?.user?.email) emails.push(data.user.email);
         }
         if (opts?.emails) emails.push(...opts.emails.filter(Boolean));
         if (emails.length) {
           try {
-            await enviar(emails, `[ConvoFlow] ${titulo}`, `<p>${mensagem.replace(/</g, '&lt;')}</p><p>Abra Administração, Faturamento, Cobranças.</p>`);
+            await enviar([...new Set(emails)], `[ConvoFlow] ${titulo}`, `<p>${mensagem.replace(/</g, '&lt;')}</p><p>Abra Administração, Faturamento, Cobranças.</p>`);
           } catch (e) {
             log('nfse: e-mail do alerta falhou', { erro: (e as Error).message });
           }
@@ -291,11 +303,11 @@ export function montarPortas(db: SupabaseClient, cfg: { ambiente: Ambiente; url:
     async itensDaFatura(invoiceId) {
       const chave = Deno.env.get('STRIPE_SECRET_KEY');
       if (!chave) throw new Error('STRIPE_SECRET_KEY ausente');
-      const res = await fetch(`https://api.stripe.com/v1/invoices/${encodeURIComponent(invoiceId)}?expand[]=lines.data.price`, {
+      const res = await fetch(enderecoDasLinhasDaFatura(invoiceId), {
         headers: { Authorization: `Bearer ${chave}`, 'Stripe-Version': '2024-12-18.acacia' },
       });
       if (!res.ok) throw new Error(`Stripe respondeu ${res.status}`);
-      return resumoDaFatura(await res.json(), {
+      return itensDasLinhasDaFatura(await res.json(), {
         precoLojaExtra: Deno.env.get('STRIPE_PRICE_STORE_SLOT') ?? null,
         produtoAtendente: Deno.env.get('STRIPE_PRODUCT_ATTENDANT') ?? null,
         produtoApi: Deno.env.get('STRIPE_PRODUCT_API') ?? null,
