@@ -15,11 +15,12 @@ import { CAMINHO_DA_MANUTENCAO } from '@/lib/admin/painel';
  * esquecer a chave virada e ir dormir com a base de clientes trancada. O
  * bloqueio não avisa quem o ligou; esta barra avisa.
  *
- * POR QUE `sticky` E NÃO `fixed`. A barra lateral é `fixed left-0 top-0`
- * (Sidebar.tsx). Uma barra `fixed` no topo da janela cobriria o logo dela. Como
- * `sticky`, ela ocupa a largura da coluna de conteúdo (à direita da lateral),
- * empurra o Navbar para baixo sem sobrepor nada, e continua colada no topo da
- * janela quando a página rola. Some da vista nunca.
+ * POR QUE ELA NÃO SE PRENDE SOZINHA. Ela mora no topo do DashboardLayout,
+ * acima do Navbar, dentro do bloco `sticky` que prende os dois juntos no alto
+ * da janela. Presa sozinha (era assim até o conserto do topo, 2026-11), ela e o
+ * Navbar disputariam o mesmo lugar. `sticky` e não `fixed` porque a barra
+ * lateral é `fixed left-0 top-0` (Sidebar.tsx): um `fixed` cobriria o logo
+ * dela. Assim ocupa a largura da coluna de conteúdo e some da vista nunca.
  *
  * DOIS TONS, DUAS URGÊNCIAS: âmbar quando a manutenção está EM CURSO (há
  * clientes trancados agora), azul quando está apenas agendada (ninguém foi
@@ -52,7 +53,7 @@ export const MaintenanceBanner = () => {
 
   if (scheduled) {
     return (
-      <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-info/30 bg-info/10 px-4 py-2 text-sm text-info backdrop-blur">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-info/30 bg-info/10 px-4 py-2 text-sm text-info backdrop-blur">
         <CalendarClock className="h-4 w-4 flex-shrink-0" />
         <span className="font-medium">Manutenção agendada</span>
         <span className="text-info">
@@ -71,7 +72,7 @@ export const MaintenanceBanner = () => {
   }
 
   return (
-    <div className="sticky top-0 z-30 flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-warning/40 bg-warning/15 px-4 py-2 text-sm text-warning backdrop-blur">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-warning/40 bg-warning/15 px-4 py-2 text-sm text-warning backdrop-blur">
       <span className="relative flex h-2.5 w-2.5 flex-shrink-0">
         {/* O pulso é o que diferencia "está ligado AGORA" de mais uma faixa
             colorida na tela. Cliente trancado merece um aviso que se mexe. */}

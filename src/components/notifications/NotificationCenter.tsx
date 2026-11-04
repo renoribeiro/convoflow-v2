@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Bell, X, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,14 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({ classNam
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  // O topo fica preso numa camada própria (DashboardLayout), e o menu lateral
+  // fica acima do fundo invisível deste painel: um clique no menu troca de
+  // tela sem passar pelo fundo. Trocou de tela, o painel fecha.
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
   const queryClient = useQueryClient();
 
   // Notificações são por usuário — o RLS (user_id = auth.uid()) já escopa,

@@ -486,6 +486,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Os números de atendimento olham conversas iniciadas no período escolhido; só "Esperando uma pessoa agora" é retrato de hoje, seja qual for o período.',
       'A tela se atualiza sozinha a cada 30 segundos. Não precisa recarregar.',
       'Como Gerente ou Superadmin você troca a Conta em foco pelo seletor do topo. Como Gestor ou Atendente, você vê sempre a sua Loja.',
+      'O topo fica preso no alto da janela em todas as telas: mesmo no fim de uma lista longa, o seletor de Loja, a busca, o sino e o seu menu continuam à mão, sem precisar rolar de volta.',
       'Gerente: ao escolher uma Loja em "Escolher Loja", os dados dela aparecem: conversas, contatos, funil, campanhas. Você trabalha dentro dela como o Gestor: atende na caixa de entrada, configura as etapas do funil, os números, as respostas rápidas, a distribuição e o chatbot da Loja.',
       'Gerente: trocar de Loja não recarrega o sistema. O menu e o topo ficam onde estão, uma linha fina aparece embaixo do topo enquanto a Loja nova abre, e só a tela do meio volta com os dados dela.',
       'Gerente: para sair da Loja e voltar à sua Conta, abra o seletor e clique em "Voltar para a Conta", o primeiro item da lista. Ele só aparece enquanto uma Loja está aberta; com a Conta em foco, o seletor mostra "Escolher Loja". A Conta tem dados próprios, como as conversas dela. O Instagram não é um deles: a conta do Instagram fica sempre numa Loja, como o WhatsApp de cada Loja.',

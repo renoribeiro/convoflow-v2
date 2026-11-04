@@ -163,8 +163,12 @@ const Help = () => {
       />
 
       {/* Busca fixa no topo: a lista é longa e, no celular, rolar de volta até
-          o campo a cada consulta seria o gargalo da tela. */}
-      <div className="sticky top-0 z-20 rounded-lg border border-border bg-card p-3 shadow-sm">
+          o campo a cada consulta seria o gargalo da tela. Para logo abaixo do
+          topo do painel, que também fica preso (--altura-topo). */}
+      <div
+        className="sticky top-[var(--altura-topo)] z-20 rounded-lg border border-border bg-card p-3 shadow-sm"
+        data-busca-da-ajuda
+      >
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -225,9 +229,12 @@ const Help = () => {
                         key={topic.key}
                         value={topic.key}
                         id={topic.key}
-                        className="border-b border-border px-4 last:border-b-0 data-[state=open]:bg-muted/30"
+                        // Folga para a busca presa em cima: o link com # e o
+                        // foco param com o título à vista, não atrás dela (o
+                        // topo do painel já é descontado pela página).
+                        className="scroll-mt-32 border-b border-border px-4 last:border-b-0 data-[state=open]:bg-muted/30"
                       >
-                        <AccordionTrigger className="gap-3 text-left text-sm hover:no-underline">
+                        <AccordionTrigger className="scroll-mt-32 gap-3 text-left text-sm hover:no-underline">
                           {topic.title}
                         </AccordionTrigger>
                         <AccordionContent>

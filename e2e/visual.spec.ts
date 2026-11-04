@@ -459,13 +459,21 @@ test.describe('visual: telas de layout fixo cabem na janela', () => {
               const r = el.getBoundingClientRect();
               return { topo: Math.round(r.top), base: Math.round(r.bottom) };
             });
-          return { sobra: document.scrollingElement!.scrollHeight - innerHeight, janela: innerHeight, rodapes };
+          const topo = document.querySelector('[data-topo-do-painel]')?.getBoundingClientRect();
+          return {
+            sobra: document.scrollingElement!.scrollHeight - innerHeight,
+            janela: innerHeight,
+            rodapes,
+            topo: topo ? { topo: Math.round(topo.top), altura: Math.round(topo.height) } : null,
+          };
         });
         if (DESTINO_FOTOS) {
           await page.screenshot({ path: path.join(DESTINO_FOTOS, `fixa__${tela.nome}__${largura}x${altura}.png`) });
         }
         if (SO_MEDIR) return;
         expect(m.sobra, `${tela.nome}: a página passa ${m.sobra} px da janela`).toBeLessThanOrEqual(1);
+        expect(m.topo, `${tela.nome}: o topo do painel não está no alto da janela`).toEqual({ topo: 0, altura: expect.any(Number) });
+        expect(m.topo!.altura).toBeGreaterThanOrEqual(48);
         expect(m.rodapes.length, `${tela.nome}: nenhum rodapé [data-rodape-fixo] à vista`).toBeGreaterThan(0);
         for (const r of m.rodapes) {
           expect(r.base, `${tela.nome}: rodapé termina em ${r.base} px, a janela tem ${m.janela}`).toBeLessThanOrEqual(m.janela);
@@ -474,6 +482,156 @@ test.describe('visual: telas de layout fixo cabem na janela', () => {
       });
     }
   }
+});
+
+/**
+ * Topo preso (2026-11): o topo do painel (faixa de manutenção + Navbar) fica
+ * no alto da janela quando a página rola, e o menu lateral também (768 em
+ * diante). Até ali o topo rolava junto e sumia em toda tela mais alta que a
+ * janela; Gestão de Usuários foi onde o cliente viu.
+ *
+ * Um bloco alto e vazio no fim da página faz TODA tela rolar, até a que cabe
+ * na janela. Rola até o fim e reprova quando o topo não está inteiro no alto,
+ * quando outra coisa cobre o meio dele ou quando o menu lateral sai do alto.
+ * Na Ajuda o bloco entra dentro da página (a busca presa só vale dentro dela)
+ * e a busca tem de ficar inteira abaixo do topo. As telas de altura travada
+ * (Conversas e os construtores) ficam no teste delas, sem o bloco.
+ */
+const VISTAS_DO_TOPO = [
+  [375, 812],
+  [768, 1024],
+  [1366, 768],
+  [1440, 900],
+] as const;
+const TELAS_DE_ALTURA_TRAVADA = ['conversations'];
+
+/** Roda no navegador: põe o bloco alto, rola até o fim e mede o topo. */
+const MEDIR_TOPO_ROLADO = async () => {
+  const descrever = (el: Element | null) =>
+    el ? `${el.tagName.toLowerCase()}.${[...el.classList].slice(0, 3).join('.')} "${(el.textContent ?? '').trim().slice(0, 30)}"` : 'nada';
+  const busca = document.querySelector<HTMLElement>('[data-busca-da-ajuda]');
+  if (!document.querySelector('[data-e2e-espaco]')) {
+    const espaco = document.createElement('div');
+    espaco.setAttribute('data-e2e-espaco', '');
+    espaco.style.height = '3000px';
+    (busca?.parentElement ?? document.querySelector('main'))?.appendChild(espaco);
+  }
+  const se = document.scrollingElement!;
+  window.scrollTo({ top: se.scrollHeight, behavior: 'instant' });
+  await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise((r) => setTimeout(r, 150));
+
+  const topo = document.querySelector('[data-topo-do-painel]');
+  const r = topo?.getBoundingClientRect();
+  const cobertos: string[] = [];
+  if (topo && r) {
+    const y = r.top + r.height / 2;
+    for (const f of [0.25, 0.5, 0.75]) {
+      const el = document.elementFromPoint(r.left + r.width * f, y);
+      // Aviso (toast) pode passar por cima do topo: ele some sozinho.
+      if (el && !topo.contains(el) && !el.closest('[data-sonner-toaster]')) cobertos.push(descrever(el));
+    }
+  }
+  const lateral = document.querySelector('[data-menu-lateral]')?.getBoundingClientRect();
+  const b = busca?.getBoundingClientRect();
+  const noMeioDaBusca = b ? document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2) : null;
+  return {
+    rolou: Math.round(se.scrollTop),
+    janela: innerHeight,
+    topo: r ? { topo: Math.round(r.top), base: Math.round(r.bottom), altura: Math.round(r.height) } : null,
+    cobertos,
+    lateral: lateral && lateral.width > 0 ? { topo: Math.round(lateral.top), base: Math.round(lateral.bottom) } : null,
+    busca: b
+      ? { topo: Math.round(b.top), base: Math.round(b.bottom), coberta: !!noMeioDaBusca && !busca!.contains(noMeioDaBusca) ? descrever(noMeioDaBusca) : null }
+      : null,
+  };
+};
+
+test.describe('visual: o topo fica no alto quando a página rola', () => {
+  for (const papel of ['superadmin', 'gerente', 'gestor', 'atendente'] as MockRole[]) {
+    for (const tela of telasDoPainel(papel).filter((t) => !TELAS_DE_ALTURA_TRAVADA.includes(t.nome))) {
+      test(`topo ${papel} ${tela.nome}`, async ({ context }) => {
+        await installSupabaseMock(context, papel);
+        const page = await context.newPage();
+        for (const [largura, altura] of VISTAS_DO_TOPO) {
+          const onde = `${papel} ${tela.nome} ${largura}x${altura}`;
+          await page.setViewportSize({ width: largura, height: altura });
+          await page.goto(tela.caminho, { waitUntil: 'domcontentloaded' });
+          await esperar(page);
+          const m = await page.evaluate(MEDIR_TOPO_ROLADO);
+          if (DESTINO_MEDIDAS) {
+            fs.writeFileSync(path.join(DESTINO_MEDIDAS, `topo__${papel}__${tela.nome}__${largura}.json`), JSON.stringify(m, null, 2));
+          }
+          if (SO_MEDIR) continue;
+          expect(m.rolou, `${onde}: a página não rolou`).toBeGreaterThan(1000);
+          expect(m.topo, `${onde}: sem o topo do painel`).not.toBeNull();
+          expect(m.topo!.topo, `${onde}: o topo saiu do alto da janela (está em ${m.topo!.topo} px)`).toBe(0);
+          expect(m.topo!.altura).toBeGreaterThanOrEqual(48);
+          expect(m.topo!.base).toBeLessThanOrEqual(m.janela);
+          expect(m.cobertos, `${onde}: algo cobre o topo`).toEqual([]);
+          if (largura >= 768) {
+            expect(m.lateral, `${onde}: o menu lateral saiu do alto`).toEqual({ topo: 0, base: m.janela });
+          }
+          if (tela.nome === 'help') {
+            expect(m.busca, `${onde}: sem a busca da Ajuda`).not.toBeNull();
+            expect(m.busca!.topo, `${onde}: a busca da Ajuda ficou atrás do topo`).toBeGreaterThanOrEqual(m.topo!.base);
+            expect(m.busca!.base).toBeLessThanOrEqual(m.janela);
+            expect(m.busca!.coberta, `${onde}: algo cobre a busca da Ajuda`).toBeNull();
+          }
+        }
+      });
+    }
+  }
+
+  // Link para uma entrada da Ajuda: o título para abaixo do topo e da busca.
+  for (const [largura, altura] of [[375, 667], [1440, 900]] as const) {
+    test(`ajuda: link com # para abaixo do topo ${largura}x${altura}`, async ({ context }) => {
+      await installSupabaseMock(context, 'gerente');
+      const page = await context.newPage();
+      await page.setViewportSize({ width: largura, height: altura });
+      await page.goto('/dashboard/help#page:campaigns', { waitUntil: 'domcontentloaded' });
+      await esperar(page);
+      await page.waitForTimeout(1200); // a página rola sozinha, com animação
+      const m = await page.evaluate(() => {
+        const titulo = document.getElementById('page:campaigns')?.querySelector('button')?.getBoundingClientRect();
+        const busca = document.querySelector('[data-busca-da-ajuda]')!.getBoundingClientRect();
+        const topo = document.querySelector('[data-topo-do-painel]')!.getBoundingClientRect();
+        return {
+          rolou: Math.round(document.scrollingElement!.scrollTop),
+          titulo: titulo ? Math.round(titulo.top) : null,
+          busca: Math.round(busca.bottom),
+          topo: Math.round(topo.bottom),
+        };
+      });
+      expect(m.rolou, 'a página não rolou até a entrada').toBeGreaterThan(0);
+      expect(m.titulo).not.toBeNull();
+      expect(m.titulo!, `o título ficou atrás do topo (${m.topo} px)`).toBeGreaterThanOrEqual(m.topo);
+      expect(m.titulo!, `o título ficou atrás da busca (${m.busca} px)`).toBeGreaterThanOrEqual(m.busca);
+    });
+  }
+
+  // Campo focado depois de rolar (o teclado do celular vem com o foco): a
+  // página traz o campo de volta abaixo do topo, não atrás dele.
+  test('campo focado no celular para abaixo do topo', async ({ context }) => {
+    await installSupabaseMock(context, 'gerente');
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.goto('/dashboard/profile', { waitUntil: 'domcontentloaded' });
+    await esperar(page);
+    await page.evaluate(MEDIR_TOPO_ROLADO);
+    const m = await page.evaluate(async () => {
+      const campo = [...document.querySelectorAll<HTMLInputElement>('main input:not([type="hidden"]):not([disabled])')]
+        .find((el) => el.getBoundingClientRect().height > 0)!;
+      campo.focus();
+      // O ajuste do DashboardLayout (Safari) espera um quadro.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const r = campo.getBoundingClientRect();
+      const topo = document.querySelector('[data-topo-do-painel]')!.getBoundingClientRect();
+      return { campo: Math.round(r.top), base: Math.round(r.bottom), topo: Math.round(topo.bottom), janela: innerHeight };
+    });
+    expect(m.campo, `o campo focado ficou atrás do topo (${m.topo} px)`).toBeGreaterThanOrEqual(m.topo);
+    expect(m.base).toBeLessThanOrEqual(m.janela);
+  });
 });
 
 for (const papel of ['superadmin', 'gerente', 'gestor', 'atendente'] as MockRole[]) {

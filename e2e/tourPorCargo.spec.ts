@@ -106,6 +106,20 @@ async function percorrer(page: Page, t: Tour, celular: boolean) {
       const alvo = page.locator(`[data-tour="${s.target}"].driver-active-element`);
       await expect(alvo, `${onde}: o destaque não caiu em ${s.target}`).toHaveCount(1);
       await expect(alvo, `${onde}: ${s.target} não está visível`).toBeVisible();
+      // O topo do painel fica preso no alto (2026-11): o destaque não pode
+      // cair atrás dele. Confere o meio e a beira de cima do elemento.
+      const atras = await alvo.evaluate((el) => {
+        const topo = document.querySelector('[data-topo-do-painel]');
+        if (!topo || topo.contains(el)) return null;
+        const r = el.getBoundingClientRect();
+        const x = r.left + r.width / 2;
+        for (const y of [r.top + r.height / 2, r.top + 4]) {
+          const aqui = document.elementFromPoint(x, y);
+          if (aqui && topo.contains(aqui)) return `em ${Math.round(y)} px`;
+        }
+        return null;
+      });
+      expect(atras, `${onde}: ${s.target} ficou atrás do topo`).toBeNull();
     }
     if (celular && s.menuItem) {
       await expect(page.locator(`[data-tour="${s.target}"].driver-active-element`)).toHaveCount(0);

@@ -266,6 +266,7 @@ export const Sidebar = ({ isOpen, onToggle, mobileOpen, onMobileClose }: Sidebar
           'md:w-16',
           isOpen ? 'lg:w-60' : 'lg:w-14',
         )}
+        data-menu-lateral
       >
         {/* Logo + toggle */}
         <div className="flex items-center h-12 px-3 border-b border-sidebar-border flex-shrink-0">
