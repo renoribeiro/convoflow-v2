@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 import { toast } from 'sonner';
 
 export interface Tag {
@@ -14,6 +15,13 @@ interface TagInput {
   name: string;
   color: string;
 }
+
+/** Recusa que o banco não devolve como erro: o motivo já vem pronto para a tela. */
+class EtiquetaNaoExcluida extends Error {}
+
+export const ETIQUETA_SEM_PERMISSAO =
+  'A etiqueta não foi excluída: você não tem permissão nesta Loja. Peça ao Gestor da Loja ou ao Gerente da Conta.';
+export const ETIQUETA_JA_EXCLUIDA = 'Esta etiqueta já tinha sido excluída por outra pessoa. A lista foi atualizada.';
 
 /**
  * CRUD de etiquetas (labels estilo WhatsApp).
@@ -102,8 +110,19 @@ export function useTags() {
   const deleteTag = useMutation({
     mutationFn: async (id: string): Promise<void> => {
       // contact_tags cai por ON DELETE CASCADE.
-      const { error } = await supabase.from('tags').delete().eq('id', id);
+      const { data, error } = await supabase.from('tags').delete().eq('id', id).select('id');
       if (error) throw error;
+      if (data?.length) return;
+
+      // DELETE barrado pela RLS não dá erro, só apaga zero linhas: sem esta
+      // conferência a tela dizia "excluída" sem ter excluído nada.
+      const { data: aindaExiste, error: erroAoConferir } = await supabase
+        .from('tags')
+        .select('id')
+        .eq('id', id)
+        .maybeSingle();
+      if (erroAoConferir) throw erroAoConferir;
+      throw new EtiquetaNaoExcluida(aindaExiste ? ETIQUETA_SEM_PERMISSAO : ETIQUETA_JA_EXCLUIDA);
     },
     onSuccess: () => {
       invalidate();
@@ -111,7 +130,12 @@ export function useTags() {
     },
     onError: (error) => {
       logger.error('Erro ao excluir etiqueta', { error });
-      toast.error('Não foi possível excluir a etiqueta');
+      invalidate();
+      toast.error(
+        error instanceof EtiquetaNaoExcluida
+          ? error.message
+          : `Não foi possível excluir a etiqueta. ${motivoDoErro(error)}`,
+      );
     },
   });
 

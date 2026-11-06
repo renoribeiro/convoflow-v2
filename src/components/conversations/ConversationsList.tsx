@@ -33,7 +33,7 @@ import {
 } from '@/lib/conversations/channel';
 import { pickMessagePreview } from './MessageBubble';
 import { MessageStatusIcon } from './MessageStatusIcon';
-import { TagBadge } from '@/components/etiquetas/TagBadge';
+import { LinhaDeEtiquetas } from './LinhaDeEtiquetas';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ATTENDANCE_GROUP_META,
@@ -55,6 +55,7 @@ import { useSlaMutedConversations } from '@/hooks/useSlaMute';
 import { useTenant } from '@/contexts/TenantContext';
 import { useIneligibleOwners } from '@/hooks/useConversationRotation';
 import { useTeamMemberLookup } from '@/hooks/useTeamDirectory';
+import { useLojaTemEtapas } from '@/hooks/useLojaTemEtapas';
 import { OwnerChip } from './OwnerChip';
 import { useActiveBotSessions } from '@/hooks/useChatbotSessions';
 import { BotSessionBadge } from './BotSessionBadge';
@@ -207,6 +208,7 @@ export const ConversationsList = ({
     [profile?.id, ineligible.canManage, ineligible.ownerIds],
   );
   const lookupMember = useTeamMemberLookup();
+  const lojaTemEtapas = useLojaTemEtapas();
 
   // Sinalização de conversas não respondidas: opt-in por Loja. Desligada, nada
   // abaixo roda — nem a query do mapa de silenciadas.
@@ -447,7 +449,8 @@ export const ConversationsList = ({
     const isOnline =
       conversation.last_interaction_at &&
       differenceInMinutes(new Date(), new Date(conversation.last_interaction_at)) < PRESENCE_THRESHOLD_MIN;
-    const isNewLead = !conversation.contact_current_stage;
+    // "Contato novo" é "sem etapa": sem funil na Loja, valeria para todo mundo.
+    const isNewLead = lojaTemEtapas && !conversation.contact_current_stage;
     // Com o SLA desligado nada disto aparece: nível fixo em 'ok' e sem botão.
     const slaLevel = slaEnabled ? resolveSlaLevel(conversation, slaThresholds) : 'ok';
     const isSlaMuted = slaEnabled && !!conversation.sla_muted_at;
@@ -514,7 +517,8 @@ export const ConversationsList = ({
             </div>
 
             <div className="flex items-center justify-between gap-2">
-              {/* Uma linha só: o que não cabe vira "+N" (nada passa da borda). */}
+              {/* Uma linha só: o que não cabe vira "+N" (nada passa da borda).
+                  As etiquetas têm linha própria, abaixo: aqui elas sumiam no "+N". */}
               <LinhaDeSelos>
                 <OwnerChip
                   key={`responsavel-${conversation.assigned_profile_id ?? 'ninguem'}`}
@@ -536,17 +540,14 @@ export const ConversationsList = ({
                 )}
                 {conversation.contact_source && (
                   <Badge key={`fonte-${conversation.contact_source}`} variant="outline" className="border-0 bg-muted text-foreground text-xs font-medium truncate max-w-[80px]">
-                    {conversation.contact_source}
+                    <span className="truncate">{conversation.contact_source}</span>
                   </Badge>
                 )}
                 {conversation.contact_current_stage && (
                   <Badge key={`etapa-${conversation.contact_current_stage}`} variant="outline" className="text-xs truncate max-w-[80px]">
-                    {conversation.contact_current_stage}
+                    <span className="truncate">{conversation.contact_current_stage}</span>
                   </Badge>
                 )}
-                {conversation.tags.map((tag) => (
-                  <TagBadge key={`etiqueta-${tag.id}`} name={tag.name} color={tag.color} />
-                ))}
               </LinhaDeSelos>
               <div className="flex flex-shrink-0 items-center gap-1">
                 {hasUnreadMsgs && (
@@ -559,6 +560,8 @@ export const ConversationsList = ({
                 )}
               </div>
             </div>
+
+            <LinhaDeEtiquetas tags={conversation.tags} />
           </div>
         </div>
       </div>

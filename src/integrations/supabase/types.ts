@@ -7000,6 +7000,10 @@ export type Database = {
         Args: { p_phone: string; p_source?: string; p_tenant: string }
         Returns: number
       }
+      set_contact_tags: {
+        Args: { p_add?: string[]; p_contact_id: string; p_remove?: string[] }
+        Returns: undefined
+      }
       set_conversation_rotation: {
         Args: { p_percents: Json; p_tenant_id: string }
         Returns: undefined

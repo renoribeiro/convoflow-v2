@@ -170,3 +170,77 @@ test('superadmin: Faturamento › Cobranças', async ({ context }) => {
   await expect(lista).toContainText('Conta Matriz');
   await expect(page.getByTestId('totais-cobrancas')).toContainText('2 cobranças');
 });
+
+/** A linha de nfse_config e o RPC da chave: `chamadas` guarda o que o navegador pediu. */
+async function nfseConfig(context: BrowserContext, chamadas: unknown[]) {
+  let liberada = false;
+  const linha = () => ({
+    id: true, p_tot_trib_sn: 6, ambiente_ativo: 'restrita', certificado_valido_ate: '2027-09-21T12:16:42+00:00',
+    prefeitura_emissor_nacional: true, prefeitura_lida_em: '2026-11-04T03:00:00Z', diario_rodado_em: '2026-11-04',
+    prefeitura_producao_emissor_nacional: false, prefeitura_producao_lida_em: '2026-11-04T03:00:00Z',
+    prefeitura_producao_situacao_rfb: 1, emissao_producao_liberada: liberada, atualizado_em: '2026-11-04T03:00:00Z',
+  });
+  await context.route(/\/rest\/v1\/nfse_config\?/, (route) =>
+    route.request().method() === 'OPTIONS' ? route.fulfill({ status: 204, headers: CORS }) : json(route, [linha()]),
+  );
+  await context.route(/\/rest\/v1\/nfse_config_historico/, (route) =>
+    route.request().method() === 'OPTIONS' ? route.fulfill({ status: 204, headers: CORS }) : json(route, []),
+  );
+  await context.route(/\/rest\/v1\/rpc\/nfse_definir_emissao_producao/, (route) => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: CORS });
+    const corpo = route.request().postDataJSON() as { p_liberada: boolean };
+    chamadas.push(corpo);
+    liberada = corpo.p_liberada;
+    return json(route, liberada);
+  });
+}
+
+for (const { nome, largura, altura } of [{ nome: 'celular', largura: 375, altura: 800 }, { nome: 'computador', largura: 1440, altura: 900 }]) {
+  test(`superadmin: chave "Emissão em produção liberada" no ${nome}`, async ({ context }) => {
+    const page = await abrirComo(context, 'superadmin');
+    await page.setViewportSize({ width: largura, height: altura });
+    await cobrancas(context);
+    const chamadas: unknown[] = [];
+    await nfseConfig(context, chamadas);
+    await context.route(/\/functions\/v1\/stripe-admin/, (route) =>
+      route.request().method() === 'OPTIONS'
+        ? route.fulfill({ status: 204, headers: CORS })
+        : json(route, {
+            generatedAt: '2026-10-13T12:00:00Z', mode: 'live', currency: 'brl',
+            mrr: { net: 0, gross: 0, plan: 0, extraStores: 0, extraAttendants: 0, other: 0, discounts: 0, subscriptions: 0 },
+            upcoming: [], revenueByMonth: [], failedPayments: [], legacy: [], warnings: [],
+          }),
+    );
+    await page.goto('/dashboard/admin');
+    await page.getByRole('tab', { name: 'Faturamento' }).click();
+    await page.getByRole('tab', { name: 'Cobranças' }).click();
+
+    const chave = page.getByRole('switch', { name: 'Emissão em produção liberada' });
+    await expect(chave).not.toBeChecked();
+    await expect(page.getByTestId('nfse-liberacao')).toContainText('Desligada: nenhuma nota de cliente sai em produção.');
+    await expect(page.getByTestId('nfse-fortaleza')).toContainText('Só informação: não decide a emissão.');
+    if (largura === 375) {
+      const caixa = await chave.boundingBox();
+      expect(caixa!.height).toBeGreaterThanOrEqual(24);
+      // Sem rolagem lateral no celular.
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    }
+
+    await chave.click();
+    const janela = page.getByTestId('confirmacao');
+    await expect(janela).toContainText('Liberar a emissão em produção?');
+    await expect(janela).toContainText('O ambiente ainda é de teste.');
+    const liberar = page.getByRole('button', { name: 'Liberar emissão em produção' });
+    await expect(liberar).toBeDisabled();
+    // O foco começa em Cancelar: Enter sem pensar não libera nada.
+    await expect(page.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+    await page.getByLabel(/Para confirmar, digite/).fill('LIBERAR');
+    await liberar.click();
+
+    await expect(janela).toBeHidden();
+    expect(chamadas).toEqual([{ p_liberada: true }]);
+    await expect(chave).toBeChecked();
+    await expect(page.getByTestId('nfse-liberacao')).toContainText('Ligada, mas o ambiente ainda é de teste');
+    if (process.env.FOTO_NOTA_FISCAL) await page.getByTestId('nfse-liberacao').screenshot({ path: `${process.env.FOTO_NOTA_FISCAL}/chave-${nome}.png` });
+  });
+}

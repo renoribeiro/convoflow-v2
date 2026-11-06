@@ -82,7 +82,7 @@ export const TOURS: Tour[] = [
       {
         target: 'conversas-lista',
         title: 'Abra uma conversa',
-        body: 'Clique numa conversa da lista para ver o histórico e responder. Ao abrir, o cliente vê no WhatsApp que você leu.',
+        body: 'Clique numa conversa da lista para ver o histórico e responder. Ao abrir, o cliente vê no WhatsApp que você leu. As etiquetas do contato ficam na própria linha; no +N você vê todas.',
       },
       {
         target: 'conversas-filtros',

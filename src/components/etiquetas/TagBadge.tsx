@@ -21,14 +21,16 @@ export const TagBadge = ({ name, color, onRemove, className }: TagBadgeProps) =>
   return (
     <Badge
       variant="outline"
-      className={cn('text-xs gap-1', CLASSE_DA_TINTA, className)}
+      title={name}
+      className={cn('max-w-full text-xs gap-1', CLASSE_DA_TINTA, className)}
       style={{
         backgroundColor: `${color}20`,
         borderColor: color,
         ...estiloDaTinta(color),
       }}
     >
-      {name}
+      {/* Texto solto dentro de flex não ganha reticências: precisa do span. */}
+      <span className="min-w-0 truncate">{name}</span>
       {onRemove && (
         <X
           className="h-3 w-3 cursor-pointer hover:opacity-70"

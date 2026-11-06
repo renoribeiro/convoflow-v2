@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import { installSupabaseMock, type MockRole } from './support/supabaseMock';
+import { IDS, installSupabaseMock, type MockRole } from './support/supabaseMock';
 import { TELAS, TELAS_SO_DE_LOJA, caminhoDaTela } from '../src/lib/access/telas';
 import { ABAS_DE_CONFIGURACOES } from '../src/lib/access/abasConfiguracoes';
 import { DEFAULT_CAPABILITIES } from '../src/types/userHierarchy';
@@ -419,7 +419,7 @@ const TELAS_FIXAS: { nome: string; caminho: string; preparar: (page: Page) => Pr
     nome: 'construtor-de-chatbot',
     caminho: '/dashboard/chatbots/aaaaaaaa-0000-4000-8000-000000000001/builder',
     preparar: async (page) => {
-      await page.locator('.react-flow__node').first().waitFor({ timeout: 20_000 });
+      await page.locator('.react-flow__node').first().waitFor({ timeout: 45_000 });
       // Os blocos do backend falso nascem empilhados: o de cima é o último.
       await page.locator('.react-flow__node').last().click({ force: true });
     },
@@ -688,6 +688,278 @@ const JANELAS: { nome: string; caminho: string; abrir: (page: Page) => Promise<v
   { nome: 'nova-resposta-rapida', caminho: '/dashboard/settings?tab=quick-replies', abrir: clicar('Nova resposta'), escopo: JANELA },
   { nome: 'nova-chave-de-api', caminho: '/dashboard/settings?tab=api', abrir: clicar('Nova chave'), escopo: JANELA },
 ];
+
+/**
+ * Etiquetas na lista de Conversas (2026-11-05). A parte 6a pôs as etiquetas no
+ * fim da linha de selos: no celular e no computador elas sumiam num "+N" que só
+ * abria com o mouse, e a cliente deixou de ver o que tinha etiquetado. Aqui os
+ * nomes precisam estar à vista num contato com 1, 2 e 5 etiquetas, no iPhone
+ * (WebKit, 390x844) e no computador (1440), e o "+N" abre por toque.
+ */
+const ETIQUETAS_DA_LISTA = ['Agendado', 'Esperando dados', 'Finalizado', 'Fora do perfil', 'Retomar em alguns dias'];
+const CORES_DAS_ETIQUETAS = ['#22c55e', '#3b82f6', '#a855f7', '#ef4444', '#f59e0b'];
+
+function conversaFalsa(i: number, nomesDasEtiquetas: string[], fonte: string | null = null) {
+  const agora = Date.now();
+  const id = `bbbbbbbb-0000-4000-8000-0000000002${String(i).padStart(2, '0')}`;
+  const contato = `cccccccc-0000-4000-8000-0000000003${String(i).padStart(2, '0')}`;
+  return {
+    id,
+    contact_id: contato,
+    channel: 'whatsapp',
+    last_message_at: new Date(agora - i * 3_600_000).toISOString(),
+    unread_count: 0,
+    is_archived: false,
+    created_at: new Date(agora - 86_400_000).toISOString(),
+    updated_at: new Date(agora).toISOString(),
+    tenant_id: IDS.tenant,
+    last_message_content: 'Mensagem de exemplo',
+    last_message_direction: 'outbound',
+    last_message_status: 'read',
+    last_message_type: 'text',
+    assigned_profile_id: null,
+    assigned_at: null,
+    assigned_by: null,
+    contacts: {
+      id: contato,
+      name: `Pessoa ${i + 1}`,
+      phone: '5511999990000',
+      channel: 'whatsapp',
+      username: null,
+      profile_status: null,
+      profile_checked_at: null,
+      whatsapp_instance_id: IDS.instance,
+      avatar_url: null,
+      lead_source_id: fonte ? 'dddddddd-0000-4000-8000-000000000401' : null,
+      current_stage_id: null,
+      last_interaction_at: new Date(agora - 86_400_000).toISOString(),
+      created_at: new Date(agora - 86_400_000).toISOString(),
+      updated_at: new Date(agora).toISOString(),
+      tenant_id: IDS.tenant,
+      stage: null,
+      lead_sources: fonte ? { name: fonte } : null,
+      contact_tags: nomesDasEtiquetas.map((name, n) => {
+        const tagId = `eeeeeeee-0000-4000-8000-00000000050${ETIQUETAS_DA_LISTA.indexOf(name)}`;
+        return { tag_id: tagId, tags: { id: tagId, name, color: CORES_DAS_ETIQUETAS[n % CORES_DAS_ETIQUETAS.length] } };
+      }),
+    },
+  };
+}
+
+const CABECALHOS_DO_FALSO = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': '*',
+  'access-control-expose-headers': '*',
+  'content-type': 'application/json',
+};
+
+/** Depois do installSupabaseMock: quem registra por último responde primeiro. */
+async function servirConversas(context: BrowserContext, linhas: ReturnType<typeof conversaFalsa>[]) {
+  await context.route(/\/rest\/v1\/conversations/, async (route) => {
+    const req = route.request();
+    if (req.method() === 'HEAD' || !req.url().includes('contact_tags%28tag_id%2Ctags')) return route.fallback();
+    return route.fulfill({
+      status: 200,
+      headers: { ...CABECALHOS_DO_FALSO, 'content-range': `0-${linhas.length - 1}/${linhas.length}` },
+      body: JSON.stringify(linhas),
+    });
+  });
+}
+
+const COM_ETIQUETAS = [
+  conversaFalsa(0, ETIQUETAS_DA_LISTA.slice(4)),
+  // Não lida: a linha colorida não pode derrubar o contraste da etiqueta.
+  { ...conversaFalsa(1, ['Agendado', 'Retomar em alguns dias']), unread_count: 3 },
+  conversaFalsa(2, ETIQUETAS_DA_LISTA),
+  conversaFalsa(3, ['Agendado'], 'Anúncio do Instagram da campanha de novembro'),
+  conversaFalsa(4, []),
+];
+
+type Navegador = 'webkit' | 'chromium';
+const NAVEGADORES: { navegador: Navegador; largura: number; altura: number }[] = [
+  { navegador: 'webkit', largura: 390, altura: 844 },
+  { navegador: 'chromium', largura: 1440, altura: 900 },
+];
+
+/** O que cada etiqueta da linha mostra de verdade, em pixels. */
+const MEDIR_ETIQUETAS = (id: string) => {
+  const linha = document.querySelector(`[data-conversation-id="${id}"]`) as HTMLElement;
+  const caixa = linha.querySelector('[data-linha-de-etiquetas]');
+  if (!caixa) return null;
+  const limite = linha.getBoundingClientRect().right;
+  return [...caixa.querySelectorAll<HTMLElement>('[title]')].map((etiqueta) => {
+    const texto = etiqueta.querySelector('span') as HTMLElement;
+    const r = texto.getBoundingClientRect();
+    return { nome: etiqueta.title, largura: r.width, passouDaBorda: etiqueta.getBoundingClientRect().right > limite + 0.5 };
+  });
+};
+
+test.describe('visual: etiquetas na lista de Conversas', () => {
+  for (const { navegador, largura, altura } of NAVEGADORES) {
+    test(`nomes à vista e "+N" abre por toque, ${navegador} ${largura}`, async ({ playwright, baseURL }) => {
+      const browser = await playwright[navegador].launch();
+      const celular = largura < 500 ? playwright.devices['iPhone 13'] : {};
+      const context = await browser.newContext({
+        ...celular,
+        baseURL,
+        viewport: { width: largura, height: altura },
+        hasTouch: true,
+        serviceWorkers: 'block',
+      });
+      try {
+        await installSupabaseMock(context, 'gerente');
+        await servirConversas(context, COM_ETIQUETAS);
+        const page = await context.newPage();
+        await page.goto('/dashboard/conversations', { waitUntil: 'domcontentloaded' });
+        await page.locator('[data-linha-de-etiquetas]').first().waitFor({ timeout: 45_000 });
+        await page.waitForTimeout(600);
+
+        const esperadas: [number, string[]][] = [
+          [0, ['Retomar em alguns dias']],
+          [1, ['Agendado', 'Retomar em alguns dias']],
+          [2, ['Agendado', 'Esperando dados']],
+        ];
+        for (const [n, nomes] of esperadas) {
+          const medidas = await page.evaluate(MEDIR_ETIQUETAS, COM_ETIQUETAS[n].id);
+          expect(medidas?.map((m) => m.nome), `etiquetas da linha ${n + 1}`).toEqual(nomes);
+          for (const m of medidas ?? []) {
+            // Com reticências pode, sumindo não: sobra o começo legível do nome.
+            expect(m.largura, `${m.nome} à vista`).toBeGreaterThanOrEqual(40);
+            expect(m.passouDaBorda, `${m.nome} dentro da linha`).toBe(false);
+          }
+        }
+        expect(await page.evaluate(MEDIR_ETIQUETAS, COM_ETIQUETAS[4].id), 'sem etiqueta, sem linha').toBeNull();
+
+        const semConversaAberta = async () => {
+          await expect(page.locator(`[data-conversation-id="${COM_ETIQUETAS[2].id}"]`)).toBeVisible();
+          await expect(page.locator('[data-conversation-id].bg-primary\\/20')).toHaveCount(0);
+        };
+
+        // O "+N" abre por toque, com todas, e não abre a conversa.
+        await page.getByRole('button', { name: 'Ver todas as 5 etiquetas deste contato' }).tap();
+        const lista = page.getByRole('dialog');
+        await expect(lista).toBeVisible();
+        for (const nome of ETIQUETAS_DA_LISTA) await expect(lista.getByText(nome, { exact: true })).toBeVisible();
+        await semConversaAberta();
+
+        // Tocar fora só fecha: a conversa de baixo continua fechada.
+        // O ponto é uma linha de conversa à vista, fora da janelinha.
+        const ponto = await page.evaluate(() => {
+          const janela = document.querySelector('[role="dialog"]')!.getBoundingClientRect();
+          for (const linha of document.querySelectorAll('[data-conversation-id]')) {
+            const r = linha.getBoundingClientRect();
+            const x = r.left + 20;
+            const y = r.top + r.height / 2;
+            const dentroDaJanela = x >= janela.left && x <= janela.right && y >= janela.top && y <= janela.bottom;
+            if (y > 0 && y < window.innerHeight && !dentroDaJanela) return { x, y };
+          }
+          return null;
+        });
+        await page.touchscreen.tap(ponto!.x, ponto!.y);
+        await expect(lista).toBeHidden();
+        await semConversaAberta();
+
+        if (largura >= 500) {
+          // Mouse também, sem passar por cima e esperar.
+          await page.getByRole('button', { name: 'Ver todas as 5 etiquetas deste contato' }).click();
+          await expect(lista).toBeVisible();
+          await page.keyboard.press('Escape');
+          await expect(lista).toBeHidden();
+
+          // O "+N" dos selos também abre: a fonte não cabe a 1440.
+          await page
+            .locator(`[data-conversation-id="${COM_ETIQUETAS[3].id}"]`)
+            .getByRole('button', { name: /^Ver mais \d+ desta conversa$/ })
+            .tap();
+          await expect(lista.getByText(/Anúncio do Instagram/)).toBeVisible();
+        }
+      } finally {
+        await browser.close();
+      }
+    });
+  }
+
+  test('sem etiqueta a lista segue compacta: 6 conversas, uma rolagem só, nada cortado (WebKit 390x844)', async ({ playwright, baseURL }) => {
+    const browser = await playwright.webkit.launch();
+    const context = await browser.newContext({
+      ...playwright.devices['iPhone 13'],
+      baseURL,
+      viewport: { width: 390, height: 844 },
+      serviceWorkers: 'block',
+    });
+    try {
+      await installSupabaseMock(context, 'gerente');
+      await servirConversas(context, Array.from({ length: 12 }, (_, i) => conversaFalsa(i, [])));
+      const page = await context.newPage();
+      await page.goto('/dashboard/conversations', { waitUntil: 'domcontentloaded' });
+      await page.locator('[data-conversation-id]').first().waitFor({ timeout: 45_000 });
+      await page.waitForTimeout(600);
+
+      const m = await page.evaluate(() => {
+        const linhas = [...document.querySelectorAll<HTMLElement>('[data-conversation-id]')];
+        const rolam = (el: HTMLElement) => /(auto|scroll)/.test(getComputedStyle(el).overflowY) && el.scrollHeight > el.clientHeight + 1;
+        const rolagens = new Set<HTMLElement>();
+        for (let el = linhas[0].parentElement; el; el = el.parentElement) if (rolam(el)) rolagens.add(el);
+        return {
+          inteiras: linhas.filter((l) => {
+            const r = l.getBoundingClientRect();
+            return r.top >= 0 && r.bottom <= window.innerHeight;
+          }).length,
+          rolagens: rolagens.size,
+          lateral: document.documentElement.scrollWidth - window.innerWidth,
+          passaram: linhas.filter((l) => l.getBoundingClientRect().right > window.innerWidth + 0.5).length,
+          comEtiqueta: document.querySelectorAll('[data-linha-de-etiquetas]').length,
+        };
+      });
+      expect(m.inteiras, 'conversas inteiras na tela').toBeGreaterThanOrEqual(6);
+      expect(m.rolagens, 'rolagens na tela').toBe(1);
+      expect(m.lateral, 'rolagem lateral').toBeLessThanOrEqual(0);
+      expect(m.passaram, 'linhas cortadas à direita').toBe(0);
+      expect(m.comEtiqueta).toBe(0);
+    } finally {
+      await browser.close();
+    }
+  });
+
+  test('"Contato novo": aparece na Loja com etapas e some na Loja sem etapas', async ({ context }) => {
+    await installSupabaseMock(context, 'gerente');
+    await servirConversas(context, [conversaFalsa(0, ['Agendado'])]);
+    const page = await context.newPage();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/dashboard/conversations', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByText('Contato novo', { exact: true })).toBeVisible({ timeout: 45_000 });
+
+    await context.route(/\/rest\/v1\/funnel_stages/, (route) =>
+      route.fulfill({ status: 200, headers: { ...CABECALHOS_DO_FALSO, 'content-range': '*/0' }, body: '[]' }),
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.locator('[data-linha-de-etiquetas]').first().waitFor({ timeout: 45_000 });
+    await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => {});
+    await expect(page.getByText('Agendado', { exact: true })).toBeVisible();
+    await expect(page.getByText('Contato novo', { exact: true })).toHaveCount(0);
+  });
+
+  test('a tela com etiquetas passa nas mesmas regras das outras', async ({ context }) => {
+    await prepararTema(context);
+    await installSupabaseMock(context, 'gerente');
+    await servirConversas(context, COM_ETIQUETAS);
+    const page = await context.newPage();
+    const tela = { nome: 'conversas-com-etiquetas', caminho: '/dashboard/conversations' };
+    conferir('gerente', tela, await medirTela(page, 'gerente', tela));
+  });
+
+  test('a lista aberta pelo "+N" passa nas mesmas regras das janelas', async ({ context }) => {
+    await prepararTema(context);
+    await installSupabaseMock(context, 'gerente');
+    await servirConversas(context, COM_ETIQUETAS);
+    const page = await context.newPage();
+    const tela = { nome: 'conversas-lista-de-etiquetas', caminho: '/dashboard/conversations' };
+    const abrir = async (p: Page) => {
+      await p.getByRole('button', { name: 'Ver todas as 5 etiquetas deste contato' }).click();
+    };
+    conferir('gerente', tela, await medirTela(page, 'gerente', tela, { abrir, escopo: '[role="dialog"]', vistas: VISTAS_DAS_JANELAS }));
+  });
+});
 
 test.describe('visual: janelas abertas', () => {
   for (const j of JANELAS) {

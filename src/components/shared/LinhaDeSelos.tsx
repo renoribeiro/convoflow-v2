@@ -1,4 +1,5 @@
 import { Children, isValidElement, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { MaisComLista } from '@/components/shared/MaisComLista';
 import { cn } from '@/lib/utils';
 
 /** Espaço guardado para o "+N" quando nem todos os selos cabem. */
@@ -9,8 +10,10 @@ const RESERVA_DO_MAIS = 30;
  *
  * Mede a largura natural de cada selo uma vez (quando a lista de selos muda) e
  * recalcula quantos cabem sempre que a linha muda de largura. Sem medida (teste
- * em jsdom, primeiro quadro) mostra todos. Os selos escondidos aparecem no
- * `title` do "+N".
+ * em jsdom, primeiro quadro) mostra todos. Tocar no "+N" abre os escondidos.
+ *
+ * O "+N" fica fora da caixa que corta: dentro dela a área de toque de 44 px era
+ * cortada junto.
  */
 export function LinhaDeSelos({ children, className }: { children: ReactNode; className?: string }) {
   // toArray já tira null, undefined e false.
@@ -18,6 +21,7 @@ export function LinhaDeSelos({ children, className }: { children: ReactNode; cla
   const assinatura = itens.map((c, i) => (isValidElement(c) ? String(c.key ?? i) : String(i))).join('|');
 
   const linhaRef = useRef<HTMLDivElement>(null);
+  const selosRef = useRef<HTMLDivElement>(null);
   const larguras = useRef<number[] | null>(null);
   const [cabem, setCabem] = useState(Infinity);
   const [assinaturaMedida, setAssinaturaMedida] = useState(assinatura);
@@ -31,12 +35,13 @@ export function LinhaDeSelos({ children, className }: { children: ReactNode; cla
   const medindo = cabem === Infinity;
   useLayoutEffect(() => {
     const linha = linhaRef.current;
-    if (!linha) return;
+    const caixaDosSelos = selosRef.current;
+    if (!linha || !caixaDosSelos) return;
     const calcular = () => {
       if (!larguras.current) {
         // Só dá para medir com todos à mostra.
         if (!medindo) return;
-        const selos = Array.from(linha.querySelectorAll<HTMLElement>(':scope > [data-selo]'));
+        const selos = Array.from(caixaDosSelos.querySelectorAll<HTMLElement>(':scope > [data-selo]'));
         if (selos.length !== itens.length) return;
         larguras.current = selos.map((s) => s.getBoundingClientRect().width);
       }
@@ -72,32 +77,28 @@ export function LinhaDeSelos({ children, className }: { children: ReactNode; cla
   // Conta só os que desenham algo (os vazios não somam no "+N").
   const escondidos =
     cabem === Infinity ? 0 : (larguras.current?.slice(cabem).filter((w) => w > 0).length ?? itens.length - cabem);
-  const nomesEscondidos = escondidos
-    ? Array.from(linhaRef.current?.querySelectorAll<HTMLElement>(':scope > [data-selo]') ?? [])
-        .slice(cabem)
-        .map((s) => s.textContent?.trim())
-        .filter(Boolean)
-        .join(', ')
-    : '';
 
   return (
-    <div ref={linhaRef} className={cn('flex min-w-0 flex-1 flex-nowrap items-center gap-1 overflow-hidden', className)}>
-      {itens.map((item, i) => (
-        <span
-          key={isValidElement(item) ? (item.key ?? i) : i}
-          data-selo
-          className={cn('flex max-w-full flex-shrink-0 items-center empty:hidden', i >= cabem && 'hidden')}
-        >
-          {item}
-        </span>
-      ))}
+    <div ref={linhaRef} className={cn('flex min-w-0 flex-1 flex-nowrap items-center gap-1', className)}>
+      <div ref={selosRef} className="flex min-w-0 flex-nowrap items-center gap-1 overflow-hidden">
+        {itens.map((item, i) => (
+          <span
+            key={isValidElement(item) ? (item.key ?? i) : i}
+            data-selo
+            className={cn('flex max-w-full flex-shrink-0 items-center empty:hidden', i >= cabem && 'hidden')}
+          >
+            {item}
+          </span>
+        ))}
+      </div>
       {escondidos > 0 && (
-        <span
-          className="flex-shrink-0 rounded-full border border-border px-1.5 text-[11px] font-medium leading-5 text-muted-foreground"
-          title={nomesEscondidos || undefined}
-        >
-          +{escondidos}
-        </span>
+        <MaisComLista quantidade={escondidos} rotulo={`Ver mais ${escondidos} desta conversa`} titulo="Mais desta conversa">
+          {itens.slice(cabem).map((item, i) => (
+            <span key={isValidElement(item) ? (item.key ?? i) : i} className="flex items-center empty:hidden">
+              {item}
+            </span>
+          ))}
+        </MaisComLista>
       )}
     </div>
   );

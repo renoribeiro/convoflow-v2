@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ import { z } from 'zod';
 import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 import { TAG_PALETTE } from '@/lib/cores/paletaDeEtiquetas';
+import { diferencaDeEtiquetas } from '@/lib/etiquetas/diferencaDeEtiquetas';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -131,6 +133,11 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
   });
 
   const contact = contactData?.[0];
+  // As etiquetas que o contato tem agora: a comparação do salvar parte daqui.
+  const etiquetasDoContato = useMemo<string[]>(
+    () => (contactId ? contact?.contact_tags?.map((ct) => ct.tags?.id).filter(Boolean) ?? [] : []),
+    [contact, contactId],
+  );
   // Canal do contato. "Novo Contato" é sempre WhatsApp: contato do Instagram só
   // nasce quando a pessoa manda mensagem.
   const contactChannelInfo = contact as unknown as { channel?: string | null; username?: string | null } | undefined;
@@ -208,13 +215,12 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
       });
       
       // Carregar tags do contato
-      const contactTagIds = contact.contact_tags?.map(ct => ct.tags?.id).filter(Boolean) || [];
-      setSelectedTags(contactTagIds);
+      setSelectedTags(etiquetasDoContato);
     } else if (!contactId) {
       setFormData(EMPTY_FORM);
       setSelectedTags([]);
     }
-  }, [contact, contactId, isOpen]);
+  }, [contact, contactId, isOpen, etiquetasDoContato]);
 
   // Funções para gerenciar tags
   const addTag = (tagId: string) => {
@@ -261,34 +267,25 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
     }
   };
 
-  const manageTags = async (contactId: string) => {
-    try {
-      // Substitui o conjunto de tags do contato: remove as atuais e insere as selecionadas.
-      // Usa o cliente Supabase (sessão autenticada) para respeitar a RLS de contact_tags.
-      const { error: deleteError } = await supabase
-        .from('contact_tags')
-        .delete()
-        .eq('contact_id', contactId);
+  // Só o que mudou, numa transação no servidor (set_contact_tags): se falhar no
+  // meio, o contato fica com as etiquetas que tinha. Nunca apague para regravar.
+  const manageTags = async (id: string) => {
+    const { adicionar, remover } = diferencaDeEtiquetas(etiquetasDoContato, selectedTags);
+    if (adicionar.length === 0 && remover.length === 0) return;
 
-      if (deleteError) throw deleteError;
-
-      if (selectedTags.length > 0) {
-        const tagAssociations = selectedTags.map(tagId => ({
-          contact_id: contactId,
-          tag_id: tagId
-        }));
-
-        const { error: insertError } = await supabase
-          .from('contact_tags')
-          .insert(tagAssociations);
-
-        if (insertError) throw insertError;
-      }
-    } catch (error) {
-      logger.error('Erro ao gerenciar tags do contato', { error, contactId });
-      toast.error('O contato foi salvo, mas as etiquetas não. Abra o contato e tente de novo.');
+    const { error } = await supabase.rpc('set_contact_tags', {
+      p_contact_id: id,
+      p_add: adicionar,
+      p_remove: remover,
+    });
+    if (error) {
+      logger.error('Erro ao salvar as etiquetas do contato', { error, contactId: id });
+      toast.error(`O contato foi salvo, mas as etiquetas continuam como estavam. ${motivoDoErro(error)}`);
       throw error;
     }
+    queryClient.invalidateQueries({ queryKey: ['contacts'] });
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    queryClient.invalidateQueries({ queryKey: ['conversation'] });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -315,9 +312,11 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
         const result = await saveMutation.mutateAsync({ 
           data: contactData
         });
-        // Gerenciar tags após criar o contato
-        if (result?.data?.[0]?.id) {
-          await manageTags(result.data[0].id);
+        // Gerenciar tags após criar o contato. A mutação devolve as linhas
+        // gravadas (lista), não um objeto com `data`.
+        const novoId = Array.isArray(result) ? result[0]?.id : undefined;
+        if (novoId) {
+          await manageTags(novoId);
         }
       }
     } catch (error) {
@@ -532,7 +531,10 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
 
             {/* Seção de Tags */}
             <div>
-              <Label>Etiquetas</Label>
+              <div className="flex items-center gap-1">
+                <Label>Etiquetas</Label>
+                <DicaDoCampo rotulo="Etiquetas" texto="Ao salvar, muda só a etiqueta que você pôs ou tirou. Se der erro, as etiquetas do contato ficam como estavam." />
+              </div>
               {tagsLoading ? (
                 <Skeleton className="h-20 w-full" />
               ) : (
@@ -543,6 +545,7 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                       {selectedTags.map((tagId) => {
                         const tag = allTags.find(t => t.id === tagId);
                         if (!tag) return null;
+                        const nomeDaEtiqueta: string = tag.name;
                         return (
                           <Badge
                             key={tagId}
@@ -550,11 +553,16 @@ export const ContactModal = ({ isOpen, onClose, contactId }: ContactModalProps) 
                             className={`flex items-center gap-1 px-2 py-1 ${CLASSE_DA_TINTA}`}
                             style={{ backgroundColor: tag.color + '20', borderColor: tag.color, ...estiloDaTinta(tag.color) }}
                           >
-                            {tag.name}
-                            <X
-                              className="h-3 w-3 cursor-pointer hover:opacity-70"
+                            {nomeDaEtiqueta}
+                            <button
+                              type="button"
+                              data-alvo-expandido
+                              aria-label={`Tirar a etiqueta ${nomeDaEtiqueta}`}
+                              className="hover:opacity-70"
                               onClick={() => removeTag(tagId)}
-                            />
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
                           </Badge>
                         );
                       })}

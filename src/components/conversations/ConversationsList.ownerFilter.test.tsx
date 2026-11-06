@@ -70,6 +70,7 @@ vi.mock('@/contexts/TenantContext', () => ({
 vi.mock('@/hooks/useConversationRotation', () => ({
   useIneligibleOwners: () => ({ canManage: false, ownerIds: [] }),
 }));
+vi.mock('@/hooks/useLojaTemEtapas', () => ({ useLojaTemEtapas: () => true }));
 vi.mock('@/hooks/useTeamDirectory', () => ({ useTeamMemberLookup: () => () => undefined }));
 vi.mock('@/hooks/useSlaConfig', () => ({
   useSlaConfig: () => ({ enabled: false, thresholds: { atencao: 30, critica: 120 } }),

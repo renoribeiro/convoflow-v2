@@ -768,7 +768,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Abra Conversas e leia o cabeçalho: de quem é esta conversa?',
         body:
-          'Ao abrir uma conversa, o cabeçalho mostra o responsável por ela. "Sem responsável" quer dizer que ninguém pegou; um nome quer dizer que a conversa é daquela pessoa. A lista tem as pílulas "Minhas" (o que está com você) e "Sem responsável" (a fila) para você separar uma coisa da outra.',
+          'Ao abrir uma conversa, o cabeçalho mostra o responsável por ela. "Sem responsável" quer dizer que ninguém pegou; um nome quer dizer que a conversa é daquela pessoa. A lista tem as pílulas "Minhas" (o que está com você) e "Sem responsável" (a fila) para você separar uma coisa da outra. Embaixo de cada conversa ficam as etiquetas do contato: até duas, e toque no "+N" para ver todas.',
         note:
           'Se a Loja tem Instagram, o topo da lista tem a chave "WhatsApp" / "Instagram": cada lado é uma fila própria, e o número no lado que não está aberto mostra quantas conversas esperam resposta lá.',
         screen: '/dashboard/conversations',

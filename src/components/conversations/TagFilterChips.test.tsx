@@ -34,7 +34,7 @@ describe('TagFilterChips', () => {
   it('o "x" de um selo tira só aquela etiqueta', () => {
     const onRemove = vi.fn();
     render(<TagFilterChips tagIds={['tag-quente', 'tag-frio']} onRemove={onRemove} />);
-    const selo = screen.getByText('Quente');
+    const selo = screen.getByText('Quente').parentElement as HTMLElement;
     const x = selo.querySelector('svg.cursor-pointer') as SVGElement;
     fireEvent.click(x);
     expect(onRemove).toHaveBeenCalledTimes(1);

@@ -191,8 +191,8 @@ export const EtiquetasManagerSheet = ({ open, onOpenChange }: EtiquetasManagerSh
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir etiqueta?</AlertDialogTitle>
             <AlertDialogDescription>
-              A etiqueta <strong>{pendingDelete?.name}</strong> será removida de todos os leads
-              que a possuem. Esta ação não pode ser desfeita.
+              A etiqueta <strong>{pendingDelete?.name}</strong> será removida de todos os contatos
+              da Loja que a possuem. Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

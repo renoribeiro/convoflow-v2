@@ -17,9 +17,16 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
  * Teste (sem dado pessoal: são fixtures de teste).
  */
 
-const { state, calls } = vi.hoisted(() => ({
+const { state, calls, rpcCalls, rpcErro, ETIQUETAS_DA_LOJA } = vi.hoisted(() => ({
   state: { contact: null as Record<string, unknown> | null },
   calls: [] as { table: string; op: string; payload?: unknown; filter?: [string, unknown] }[],
+  rpcCalls: [] as { fn: string; args: unknown }[],
+  rpcErro: { atual: null as { code?: string; message: string } | null },
+  ETIQUETAS_DA_LOJA: [
+    { id: 'aaaaaaaa-0000-4000-8000-000000000011', name: 'Agendado', color: '#22c55e' },
+    { id: 'aaaaaaaa-0000-4000-8000-000000000012', name: 'Esperando dados', color: '#3b82f6' },
+    { id: 'aaaaaaaa-0000-4000-8000-000000000013', name: 'Finalizado', color: '#f59e0b' },
+  ],
 }));
 
 vi.mock('@/contexts/TenantContext', () => ({
@@ -31,7 +38,12 @@ vi.mock('@/contexts/TenantContext', () => ({
 }));
 vi.mock('@/hooks/useSupabaseQuery', () => ({
   useSupabaseQuery: (opts: { table: string }) => ({
-    data: opts.table === 'contacts' && state.contact ? [state.contact] : [],
+    data:
+      opts.table === 'contacts' && state.contact
+        ? [state.contact]
+        : opts.table === 'tags'
+          ? ETIQUETAS_DA_LOJA
+          : [],
     isLoading: false,
     error: null,
   }),
@@ -64,9 +76,16 @@ function builder(table: string) {
   return chain;
 }
 vi.mock('@/integrations/supabase/client', () => ({
-  supabase: { from: (t: string) => builder(t) },
+  supabase: {
+    from: (t: string) => builder(t),
+    rpc: (fn: string, args: unknown) => {
+      rpcCalls.push({ fn, args });
+      return Promise.resolve({ data: null, error: rpcErro.atual });
+    },
+  },
 }));
 
+import { toast } from 'sonner';
 import { ContactModal } from './ContactModal';
 
 const WHATSAPP_ROW = {
@@ -119,6 +138,9 @@ function onlyWrite() {
 
 beforeEach(() => {
   calls.length = 0;
+  rpcCalls.length = 0;
+  rpcErro.atual = null;
+  vi.mocked(toast.error).mockClear();
   state.contact = null;
 });
 
@@ -247,5 +269,86 @@ describe('ContactModal — salvar', () => {
       notes: null,
       tenant_id: 'aaaaaaaa-0000-4000-8000-000000000001',
     });
+  });
+});
+
+/**
+ * Até 2026-11-05 o salvar apagava TODAS as etiquetas do contato e gravava de
+ * novo, em dois pedidos: se o segundo falhasse, o contato ficava sem nenhuma.
+ * Agora vai só a diferença, num pedido (set_contact_tags, uma transação; a falha
+ * no meio é provada em docs/teste_etiquetas_do_contato.sql). A tela nunca mais
+ * escreve direto em contact_tags.
+ */
+describe('ContactModal: etiquetas', () => {
+  const AGENDADO = ETIQUETAS_DA_LOJA[0]!;
+  const ESPERANDO = ETIQUETAS_DA_LOJA[1]!;
+  const FINALIZADO = ETIQUETAS_DA_LOJA[2]!;
+  const ligacao = (t: (typeof ETIQUETAS_DA_LOJA)[number]) => ({ tag_id: t.id, tags: t });
+  const escritasEmEtiquetas = () => calls.filter((c) => c.table === 'contact_tags');
+  const salvar = () => fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+  beforeEach(() => {
+    state.contact = { ...WHATSAPP_ROW, name: 'Ana', contact_tags: [ligacao(AGENDADO), ligacao(ESPERANDO)] };
+    // O Radix Select usa estes métodos, que o jsdom não tem.
+    Element.prototype.hasPointerCapture = () => false;
+    Element.prototype.setPointerCapture = () => {};
+    Element.prototype.releasePointerCapture = () => {};
+  });
+
+  async function escolherEtiqueta(nome: string) {
+    fireEvent.keyDown(await screen.findByRole('combobox', { name: 'Adicionar etiqueta existente' }), { key: 'Enter' });
+    fireEvent.click(await screen.findByRole('option', { name: nome }));
+  }
+
+  it('manda só o que mudou, num pedido só, e não toca em contact_tags', async () => {
+    renderModal(WHATSAPP_ROW.id);
+    fireEvent.click(await screen.findByRole('button', { name: 'Tirar a etiqueta Agendado' }));
+    await escolherEtiqueta('Finalizado');
+    salvar();
+
+    await waitFor(() => expect(rpcCalls).toHaveLength(1));
+    expect(rpcCalls[0]).toEqual({
+      fn: 'set_contact_tags',
+      args: { p_contact_id: WHATSAPP_ROW.id, p_add: [FINALIZADO.id], p_remove: [AGENDADO.id] },
+    });
+    expect(escritasEmEtiquetas()).toEqual([]);
+  });
+
+  it('sem mudança nas etiquetas: nenhum pedido', async () => {
+    renderModal(WHATSAPP_ROW.id);
+    fireEvent.change(await screen.findByLabelText(/Observações/), { target: { value: 'Retomar' } });
+    salvar();
+
+    await waitFor(() => expect(contactWrites()).toHaveLength(1));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(rpcCalls).toEqual([]);
+    expect(escritasEmEtiquetas()).toEqual([]);
+  });
+
+  it('falha no meio do salvar: avisa, e nada foi apagado antes', async () => {
+    rpcErro.atual = { code: '42501', message: 'permission denied' };
+    renderModal(WHATSAPP_ROW.id);
+    fireEvent.click(await screen.findByRole('button', { name: 'Tirar a etiqueta Agendado' }));
+    salvar();
+
+    await waitFor(() => expect(rpcCalls).toHaveLength(1));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    const aviso = String(vi.mocked(toast.error).mock.calls[0]?.[0]);
+    expect(aviso).toContain('as etiquetas continuam como estavam');
+    expect(aviso).toContain('Você não tem permissão');
+    expect(aviso).not.toContain('permission denied');
+    expect(escritasEmEtiquetas()).toEqual([]);
+  });
+
+  it('contato novo: as marcadas entram depois de criar', async () => {
+    state.contact = null;
+    renderModal(null);
+    fireEvent.change(await screen.findByLabelText(/Nome/), { target: { value: 'Contato Novo' } });
+    fireEvent.change(screen.getByLabelText(/^Telefone/), { target: { value: '5585999990000' } });
+    await escolherEtiqueta('Agendado');
+    fireEvent.click(screen.getByRole('button', { name: 'Criar' }));
+
+    await waitFor(() => expect(rpcCalls).toHaveLength(1));
+    expect(rpcCalls[0]?.args).toEqual({ p_contact_id: 'novo-id', p_add: [AGENDADO.id], p_remove: [] });
   });
 });
