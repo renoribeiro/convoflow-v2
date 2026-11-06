@@ -1,3 +1,4 @@
+import { CONTA_SEM_ACESSO_CODE, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
@@ -129,6 +130,17 @@ serve(async (req) => {
       triggerType: trigger.type,
       tenantId: trigger.tenant_id,
     });
+
+    // Conta sem acesso: nenhum fluxo roda, então nada sai e nada muda sozinho.
+    const acesso = criarMemoDeAcesso(supabaseClient, (id, erro) =>
+      logger.error('automation-processor: não conferi o acesso', { tenantId: id, erro }));
+    if (!(await acesso.liberada(trigger.tenant_id))) {
+      logger.info('Conta sem acesso: automação não executada', { tenantId: trigger.tenant_id });
+      return new Response(
+        JSON.stringify({ success: true, skipped: CONTA_SEM_ACESSO_CODE }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     // Buscar fluxos ativos com o tipo de gatilho correspondente.
     // Scope explicitly by tenant_id — service_role bypasses RLS, so we

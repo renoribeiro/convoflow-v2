@@ -17,6 +17,7 @@
  * Todo envio passa pela ProviderFactory (Evolution/WAHA/Meta) e respeita a
  * janela de 24h da Meta para instâncias oficiais.
  */
+import { MOTIVO_CONTA_SEM_ACESSO } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
@@ -174,6 +175,18 @@ serve(async (req) => {
 
     const stats = { sent: 0, failed: 0, blocked: 0, tasksCreated: 0, advanced: 0, recurred: 0 }
 
+    // Conta sem acesso: nada dela é enviado, e os itens ficam como estão para
+    // saírem quando a Conta voltar. Saem da busca ANTES do limite do lote, senão a
+    // fila de uma Conta parada ocuparia o lote e as outras nunca seriam atendidas.
+    // Sem resposta do banco, esta rodada para: nada sai sem certeza.
+    const { data: contasSemAcesso, error: acessoError } = await supabase.rpc('tenants_sem_acesso_com_followup')
+    if (acessoError) throw new Error(`Não conferi o acesso das Contas: ${acessoError.message}`)
+    const semAcesso = (contasSemAcesso ?? []) as string[]
+    const filtroSemAcesso = semAcesso.length > 0 ? `(${semAcesso.join(',')})` : null
+    // deno-lint-ignore no-explicit-any
+    const semContasParadas = (q: any) => (filtroSemAcesso ? q.not('tenant_id', 'in', filtroSemAcesso) : q)
+    if (semAcesso.length > 0) logger.info(MOTIVO_CONTA_SEM_ACESSO, { contas: semAcesso.length })
+
     // ── 1. Reclama envios agendados travados em 'in_progress' por >5min ────────
     await supabase
       .from('individual_followups')
@@ -191,12 +204,12 @@ serve(async (req) => {
     // aqui para materializar o status.
 
     // ── 3. Envios AGENDADOS vencidos ───────────────────────────────────────────
-    const { data: dueScheduled } = await supabase
+    const { data: dueScheduled } = await semContasParadas(supabase
       .from('individual_followups')
       .select('*')
       .eq('mode', 'scheduled')
       .eq('status', 'scheduled')
-      .lte('scheduled_at', nowIso)
+      .lte('scheduled_at', nowIso))
       .order('scheduled_at', { ascending: true })
       .limit(SCHEDULED_BATCH)
 
@@ -293,11 +306,11 @@ serve(async (req) => {
 
     // ── 4a. Retoma sequências pausadas em tarefa manual concluída ──────────────
     if (!overBudget()) {
-      const { data: paused } = await supabase
+      const { data: paused } = await semContasParadas(supabase
         .from('followup_sequence_enrollments')
         .select('*')
         .eq('status', 'active')
-        .not('waiting_on_followup_id', 'is', null)
+        .not('waiting_on_followup_id', 'is', null))
         .limit(ENROLLMENT_BATCH)
 
       for (const enr of paused ?? []) {
@@ -323,12 +336,12 @@ serve(async (req) => {
 
     // ── 4b. Executa passos de sequência vencidos ───────────────────────────────
     if (!overBudget()) {
-      const { data: dueEnr } = await supabase
+      const { data: dueEnr } = await semContasParadas(supabase
         .from('followup_sequence_enrollments')
         .select('*')
         .eq('status', 'active')
         .is('waiting_on_followup_id', null)
-        .lte('next_run_at', nowIso)
+        .lte('next_run_at', nowIso))
         .order('next_run_at', { ascending: true })
         .limit(ENROLLMENT_BATCH)
 
@@ -486,12 +499,12 @@ serve(async (req) => {
     // ── 5. Geração de recorrências ─────────────────────────────────────────────
     if (!overBudget()) {
       const since = new Date(Date.now() - 2 * 86_400_000).toISOString()
-      const { data: completedRecurring } = await supabase
+      const { data: completedRecurring } = await semContasParadas(supabase
         .from('individual_followups')
         .select('*')
         .eq('recurring', true)
         .eq('status', 'completed')
-        .gte('completed_at', since)
+        .gte('completed_at', since))
         .limit(RECURRENCE_BATCH)
 
       for (const parent of completedRecurring ?? []) {

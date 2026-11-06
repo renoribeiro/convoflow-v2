@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
@@ -55,6 +56,10 @@ Deno.serve(async (req: Request) => {
     .select('tenant_id, role, status, capabilities')
     .eq('user_id', user.id)
     .maybeSingle();
+
+  // Conta sem acesso não liga número.
+  const acesso = await decidirAcessoDoChamador(admin, caller);
+  if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
 
   const result = await provisionWaha(body, {
     caller,

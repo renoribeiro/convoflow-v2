@@ -58,7 +58,8 @@ export type ScheduleRunStatus =
   | 'failed'
   | 'skipped_not_due'
   | 'skipped_claimed_elsewhere'
-  | 'skipped_invalid_cron';
+  | 'skipped_invalid_cron'
+  | 'skipped_no_access';
 
 export interface ScheduleRunResult {
   scheduleId: string;
@@ -78,6 +79,11 @@ export interface RunDueSchedulesOptions {
   db: ReportDb;
   /** Transporte de e-mail já configurado com os secrets. Injetável para teste. */
   sendEmail: (args: SendEmailArgs) => Promise<void>;
+  /**
+   * A Conta da agenda tem acesso? Sem acesso o relatório não é montado nem
+   * enviado, e a agenda não é gasta. Sem esta opção, nada é conferido (teste).
+   */
+  contaLiberada?: (tenantId: string) => Promise<boolean>;
   now?: Date;
   timeZone?: string;
   lookbackMinutes?: number;
@@ -222,6 +228,7 @@ export async function runDueSchedules(
   const {
     db,
     sendEmail,
+    contaLiberada,
     now = new Date(),
     timeZone = DEFAULT_TIME_ZONE,
     lookbackMinutes = DEFAULT_LOOKBACK_MINUTES,
@@ -270,6 +277,14 @@ export async function runDueSchedules(
 
       if (!due) {
         push({ scheduleId: schedule.id, tenantId: schedule.tenant_id, status: 'skipped_not_due' });
+        continue;
+      }
+
+      // Conta sem acesso: nada é montado nem enviado, e a agenda não é gasta. Não
+      // acumula: a janela de recuperação é curta, então a volta da Conta não
+      // dispara relatório velho.
+      if (contaLiberada && !(await contaLiberada(schedule.tenant_id))) {
+        push({ scheduleId: schedule.id, tenantId: schedule.tenant_id, status: 'skipped_no_access' });
         continue;
       }
 

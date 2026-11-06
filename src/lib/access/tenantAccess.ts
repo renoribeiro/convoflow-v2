@@ -6,10 +6,10 @@
 // bloqueio por Loja: se a Conta está liberada, todas as Lojas dela funcionam.
 //
 // ESTE ARQUIVO É UM ESPELHO. A fonte da verdade em produção é a função
-// `public.tenant_access_state(uuid)` (migrações 20260818000001 e
-// 20260926000001, a dos status que liberam), porque só ela
-// consegue ler a linha da Conta pai — o RLS de `tenants` não deixa quem está
-// dentro de uma Loja enxergar a Conta, e isso é de propósito.
+// `public.conta_acesso(uuid)` (migração 20261106000001), que o navegador alcança
+// por `public.tenant_access_state(uuid)`, e é ela que o servidor usa para barrar
+// Conta sem acesso. Só ela consegue ler a linha da Conta pai — o RLS de `tenants`
+// não deixa quem está dentro de uma Loja enxergar a Conta, e isso é de propósito.
 //
 // Este módulo existe por dois motivos:
 //   1. Escreve a regra num lugar que o Vitest alcança, com as formas de linha

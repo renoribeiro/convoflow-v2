@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
@@ -18,6 +19,9 @@ import { callProvider } from '../_shared/provider-call.ts';
  */
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Ver o estado continua liberado; o resto muda o número. */
+const ACOES_DE_LEITURA = ['status', 'credential'];
 
 Deno.serve(async (req: Request) => {
   const logger = createLogger(req);
@@ -59,6 +63,11 @@ Deno.serve(async (req: Request) => {
     .select('tenant_id, role, status, capabilities')
     .eq('user_id', user.id)
     .maybeSingle();
+
+  if (!ACOES_DE_LEITURA.includes(String(body.action))) {
+    const acesso = await decidirAcessoDoChamador(admin, caller);
+    if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
+  }
 
   const { data: instance } = await admin
     .from('whatsapp_instances')

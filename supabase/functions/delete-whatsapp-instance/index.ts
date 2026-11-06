@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
@@ -92,6 +93,15 @@ Deno.serve(async (req: Request) => {
   if (!UUID_PATTERN.test(instanceId)) {
     return jsonResponse({ ok: false, error: 'instance_id inválido.' }, 400);
   }
+
+  // Conta sem acesso não muda os números. Antes de ler o cofre.
+  const { data: chamador } = await admin
+    .from('profiles')
+    .select('tenant_id, role')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  const acesso = await decidirAcessoDoChamador(admin, chamador);
+  if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
 
   // ------------------------------------------------ o cofre, antes da RPC
   // A RPC apaga o segredo do cofre junto com a linha. O endereço e a chave do

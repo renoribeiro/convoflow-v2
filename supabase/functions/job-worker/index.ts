@@ -1,3 +1,4 @@
+import { MOTIVO_CONTA_SEM_ACESSO, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
@@ -53,6 +54,9 @@ serve(async (req) => {
 
     logger.info('Job worker started...')
 
+    const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
+      logger.error('job-worker: não conferi o acesso', { tenantId: id, erro }))
+
     const maxProcessingTime = 45 * 1000 // 45 seconds to avoid Edge Function timeout
     const startTime = Date.now()
 
@@ -79,6 +83,21 @@ serve(async (req) => {
         }
 
         const job: Job = jobs[0]
+
+        // Conta sem acesso: o envio é cancelado, sem nova tentativa. Uma resposta
+        // de dias atrás não pode sair quando a Conta voltar. Sem certeza, o
+        // trabalho volta para a fila e a próxima volta pergunta de novo.
+        const estado = await acesso.estado(job.tenant_id)
+        if (estado !== 'liberada') {
+          await supabase.from('job_queue').update(
+            estado === 'sem_acesso'
+              ? { status: 'cancelled', completed_at: new Date().toISOString(), error_message: MOTIVO_CONTA_SEM_ACESSO }
+              : { status: 'pending' },
+          ).eq('id', job.id)
+          logger.info(`Job ${job.id} não enviado`, { jobId: job.id, estado })
+          if (estado === 'desconhecido') await new Promise(resolve => setTimeout(resolve, 5000))
+          continue
+        }
         logger.info(`Processing job ${job.id} (${job.job_type}) - Attempt ${job.current_attempts}`, { jobId: job.id, type: job.job_type })
 
         try {

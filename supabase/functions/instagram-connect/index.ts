@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
@@ -129,6 +130,16 @@ Deno.serve(async (req: Request) => {
   const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
   const user = userData?.user;
   if (userErr || !user) return json({ error: 'Sessão inválida ou expirada. Entre de novo no ConvoFlow.' }, 401);
+
+  // Conta sem acesso não conecta o Instagram. O GET acima só devolve a pessoa
+  // para o ConvoFlow, e quem conclui a conexão passa por aqui.
+  const { data: chamador } = await admin
+    .from('profiles')
+    .select('tenant_id, role')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  const acesso = await decidirAcessoDoChamador(admin, chamador);
+  if (!acesso.ok) return json(corpoDaRecusa(acesso), acesso.status);
 
   let raw: unknown;
   try {

@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
@@ -97,6 +98,10 @@ Deno.serve(async (req: Request) => {
     .eq('user_id', user.id)
     .single();
   if (!profile?.tenant_id) return json({ ok: false, error: 'Profile not found' }, 403);
+
+  // Conta sem acesso não envia.
+  const acesso = await decidirAcessoDoChamador(admin, profile);
+  if (!acesso.ok) return json(corpoDaRecusa(acesso), acesso.status);
 
   // ---- corpo ---------------------------------------------------------------
   let raw: unknown;

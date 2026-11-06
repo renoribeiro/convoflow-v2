@@ -16,6 +16,7 @@
  *   Meta         : .agent/skills/meta-cloud-api/SKILL.md §2.1 (text)
  */
 
+import { CONTA_SEM_ACESSO_CODE, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
@@ -104,6 +105,18 @@ serve(async (req) => {
         status: 400,
       },
     );
+  }
+
+  // Conta sem acesso: a mensagem do cliente já foi gravada pelo webhook. O que
+  // não sai é a resposta automática.
+  const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
+    logger.error('process-chatbot-message: não conferi o acesso', { tenant_id: id, erro }));
+  if (!(await acesso.liberada(tenant_id))) {
+    logger.info('Conta sem acesso: resposta automática não enviada', { tenant_id });
+    return new Response(JSON.stringify({ success: true, skipped: CONTA_SEM_ACESSO_CODE }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
   }
 
   try {

@@ -17,6 +17,7 @@
 // Regras WhatsApp: ver .agent/skills/{evolution-v2,waha,meta-cloud-api}/SKILL.md
 // =============================================================================
 
+import { decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
@@ -447,7 +448,15 @@ Deno.serve(async (req) => {
       return await handleBugReport(admin, bugCaller, rawBody as unknown as BugReportRequest, cors);
     }
 
-    caller = await getCaller(admin, token);
+    const chamador = await getCaller(admin, token);
+
+    // Conta sem acesso não manda relatório. O relato de problema, logo acima,
+    // continua livre. `caller` só recebe depois da trava: com ele preenchido, o
+    // catch externo registraria uma execução de relatório que nunca aconteceu.
+    const acesso = await decidirAcessoDoChamador(admin, chamador);
+    if (!acesso.ok) throw new SecureError(acesso.error, acesso.code, acesso.status);
+    caller = chamador;
+
     body = rawBody as ReportRequest;
     // A Loja aberta no seletor, revalidada. Fica em `caller.tenant_id` para o
     // resto do fluxo (montagem, report_executions e o catch) usar UMA fonte.

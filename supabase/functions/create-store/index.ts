@@ -16,6 +16,7 @@
 // `_shared/store-creation.ts`, sem I/O, para poderem ser testadas pelo Vitest.
 // =============================================================================
 
+import { decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
@@ -217,6 +218,10 @@ Deno.serve(async (req: Request) => {
       throw new SecureError('Cabeçalho de autorização ausente.', 'UNAUTHORIZED', 401);
     }
     const caller = await getCaller(admin, authHeader.replace(/^Bearer\s+/i, ''));
+
+    // Conta sem acesso não cria Loja.
+    const acesso = await decidirAcessoDoChamador(admin, caller);
+    if (!acesso.ok) throw new SecureError(acesso.error, acesso.code, acesso.status);
 
     let body: RequestPayload;
     try {

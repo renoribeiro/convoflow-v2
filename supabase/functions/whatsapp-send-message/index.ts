@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
@@ -112,6 +113,10 @@ Deno.serve(async (req: Request) => {
   if (callerProfile.status !== 'active') {
     return jsonResponse({ ok: false, error: 'Sua conta não está ativa.' }, 403);
   }
+
+  // Conta sem acesso não envia, por nenhum provedor.
+  const acesso = await decidirAcessoDoChamador(supabaseAdmin, callerProfile);
+  if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
 
   // Parse body
   let body: SendRequest;

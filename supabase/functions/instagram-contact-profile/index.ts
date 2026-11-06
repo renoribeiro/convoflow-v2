@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { createLogger } from '../_shared/logger.ts';
@@ -75,6 +76,15 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(supabaseUrl, serviceRole, { auth: { persistSession: false } });
   const { data: { user }, error: authError } = await admin.auth.getUser(authHeader.replace('Bearer ', ''));
   if (authError || !user) return json({ ok: false, error: 'Invalid session' }, 401);
+
+  // Conta sem acesso não busca nem grava o perfil na Meta.
+  const { data: chamador } = await admin
+    .from('profiles')
+    .select('tenant_id, role')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  const acesso = await decidirAcessoDoChamador(admin, chamador);
+  if (!acesso.ok) return json(corpoDaRecusa(acesso), acesso.status);
 
   let raw: unknown;
   try {

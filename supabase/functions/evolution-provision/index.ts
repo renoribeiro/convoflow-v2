@@ -1,3 +1,4 @@
+import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
@@ -127,6 +128,10 @@ Deno.serve(async (req: Request) => {
     logger.warn('evolution-provision recusado', { reason: target.reason, userId: callerUser.id });
     return jsonResponse({ ok: false, reason: target.reason, error: target.message }, target.status);
   }
+
+  // Conta sem acesso não liga número.
+  const acesso = await decidirAcessoDoChamador(supabaseAdmin, callerProfile);
+  if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
 
   // As credenciais da plataforma. Ausentes = recusa explícita, com o nome do
   // secret que falta: "não abre nada" foi exatamente o bug que trouxe a gente aqui.

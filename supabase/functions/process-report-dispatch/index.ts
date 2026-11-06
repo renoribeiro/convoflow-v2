@@ -25,6 +25,7 @@
  * A regra de negócio mora em ../_shared/report-scheduler.ts, que é testado por
  * src/lib/reports/reportScheduler.test.ts. Esta função é só a casca.
  */
+import { criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
@@ -70,8 +71,12 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const startedAt = Date.now()
 
+    const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
+      logger.error('process-report-dispatch: não conferi o acesso', { tenantId: id, erro }))
+
     const result = await runDueSchedules({
       db: supabase,
+      contaLiberada: acesso.liberada,
       sendEmail: resendTransport(resendApiKey, fromEmail),
       now: new Date(),
       lookbackMinutes: LOOKBACK_MINUTES,

@@ -8,6 +8,7 @@
  * Per-invocation budget: ~50 s. Executions left pending are retried on the
  * next minute tick.
  */
+import { criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
@@ -235,12 +236,34 @@ serve(async (req) => {
     // Two-step: get active campaign IDs first, then get pending executions.
     const { data: activeCampaignIds } = await supabase
       .from('mass_message_campaigns')
-      .select('id')
+      .select('id, tenant_id')
       .eq('status', 'active')
       .is('paused_at', null)
       .is('cancelled_at', null)
 
-    if (!activeCampaignIds || activeCampaignIds.length === 0) {
+    // Conta sem acesso: a campanha é PAUSADA, antes do limite do lote. Assim ela
+    // aparece como pausada na tela, quem decide retomar é a pessoa, e a fila dela
+    // não ocupa o lote das outras Contas. Sem certeza da resposta, a campanha só
+    // fica de fora desta rodada: nunca se pausa campanha de quem paga por engano.
+    const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
+      logger.error('Não conferi o acesso da Conta', { tenant_id: id, erro }))
+    const liberadas: any[] = []
+    const paraPausar: string[] = []
+    for (const c of activeCampaignIds ?? []) {
+      const estado = await acesso.estado(c.tenant_id)
+      if (estado === 'liberada') liberadas.push(c)
+      else if (estado === 'sem_acesso') paraPausar.push(c.id)
+    }
+    if (paraPausar.length > 0) {
+      await supabase
+        .from('mass_message_campaigns')
+        .update({ status: 'paused', paused_at: new Date().toISOString() })
+        .in('id', paraPausar)
+        .eq('status', 'active')
+      logger.info('Campanhas pausadas: Conta sem acesso', { total: paraPausar.length })
+    }
+
+    if (liberadas.length === 0) {
       logger.info('No active campaigns, nothing to dispatch')
       return new Response(JSON.stringify({ processed: 0, sent: 0, failed: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -248,7 +271,7 @@ serve(async (req) => {
       })
     }
 
-    const campaignIdList = activeCampaignIds.map((r: any) => r.id)
+    const campaignIdList = liberadas.map((r: any) => r.id)
 
     const { data: executions, error: execError } = await supabase
       .from('campaign_executions')

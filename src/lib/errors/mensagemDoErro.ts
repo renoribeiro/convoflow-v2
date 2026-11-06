@@ -16,6 +16,9 @@ export function tituloDoErro(acao: AcaoDoAviso): string {
   return 'Não foi possível salvar';
 }
 
+/** SQLSTATE de public.exigir_conta_com_acesso (migração 20261106000001). */
+export const CODIGO_CONTA_SEM_ACESSO = 'CF403';
+
 interface ErroDoBanco {
   code?: unknown;
   message?: unknown;
@@ -28,6 +31,12 @@ export function motivoDoErro(error: unknown): string {
   const code = typeof e.code === 'string' ? e.code : '';
   const message = typeof e.message === 'string' ? e.message : '';
   const status = typeof e.status === 'number' ? e.status : 0;
+
+  // Conta sem acesso: o servidor já manda a frase certa para o cargo, com o
+  // caminho do pagamento ou "fale com o responsável". Vai como veio.
+  if ((code === CODIGO_CONTA_SEM_ACESSO || code === 'conta_sem_acesso') && message) {
+    return message;
+  }
 
   if (code === '42501' || status === 401 || status === 403 || /permission denied|row-level security/i.test(message)) {
     return 'Você não tem permissão para isso. Peça ao Gestor da Loja.';

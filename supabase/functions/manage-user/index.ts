@@ -17,6 +17,7 @@
 // agir sobre target. Para `create`, regras específicas por role do caller.
 // =============================================================================
 
+import { decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
@@ -836,6 +837,11 @@ Deno.serve(async (req: Request) => {
     }
     const token = authHeader.replace(/^Bearer\s+/i, '');
     const caller = await getCaller(admin, token);
+
+    // Conta sem acesso não convida nem muda ninguém. Superadmin passa, e é ele
+    // quem cria a Conta do Gerente antes de haver assinatura.
+    const acesso = await decidirAcessoDoChamador(admin, caller);
+    if (!acesso.ok) throw new SecureError(acesso.error, acesso.code, acesso.status);
 
     const body = (await req.json()) as RequestPayload;
     if (!body?.action) {

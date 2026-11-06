@@ -5,6 +5,7 @@
 // Acionada por pg_cron (a cada minuto) via net.http_post (anon bearer).
 // verify_jwt = false no config.toml; autentica internamente via service_role.
 // =============================================================================
+import { MOTIVO_CONTA_SEM_ACESSO, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
@@ -67,6 +68,9 @@ serve(async (req) => {
     }
     const supabase = createClient(supabaseUrl, serviceKey)
 
+    const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
+      logger.error('webhook-dispatcher: não conferi o acesso', { tenant_id: id, erro }))
+
     const nowIso = new Date().toISOString()
     const { data: pending, error: fetchError } = await supabase
       .from('webhook_deliveries')
@@ -101,6 +105,20 @@ serve(async (req) => {
 
       processed++
       const attempts = d.attempts + 1
+
+      // Conta sem acesso: a entrega é encerrada, sem nova tentativa. Sem certeza
+      // da resposta, ela volta para a fila.
+      const estado = await acesso.estado(d.tenant_id)
+      if (estado !== 'liberada') {
+        await supabase.from('webhook_deliveries').update(
+          estado === 'sem_acesso'
+            ? { status: 'failed', attempts, error_message: MOTIVO_CONTA_SEM_ACESSO }
+            : { status: 'pending' },
+        ).eq('id', d.id)
+        if (estado === 'sem_acesso') failed++
+        continue
+      }
+
       const url = d.webhooks?.url
       const active = d.webhooks?.is_active
 
