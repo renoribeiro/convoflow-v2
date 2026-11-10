@@ -1,4 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
+import { PUBLIC_SIGNUP_ENABLED } from '../src/lib/signup/chave';
+
+// Os botões de começar seguem a chave do cadastro (src/lib/signup/chave.ts):
+// ligada, "Começar teste grátis" abre /cadastro; desligada, "Começar Agora"
+// leva ao login.
+const COMECAR = PUBLIC_SIGNUP_ENABLED ? 'Começar teste grátis' : 'Começar Agora';
+const COMECAR_RE = PUBLIC_SIGNUP_ENABLED ? /Começar teste grátis/ : /Começar Agora/;
+const DESTINO = PUBLIC_SIGNUP_ENABLED ? /\/cadastro$/ : /\/auth$/;
 
 /**
  * Auditoria da superficie publica: clique de verdade em cada link e botao da
@@ -46,10 +54,10 @@ test.describe('Landing — navegação', () => {
     await expect(page).toHaveURL(/\/auth$/);
   });
 
-  test('navbar: "Começar Agora" leva para /auth', async ({ page }) => {
+  test('navbar: o botão de começar segue a chave do cadastro', async ({ page }) => {
     await page.goto('/');
-    await page.locator('nav').getByRole('link', { name: 'Começar Agora', exact: true }).click();
-    await expect(page).toHaveURL(/\/auth$/);
+    await page.locator('nav').getByRole('link', { name: COMECAR, exact: true }).click();
+    await expect(page).toHaveURL(DESTINO);
   });
 
   test('navbar: logo volta para /', async ({ page }) => {
@@ -58,10 +66,10 @@ test.describe('Landing — navegação', () => {
     await expect(page.getByRole('link', { name: 'ConvoFlow' }).first()).toBeVisible();
   });
 
-  test('hero: "Começar Agora" leva para /auth', async ({ page }) => {
+  test('hero: o botão de começar segue a chave do cadastro', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('link', { name: /Começar Agora/ }).first().click();
-    await expect(page).toHaveURL(/\/auth$/);
+    await page.getByRole('link', { name: COMECAR_RE }).first().click();
+    await expect(page).toHaveURL(DESTINO);
   });
 
   test('hero: "Ver funcionalidades" rola até a seção de Funcionalidades', async ({ page }) => {
@@ -76,11 +84,11 @@ test.describe('Landing — navegação', () => {
     await expect(features).toBeInViewport();
   });
 
-  test('CTA final: "Começar Agora" cai em /auth via redirect de /register', async ({ page }) => {
+  test('CTA final: o botão de começar segue a chave do cadastro', async ({ page }) => {
     await page.goto('/');
-    const links = page.getByRole('link', { name: /Começar Agora/ });
+    const links = page.getByRole('link', { name: COMECAR_RE });
     await links.last().click();
-    await expect(page).toHaveURL(/\/auth$/);
+    await expect(page).toHaveURL(DESTINO);
   });
 
   test('rodapé: Termos de Uso abre a página legal', async ({ page }) => {
@@ -117,15 +125,21 @@ test.describe('Landing — navegação', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
-  test('login: quem ainda não é cliente tem "Fale com a gente" (achado 3, decisão D12)', async ({ page }) => {
+  // Achado 3, decisão D12: a tela de login sempre tem saída para quem ainda não
+  // é cliente. Com o cadastro ligado é o teste grátis; desligado, o email.
+  test('login: quem ainda não é cliente tem uma saída que segue a chave do cadastro', async ({ page }) => {
     for (const rota of ['/auth', '/login']) {
       await page.goto(rota);
       const linha = page.getByTestId('login-nao-cliente');
       await expect(linha).toContainText('Ainda não é cliente?');
-      await expect(linha.getByRole('link', { name: 'Fale com a gente' })).toHaveAttribute(
-        'href',
-        /^mailto:contato@convoflow\.com\.br\?subject=/,
-      );
+      if (PUBLIC_SIGNUP_ENABLED) {
+        await expect(linha.getByRole('link', { name: 'Comece seu teste grátis' })).toHaveAttribute('href', '/cadastro');
+      } else {
+        await expect(linha.getByRole('link', { name: 'Fale com a gente' })).toHaveAttribute(
+          'href',
+          /^mailto:contato@convoflow\.com\.br\?subject=/,
+        );
+      }
     }
   });
 
@@ -142,7 +156,7 @@ test.describe('Landing — navegação', () => {
     // "Comecar Agora" do desktop continuam no DOM, porem escondidos. Busca so
     // dentro do nav: o hero e o CTA final tambem tem "Comecar Agora".
     const alternar = page.locator('nav button').locator('visible=true').first();
-    const comecar = page.locator('nav').getByRole('link', { name: 'Começar Agora', exact: true });
+    const comecar = page.locator('nav').getByRole('link', { name: COMECAR, exact: true });
     await alternar.click();
     await expect(comecar).toBeVisible();
     await alternar.click();
@@ -178,9 +192,9 @@ test.describe('Rotas públicas', () => {
     });
   }
 
-  test('/register redireciona para /auth', async ({ page }) => {
+  test('/register segue a chave do cadastro', async ({ page }) => {
     await page.goto('/register');
-    await expect(page).toHaveURL(/\/auth$/);
+    await expect(page).toHaveURL(DESTINO);
   });
 
   test('rota inexistente mostra o 404 e o botão volta para a home', async ({ page }) => {

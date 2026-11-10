@@ -129,10 +129,10 @@ describe('as chaves de lançamento', () => {
     if (PUBLIC_SIGNUP_ENABLED) expect(TRIAL_OFFER_ENABLED).toBe(true);
   });
 
-  it('hoje as duas estão desligadas (entregas 3 e 4 ainda não saíram)', () => {
-    // Quando ligar, troque este teste junto — é a lembrança de que ligar é uma
-    // decisão, não um detalhe.
-    expect(PUBLIC_SIGNUP_ENABLED).toBe(false);
-    expect(TRIAL_OFFER_ENABLED).toBe(false);
+  it('hoje as duas estão ligadas (sessão 4, 2026-11-10)', () => {
+    // Quando desligar, troque este teste junto: é a lembrança de que ligar e
+    // desligar são decisões, não detalhes.
+    expect(PUBLIC_SIGNUP_ENABLED).toBe(true);
+    expect(TRIAL_OFFER_ENABLED).toBe(true);
   });
 });

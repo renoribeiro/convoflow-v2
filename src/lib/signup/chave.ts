@@ -7,8 +7,9 @@
 // lados. Mora aqui, sem dependência nenhuma, para release.ts e trialOffer.ts a
 // lerem sem um importar o outro.
 //
-// PARA LIGAR (docs/RUNBOOK_ligar_teste_gratis.md): primeiro o secret
-// PUBLIC_SIGNUP_ENABLED = true no Supabase, depois esta chave.
+// LIGADA na sessão 4 (2026-11-10). A ordem (docs/RUNBOOK_ligar_teste_gratis.md):
+// para ligar, primeiro o secret PUBLIC_SIGNUP_ENABLED = true no Supabase, depois
+// esta chave; para desligar, primeiro o secret, depois esta chave, no mesmo dia.
 // =============================================================================
 
-export const PUBLIC_SIGNUP_ENABLED = false;
+export const PUBLIC_SIGNUP_ENABLED = true;

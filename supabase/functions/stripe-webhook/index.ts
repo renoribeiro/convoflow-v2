@@ -4,6 +4,8 @@ import Stripe from 'https://esm.sh/stripe@14.14.0?target=deno'
 import { syncSubscriptionFromEvent } from '../_shared/stripe-webhook-sync.ts'
 import type { TenantBillingRow } from '../_shared/subscription-state.ts'
 import { recordChargeFromEvent, type ChargeRow } from '../_shared/billing-charges.ts'
+import { avisarFalhaDoWebhook, type FalhaDoWebhook } from '../_shared/alerta-webhook-stripe.ts'
+import { sendViaResend } from '../_shared/report-core.ts'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') ?? '', {
   apiVersion: '2024-12-18.acacia',
@@ -25,6 +27,23 @@ const corsHeaders = {
 
 const COLUNAS_DA_CONTA = 'id, kind, subscription_id, subscription_status';
 
+// Aviso ao superadmin quando este webhook responde erro (sino + email, no máximo
+// um a cada 30 min; migração 20261110000001). Nunca muda a resposta ao Stripe e
+// espera no máximo 4 s.
+async function avisarSuperadmin(falha: FalhaDoWebhook): Promise<void> {
+  const url = Deno.env.get('SUPABASE_URL')
+  const chave = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (!url || !chave) return
+  const admin = createClient(url, chave, { auth: { persistSession: false } })
+  const aviso = avisarFalhaDoWebhook({
+    rpc: (fn, args) => admin.rpc(fn, args),
+    getEnv: (n) => Deno.env.get(n),
+    enviar: (o) => sendViaResend(o),
+    log: (nivel, msg) => (nivel === 'error' ? console.error(msg) : nivel === 'warn' ? console.warn(msg) : console.log(msg)),
+  }, falha)
+  await Promise.race([aviso, new Promise((r) => setTimeout(r, 4000))])
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -41,6 +60,7 @@ serve(async (req) => {
 
   if (!webhookSecret) {
       console.error("Missing STRIPE_WEBHOOK_SECRET configuration");
+      await avisarSuperadmin({ tipo: 'sem_segredo' });
       return new Response("Configuration Error", { status: 500 });
   }
 
@@ -55,6 +75,7 @@ serve(async (req) => {
     );
   } catch (err) {
     console.error(`Webhook signature verification failed: ${err.message}`)
+    await avisarSuperadmin({ tipo: 'assinatura' })
     return new Response(`Webhook Error: ${err.message}`, { status: 400 })
   }
 
@@ -224,6 +245,7 @@ serve(async (req) => {
 
   if (falhas.length) {
     // Sem log do evento: o reenvio do Stripe precisa passar pela guarda acima.
+    await avisarSuperadmin({ tipo: 'processamento', evento: event.type })
     return new Response(`Error processing webhook: ${falhas.join(' | ')}`, { status: 500 })
   }
 
@@ -244,6 +266,7 @@ serve(async (req) => {
     })
   } catch (err) {
     console.error(`Error processing webhook: ${err.message}`)
+    await avisarSuperadmin({ tipo: 'processamento', evento: event.type })
     return new Response(`Error processing webhook: ${err.message}`, { status: 500 })
   }
 })

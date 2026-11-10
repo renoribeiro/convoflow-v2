@@ -1,6 +1,7 @@
 import { test, expect as expectBase, type BrowserContext, type Page, type Route } from '@playwright/test';
 import { installSupabaseMock, sessionFor, type MockRole } from './support/supabaseMock';
 import { API_ADDON_RELEASED } from '../src/lib/api/release';
+import { PUBLIC_SIGNUP_ENABLED } from '../src/lib/signup/chave';
 
 /**
  * Rotas no navegador de verdade: guardas, 404, links que chegam de fora e
@@ -120,10 +121,12 @@ test.describe('guardas', () => {
     else await expect(page).toHaveURL(/\/$/);
   });
 
-  test('/register leva ao login', async ({ context }) => {
+  // A chave do cadastro: ligada, /register abre o formulário; desligada, o login.
+  test('/register segue a chave do cadastro', async ({ context }) => {
     const page = await abrirComo(context, 'gerente', { sessao: false });
     await page.goto('/register');
-    await expect(page).toHaveURL(/\/auth$/);
+    if (PUBLIC_SIGNUP_ENABLED) await expect(page).toHaveURL(/\/cadastro$/);
+    else await expect(page).toHaveURL(/\/auth$/);
   });
 
   // Desde 2026-10-26 (lote 2 do checkup) a guarda é a TelaGuard: quem não

@@ -1,11 +1,12 @@
 /**
  * A página de vendas com as chaves LIGADAS (teste grátis, entrega 4).
  *
- * As chaves de verdade estão desligadas; aqui elas são viradas só para o teste.
+ * As chaves de verdade estão ligadas desde 2026-11-10; aqui elas são fixadas
+ * ligadas para o teste não depender do arquivo.
  * O mock não inventa comportamento: ele chama as funções reais de
  * src/lib/signup/release.ts com o valor da chave que o cenário pede, que é
- * exatamente o que elas fazem com a chave virada no arquivo. O lado desligado,
- * com as chaves reais, está em src/lib/signup/release.test.tsx.
+ * exatamente o que elas fazem com a chave no arquivo. O lado desligado (o
+ * desligar de emergência) está em src/lib/signup/release.test.tsx.
  */
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';

@@ -1,11 +1,13 @@
 /**
- * A chave do cadastro pelo site: enquanto ela está desligada, a página de
- * vendas não alcança /cadastro por nenhum botão, não fala em teste grátis, e
- * /cadastro e /register levam ao login.
+ * A chave do cadastro pelo site: com ela desligada, a página de vendas não
+ * alcança /cadastro por nenhum botão, não fala em teste grátis, e /cadastro e
+ * /register levam ao login.
  *
- * Aqui tudo roda com as chaves REAIS de hoje. O lado ligado (os mesmos botões
- * indo para /cadastro, com o texto do teste) está em
- * src/components/landing/landingTrialCopy.test.tsx.
+ * A chave real está LIGADA desde 2026-11-10 (sessão 4). Aqui ela é forçada
+ * desligada, porque é esse o estado do desligar de emergência
+ * (docs/RUNBOOK_ligar_teste_gratis.md) e ele tem de continuar funcionando. O
+ * lado ligado (os mesmos botões indo para /cadastro, com o texto do teste) está
+ * em src/components/landing/landingTrialCopy.test.tsx.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -24,6 +26,8 @@ import {
   startCtaLabel,
 } from './release';
 
+// O desligar de emergência: a chave volta a false (release.ts e trialOffer.ts leem daqui).
+vi.mock('@/lib/signup/chave', () => ({ PUBLIC_SIGNUP_ENABLED: false }));
 vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => ({ session: null }) }));
 vi.mock('@/integrations/supabase/client', () => ({ supabase: { functions: { invoke: vi.fn() } } }));
 
@@ -41,7 +45,13 @@ describe('signupEntryPath', () => {
     expect(signupEntryPath(true)).toBe(SIGNUP_PATH);
   });
 
-  it('hoje está desligado', () => {
+  it('hoje está ligado no arquivo de verdade (sessão 4, 2026-11-10)', () => {
+    // Desligar é decisão: troque este teste junto (docs/RUNBOOK_ligar_teste_gratis.md).
+    const fonte = fs.readFileSync(path.join(SRC, 'lib', 'signup', 'chave.ts'), 'utf8');
+    expect(fonte).toMatch(/^export const PUBLIC_SIGNUP_ENABLED = true;$/m);
+  });
+
+  it('com a chave desligada, vai ao login', () => {
     expect(PUBLIC_SIGNUP_ENABLED).toBe(false);
     expect(signupEntryPath()).toBe('/auth');
   });
@@ -60,13 +70,13 @@ describe('o teste grátis na página de vendas (salesTrialOn / startCtaLabel)', 
     expect(startCtaLabel(true)).toBe('Começar teste grátis');
   });
 
-  it('hoje: sem teste na página, e o rótulo de sempre', () => {
+  it('com a chave desligada: sem teste na página, e o rótulo de sempre', () => {
     expect(salesTrialOn()).toBe(false);
     expect(startCtaLabel()).toBe('Começar Agora');
   });
 });
 
-describe('página de vendas com as chaves de hoje (desligadas)', () => {
+describe('página de vendas com a chave desligada (desligar de emergência)', () => {
   const hrefs = () => screen.getAllByRole('link').map((a) => a.getAttribute('href'));
 
   it('o menu não tem link para /cadastro, e "Começar Agora" leva ao login (antes dizia "Começar Grátis")', () => {

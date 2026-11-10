@@ -6,6 +6,7 @@
  * tutorial em silêncio — os dois primeiros testes existem para isso não passar.
  */
 import { API_ADDON_RELEASED } from '@/lib/api/release';
+import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -223,7 +224,10 @@ describe('cobertura dos tutoriais de onboarding', () => {
     // depois da API Oficial, a distribuição logo depois da equipe, e os avisos
     // para sistemas e a chave da API (a integração com outros sistemas) depois
     // do dia a dia. chave-api só aparece com a API liberada no site.
+    // Desde 2026-11-10 (sessão 4, cadastro ligado): teste-gratis é o primeiro,
+    // porque é o começo da jornada de quem chega pelo site.
     expect(TUTORIALS.map((t) => t.id)).toEqual([
+      ...(PUBLIC_SIGNUP_ENABLED ? ['teste-gratis'] : []),
       'antes-de-conectar',
       'conectar-whatsapp',
       'conectar-evolution',

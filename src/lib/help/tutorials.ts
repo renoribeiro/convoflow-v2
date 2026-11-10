@@ -70,6 +70,71 @@ export const TUTORIAL_CHAVE_API_ID = 'chave-api';
  * conectar vem em seguida porque nada funciona antes disso.
  */
 export const ALL_TUTORIALS: Tutorial[] = [
+  // ------------------------------------------------------------------ 0
+  // Cadastro pelo site (teste grátis, entrega 2). Vem primeiro: é o começo da
+  // jornada de quem chega pelo site. Só aparece com PUBLIC_SIGNUP_ENABLED ligada
+  // (ligada desde 2026-11-10) — ver visibleTutorials abaixo.
+  {
+    id: TUTORIAL_TESTE_GRATIS_ID,
+    title: 'Criar sua Conta e começar o teste grátis',
+    goal: `No fim, sua Conta estará criada, com a senha definida, o teste grátis de ${TRIAL_DAYS} dias rodando e a primeira Loja pronta para receber o time.`,
+    forWhom:
+      'Quem vai criar a Conta da empresa pelo site e ser o Gerente dela. Gestor e Atendente não se cadastram: eles entram por convite do Gerente.',
+    minRole: 'gerente',
+    nextTutorialId: 'configurar-equipe',
+    steps: [
+      {
+        title: 'Cadastre-se pela página do ConvoFlow',
+        body:
+          'Na página de vendas, clique em "Começar teste grátis" e preencha nome, sobrenome, email, o nome da empresa e um telefone com DDD. Marque o aceite dos Termos de Uso e da Política de Privacidade, espere a verificação "não sou um robô" e clique em "Criar minha conta".',
+        helpKey: 'page:cadastro',
+        note:
+          'A tela seguinte diz "Confira seu email", mesmo se o email já tiver conta. Se você já é cliente, entre pelo login. Se o email não sair, a tela avisa e mostra "Tentar de novo". Email de caixa temporária não é aceito.',
+      },
+      {
+        title: 'Crie sua senha pelo link do email',
+        body:
+          'Abra o email do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
+        note:
+          'O botão e o código de 6 dígitos do email valem por 24 horas e por um acesso. Se o botão não abrir, clique no link do fim do email, logo depois de Onde digitar, e digite o seu email e o código. Ou peça um código novo na mesma tela, em "Esqueci minha senha".',
+      },
+      {
+        title: 'Preencha os dados para a nota fiscal',
+        body:
+          'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o email que vai receber a nota e clique em "Salvar dados".',
+        helpKey: 'page:paywall',
+        note:
+          'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito. O teste grátis vale uma vez por CNPJ ou CPF: se o documento já teve teste, a tela avisa e a assinatura começa sem teste.',
+      },
+      {
+        title: 'Clique em "Começar teste grátis" e cadastre o cartão',
+        body:
+          'A mesma tela mostra o que acontece: hoje você não paga nada, e ali estão a data e o valor da primeira cobrança. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.',
+        helpKey: 'page:paywall',
+        note:
+          'Durante o teste a Conta tem limites de uso, listados no mesmo quadro: Lojas, números de WhatsApp, mensagens por dia e contatos por campanha. Eles deixam de valer depois do primeiro pagamento.',
+      },
+      {
+        title: 'Espere a confirmação, sem pagar de novo',
+        body:
+          'De volta do Stripe, a tela "Confirmando seu pagamento" abre o sistema sozinha, normalmente em segundos. Não clique para assinar de novo: seria uma segunda assinatura.',
+        helpKey: 'page:paywall',
+      },
+      {
+        title: 'Crie a primeira Loja em "Nova Loja"',
+        body:
+          'Em Equipe, clique em "Nova Loja", dê o nome pelo qual o time reconhece a operação e confirme em "Criar Loja". É na Loja que ficam o número de WhatsApp, as conversas e o time.',
+        screen: '/dashboard/team',
+        helpKey: 'page:team',
+      },
+      {
+        title: 'Anote a data do fim do teste',
+        body: `Em Configurações › Assinatura, o selo "EM TESTE" mostra até quando o teste vai. Para não ser cobrado, ${COMO_CANCELAR_NO_TESTE}.`,
+        screen: '/dashboard/settings',
+        helpKey: 'page:settings-subscription',
+      },
+    ],
+  },
   // ------------------------------------------------------------------ 1
   {
     id: 'antes-de-conectar',
@@ -951,70 +1016,6 @@ export const ALL_TUTORIALS: Tutorial[] = [
     ],
   },
 
-  // ------------------------------------------------------------------ 9
-  // Cadastro pelo site (teste grátis, entrega 2). Escrito e testado, mas só
-  // aparece com PUBLIC_SIGNUP_ENABLED ligada — ver visibleTutorials abaixo.
-  {
-    id: TUTORIAL_TESTE_GRATIS_ID,
-    title: 'Criar sua Conta e começar o teste grátis',
-    goal: `No fim, sua Conta estará criada, com a senha definida, o teste grátis de ${TRIAL_DAYS} dias rodando e a primeira Loja pronta para receber o time.`,
-    forWhom:
-      'Quem vai criar a Conta da empresa pelo site e ser o Gerente dela. Gestor e Atendente não se cadastram: eles entram por convite do Gerente.',
-    minRole: 'gerente',
-    nextTutorialId: 'configurar-equipe',
-    steps: [
-      {
-        title: 'Cadastre-se pela página do ConvoFlow',
-        body:
-          'Na página de vendas, clique em "Começar teste grátis" e preencha nome, sobrenome, email, o nome da empresa e um telefone com DDD. Marque o aceite dos Termos de Uso e da Política de Privacidade, espere a verificação "não sou um robô" e clique em "Criar minha conta".',
-        helpKey: 'page:cadastro',
-        note:
-          'A tela seguinte diz "Confira seu email", mesmo se o email já tiver conta. Se você já é cliente, entre pelo login. Se o email não sair, a tela avisa e mostra "Tentar de novo". Email de caixa temporária não é aceito.',
-      },
-      {
-        title: 'Crie sua senha pelo link do email',
-        body:
-          'Abra o email do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
-        note:
-          'O botão e o código de 6 dígitos do email valem por 24 horas e por um acesso. Se o botão não abrir, clique no link do fim do email, logo depois de Onde digitar, e digite o seu email e o código. Ou peça um código novo na mesma tela, em "Esqueci minha senha".',
-      },
-      {
-        title: 'Preencha os dados para a nota fiscal',
-        body:
-          'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o email que vai receber a nota e clique em "Salvar dados".',
-        helpKey: 'page:paywall',
-        note:
-          'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito. O teste grátis vale uma vez por CNPJ ou CPF: se o documento já teve teste, a tela avisa e a assinatura começa sem teste.',
-      },
-      {
-        title: 'Clique em "Começar teste grátis" e cadastre o cartão',
-        body:
-          'A mesma tela mostra o que acontece: hoje você não paga nada, e ali estão a data e o valor da primeira cobrança. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.',
-        helpKey: 'page:paywall',
-        note:
-          'Durante o teste a Conta tem limites de uso, listados no mesmo quadro: Lojas, números de WhatsApp, mensagens por dia e contatos por campanha. Eles deixam de valer depois do primeiro pagamento.',
-      },
-      {
-        title: 'Espere a confirmação, sem pagar de novo',
-        body:
-          'De volta do Stripe, a tela "Confirmando seu pagamento" abre o sistema sozinha, normalmente em segundos. Não clique para assinar de novo: seria uma segunda assinatura.',
-        helpKey: 'page:paywall',
-      },
-      {
-        title: 'Crie a primeira Loja em "Nova Loja"',
-        body:
-          'Em Equipe, clique em "Nova Loja", dê o nome pelo qual o time reconhece a operação e confirme em "Criar Loja". É na Loja que ficam o número de WhatsApp, as conversas e o time.',
-        screen: '/dashboard/team',
-        helpKey: 'page:team',
-      },
-      {
-        title: 'Anote a data do fim do teste',
-        body: `Em Configurações › Assinatura, o selo "EM TESTE" mostra até quando o teste vai. Para não ser cobrado, ${COMO_CANCELAR_NO_TESTE}.`,
-        screen: '/dashboard/settings',
-        helpKey: 'page:settings-subscription',
-      },
-    ],
-  },
   // ------------------------------------------------------------------ 10
   // Cancelar, desfazer e trocar o cartão (teste grátis, entrega 3).
   {

@@ -165,6 +165,7 @@ vi.mock('@/hooks/useTenantAccess', () => ({
 
 import App from '@/App';
 import { API_ADDON_RELEASED } from '@/lib/api/release';
+import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
 
 // ----------------------------------------------------------------- apoio --
 function abrir(endereco: string) {
@@ -224,12 +225,22 @@ describe('App.tsx — rotas públicas', () => {
     expect(window.location.pathname).toBe(caminho);
   });
 
-  it.each(['/register', '/cadastro'])('%s leva ao login enquanto o cadastro pelo site está desligado', async (caminho) => {
-    estado.sessao = false;
-    abrir(caminho);
-    expect(await tela('Auth')).toBeInTheDocument();
-    await esperarCaminho('/auth');
-  });
+  // Seguem a chave do cadastro (src/lib/signup/chave.ts, ligada desde
+  // 2026-11-10): ligada, abrem o formulário; desligada, o login.
+  it.each(['/register', '/cadastro'])(
+    PUBLIC_SIGNUP_ENABLED ? '%s abre o formulário de cadastro' : '%s leva ao login enquanto o cadastro pelo site está desligado',
+    async (caminho) => {
+      estado.sessao = false;
+      abrir(caminho);
+      if (PUBLIC_SIGNUP_ENABLED) {
+        expect(await tela('Cadastro')).toBeInTheDocument();
+        await esperarCaminho('/cadastro');
+      } else {
+        expect(await tela('Auth')).toBeInTheDocument();
+        await esperarCaminho('/auth');
+      }
+    },
+  );
 });
 
 describe('App.tsx — documentação da API', () => {
