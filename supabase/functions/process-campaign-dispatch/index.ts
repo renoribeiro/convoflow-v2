@@ -8,6 +8,7 @@
  * Per-invocation budget: ~50 s. Executions left pending are retried on the
  * next minute tick.
  */
+import { criarCotaDeEnvios } from '../_shared/limites-do-teste.ts';
 import { criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -271,7 +272,24 @@ serve(async (req) => {
       })
     }
 
-    const campaignIdList = liberadas.map((r: any) => r.id)
+    // Teste grátis: a Conta que já usou as mensagens do dia fica de fora do lote,
+    // sem pausar a campanha: ela segue no dia seguinte. Fora ANTES do limite do
+    // lote, pelo mesmo motivo da Conta sem acesso.
+    const cota = criarCotaDeEnvios(supabase, (id, erro) =>
+      logger.error('Não conferi o limite do teste', { tenant_id: id, erro }))
+    const comCota: any[] = []
+    for (const c of liberadas) {
+      if ((await cota.podeEnviar(c.tenant_id)) === 'sim') comCota.push(c)
+    }
+    if (comCota.length === 0) {
+      logger.info('Nenhuma campanha com mensagens disponíveis hoje')
+      return new Response(JSON.stringify({ processed: 0, sent: 0, failed: 0 }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      })
+    }
+
+    const campaignIdList = comCota.map((r: any) => r.id)
 
     const { data: executions, error: execError } = await supabase
       .from('campaign_executions')
@@ -370,6 +388,12 @@ serve(async (req) => {
       const { campaign_id } = exec
 
       if (skippedCampaigns.has(campaign_id)) continue
+
+      // O saldo do dia acabou no meio desta rodada: o resto fica para amanhã.
+      if ((await cota.podeEnviar(exec.tenant_id)) !== 'sim') {
+        skippedCampaigns.add(campaign_id)
+        continue
+      }
 
       const campaign = campaignMap.get(campaign_id)
       const instanceRow = instanceMap.get(campaign_id)
@@ -582,6 +606,7 @@ serve(async (req) => {
           }).eq('id', exec.id)
 
           sent++
+          await cota.registrarEnvio(exec.tenant_id)
           touchedCampaigns.add(campaign_id)
 
           if (exec.contact_id) {
@@ -703,6 +728,7 @@ serve(async (req) => {
         }).eq('id', exec.id)
 
         sent++
+        await cota.registrarEnvio(exec.tenant_id)
         touchedCampaigns.add(campaign_id)
 
         // Mirror the campaign message into the Conversas thread, tagged by origin, so the

@@ -4,9 +4,12 @@
  * PaywallScreen.test.tsx cobre a tela de hoje (oferta desligada). Aqui a chave
  * TRIAL_OFFER_ENABLED é ligada por mock e travamos:
  *   - Conta que nunca assinou → "Começar teste grátis", com "hoje você não paga
- *     nada", a data e o valor da primeira cobrança e como cancelar;
+ *     nada", a data e o valor da primeira cobrança, como cancelar, um teste por
+ *     CNPJ ou CPF e os limites do teste (sessão 2);
  *   - Conta que já assinou → "Assinar agora", sem promessa de teste;
+ *   - CNPJ ou CPF que já teve teste → "Assinar agora" com o aviso (sessão 2);
  *   - não deu para saber (erro) → "Assinar agora";
+ *   - quem responde é public.teste_gratis_disponivel (RPC), não a linha da Conta;
  *   - a pergunta vai para a CONTA do gerente, nunca para a Loja em foco;
  *   - de volta do Stripe → "Confirmando seu pagamento", sem botão de pagar,
  *     perguntando de novo por cima do cache, e avisando se demorar;
@@ -17,23 +20,28 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockInvoke, mockFrom, mockEq, mockRefreshTenant } = vi.hoisted(() => ({
+const { mockInvoke, mockFrom, mockRpc, mockRefreshTenant } = vi.hoisted(() => ({
   mockInvoke: vi.fn(),
   mockFrom: vi.fn(),
-  mockEq: vi.fn(),
+  mockRpc: vi.fn(),
   mockRefreshTenant: vi.fn().mockResolvedValue(undefined),
 }));
 
-let linhaDaConta: { data: unknown; error: unknown } = { data: null, error: null };
+/** A resposta de teste_gratis_disponivel. */
+let respostaDoTeste: { data: unknown; error: unknown } = { data: 'disponivel', error: null };
+/** A linha de limites_da_plataforma. */
+let linhaDosLimites: { data: unknown; error: unknown } = { data: null, error: null };
 
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
     functions: { invoke: mockInvoke },
-    from: mockFrom.mockImplementation(() => ({
+    rpc: mockRpc.mockImplementation(async () => respostaDoTeste),
+    from: mockFrom.mockImplementation((tabela: string) => ({
       select: () => ({
-        eq: mockEq.mockImplementation(() => ({
-          maybeSingle: async () => linhaDaConta,
-        })),
+        eq: () => ({
+          maybeSingle: async () =>
+            tabela === 'limites_da_plataforma' ? linhaDosLimites : { data: { subscription_status: null }, error: null },
+        }),
       }),
     })),
   },
@@ -78,6 +86,7 @@ import { PLAN_PRICE_LABEL } from '@/lib/billing/checkout';
 import { COMO_CANCELAR_NO_TESTE, trialChargeDateLabel } from '@/lib/billing/trialOffer';
 import { CONFIRMACAO_INTERVALO_MS, CONFIRMACAO_LIMITE_MS } from '@/lib/billing/paywallState';
 import { QUERY_KEYS } from '@/lib/queryClient';
+import { LIMITES_PADRAO } from '@/lib/billing/limitesDoTesteTexto';
 
 const CONTA = { id: 'conta-1', kind: 'account', name: 'Imobiliária Horizonte' };
 const LOJA = { id: 'loja-1', kind: 'store', name: 'Loja Centro', parent_tenant_id: 'conta-1' };
@@ -105,7 +114,8 @@ beforeEach(() => {
   role = 'gerente';
   tenant = CONTA;
   profile = { tenant_id: 'conta-1' };
-  linhaDaConta = { data: { id: 'conta-1', subscription_id: null }, error: null };
+  respostaDoTeste = { data: 'disponivel', error: null };
+  linhaDosLimites = { data: { id: true, ...LIMITES_PADRAO }, error: null };
   comBusca('');
 });
 
@@ -125,6 +135,25 @@ describe('Conta que nunca assinou → oferta do teste grátis', () => {
     expect(termos).toHaveTextContent(trialChargeDateLabel());
     expect(termos).toHaveTextContent(PLAN_PRICE_LABEL);
     expect(termos).toHaveTextContent(COMO_CANCELAR_NO_TESTE);
+    expect(termos).toHaveTextContent('O teste grátis vale uma vez por CNPJ ou CPF.');
+  });
+
+  it('lista os limites do teste, lidos do banco, e diz que acabam no primeiro pagamento', async () => {
+    linhaDosLimites = { data: { id: true, ...LIMITES_PADRAO, teste_numeros: 3 }, error: null };
+    renderPaywall();
+    const limites = await screen.findByTestId('limites-do-teste');
+    expect(limites).toHaveTextContent(`Até ${LIMITES_PADRAO.teste_lojas} Lojas.`);
+    expect(limites).toHaveTextContent('Até 3 números de WhatsApp (1 por QR Code).');
+    expect(limites).toHaveTextContent(`Até ${LIMITES_PADRAO.teste_mensagens_dia} mensagens enviadas por dia.`);
+    expect(limites).toHaveTextContent(`Campanhas de até ${LIMITES_PADRAO.teste_contatos_campanha} contatos por disparo.`);
+    expect(limites).toHaveTextContent('acabam depois do primeiro pagamento');
+  });
+
+  it('sem os limites (leitura falhou), a oferta segue sem a lista', async () => {
+    linhaDosLimites = { data: null, error: { message: 'rls' } };
+    renderPaywall();
+    await screen.findByText(/Comece seu teste grátis/);
+    expect(screen.queryByTestId('limites-do-teste')).not.toBeInTheDocument();
   });
 
   it('não chama de "Acesso bloqueado" quem acabou de chegar', async () => {
@@ -146,9 +175,8 @@ describe('Conta que nunca assinou → oferta do teste grátis', () => {
     tenant = LOJA;
     renderPaywall();
     await screen.findByText(/Comece seu teste grátis/);
-    expect(mockFrom).toHaveBeenCalledWith('tenants');
-    expect(mockEq).toHaveBeenCalledWith('id', 'conta-1');
-    expect(mockEq).not.toHaveBeenCalledWith('id', 'loja-1');
+    expect(mockRpc).toHaveBeenCalledWith('teste_gratis_disponivel', { p_tenant_id: 'conta-1' });
+    expect(mockRpc).not.toHaveBeenCalledWith('teste_gratis_disponivel', { p_tenant_id: 'loja-1' });
   });
 
   it('voltou do Stripe sem concluir: avisa que nada foi cobrado', async () => {
@@ -161,25 +189,36 @@ describe('Conta que nunca assinou → oferta do teste grátis', () => {
 
 describe('Conta que já assinou, ou não dá para saber → assinar, sem prometer teste', () => {
   it('já assinou antes', async () => {
-    linhaDaConta = { data: { id: 'conta-1', subscription_id: 'sub_antiga' }, error: null };
+    respostaDoTeste = { data: 'conta_ja_assinou', error: null };
     renderPaywall();
     expect(await screen.findByText('Acesso bloqueado')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Assinar agora/ })).toBeInTheDocument();
     expect(screen.queryByText(/teste grátis/i)).not.toBeInTheDocument();
   });
 
-  it('a leitura da Conta falhou', async () => {
-    linhaDaConta = { data: null, error: { message: 'rls' } };
+  it('o CNPJ ou CPF já teve teste em outra Conta: assinar, com o aviso', async () => {
+    respostaDoTeste = { data: 'documento_ja_usou', error: null };
+    renderPaywall();
+    expect(await screen.findByTestId('documento-ja-teve-teste')).toHaveTextContent(
+      'O teste grátis vale uma vez por CNPJ ou CPF',
+    );
+    expect(screen.getByRole('button', { name: /Assinar agora/ })).toBeInTheDocument();
+    expect(screen.queryByText(/não paga nada/)).not.toBeInTheDocument();
+  });
+
+  it('a pergunta ao servidor falhou', async () => {
+    respostaDoTeste = { data: null, error: { message: 'rls' } };
     renderPaywall();
     expect(await screen.findByText('Acesso bloqueado')).toBeInTheDocument();
     expect(screen.queryByText(/não paga nada/)).not.toBeInTheDocument();
+    expect(screen.queryByTestId('documento-ja-teve-teste')).not.toBeInTheDocument();
   });
 
   it('sem perfil carregado (não sabe a Conta)', async () => {
     profile = null;
     renderPaywall();
     expect(await screen.findByText('Acesso bloqueado')).toBeInTheDocument();
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 });
 
@@ -190,6 +229,7 @@ describe('gestor e atendente', () => {
     renderPaywall();
     expect(await screen.findByText(/Fale com a pessoa responsável pela Conta/)).toBeInTheDocument();
     expect(screen.queryByText(/teste grátis/i)).not.toBeInTheDocument();
+    expect(mockRpc).not.toHaveBeenCalled();
     expect(mockFrom).not.toHaveBeenCalled();
   });
 });

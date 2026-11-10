@@ -340,8 +340,20 @@ serve(async (req) => {
       stripeCustomerUpdate(dadosFiscais as BillingDetailsRow, tenantId) as Stripe.CustomerUpdateParams,
     );
 
+    // Teste grátis: só com a oferta ligada (o mesmo secret do cadastro pelo
+    // site) e só para documento que nunca teve teste. Sem resposta do banco,
+    // sem teste: nunca se promete o que não se cumpre.
+    const ofertaLigada = Deno.env.get('PUBLIC_SIGNUP_ENABLED') === 'true';
+    let documentoJaTeveTeste = true;
+    if (ofertaLigada) {
+      const { data: jaTeve, error: docError } = await admin.rpc('documento_teve_teste', { p_tenant_id: tenantId });
+      if (docError) console.error('documento_teve_teste falhou; checkout sem teste:', docError.code);
+      else documentoJaTeveTeste = jaTeve === true;
+    }
     const diasDeTeste = trialDaysForCheckout({
       subscription_id: (tenant.subscription_id as string | null) ?? null,
+      ofertaLigada,
+      documentoJaTeveTeste,
     });
 
     const lineItems: Array<{ price: string; quantity: number }> = [

@@ -22,6 +22,11 @@ import type { Capability, UserRole } from '@/types/userHierarchy';
 import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/release';
 import { API_ADDON_PRICE_LABEL, API_ADDON_RELEASED } from '@/lib/api/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS, TRIAL_OFFER_ENABLED } from '@/lib/billing/trialOffer';
+import { LIMITES_PADRAO } from '@/lib/billing/limitesDoTesteTexto';
+
+/** A regra dos limites do teste grátis, dita igual em toda tela que tem um. */
+const LIMITE_DO_TESTE_FIM =
+  'O limite vale só enquanto a Conta está no teste grátis e deixa de valer depois do primeiro pagamento. A Conta liberada à mão pelo ConvoFlow nunca é limitada.';
 
 /**
  * Ordem das seções na página de Ajuda. Categoria nova entra AQUI, na posição em
@@ -558,6 +563,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Desde 21/09/2026 o sistema guarda quem enviou cada mensagem escrita por uma pessoa (texto, mídia, template e a primeira mensagem de uma conversa nova). Isso é gravado pelo próprio sistema a partir de quem está logado e não pode ser alterado depois. Mensagem do bot, de campanha, de follow up, digitada direto no celular ou importada do histórico fica sem autor. As mensagens anteriores a essa data também não têm autor e nunca terão: não há como saber quem escreveu. Toda mudança de responsável (assumir, transferir, devolver, rodízio, regra de tempo, bloco do chatbot) também passa a ficar registrada a partir dessa data, com quem, de quem e como.',
       'Quem tem etiqueta ganha uma linha só para elas, embaixo do responsável: até duas, em ordem de nome, e "+N" quando há mais. Toque ou clique no "+N" para ver todas. Nome comprido termina em reticências; o nome inteiro está no "+N" e no painel do contato. Quem não tem etiqueta não ganha essa linha, e a lista continua compacta.',
       'Se os selos da conversa não cabem na linha (responsável, fonte, etapa), o que sobra também vira "+N": toque nele para ver o resto.',
+      `No teste grátis a Conta envia até ${LIMITES_PADRAO.teste_mensagens_dia} mensagens por dia (o ConvoFlow pode ajustar), somando todas as Lojas e o chatbot, a automação, a campanha e o follow up. Passou, o envio é recusado com o aviso do limite; as mensagens dos clientes continuam chegando. ${LIMITE_DO_TESTE_FIM}`,
       'O selo "Contato novo" não é etiqueta: ele avisa que o contato ainda não está em nenhuma etapa do funil. Só aparece na Loja que tem etapas criadas. Em Loja sem funil ele não aparece, porque valeria para todo mundo. Assim que a Loja cria a primeira etapa, ele volta nos contatos sem etapa.',
       'As etiquetas e as pessoas são de cada Loja. Se você é Gerente e troca de Loja no seletor do topo, os filtros de etiqueta e de responsável são limpos sozinhos: as etiquetas e o time da outra Loja são outros, mesmo que tenham o mesmo nome.',
       'Conversas é privada por Loja: o Superadmin não abre esta tela de nenhuma Conta, nem entrando nela pelo seletor do topo, que aqui mostra "Exclusivo para Lojas". Quem lê as conversas é o Atendente, o Gestor e o Gerente da Conta.',
@@ -880,6 +886,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Para ver como foi UMA campanha, abra o menu dela e clique em "Ver detalhes". Para comparar várias de uma vez, use o botão "Relatórios" no topo da tela.',
       'Campanha é só WhatsApp. Contato do Instagram não aparece na lista de "Contatos" do passo Público e não conta no total das etiquetas, mesmo com a etiqueta escolhida. Para falar com ele, responda pelo direct em Conversas.',
       'Se a Conta ficar sem acesso, a campanha em andamento é pausada sozinha e a campanha agendada não começa. Com o acesso de volta, abra a campanha e clique em "Retomar": ela não recomeça sem você.',
+      `No teste grátis cada disparo vai para até ${LIMITES_PADRAO.teste_contatos_campanha} contatos (o ConvoFlow pode ajustar). Campanha maior é recusada ao disparar, com o limite no aviso: divida o público em mais de uma campanha. As mensagens dela também entram no limite de envios do dia. ${LIMITE_DO_TESTE_FIM}`,
     ],
     category: 'tela',
     area: 'Marketing',
@@ -1067,6 +1074,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Excluir uma conta do Instagram segue a mesma regra: só conta vazia. Com qualquer conversa, mensagem ou contato, a exclusão é recusada, e o caminho é reconectar. Numa conta vazia, no Instagram nada muda (a conta continua sua); some o vínculo aqui e o acesso guardado no cofre, e as mensagens novas do direct dessa conta deixam de entrar no ConvoFlow.',
       'O Gerente e o Gestor recebem aviso no sino sobre a conexão do Instagram em três momentos, uma vez cada: 7 dias antes de vencer, no dia em que vence e quando o Instagram recusa renovar. Se a renovação der certo, nenhum aviso sai. Quando o Instagram é de uma Loja, o Gerente da Conta também recebe. O Atendente não recebe.',
       'Se a Conta ficar sem acesso, não dá para conectar, desconectar nem excluir número. O número ligado continua recebendo as mensagens dos clientes.',
+      `No teste grátis a Conta liga até ${LIMITES_PADRAO.teste_numeros} números de WhatsApp, somando todas as Lojas, e no máximo ${LIMITES_PADRAO.teste_numeros_qr} deles por QR Code no servidor do ConvoFlow (o ConvoFlow pode ajustar). O Instagram não conta. ${LIMITE_DO_TESTE_FIM}`,
     ],
     category: 'tela',
     area: 'Configuração',
@@ -1312,6 +1320,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
         ? [
             `Gerente de uma Conta que nunca assinou: a tela oferece o teste grátis de ${TRIAL_DAYS} dias. Leia o quadro antes de clicar: hoje você não paga nada; ali estão a data e o valor da primeira cobrança e como cancelar antes. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.`,
             'Gerente de uma Conta que já assinou e voltou a travar: a tela mostra o plano, o preço e "Assinar agora". Não há teste de novo: ele vale uma vez por Conta.',
+            'O teste grátis vale uma vez por CNPJ ou CPF. Se o documento dos dados da nota já teve teste em outra Conta, a tela avisa e mostra "Assinar agora": a cobrança começa no mesmo dia.',
           ]
         : [
             'Gerente: a tela mostra o plano, o preço e "Assinar agora". O cartão é cadastrado no Stripe, e a cobrança começa no mesmo dia.',
@@ -1327,7 +1336,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       : 'O cartão da Conta foi recusado em todas as tentativas e a assinatura foi encerrada. Você abre o sistema, vê "Acesso bloqueado", clica em "Assinar agora", paga no Stripe e, de volta, vê "Confirmando seu pagamento" até o sistema abrir.',
     tips: [
       ...(TRIAL_OFFER_ENABLED
-        ? [`Para cancelar durante o teste e não ser cobrado, ${COMO_CANCELAR_NO_TESTE}.`]
+        ? [
+            `Para cancelar durante o teste e não ser cobrado, ${COMO_CANCELAR_NO_TESTE}.`,
+            `O quadro do teste lista os limites de uso dele (hoje, até ${LIMITES_PADRAO.teste_lojas} Lojas, ${LIMITES_PADRAO.teste_numeros} números de WhatsApp, ${LIMITES_PADRAO.teste_mensagens_dia} mensagens por dia e campanhas de ${LIMITES_PADRAO.teste_contatos_campanha} contatos). ${LIMITE_DO_TESTE_FIM}`,
+          ]
         : []),
       'Se "Confirmando seu pagamento" passar de dois minutos, a própria tela avisa. Nada se perdeu: reconfira em alguns minutos ou fale com o suporte.',
       'Voltou do Stripe sem terminar? A tela avisa que nada foi cobrado, e o botão continua lá.',
@@ -1485,6 +1497,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       '"Excluir" (só para quem está Ativo ou Suspenso) tira o acesso de vez e libera a vaga de Atendente ou o lugar de Gestor. As conversas e mensagens da pessoa ficam. Quem está abaixo dela é SUSPENSO, não excluído. A pessoa continua na lista com a situação "Excluído", e só volta com um convite novo.',
       '"Editar" muda só o nome. O cargo, a Loja e a Conta de quem já entrou não mudam pela Equipe por enquanto. Cargo ou Loja errados: exclua e convide de novo, ou peça ao ConvoFlow.',
       'Se a Conta ficar sem acesso, não dá para convidar nem mudar a equipe. Quem já está na Conta segue com o login, e vê a tela de bloqueio.',
+      `No teste grátis a Conta cria até ${LIMITES_PADRAO.teste_lojas} Lojas (o ConvoFlow pode ajustar). A terceira é recusada com o aviso do limite. ${LIMITE_DO_TESTE_FIM}`,
     ],
     category: 'tela',
     area: 'Equipe',
@@ -1599,21 +1612,23 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
   },
   'page:admin-usage-limits': {
     minRole: 'superadmin',
-    title: 'Limites de uso por nível',
+    title: 'Limites de uso',
     whatItDoes:
-      'Registra o teto de uso planejado para cada nível da hierarquia: números de WhatsApp, mensagens por mês, chatbots e pessoas da equipe. Hoje é só registro: nenhuma parte do sistema confere esses valores, e ninguém é impedido de criar nada por causa deles. A aplicação de verdade vem com o novo desenho dos níveis e acessos.',
+      'O quadro de cima, "Teste grátis e cadastro pelo site", traz os limites que VALEM: o servidor confere cada um. Os do teste valem só para a Conta em teste grátis e acabam no primeiro pagamento; os do cadastro somam todos os cadastros do site. A tabela de baixo, por nível da hierarquia, ainda é só registro: ninguém é barrado por ela.',
     howToConfigure: [
       'Abra pelo menu, no grupo Admin, em "Limites de uso" (ou pela busca rápida).',
-      'Ache a linha do nível e do limite na tabela: ela já traz todos os níveis.',
-      'Preencha o limite. Campo vazio significa sem limite, não zero.',
-      'Clique em Salvar na linha. O valor fica gravado para quando os limites passarem a valer.',
+      'No quadro "Teste grátis e cadastro pelo site", mude o número que quiser: Lojas por Conta, números de WhatsApp por Conta, quantos deles por QR Code, mensagens enviadas por dia, contatos por disparo de campanha, cadastros por hora e por dia.',
+      'Clique em "Salvar limites". Vale a partir do próximo pedido, sem publicar nada.',
+      'Na tabela de baixo, ache a linha do nível e do limite, preencha (vazio é sem limite) e clique em Salvar na linha. Esse valor fica só registrado.',
     ],
-    example:
-      'Você registra Gestor com 2 números de WhatsApp e Gerente com 10. Por enquanto ninguém é barrado; o valor serve de referência e já estará pronto quando a regra passar a valer.',
+    example: `A Conta em teste nasce com até ${LIMITES_PADRAO.teste_lojas} Lojas, ${LIMITES_PADRAO.teste_numeros} números (${LIMITES_PADRAO.teste_numeros_qr} por QR Code), ${LIMITES_PADRAO.teste_mensagens_dia} mensagens por dia e campanhas de ${LIMITES_PADRAO.teste_contatos_campanha} contatos. Uma agência pede para testar com 3 números: você sobe "Números de WhatsApp por Conta" para 3 e salva. A regra muda para todas as Contas em teste.`,
     tips: [
-      'Vazio é ilimitado: apagar o campo libera em vez de bloquear.',
-      'O aviso no topo da tela some quando os limites passarem a ser aplicados. Até lá, não prometa a um cliente que ele será bloqueado ao passar do limite.',
-      'Os limites que valem de verdade hoje não moram aqui: as 5 Lojas do plano (mais as contratadas em Assinatura) e as vagas de Atendente de cada Loja (2, mais as extras em Faturamento › Atendentes). As linhas de "equipe" desta tabela não mudam nenhum dos dois.',
+      'Quem passa do limite lê na hora o limite, o motivo e que ele deixa de valer depois do primeiro pagamento. As mensagens que chegam dos clientes nunca são barradas nem contam.',
+      'Mensagens contam as que saíram hoje, no horário de Brasília, somando a Conta e todas as Lojas dela, por qualquer canal: conversa, chatbot, automação, campanha e follow up. Quando o limite do dia acaba, o envio automático espera o dia seguinte.',
+      'Números somam todas as Lojas da Conta; o Instagram não entra. "Desses, por QR Code" conta os números ligados pelo nosso servidor Evolution, e não pode passar do total.',
+      'Cadastros por hora e por dia somam os cadastros do site inteiro, de qualquer pessoa. Passou, o visitante lê que muitos cadastros estão chegando e tenta mais tarde. Se o servidor não conseguir contar, o cadastro é recusado: falha fechada.',
+      'O Superadmin e a Conta liberada à mão nunca são limitados.',
+      'Os limites que valem para a Conta paga também não moram aqui: as 5 Lojas do plano (mais as contratadas em Assinatura) e as vagas de Atendente de cada Loja (2, mais as extras em Faturamento › Atendentes). As linhas de "equipe" da tabela de baixo não mudam nenhum dos dois.',
     ],
     category: 'tela',
     area: 'Admin',
@@ -1770,6 +1785,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     example: `A Ana, dona de uma imobiliária, se cadastra às 10h com o email da empresa. Às 10h02 cria a senha pelo link, cadastra o cartão e entra. A primeira cobrança só acontece ${TRIAL_DAYS} dias depois, se ela não cancelar.`,
     tips: [
       'O email não chegou em alguns minutos? Confira o spam e a aba Promoções.',
+      'Se o email não sair, a tela diz isso e mostra "Tentar de novo", em vez de pedir para conferir a caixa de entrada.',
+      'Email de caixa temporária (daquelas que se apagam sozinhas) não é aceito: use o email da empresa ou o seu de sempre.',
+      'O teste grátis vale uma vez por CNPJ ou CPF. Quem já testou com o mesmo documento consegue criar a Conta, mas assina sem teste: a cobrança começa no dia.',
+      'Quando muitos cadastros chegam ao mesmo tempo, a tela pede para tentar mais tarde. Não é problema com os seus dados.',
       'Já tem conta? Não se cadastre de novo: entre pelo login ou use "Esqueci minha senha".',
       'O link do email vale por um acesso. Se ele não abrir, peça outro na própria tela de criar senha.',
       'Cada cadastro cria uma Conta nova, e o teste grátis é da Conta: vale na primeira assinatura dela.',

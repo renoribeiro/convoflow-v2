@@ -16,6 +16,7 @@
 // `_shared/store-creation.ts`, sem I/O, para poderem ser testadas pelo Vitest.
 // =============================================================================
 
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -222,6 +223,10 @@ Deno.serve(async (req: Request) => {
     // Conta sem acesso não cria Loja.
     const acesso = await decidirAcessoDoChamador(admin, caller);
     if (!acesso.ok) throw new SecureError(acesso.error, acesso.code, acesso.status);
+
+    // Teste grátis: até N Lojas por Conta (o superadmin passa).
+    const limite = await conferirLimiteDoTeste(admin, caller, caller.tenant_id, 'lojas');
+    if (!limite.ok) throw new SecureError(limite.error, limite.code, limite.status);
 
     let body: RequestPayload;
     try {

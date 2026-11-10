@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { MaintenanceLoginNotice } from '@/components/maintenance/MaintenanceLoginNotice';
 import { SUPORTE_EMAIL } from '@/lib/billing/checkout';
+import { PUBLIC_SIGNUP_ENABLED, SIGNUP_PATH } from '@/lib/signup/release';
 import logoVertical from '@/assets/logos/logo-vertical.svg';
 import logoVerticalDark from '@/assets/logos/logo-vertical-dark.svg';
 
@@ -136,12 +137,22 @@ export const Auth = () => {
                 é o único canal público de contato. */}
             <p className="mt-6 text-center text-sm text-muted-foreground" data-testid="login-nao-cliente">
               Ainda não é cliente?{' '}
-              <a
-                href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent('Quero conhecer o ConvoFlow')}`}
-                className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
-              >
-                Fale com a gente
-              </a>
+              {PUBLIC_SIGNUP_ENABLED ? (
+                // Com o cadastro pelo site ligado, o caminho é o teste grátis.
+                <Link
+                  to={SIGNUP_PATH}
+                  className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                >
+                  Comece seu teste grátis
+                </Link>
+              ) : (
+                <a
+                  href={`mailto:${SUPORTE_EMAIL}?subject=${encodeURIComponent('Quero conhecer o ConvoFlow')}`}
+                  className="font-medium text-foreground underline underline-offset-2 hover:text-primary"
+                >
+                  Fale com a gente
+                </a>
+              )}
             </p>
           </CardContent>
         </Card>

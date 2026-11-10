@@ -8,7 +8,10 @@
 //   - Turnstile               token verificado no Cloudflare, com a ação
 //                             'cadastro' e, se TURNSTILE_ALLOWED_HOSTNAMES
 //                             estiver setado, o hostname
-//   - checkRateLimitDb        5 pedidos/hora por IP, 3/dia por e-mail (hash)
+//   - checkRateLimitDb        5 pedidos/hora por IP, 3/dia por e-mail (hash),
+//                             recusando quando a própria checagem falha
+//   - public_signup_registrar teto do sistema inteiro por hora e por dia
+//                             (limites_da_plataforma); erro também é recusa
 //
 // NUNCA liga o "Allow new users to sign up" do Supabase: a conta é criada aqui,
 // com a chave de serviço, por convite. O cargo é fixo (gerente) e a Conta é a
@@ -92,26 +95,29 @@ Deno.serve(async (req) => {
         maxRequests: cfg.maxRequests,
         windowMs: cfg.windowMs,
         keyPrefix: `cadastro-${bucket}`,
+        failClosed: true,
       });
       return r.allowed;
     },
 
     async insertLead(f) {
-      const { data, error } = await admin
-        .from('signup_requests')
-        .insert({
-          first_name: f.firstName,
-          last_name: f.lastName,
-          email: f.email,
-          company_name: f.companyName,
-          phone: f.phone,
-          terms_version: f.termsVersion,
-          privacy_version: f.privacyVersion,
-        })
-        .select('id')
-        .single();
-      if (error || !data) throw new Error(error?.message ?? 'insert sem retorno');
-      return data.id as string;
+      // Grava conferindo o teto do sistema inteiro, numa transação só.
+      const { data, error } = await admin.rpc('public_signup_registrar', {
+        p_first_name: f.firstName,
+        p_last_name: f.lastName,
+        p_email: f.email,
+        p_company_name: f.companyName,
+        p_phone: f.phone,
+        p_terms_version: f.termsVersion,
+        p_privacy_version: f.privacyVersion,
+      });
+      if (error) {
+        const e = error as { code?: string; hint?: string; message?: string };
+        if (e.code === 'CF429') return { teto: e.hint === 'teto_dia' ? 'dia' : 'hora' };
+        throw new Error(e.message ?? 'public_signup_registrar falhou');
+      }
+      if (typeof data !== 'string') throw new Error('public_signup_registrar sem retorno');
+      return data;
     },
 
     async startSignup(leadId, slug) {
@@ -163,6 +169,9 @@ Deno.serve(async (req) => {
         task.catch(() => {});
       }
     },
+
+    agora: () => Date.now(),
+    esperar: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 
     log(level, message, context) {
       const linha = context ? `${message} ${JSON.stringify(context)}` : message;

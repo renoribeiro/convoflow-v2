@@ -11,6 +11,7 @@ import {
   checkoutReturnFrom,
   CONFIRMACAO_INTERVALO_MS,
   CONFIRMACAO_LIMITE_MS,
+  lerDisponibilidadeDoTeste,
   paywallVariant,
   type PaywallInputs,
 } from './paywallState';
@@ -22,6 +23,7 @@ const base: PaywallInputs = {
   checkoutEnabled: true,
   trialOfferEnabled: true,
   contaNuncaAssinou: true,
+  documentoJaUsou: false,
   retorno: null,
 };
 
@@ -60,6 +62,30 @@ describe('paywallVariant', () => {
 
   it('checkout desligado → sem pagamento, até para o gerente', () => {
     expect(paywallVariant({ ...base, checkoutEnabled: false })).toBe('sem-pagamento');
+  });
+
+  it('CNPJ ou CPF que já teve teste → assinar (um teste por documento)', () => {
+    expect(paywallVariant({ ...base, documentoJaUsou: true })).toBe('assinar');
+    expect(paywallVariant({ ...base, documentoJaUsou: true, retorno: 'cancel' })).toBe('assinar');
+  });
+
+  it('não se sabe do documento (carregando/erro) → assinar, nunca promete teste', () => {
+    expect(paywallVariant({ ...base, documentoJaUsou: null })).toBe('assinar');
+    expect(paywallVariant({ ...base, documentoJaUsou: undefined })).toBe('assinar');
+  });
+});
+
+describe('lerDisponibilidadeDoTeste (a resposta de teste_gratis_disponivel)', () => {
+  it.each([
+    ['disponivel', { contaNuncaAssinou: true, documentoJaUsou: false }, 'teste-gratis'],
+    ['documento_ja_usou', { contaNuncaAssinou: true, documentoJaUsou: true }, 'assinar'],
+    ['conta_ja_assinou', { contaNuncaAssinou: false, documentoJaUsou: null }, 'assinar'],
+    ['sem_conta', { contaNuncaAssinou: null, documentoJaUsou: null }, 'assinar'],
+    [null, { contaNuncaAssinou: null, documentoJaUsou: null }, 'assinar'],
+    ['qualquer outra', { contaNuncaAssinou: null, documentoJaUsou: null }, 'assinar'],
+  ])('%s → %j → %s', (resposta, lido, tela) => {
+    expect(lerDisponibilidadeDoTeste(resposta)).toEqual(lido);
+    expect(paywallVariant({ ...base, ...lerDisponibilidadeDoTeste(resposta) })).toBe(tela);
   });
 });
 

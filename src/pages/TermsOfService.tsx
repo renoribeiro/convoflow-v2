@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { VoltarParaOndeEstava } from '@/components/shared/VoltarParaOndeEstava';
+import { LIMITES_PADRAO } from '@/lib/billing/limitesDoTesteTexto';
 
 export default function TermsOfService() {
   return (
@@ -26,7 +27,7 @@ export default function TermsOfService() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Termos de Uso</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 27 de outubro de 2026
+                Última atualização: 9 de novembro de 2026
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -101,10 +102,15 @@ export default function TermsOfService() {
 
                     O teste grátis (4.3) está escrito como "quando oferecido": só vale
                     para quem o recebeu na contratação. Quem decide isso é o servidor
-                    (trialDaysForCheckout em supabase/functions/_shared/subscription-state.ts)
-                    e a chave TRIAL_OFFER_ENABLED. Mudou a regra (dias, uma vez por
-                    Conta, cartão)? Mude aqui, na página de vendas, na FAQ e na Ajuda,
-                    e suba a versão (src/lib/legal/versions.ts e o servidor).
+                    (trialDaysForCheckout em supabase/functions/_shared/subscription-state.ts:
+                    secret PUBLIC_SIGNUP_ENABLED e um teste por CNPJ ou CPF) e a chave do
+                    site (src/lib/signup/chave.ts). Os limites do teste citados em 4.3 são
+                    LIMITES_PADRAO (src/lib/billing/limitesDoTesteTexto.ts), os números com
+                    que public.limites_da_plataforma nasce; o superadmin pode mudar os da
+                    tabela, e a cláusula diz onde ficam os valores em vigor. Mudou a regra?
+                    Mude aqui, na página de vendas, na FAQ e na Ajuda, e suba a versão
+                    (src/lib/legal/versions.ts e o servidor). Versão de 9/11/2026 escrita
+                    por nós, sem revisão externa (decisão do dono).
 
                     NÃO REINTRODUZIR sem implementar antes:
                       - Garantia de satisfação / reembolso além dos 7 dias do art. 49 do
@@ -179,8 +185,9 @@ export default function TermsOfService() {
                         em Configurações › Assinatura.
                       </p>
                       <p className="text-muted-foreground mb-2">
-                        Para iniciar o teste, você cadastra um cartão de crédito no ambiente do Stripe, na forma
-                        da cláusula 4.2. <strong>Nada é cobrado durante o teste.</strong>
+                        <strong>O cartão vem antes do uso:</strong> para usar a plataforma durante o teste, você
+                        preenche os dados para a nota fiscal e cadastra um cartão de crédito no ambiente do Stripe,
+                        na forma da cláusula 4.2. <strong>Nada é cobrado durante o teste.</strong>
                       </p>
                       <p className="text-muted-foreground mb-2">
                         Se a assinatura for cancelada antes do término do teste, na forma da cláusula 4.5,
@@ -195,20 +202,46 @@ export default function TermsOfService() {
                         fica disponível a partir da primeira mensalidade paga. A partir dessa data, a assinatura
                         segue a renovação mensal da cláusula 4.2.
                       </p>
+                      <p className="text-muted-foreground mb-2">
+                        O teste grátis é concedido <strong>uma única vez por CNPJ ou CPF</strong>. O documento
+                        informado nos dados para a nota fiscal que já teve teste ou assinatura no ConvoFlow, em
+                        qualquer Conta, não recebe novo teste: a assinatura dessa Conta é cobrada desde o dia da
+                        contratação, e a tela de contratação avisa isso antes do cadastro do cartão. Também não
+                        recebe novo teste a Conta que já teve assinatura, com ou sem teste.
+                      </p>
                       <p className="text-muted-foreground">
-                        O teste grátis é concedido <strong>uma única vez por Conta</strong>: uma Conta que já teve
-                        assinatura, com ou sem teste, não recebe novo período de teste.
+                        <strong>Limites durante o teste.</strong> Para evitar abuso enquanto a Conta não fez o
+                        primeiro pagamento, o teste tem estes limites de uso: até {LIMITES_PADRAO.teste_lojas}{' '}
+                        lojas; até {LIMITES_PADRAO.teste_numeros} números de WhatsApp, dos quais no máximo{' '}
+                        {LIMITES_PADRAO.teste_numeros_qr} ligado por QR Code; até{' '}
+                        {LIMITES_PADRAO.teste_mensagens_dia} mensagens enviadas por dia, somando a Conta e as lojas;
+                        e campanhas de até {LIMITES_PADRAO.teste_contatos_campanha} contatos por disparo. As
+                        mensagens recebidas não têm limite. Os limites deixam de valer depois do primeiro
+                        pagamento. O ConvoFlow pode rever esses números; os valores em vigor aparecem na tela de
+                        contratação, antes do cadastro do cartão, e a plataforma avisa quando um deles é alcançado.
                       </p>
                     </div>
 
                     <div>
                       <h3 className="font-medium mb-2">4.4. Direito de arrependimento</h3>
-                      <p className="text-muted-foreground">
+                      <p className="text-muted-foreground mb-2">
                         Por se tratar de contratação realizada fora do estabelecimento comercial, você pode desistir
-                        da contratação no prazo de <strong>7 (sete) dias corridos</strong>, contados da data da
-                        contratação, nos termos do <strong>art. 49 do Código de Defesa do Consumidor</strong>.
-                        Exercido o arrependimento nesse prazo, os valores eventualmente pagos são devolvidos
-                        integralmente e de forma imediata, pelo mesmo meio de pagamento utilizado.
+                        da contratação no prazo de <strong>7 (sete) dias corridos</strong>, nos termos do{' '}
+                        <strong>art. 49 do Código de Defesa do Consumidor</strong>.
+                      </p>
+                      <p className="text-muted-foreground mb-2">
+                        <strong>Com o teste grátis:</strong> durante o teste nada é cobrado, e basta cancelar na forma
+                        da cláusula 4.5 para não pagar nada. Para que você tenha também 7 dias com o serviço já pago,
+                        o prazo do arrependimento conta a partir da <strong>primeira cobrança</strong>, a do término
+                        do teste. <strong>Sem teste grátis</strong>, o prazo conta da data da contratação.
+                      </p>
+                      <p className="text-muted-foreground">
+                        Para exercer o arrependimento, escreva para <strong>contato@convoflow.com.br</strong> a partir
+                        do email cadastrado na Conta. O botão "Cancelar assinatura" não faz reembolso: a devolução
+                        é feita à mão pelo ConvoFlow, no Stripe, no mesmo cartão usado no pagamento, no valor
+                        integral pago, em até <strong>5 (cinco) dias úteis</strong> depois do pedido. O prazo para o
+                        valor aparecer na fatura depende do banco emissor do cartão. Com o arrependimento, a
+                        assinatura é encerrada e o acesso termina na data da devolução.
                       </p>
                     </div>
 

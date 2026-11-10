@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -146,6 +147,15 @@ Deno.serve(async (req: Request) => {
     .select('id, kind, parent_tenant_id')
     .eq('id', instance.tenant_id)
     .maybeSingle();
+
+  // Teste grátis: até N mensagens por dia na Conta, por todo provedor. Marcar
+  // como lida e reagir não contam. Só depois de saber que a pessoa alcança o
+  // número: a recusa não pode falar da Conta dos outros.
+  if (body.type !== 'mark_read' && body.type !== 'reaction'
+      && decideInstanceAccess(callerProfile, instance, instanceTenant).allowed) {
+    const limite = await conferirLimiteDoTeste(supabaseAdmin, callerProfile, instance.tenant_id, 'mensagens');
+    if (!limite.ok) return jsonResponse(corpoDaRecusa(limite), limite.status);
+  }
 
   // Evolution e WAHA (sessão 2 do docs/RUNBOOK_segredos_das_instancias.md):
   // a chave e o endereço vêm do cofre, o anexo é lido com a chave do servidor

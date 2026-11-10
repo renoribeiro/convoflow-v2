@@ -17,6 +17,7 @@
  * Todo envio passa pela ProviderFactory (Evolution/WAHA/Meta) e respeita a
  * janela de 24h da Meta para instâncias oficiais.
  */
+import { criarCotaDeEnvios } from '../_shared/limites-do-teste.ts';
 import { MOTIVO_CONTA_SEM_ACESSO } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -175,11 +176,15 @@ serve(async (req) => {
 
     const stats = { sent: 0, failed: 0, blocked: 0, tasksCreated: 0, advanced: 0, recurred: 0 }
 
-    // Conta sem acesso: nada dela é enviado, e os itens ficam como estão para
-    // saírem quando a Conta voltar. Saem da busca ANTES do limite do lote, senão a
+    // Teste grátis: o saldo do dia, descontado a cada envio desta rodada.
+    const cota = criarCotaDeEnvios(supabase, (id, erro) =>
+      logger.error('Não conferi o limite do teste', { tenant_id: id, erro }))
+
+    // Conta sem acesso, ou em teste grátis sem mensagens no dia: nada dela é
+    // enviado, e os itens ficam como estão para saírem quando ela puder. Saem da busca ANTES do limite do lote, senão a
     // fila de uma Conta parada ocuparia o lote e as outras nunca seriam atendidas.
     // Sem resposta do banco, esta rodada para: nada sai sem certeza.
-    const { data: contasSemAcesso, error: acessoError } = await supabase.rpc('tenants_sem_acesso_com_followup')
+    const { data: contasSemAcesso, error: acessoError } = await supabase.rpc('tenants_sem_envio_com_followup')
     if (acessoError) throw new Error(`Não conferi o acesso das Contas: ${acessoError.message}`)
     const semAcesso = (contasSemAcesso ?? []) as string[]
     const filtroSemAcesso = semAcesso.length > 0 ? `(${semAcesso.join(',')})` : null
@@ -257,6 +262,13 @@ serve(async (req) => {
         contactName: contact?.name, phone, email: contact?.email,
       })
 
+      if ((await cota.podeEnviar(fu.tenant_id)) !== 'sim') {
+        await supabase.from('individual_followups').update({
+          status: 'scheduled', updated_at: new Date().toISOString(),
+        }).eq('id', fu.id)
+        continue
+      }
+
       try {
         const { msgId, mirrorContent } = await sendWhatsApp(supabase, instanceRow, phone, {
           messageBody: fu.message_body,
@@ -271,6 +283,7 @@ serve(async (req) => {
           error_message: null, attempts: (fu.attempts ?? 0) + 1,
         }).eq('id', fu.id)
         stats.sent++
+        await cota.registrarEnvio(fu.tenant_id)
 
         await mirrorMessage(supabase, {
           contactId: fu.contact_id, tenantId: fu.tenant_id, instanceId: instanceRow.id,
@@ -440,6 +453,7 @@ serve(async (req) => {
         }
 
         const variables = buildFollowupVariables({ contactName: contact?.name, phone, email: contact?.email })
+        if ((await cota.podeEnviar(enr.tenant_id)) !== 'sim') continue
         try {
           const { msgId, mirrorContent } = await sendWhatsApp(supabase, instanceRow, phone, {
             messageBody: step.message_body,
@@ -453,6 +467,7 @@ serve(async (req) => {
             content: mirrorContent, msgId,
           }, logger)
           stats.sent++
+          await cota.registrarEnvio(enr.tenant_id)
 
           // Registra o passo na timeline como follow-up concluído.
           await supabase.from('individual_followups').insert({

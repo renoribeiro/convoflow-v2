@@ -13,15 +13,25 @@
 //   impede alguém de se cadastrar como superadmin ou dentro da Conta de outro —
 //   o trigger handle_new_user confia no que vier no convite.
 //
-// A MESMA RESPOSTA PARA TODO DESFECHO
-//   Todo pedido que passa pelas travas (formato, Turnstile, limite por IP)
-//   recebe 202 {"ok":true}, sem esperar o resto: e-mail novo, e-mail que já
-//   tem login, limite por e-mail estourado, convite recusado pelo envio de
-//   e-mail — tudo igual, no mesmo tempo. O trabalho (Conta + convite) roda
-//   depois da resposta. Assim o formulário não serve para descobrir quem é
-//   cliente, nem pela resposta nem pelo tempo dela.
-//   As respostas diferentes (400, 403, 409, 429, 503) dependem só do próprio
-//   pedido, nunca de o e-mail existir.
+// A MESMA RESPOSTA PARA QUEM JÁ É CLIENTE E PARA QUEM NÃO É
+//   E-mail novo com convite enviado, e-mail que já tem login e limite por
+//   e-mail estourado recebem o mesmo 202 {"ok":true}, e nunca antes de
+//   PISO_DA_RESPOSTA_MS: o tempo do convite fica escondido atrás do piso.
+//   Assim o formulário não serve para descobrir quem é cliente, nem pela
+//   resposta nem pelo tempo dela.
+//
+// O EMAIL QUE NÃO SAIU (sessão 2, 2026-11-09)
+//   Antes, o convite rodava depois da resposta e a pessoa lia sempre "confira
+//   seu email", mesmo quando ele não saía. Agora a resposta espera o convite
+//   (até PRAZO_DO_PROCESSAMENTO_MS) e, se o envio falhou, diz isso e oferece
+//   tentar de novo (503 com code email_nao_saiu). Isso não revela quem é
+//   cliente: e-mail que já tem login nem chega ao convite, e a falha vem do
+//   envio, não do endereço. A falha fica registrada, e o banco avisa o
+//   superadmin no sino e por email (migração 20261109000002). Se o convite
+//   demorar mais que o prazo, a resposta sai como aceita e o trabalho segue.
+//
+//   As outras respostas (400, 403, 409, 429, 503) dependem só do próprio
+//   pedido ou do sistema, nunca de o e-mail existir.
 //
 // NADA SE PERDE
 //   A ficha (signup_requests) é gravada ANTES da resposta. Se o convite falha,
@@ -30,6 +40,7 @@
 // =============================================================================
 
 import { contaSlug } from './conta-slug.ts';
+import { emailDescartavel } from './emails-descartaveis.ts';
 import {
   classifyAuthEmailError,
   isEmailSendFailure,
@@ -47,8 +58,8 @@ import {
  * src/lib/legal/versions.ts — src/lib/signup/publicSignupHandler.test.ts exige
  * que as duas sejam iguais. Mudou a página, mude os dois.
  */
-export const SIGNUP_TERMS_VERSION = '2026-10-27';
-export const SIGNUP_PRIVACY_VERSION = '2026-10-30';
+export const SIGNUP_TERMS_VERSION = '2026-11-09';
+export const SIGNUP_PRIVACY_VERSION = '2026-11-09';
 
 /** A ação declarada no widget do Turnstile; o servidor confere. */
 export const TURNSTILE_ACTION = 'cadastro';
@@ -73,6 +84,23 @@ export const MSG_TERMOS_MUDARAM =
   'Os Termos de Uso ou a Política de Privacidade foram atualizados. Recarregue a página e aceite a versão nova.';
 export const MSG_TENTE_DE_NOVO =
   'Não foi possível registrar seu cadastro agora. Tente de novo em alguns minutos.';
+export const MSG_EMAIL_DESCARTAVEL =
+  'Use o email da sua empresa ou um email pessoal que você usa sempre. Endereço temporário não serve para criar a Conta.';
+export const MSG_TETO_DE_CADASTROS =
+  'Muitos cadastros estão chegando agora. Tente de novo em uma hora.';
+export const MSG_EMAIL_NAO_SAIU =
+  'Não conseguimos enviar o email para criar sua senha. Confira se o endereço está certo e tente de novo em alguns minutos.';
+
+/** Os códigos que a tela reconhece (src/lib/signup/submitPublicSignup.ts). */
+export const CODIGO_EMAIL_NAO_SAIU = 'email_nao_saiu';
+export const CODIGO_TENTE_DE_NOVO = 'tente_de_novo';
+export const CODIGO_TETO_DE_CADASTROS = 'teto_de_cadastros';
+
+/** Nenhuma resposta de "aceito" sai antes disto: esconde o tempo do convite. */
+export const PISO_DA_RESPOSTA_MS = 3000;
+
+/** Quanto a resposta espera o convite antes de sair como aceita. */
+export const PRAZO_DO_PROCESSAMENTO_MS = 9000;
 
 // ---------------------------------------------------------------------------
 // Validação
@@ -131,6 +159,9 @@ export function validateSignupBody(body: unknown): SignupValidation {
   const emailBruto = typeof b.email === 'string' ? b.email.trim().toLowerCase() : '';
   if (!emailBruto || emailBruto.length > 254 || !EMAIL.test(emailBruto)) {
     return { ok: false, field: 'email', message: 'Informe um email válido.' };
+  }
+  if (emailDescartavel(emailBruto)) {
+    return { ok: false, field: 'email', message: MSG_EMAIL_DESCARTAVEL };
   }
 
   const companyName = texto(b.companyName, 2, 120);
@@ -230,9 +261,16 @@ export interface PublicSignupDeps {
   corsHeaders: Record<string, string>;
   clientIp: string | null;
   verifyTurnstile(token: string, ip: string | null): Promise<boolean>;
-  /** true = pode seguir. Chave bruta; quem implementa faz o hash. */
+  /**
+   * true = pode seguir. Chave bruta; quem implementa faz o hash. Erro na
+   * checagem é recusa (false), nunca liberação.
+   */
   allowRequest(bucket: 'ip' | 'email', key: string): Promise<boolean>;
-  insertLead(fields: SignupFields): Promise<string>;
+  /**
+   * Grava a ficha, conferindo o teto do sistema inteiro (public_signup_registrar).
+   * Passou do teto: { teto }. Qualquer outro erro: lança (e o pedido é recusado).
+   */
+  insertLead(fields: SignupFields): Promise<string | { teto: 'hora' | 'dia' }>;
   startSignup(leadId: string, slug: string): Promise<{ outcome: 'created' | 'email_exists'; tenantId: string | null }>;
   inviteGerente(email: string, metadata: Record<string, unknown>, redirectTo: string): Promise<InviteResult>;
   markInvited(leadId: string, userId: string): Promise<void>;
@@ -242,6 +280,9 @@ export interface PublicSignupDeps {
   redirectTo: string;
   slugSuffix(): string;
   log(level: 'info' | 'warn' | 'error', message: string, context?: Record<string, unknown>): void;
+  /** Relógio e espera, para o piso da resposta (o teste troca os dois). */
+  agora(): number;
+  esperar(ms: number): Promise<void>;
 }
 
 // ---------------------------------------------------------------------------
@@ -389,28 +430,63 @@ export async function handlePublicSignup(req: Request, deps: PublicSignupDeps): 
     return json(429, { error: MSG_MUITAS_TENTATIVAS }, cors);
   }
 
+  // Daqui em diante a resposta "aceito" nunca sai antes do piso.
+  const inicio = deps.agora();
+  const aceito = async () => {
+    const falta = PISO_DA_RESPOSTA_MS - (deps.agora() - inicio);
+    if (falta > 0) await deps.esperar(falta);
+    return acceptedResponse(cors);
+  };
+
   // Limite por e-mail: a MESMA resposta de sucesso, sem trabalho nenhum. Um 429
   // aqui contaria que alguém tentou esse e-mail há pouco.
   if (!(await deps.allowRequest('email', v.fields.email))) {
     deps.log('info', 'public-signup: limite por e-mail atingido; pedido descartado');
-    return acceptedResponse(cors);
+    return aceito();
   }
 
   let leadId: string;
   try {
-    leadId = await deps.insertLead(v.fields);
+    const gravado = await deps.insertLead(v.fields);
+    if (typeof gravado !== 'string') {
+      // Teto do sistema inteiro: não depende do e-mail, não revela nada.
+      deps.log('warn', 'public-signup: teto de cadastros', { teto: gravado.teto });
+      return json(429, { error: MSG_TETO_DE_CADASTROS, code: CODIGO_TETO_DE_CADASTROS }, cors);
+    }
+    leadId = gravado;
   } catch (e) {
     // Falha de banco, antes de qualquer consulta ao e-mail: não revela nada.
     deps.log('error', 'public-signup: não gravou a ficha', { erro: mensagem(e) });
-    return json(500, { error: MSG_TENTE_DE_NOVO }, cors);
+    return json(500, { error: MSG_TENTE_DE_NOVO, code: CODIGO_TENTE_DE_NOVO }, cors);
   }
 
-  deps.runInBackground(
-    processSignup(leadId, v.fields, deps).then(
-      (desfecho) => deps.log('info', 'public-signup: processado', { leadId, desfecho }),
-      (e) => deps.log('error', 'public-signup: processamento quebrou', { leadId, erro: mensagem(e) }),
-    ),
-  );
+  const trabalho = processSignup(leadId, v.fields, deps).catch((e) => {
+    deps.log('error', 'public-signup: processamento quebrou', { leadId, erro: mensagem(e) });
+    return 'processing_error' as SignupOutcome;
+  });
+  const desfecho = await Promise.race([
+    trabalho,
+    deps.esperar(PRAZO_DO_PROCESSAMENTO_MS).then(() => 'ainda_processando' as const),
+  ]);
 
-  return acceptedResponse(cors);
+  if (desfecho === 'ainda_processando') {
+    // Demorou: a resposta sai como aceita e o trabalho segue. Se o envio falhar
+    // depois, a falha fica registrada e o superadmin é avisado.
+    deps.runInBackground(
+      trabalho.then((d) => deps.log('info', 'public-signup: processado depois da resposta', { leadId, desfecho: d })),
+    );
+    return aceito();
+  }
+
+  deps.log('info', 'public-signup: processado', { leadId, desfecho });
+  if (desfecho === 'invited' || desfecho === 'email_exists') return aceito();
+
+  // O envio não saiu: a pessoa sabe, e pode tentar de novo. Mesmo piso: a
+  // falha não deve sair mais rápido que o sucesso.
+  const falta = PISO_DA_RESPOSTA_MS - (deps.agora() - inicio);
+  if (falta > 0) await deps.esperar(falta);
+  if (desfecho === 'processing_error') {
+    return json(503, { error: MSG_TENTE_DE_NOVO, code: CODIGO_TENTE_DE_NOVO, tentarDeNovo: true }, cors);
+  }
+  return json(503, { error: MSG_EMAIL_NAO_SAIU, code: CODIGO_EMAIL_NAO_SAIU, tentarDeNovo: true }, cors);
 }

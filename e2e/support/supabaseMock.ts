@@ -164,6 +164,14 @@ function valueFor(table: string, col: string, type: string, i: number, role: Moc
 function row(table: string, i: number, role: MockRole): Record<string, unknown> {
   const r: Record<string, unknown> = {};
   for (const c of TABLES[table] ?? []) r[c.col] = valueFor(table, c.col, c.type, i, role);
+  // Os limites do teste grátis (sessão 2): a tabela não está nos tipos gerados.
+  if (table === 'limites_da_plataforma') {
+    Object.assign(r, {
+      id: true, teste_lojas: 2, teste_numeros: 2, teste_numeros_qr: 1, teste_mensagens_dia: 300,
+      teste_contatos_campanha: 100, cadastro_por_hora: 20, cadastro_por_dia: 100,
+      atualizado_em: '2026-11-09T12:00:00Z', atualizado_por: null,
+    });
+  }
   if (table === 'profiles') {
     Object.assign(r, {
       id: i === 0 ? IDS.profile : uid(i, 'p'),

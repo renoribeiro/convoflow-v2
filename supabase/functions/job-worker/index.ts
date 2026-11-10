@@ -1,3 +1,4 @@
+import { MOTIVO_LIMITE_DO_DIA, criarCotaDeEnvios } from '../_shared/limites-do-teste.ts';
 import { MOTIVO_CONTA_SEM_ACESSO, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -57,6 +58,9 @@ serve(async (req) => {
     const acesso = criarMemoDeAcesso(supabase, (id, erro) =>
       logger.error('job-worker: não conferi o acesso', { tenantId: id, erro }))
 
+    const cota = criarCotaDeEnvios(supabase, (id, erro) =>
+      logger.error('job-worker: não conferi o limite do teste', { tenantId: id, erro }))
+
     const maxProcessingTime = 45 * 1000 // 45 seconds to avoid Edge Function timeout
     const startTime = Date.now()
 
@@ -101,7 +105,21 @@ serve(async (req) => {
         logger.info(`Processing job ${job.id} (${job.job_type}) - Attempt ${job.current_attempts}`, { jobId: job.id, type: job.job_type })
 
         try {
+          // Teste grátis no limite do dia: o envio automático é cancelado, como
+          // na Conta sem acesso. Sem certeza, volta para a fila.
+          const cabe = await cota.podeEnviar(job.tenant_id)
+          if (cabe !== 'sim') {
+            await supabase.from('job_queue').update(
+              cabe === 'nao'
+                ? { status: 'cancelled', completed_at: new Date().toISOString(), error_message: MOTIVO_LIMITE_DO_DIA }
+                : { status: 'pending' },
+            ).eq('id', job.id)
+            if (cabe === 'desconhecido') await new Promise(resolve => setTimeout(resolve, 5000))
+            continue
+          }
+
           await processJob(supabase, job, logger)
+          await cota.registrarEnvio(job.tenant_id)
           
           await supabase.rpc('complete_job', {
             p_job_id: job.id,

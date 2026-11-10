@@ -16,6 +16,7 @@
  *   Meta         : .agent/skills/meta-cloud-api/SKILL.md §2.1 (text)
  */
 
+import { criarCotaDeEnvios } from '../_shared/limites-do-teste.ts';
 import { CONTA_SEM_ACESSO_CODE, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -114,6 +115,17 @@ serve(async (req) => {
   if (!(await acesso.liberada(tenant_id))) {
     logger.info('Conta sem acesso: resposta automática não enviada', { tenant_id });
     return new Response(JSON.stringify({ success: true, skipped: CONTA_SEM_ACESSO_CODE }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+  }
+
+  // Teste grátis no limite do dia: a resposta automática também não sai.
+  const cota = criarCotaDeEnvios(supabase, (id, erro) =>
+    logger.error('process-chatbot-message: não conferi o limite do teste', { tenant_id: id, erro }));
+  if ((await cota.podeEnviar(tenant_id)) !== 'sim') {
+    logger.info('Teste grátis sem mensagens no dia: resposta automática não enviada', { tenant_id });
+    return new Response(JSON.stringify({ success: true, skipped: 'limite_do_teste' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });

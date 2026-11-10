@@ -969,7 +969,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Na página de vendas, clique em "Começar teste grátis" e preencha nome, sobrenome, email, o nome da empresa e um telefone com DDD. Marque o aceite dos Termos de Uso e da Política de Privacidade, espere a verificação "não sou um robô" e clique em "Criar minha conta".',
         helpKey: 'page:cadastro',
         note:
-          'A tela seguinte sempre diz "Confira seu email", mesmo se o email já tiver conta. Se você já é cliente, entre pelo login.',
+          'A tela seguinte diz "Confira seu email", mesmo se o email já tiver conta. Se você já é cliente, entre pelo login. Se o email não sair, a tela avisa e mostra "Tentar de novo". Email de caixa temporária não é aceito.',
       },
       {
         title: 'Crie sua senha pelo link do email',
@@ -984,13 +984,15 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Na primeira tela, no quadro "Dados para a nota fiscal", escolha "Empresa (CNPJ)" ou "Pessoa física (CPF)", digite o documento e o nome ou a razão social. Digite o CEP: rua, bairro, cidade e UF se preenchem sozinhos. Complete o número, confira o email que vai receber a nota e clique em "Salvar dados".',
         helpKey: 'page:paywall',
         note:
-          'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito.',
+          'Sem esses dados o botão do teste grátis fica travado. Se a busca do CEP não responder, preencha o endereço à mão. CNPJ com letras (os novos, de 2026) é aceito. O teste grátis vale uma vez por CNPJ ou CPF: se o documento já teve teste, a tela avisa e a assinatura começa sem teste.',
       },
       {
         title: 'Clique em "Começar teste grátis" e cadastre o cartão',
         body:
           'A mesma tela mostra o que acontece: hoje você não paga nada, e ali estão a data e o valor da primeira cobrança. Clique em "Começar teste grátis" e cadastre o cartão no Stripe.',
         helpKey: 'page:paywall',
+        note:
+          'Durante o teste a Conta tem limites de uso, listados no mesmo quadro: Lojas, números de WhatsApp, mensagens por dia e contatos por campanha. Eles deixam de valer depois do primeiro pagamento.',
       },
       {
         title: 'Espere a confirmação, sem pagar de novo',

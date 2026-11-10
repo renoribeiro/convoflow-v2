@@ -305,6 +305,22 @@ export function checkoutBlockReason(status: string | null | undefined): string |
  * (com ou sem teste) — sem isto, cancelar no 6º dia e assinar de novo daria
  * teste grátis sem fim.
  */
-export function trialDaysForCheckout(tenant: { subscription_id: string | null }): number | null {
-  return tenant.subscription_id ? null : TRIAL_DAYS;
+export function trialDaysForCheckout(tenant: {
+  subscription_id: string | null;
+  /**
+   * A oferta está ligada no servidor? Segue o secret PUBLIC_SIGNUP_ENABLED: o
+   * teste é o que o cadastro pelo site promete, e os dois ligam juntos. Sem
+   * ele, o pagamento cobra no dia, como a tela de bloqueio diz.
+   */
+  ofertaLigada?: boolean;
+  /**
+   * O CNPJ ou CPF desta Conta já teve teste ou assinatura em outra Conta
+   * (public.documento_teve_teste). Um teste por documento (sessão 2).
+   */
+  documentoJaTeveTeste?: boolean;
+}): number | null {
+  if (tenant.subscription_id) return null;
+  if (tenant.ofertaLigada !== true) return null;
+  if (tenant.documentoJaTeveTeste !== false) return null;
+  return TRIAL_DAYS;
 }

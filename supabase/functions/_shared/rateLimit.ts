@@ -11,6 +11,12 @@ interface RateLimitConfig {
     maxRequests: number;     // Maximum requests allowed
     windowMs: number;        // Time window in milliseconds
     keyPrefix?: string;      // Optional prefix for rate limit keys
+    /**
+     * Recusa quando a própria checagem falha (banco fora, gravação recusada).
+     * O padrão continua liberando, para não derrubar o resto do sistema; o
+     * cadastro pelo site usa `true` (sessão 2, 2026-11-09).
+     */
+    failClosed?: boolean;
 }
 
 /**
@@ -43,8 +49,8 @@ export async function checkRateLimitDb(
 
         if (countError) {
             console.error('[RateLimit] Error checking rate limit:', countError);
-            // Fail open — allow the request if DB check fails
-            return { allowed: true, remaining: config.maxRequests, resetAt: now + config.windowMs };
+            // Fail open — allow the request if DB check fails (unless failClosed)
+            return { allowed: !config.failClosed, remaining: config.maxRequests, resetAt: now + config.windowMs };
         }
 
         const currentCount = count || 0;
@@ -56,13 +62,19 @@ export async function checkRateLimitDb(
         }
 
         // Insert new rate limit entry
-        await supabaseClient
+        const { error: insertError } = await supabaseClient
             .from('rate_limits')
             .insert({
                 key,
                 created_at: new Date(now).toISOString(),
                 expires_at: new Date(now + config.windowMs).toISOString()
             });
+        // Sem gravar a tentativa, a próxima contagem sairia baixa: com
+        // failClosed, isso também é recusa.
+        if (insertError && config.failClosed) {
+            console.error('[RateLimit] Could not record attempt:', insertError);
+            return { allowed: false, remaining: 0, resetAt: now + config.windowMs };
+        }
 
         return {
             allowed: true,
@@ -71,8 +83,8 @@ export async function checkRateLimitDb(
         };
     } catch (error) {
         console.error('[RateLimit] Unexpected error in rate limit check:', error);
-        // Fail open — allow the request if something goes wrong
-        return { allowed: true, remaining: config.maxRequests, resetAt: Date.now() + config.windowMs };
+        // Fail open — allow the request if something goes wrong (unless failClosed)
+        return { allowed: !config.failClosed, remaining: config.maxRequests, resetAt: Date.now() + config.windowMs };
     }
 }
 

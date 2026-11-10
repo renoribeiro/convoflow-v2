@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -184,6 +185,10 @@ Deno.serve(async (req: Request) => {
       logger.warn('create_manual recusado', { reason: target.reason, userId: callerUser!.id });
       return jsonResponse({ ok: false, reason: target.reason, error: target.message }, target.status);
     }
+
+    // Teste grátis: até N números na Conta, antes de falar com a Meta.
+    const limite = await conferirLimiteDoTeste(supabaseAdmin, callerProfile, target.tenantId, 'numeros');
+    if (!limite.ok) return jsonResponse(corpoDaRecusa(limite), limite.status);
 
     const name = typeof req.name === 'string' ? req.name.trim() : '';
     const phoneNumberId = typeof req.phone_number_id === 'string' ? req.phone_number_id.trim() : '';

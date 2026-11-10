@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -250,6 +251,13 @@ Deno.serve(async (req: Request) => {
       userId: callerUser.id,
     });
     return jsonResponse({ success: false, reason: decision.reason, error: decision.message }, decision.status);
+  }
+
+  // Teste grátis: número NOVO conta no limite da Conta; reconectar não conta.
+  // Antes de falar com a Meta.
+  if (decision.mode === 'connect') {
+    const limite = await conferirLimiteDoTeste(supabaseAdmin, callerProfile, decision.tenantId, 'numeros');
+    if (!limite.ok) return jsonResponse(corpoDaRecusa(limite), limite.status);
   }
 
   if (decision.mode === 'reconnect' && decision.keyMismatch) {

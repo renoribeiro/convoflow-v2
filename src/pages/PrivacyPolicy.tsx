@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
             <CardHeader>
               <CardTitle className="text-3xl text-center">Política de Privacidade</CardTitle>
               <p className="text-center text-muted-foreground">
-                Última atualização: 30 de outubro de 2026 • Conforme LGPD
+                Última atualização: 9 de novembro de 2026 • Conforme LGPD
               </p>
             </CardHeader>
             <CardContent className="prose prose-slate dark:prose-invert max-w-none">
@@ -131,9 +131,16 @@ export default function PrivacyPolicy() {
                     <div>
                       <h3 className="font-medium mb-2">Dados Fornecidos Diretamente:</h3>
                       <ul className="list-disc pl-6 text-muted-foreground">
-                        <li><strong>Cadastro:</strong> Nome, email, telefone, empresa</li>
+                        <li><strong>Cadastro:</strong> Nome, email, telefone, empresa e a versão dos Termos de Uso e desta Política que você aceitou, com a data do aceite</li>
                         <li><strong>Perfil:</strong> Informações profissionais, preferências</li>
-                        <li><strong>Pagamento:</strong> Dados de faturamento (processados por terceiros seguros)</li>
+                        <li>
+                          <strong>Dados para a nota fiscal:</strong> CPF ou CNPJ, nome ou razão social, endereço e
+                          email que recebe a nota, pedidos antes do pagamento. Servem para emitir a nota fiscal e
+                          para cumprir a regra de um teste grátis por CPF ou CNPJ: para isso guardamos um código
+                          calculado a partir do documento, no lugar do número, mesmo depois de a Conta ser
+                          encerrada. Esse código só serve para saber se o documento já teve teste.
+                        </li>
+                        <li><strong>Pagamento:</strong> Dados do cartão, processados e guardados pelo Stripe; o ConvoFlow não vê o número do cartão</li>
                         <li><strong>Suporte:</strong> Histórico de conversas e solicitações</li>
                       </ul>
                     </div>
@@ -143,6 +150,13 @@ export default function PrivacyPolicy() {
                       <ul className="list-disc pl-6 text-muted-foreground">
                         <li><strong>Uso da Plataforma:</strong> Logs de acesso, funcionalidades utilizadas</li>
                         <li><strong>Técnicos:</strong> Endereço IP, tipo de dispositivo, navegador</li>
+                        <li>
+                          <strong>Verificação contra robôs no cadastro pelo site:</strong> o formulário usa o
+                          Turnstile, da Cloudflare, que confere sinais do navegador e o endereço IP para saber se
+                          quem preenche é uma pessoa. Esses dados são tratados pela Cloudflare só para essa
+                          verificação, conforme a política de privacidade dela. Também guardamos, por até 1 dia,
+                          uma impressão do endereço IP e do email para limitar tentativas repetidas.
+                        </li>
                         <li><strong>Performance:</strong> Métricas de uso para melhorias</li>
                         <li><strong>Cookies:</strong> Preferências e dados de sessão</li>
                       </ul>
@@ -206,7 +220,7 @@ export default function PrivacyPolicy() {
                   <div className="space-y-3">
                     <div className="p-3 border-l-4 border-success bg-success/10">
                       <strong className="text-success">Parceiros Essenciais:</strong>
-                      <span className="text-muted-foreground"> WhatsApp Business API, provedores de pagamento, infraestrutura cloud</span>
+                      <span className="text-muted-foreground"> WhatsApp Business API, provedores de pagamento (Stripe), envio de email (Resend), verificação contra robôs no cadastro (Cloudflare Turnstile), infraestrutura cloud</span>
                     </div>
                     <div className="p-3 border-l-4 border-warning bg-warning/10">
                       <strong className="text-warning">Obrigações Legais:</strong>
@@ -387,6 +401,12 @@ export default function PrivacyPolicy() {
                       <h3 className="font-medium mb-2">Período de Retenção:</h3>
                       <ul className="list-disc pl-6 text-muted-foreground">
                         <li><strong>Dados de conta:</strong> Durante a vigência do contrato + 5 anos</li>
+                        <li>
+                          <strong>Cadastro feito pelo site:</strong> o de quem virou cliente fica enquanto a Conta
+                          existir, porque registra o aceite dos Termos; o cadastro que não virou Conta (convite não
+                          aceito, desistência, email que não saiu) é apagado automaticamente em até 90 dias
+                        </li>
+                        <li><strong>Falhas de envio de email de login:</strong> 90 dias, apagadas automaticamente</li>
                         <li><strong>Dados de mensagens e mídias:</strong> Enquanto a Conta estiver ativa; após o encerramento, eliminados mediante solicitação</li>
                         <li><strong>Logs de acesso:</strong> 6 meses para segurança</li>
                         <li><strong>Registro de uso da API</strong> (quem pediu o quê, quando, de qual endereço IP): 6 meses, apagado automaticamente depois disso</li>

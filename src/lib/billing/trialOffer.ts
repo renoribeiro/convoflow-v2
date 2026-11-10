@@ -4,19 +4,19 @@
 // Sem dependências (nada de supabase aqui): é importado também pela ajuda.
 //
 // TRIAL_OFFER_ENABLED diz se a tela de bloqueio PROMETE o teste grátis a uma
-// Conta que nunca assinou. Ela só pode ser `true` quando o servidor de fato dá o
-// teste — ou seja, quando o create-checkout-session com `trial_period_days`
-// estiver no ar. Hoje (2026-09-26) ele está SEGURADO na v50, sem teste, por
-// decisão do dono: prometer "você não paga nada hoje" e o Stripe cobrar na hora
-// seria enganar o cliente. Por isso nasce `false`, e a tela de bloqueio fica
-// exatamente como era.
+// Conta que nunca assinou. Desde a sessão 2 (2026-11-09) ela SEGUE a chave do
+// cadastro pelo site (src/lib/signup/chave.ts), e o servidor também: o
+// create-checkout-session só dá o teste com o secret PUBLIC_SIGNUP_ENABLED
+// ligado. Assim a tela e o pagamento nunca discordam: com o cadastro
+// desligado, a tela diz "Assinar agora" e o pagamento cobra no dia.
 //
-// Ligar: no MESMO momento do deploy do create-checkout-session com teste
-// (docs/RUNBOOK_teste_gratis.md). O cadastro pelo site
-// (src/lib/signup/release.ts) exige esta chave ligada — há teste para isso.
+// Mesmo ligada, o teste só aparece para a Conta que nunca assinou e cujo CNPJ
+// ou CPF nunca teve teste (public.teste_gratis_disponivel).
 // =============================================================================
 
-export const TRIAL_OFFER_ENABLED = false;
+import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/chave';
+
+export const TRIAL_OFFER_ENABLED: boolean = PUBLIC_SIGNUP_ENABLED;
 
 /**
  * Dias de teste. Cópia de TRIAL_DAYS em

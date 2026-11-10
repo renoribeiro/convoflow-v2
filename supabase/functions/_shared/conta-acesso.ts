@@ -92,7 +92,7 @@ export async function decidirAcessoDoChamador(
  * O corpo da recusa. As funções de número respondem `ok`, as da Meta `success`, a
  * do Instagram `message`, e a tela lê `error` nas outras: vão todos os campos.
  */
-export function corpoDaRecusa(d: Extract<DecisaoDeAcesso, { ok: false }>): Record<string, unknown> {
+export function corpoDaRecusa(d: { error: string; code: string; ok?: boolean; status?: number }): Record<string, unknown> {
   return { ok: false, success: false, error: d.error, message: d.error, code: d.code };
 }
 

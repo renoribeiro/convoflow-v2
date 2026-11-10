@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -132,6 +133,13 @@ Deno.serve(async (req: Request) => {
   // Conta sem acesso não liga número.
   const acesso = await decidirAcessoDoChamador(supabaseAdmin, callerProfile);
   if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
+
+  // Teste grátis: números e, destes, os por QR Code. ANTES de falar com a
+  // Evolution: recusar depois deixaria uma sessão sobrando no servidor.
+  for (const recurso of ['numeros', 'numeros_qr'] as const) {
+    const limite = await conferirLimiteDoTeste(supabaseAdmin, callerProfile, target.tenantId, recurso);
+    if (!limite.ok) return jsonResponse(corpoDaRecusa(limite), limite.status);
+  }
 
   // As credenciais da plataforma. Ausentes = recusa explícita, com o nome do
   // secret que falta: "não abre nada" foi exatamente o bug que trouxe a gente aqui.

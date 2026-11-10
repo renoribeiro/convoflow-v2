@@ -148,6 +148,62 @@ describe('/cadastro', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /Criar minha conta/ })).toBeEnabled());
   });
 
+  const recusa = (status: number, corpo: Record<string, unknown>) => ({
+    data: null,
+    error: Object.assign(new Error('non-2xx status code'), {
+      context: new Response(JSON.stringify(corpo), { status }),
+    }),
+  });
+
+  it('o email não saiu → a frase e "Tentar de novo", que reenvia com o token novo', async () => {
+    mockInvoke.mockResolvedValueOnce(
+      recusa(503, {
+        error: 'Não conseguimos enviar o email agora.',
+        code: 'email_nao_saiu',
+        tentarDeNovo: true,
+      }),
+    );
+    mockInvoke.mockResolvedValueOnce({ data: { ok: true }, error: null });
+    renderizar();
+    preencher();
+    await enviar();
+
+    const falha = await screen.findByTestId('cadastro-falha');
+    expect(falha).toHaveTextContent('Não conseguimos enviar o email agora.');
+    expect(screen.queryByText(CADASTRO_ENVIADO_TITULO)).not.toBeInTheDocument();
+    const deNovo = await screen.findByRole('button', { name: 'Tentar de novo' });
+    await waitFor(() => expect(deNovo).toBeEnabled());
+
+    await act(async () => {
+      fireEvent.click(deNovo);
+    });
+    expect(mockInvoke).toHaveBeenCalledTimes(2);
+    expect(mockInvoke.mock.calls[1]![1].body.turnstileToken).toBe('token-novo');
+    expect(await screen.findByText(CADASTRO_ENVIADO_TITULO)).toBeInTheDocument();
+  });
+
+  it('recusa sem "tentar de novo" (teto de cadastros) → só a frase', async () => {
+    mockInvoke.mockResolvedValueOnce(
+      recusa(429, { error: 'Muitos cadastros estão chegando agora.', code: 'teto_de_cadastros' }),
+    );
+    renderizar();
+    preencher();
+    await enviar();
+    expect(await screen.findByTestId('cadastro-falha')).toHaveTextContent('Muitos cadastros estão chegando agora.');
+    expect(screen.queryByRole('button', { name: 'Tentar de novo' })).not.toBeInTheDocument();
+  });
+
+  it('email de caixa temporária → a frase vai embaixo do campo Email', async () => {
+    mockInvoke.mockResolvedValueOnce(
+      recusa(400, { error: 'Use um email que não seja temporário.', field: 'email' }),
+    );
+    renderizar();
+    preencher();
+    await enviar();
+    expect(await screen.findByText('Use um email que não seja temporário.')).toBeInTheDocument();
+    expect(screen.queryByTestId('cadastro-falha')).not.toBeInTheDocument();
+  });
+
   it('sem a site key do Turnstile, não há formulário', () => {
     siteKey.valor = undefined;
     renderizar();

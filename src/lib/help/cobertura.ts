@@ -76,7 +76,7 @@ const FONTES_DAS_TELAS: Record<string, string[]> = {
   'store-comparison': ['src/pages/dashboard/StoreComparison.tsx'],
   admin: ['src/pages/dashboard/AdminDashboard.tsx', 'src/components/admin/'],
   'admin/users': ['src/pages/dashboard/admin/UsersPage.tsx'],
-  'admin/usage-limits': ['src/pages/dashboard/admin/UsageLimitsPage.tsx'],
+  'admin/usage-limits': ['src/pages/dashboard/admin/UsageLimitsPage.tsx', 'src/pages/dashboard/admin/LimitesDoTesteCard.tsx'],
   profile: ['src/components/settings/ProfileSettings.tsx'],
   notifications: ['src/pages/Notifications.tsx'],
 };

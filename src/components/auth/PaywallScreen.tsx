@@ -23,8 +23,10 @@ import {
   checkoutReturnFrom,
   CONFIRMACAO_INTERVALO_MS,
   CONFIRMACAO_LIMITE_MS,
+  lerDisponibilidadeDoTeste,
   paywallVariant,
 } from '@/lib/billing/paywallState';
+import { resumoDosLimitesDoTeste, useLimitesDaPlataforma } from '@/lib/billing/limitesDoTeste';
 import {
   criarSessaoDeCheckout,
   CHECKOUT_ENABLED,
@@ -101,25 +103,32 @@ export const PaywallScreen = () => {
 
   const podeAssinar = role === 'gerente' && CHECKOUT_ENABLED;
 
-  // A Conta de cobrança do gerente já assinou alguma vez? Mesma regra do
-  // servidor (trialDaysForCheckout): subscription_id preenchido = já assinou.
+  // A Conta de cobrança do gerente pode ter o teste grátis? Mesma regra do
+  // servidor (trialDaysForCheckout): a Conta nunca assinou E o CNPJ ou CPF dela
+  // nunca teve teste em outra Conta (um teste por documento, sessão 2).
   const contaId =
     role === 'gerente' ? ((profile?.tenant_id as string | null | undefined) ?? null) : null;
   const perguntarConta = TRIAL_OFFER_ENABLED && podeAssinar && !!contaId;
+
+  // Dados para a nota fiscal da Conta do gerente: obrigatórios para assinar.
+  const dadosFiscais = useDadosFiscais(podeAssinar ? contaId : null);
+  const faltamDadosFiscais = podeAssinar && !dadosFiscais.completos;
+
+  // O documento entra na chave: salvou outro CNPJ, a tela pergunta de novo.
   const consultaConta = useQuery({
-    queryKey: [QUERY_KEYS.TENANT, 'paywall-conta', contaId],
+    queryKey: [QUERY_KEYS.TENANT, 'paywall-teste', contaId, dadosFiscais.dados?.tax_id ?? null],
     enabled: perguntarConta,
     retry: false,
-    queryFn: async (): Promise<boolean | null> => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('id, subscription_id')
-        .eq('id', contaId as string)
-        .maybeSingle();
+    queryFn: async (): Promise<string | null> => {
+      const { data, error } = await supabase.rpc('teste_gratis_disponivel' as never, {
+        p_tenant_id: contaId as string,
+      } as never);
       if (error) throw error;
-      return data ? data.subscription_id == null : null;
+      return typeof data === 'string' ? data : null;
     },
   });
+  const disponibilidade = lerDisponibilidadeDoTeste(consultaConta.data);
+  const limitesDoTeste = useLimitesDaPlataforma(perguntarConta);
 
   // O motivo do bloqueio, para o Gerente (achado 118): ele lê a linha da
   // própria Conta. Gestor e Atendente não leem a Conta (RLS de tenants) e
@@ -139,15 +148,12 @@ export const PaywallScreen = () => {
     },
   });
 
-  // Dados para a nota fiscal da Conta do gerente: obrigatórios para assinar.
-  const dadosFiscais = useDadosFiscais(podeAssinar ? contaId : null);
-  const faltamDadosFiscais = podeAssinar && !dadosFiscais.completos;
-
   const variante = paywallVariant({
     role,
     checkoutEnabled: CHECKOUT_ENABLED,
     trialOfferEnabled: TRIAL_OFFER_ENABLED,
-    contaNuncaAssinou: consultaConta.data ?? null,
+    contaNuncaAssinou: disponibilidade.contaNuncaAssinou,
+    documentoJaUsou: disponibilidade.documentoJaUsou,
     retorno,
   });
 
@@ -316,7 +322,22 @@ export const PaywallScreen = () => {
                   ({PLAN_NAME} com {INCLUDED_SLOTS} Lojas incluídas).
                 </li>
                 <li>Para não ser cobrado, {COMO_CANCELAR_NO_TESTE}.</li>
+                <li>O teste grátis vale uma vez por CNPJ ou CPF.</li>
               </ul>
+
+              {limitesDoTeste.data ? (
+                <div className="space-y-1 text-sm" data-testid="limites-do-teste">
+                  <p className="font-medium">Durante o teste, a Conta tem estes limites:</p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-muted-foreground">
+                    {resumoDosLimitesDoTeste(limitesDoTeste.data).map((linha) => (
+                      <li key={linha}>{linha}</li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-muted-foreground">
+                    Eles existem para evitar abuso e acabam depois do primeiro pagamento.
+                  </p>
+                </div>
+              ) : null}
 
               <ul className="space-y-2 text-sm">
                 {PLAN_FEATURES.map((f) => (
@@ -430,6 +451,16 @@ export const PaywallScreen = () => {
             </ul>
 
             {retorno === 'cancel' ? <SaiuDoPagamento /> : null}
+
+            {TRIAL_OFFER_ENABLED && disponibilidade.documentoJaUsou === true ? (
+              <Alert data-testid="documento-ja-teve-teste">
+                <AlertTitle>Este CNPJ ou CPF já teve um teste grátis</AlertTitle>
+                <AlertDescription>
+                  O teste grátis vale uma vez por CNPJ ou CPF, e este documento já teve o dele no ConvoFlow.
+                  A assinatura começa hoje, com a primeira cobrança no dia do pagamento.
+                </AlertDescription>
+              </Alert>
+            ) : null}
 
             <DadosFiscaisCard contaId={contaId} podeEditar obrigatorio emailPadrao={user?.email ?? ''} semCartao />
 

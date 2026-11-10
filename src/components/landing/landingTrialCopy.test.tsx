@@ -28,6 +28,7 @@ vi.mock('@/lib/signup/release', async (importOriginal) => {
 
 import LandingPage from '@/pages/LandingPage';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS } from '@/lib/billing/trialOffer';
+import { LIMITES_PADRAO } from '@/lib/billing/limitesDoTesteTexto';
 
 function renderPagina() {
   return render(
@@ -81,12 +82,13 @@ describe('página de vendas com o cadastro e o teste ligados', () => {
     expect(screen.getByTestId('cta-teste-gratis')).toHaveTextContent(`${TRIAL_DAYS} dias grátis`);
 
     // O preço explica o que os Termos (cláusula 4.3) dizem: cartão no começo,
-    // cobrança só no fim, como não pagar nada e um teste por Conta.
+    // cobrança só no fim, como não pagar nada, um teste por CNPJ ou CPF e os
+    // limites do teste (sessão 2).
     const preco = screen.getByTestId('preco-teste-gratis');
     expect(preco).toHaveTextContent('Você cadastra o cartão ao começar');
     expect(preco).toHaveTextContent('só é cobrada no dia em que o teste termina');
     expect(preco).toHaveTextContent(COMO_CANCELAR_NO_TESTE);
-    expect(preco).toHaveTextContent('Um teste por Conta.');
+    expect(preco).toHaveTextContent('Um teste por CNPJ ou CPF, com limites de uso até o primeiro pagamento.');
   });
 
   it('a FAQ ganha "Como funciona o teste grátis?" e o cancelamento cita o teste', () => {
@@ -96,7 +98,12 @@ describe('página de vendas com o cadastro e o teste ligados', () => {
     expect(teste).toHaveTextContent(`${TRIAL_DAYS} dias grátis`);
     expect(teste).toHaveTextContent('nada é cobrado durante o teste');
     expect(teste).toHaveTextContent(COMO_CANCELAR_NO_TESTE);
-    expect(teste).toHaveTextContent('uma vez por Conta');
+    expect(teste).toHaveTextContent('uma vez por CNPJ ou CPF');
+    // Os limites do teste com os números com que a tabela nasce, e o fim deles.
+    expect(teste).toHaveTextContent(`até ${LIMITES_PADRAO.teste_lojas} Lojas`);
+    expect(teste).toHaveTextContent(`até ${LIMITES_PADRAO.teste_mensagens_dia} mensagens enviadas por dia`);
+    expect(teste).toHaveTextContent('tudo isso acaba no primeiro pagamento');
+    expect(teste).toHaveTextContent('em até 7 dias da primeira cobrança');
 
     fireEvent.click(screen.getByText('Posso cancelar a qualquer momento?'));
     expect(screen.getByText(/O Gerente da Conta cancela sozinho/)).toHaveTextContent(

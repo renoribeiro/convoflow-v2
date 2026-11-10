@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -140,6 +141,10 @@ Deno.serve(async (req: Request) => {
 
   if (instance.provider !== 'instagram') return refuse('not_instagram');
   if (instance.is_active === false) return refuse('instance_inactive');
+
+  // Teste grátis: as mensagens do Instagram contam no limite do dia da Conta.
+  const limite = await conferirLimiteDoTeste(admin, profile, instance.tenant_id, 'mensagens');
+  if (!limite.ok) return json(corpoDaRecusa(limite), limite.status);
 
   const cfg = (instance.connection_config ?? {}) as Record<string, unknown>;
   const igAccountId = typeof cfg.igAccountId === 'string' ? cfg.igAccountId : '';

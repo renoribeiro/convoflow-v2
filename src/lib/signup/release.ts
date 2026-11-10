@@ -15,18 +15,20 @@
 // LIGADO, os mesmos botões dizem "Começar teste grátis" e levam a /cadastro, e
 // o preço, o topo, a chamada final e a FAQ explicam o teste (entrega 4).
 //
-// PARA LIGAR, as duas chaves juntas (docs/RUNBOOK_ligar_teste_gratis.md):
-//   1. aqui, PUBLIC_SIGNUP_ENABLED = true (e TRIAL_OFFER_ENABLED = true em
-//      src/lib/billing/trialOffer.ts — um teste exige o outro);
-//   2. no Supabase, o secret PUBLIC_SIGNUP_ENABLED = true da função
-//      public-signup (sem ele a função responde 503 a tudo).
-// O servidor é a trava de verdade: com o front ligado e o secret desligado,
+// PARA LIGAR (docs/RUNBOOK_ligar_teste_gratis.md), primeiro o servidor:
+//   1. no Supabase, o secret PUBLIC_SIGNUP_ENABLED = true (a função
+//      public-signup responde 503 a tudo sem ele, e o create-checkout-session
+//      só dá o teste grátis com ele);
+//   2. depois, a chave do site, em src/lib/signup/chave.ts. A oferta do teste
+//      na tela de bloqueio (TRIAL_OFFER_ENABLED) segue a mesma chave.
+// O servidor é a trava de verdade: com o site ligado e o secret desligado,
 // ninguém se cadastra.
 // =============================================================================
 
 import { TRIAL_OFFER_ENABLED } from '@/lib/billing/trialOffer';
+import { PUBLIC_SIGNUP_ENABLED } from '@/lib/signup/chave';
 
-export const PUBLIC_SIGNUP_ENABLED = false;
+export { PUBLIC_SIGNUP_ENABLED };
 
 /** A rota do formulário. */
 export const SIGNUP_PATH = '/cadastro';

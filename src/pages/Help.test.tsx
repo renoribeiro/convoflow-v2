@@ -226,7 +226,7 @@ describe('Help — busca', () => {
 
     expect(screen.getByText('Automação')).toBeTruthy();
     // Uma entrada que não fala de automação sai da lista.
-    expect(screen.queryByText('Limites de uso por nível')).toBeNull();
+    expect(screen.queryByText('Cadastro pelo site')).toBeNull();
   });
 
   it('ignora a caixa das letras', () => {
@@ -387,7 +387,7 @@ describe('Help — link profundo', () => {
 // ── 4. Filtro por cargo ──────────────────────────────────────────────────────
 
 describe('Help — visibilidade por cargo', () => {
-  const ADMIN_TITLES = ['Administração', 'Gestão de Usuários', 'Limites de uso por nível'];
+  const ADMIN_TITLES = ['Administração', 'Gestão de Usuários', 'Limites de uso'];
   const GERENTE_TITLES = ['Equipe', 'Comparar Lojas'];
 
   /**

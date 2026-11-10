@@ -1,3 +1,4 @@
+import { conferirLimiteDoTeste } from '../_shared/limites-do-teste.ts';
 import { corpoDaRecusa, decidirAcessoDoChamador } from '../_shared/conta-acesso.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -60,6 +61,13 @@ Deno.serve(async (req: Request) => {
   // Conta sem acesso não liga número.
   const acesso = await decidirAcessoDoChamador(admin, caller);
   if (!acesso.ok) return jsonResponse(corpoDaRecusa(acesso), acesso.status);
+
+  // Teste grátis: até N números na Conta. WAHA roda no servidor do cliente,
+  // então conta no total, mas não no limite de QR Code (o do nosso servidor).
+  const lojaPedida = typeof body?.tenant_id === 'string' && /^[0-9a-f-]{36}$/i.test(body.tenant_id)
+    ? body.tenant_id : (caller?.tenant_id ?? null);
+  const limite = await conferirLimiteDoTeste(admin, caller, lojaPedida, 'numeros');
+  if (!limite.ok) return jsonResponse(corpoDaRecusa(limite), limite.status);
 
   const result = await provisionWaha(body, {
     caller,

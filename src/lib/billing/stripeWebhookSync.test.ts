@@ -518,12 +518,24 @@ describe('checkout', () => {
     }
   });
 
-  it('primeira assinatura: 7 dias de teste', () => {
+  it('primeira assinatura, oferta ligada, documento novo: 7 dias de teste', () => {
     expect(TRIAL_DAYS).toBe(7);
-    expect(trialDaysForCheckout({ subscription_id: null })).toBe(7);
+    expect(trialDaysForCheckout({ subscription_id: null, ofertaLigada: true, documentoJaTeveTeste: false })).toBe(7);
   });
 
   it('Conta que já assinou antes não ganha outro teste', () => {
-    expect(trialDaysForCheckout({ subscription_id: 'sub_antiga' })).toBeNull();
+    expect(
+      trialDaysForCheckout({ subscription_id: 'sub_FAKE_antiga', ofertaLigada: true, documentoJaTeveTeste: false }),
+    ).toBeNull();
+  });
+
+  it('oferta desligada (secret PUBLIC_SIGNUP_ENABLED fora): cobra no dia, como a tela diz', () => {
+    expect(trialDaysForCheckout({ subscription_id: null, documentoJaTeveTeste: false })).toBeNull();
+    expect(trialDaysForCheckout({ subscription_id: null, ofertaLigada: false, documentoJaTeveTeste: false })).toBeNull();
+  });
+
+  it('CNPJ ou CPF que já teve teste: sem teste; sem resposta sobre o documento, também sem', () => {
+    expect(trialDaysForCheckout({ subscription_id: null, ofertaLigada: true, documentoJaTeveTeste: true })).toBeNull();
+    expect(trialDaysForCheckout({ subscription_id: null, ofertaLigada: true })).toBeNull();
   });
 });

@@ -62,6 +62,8 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
   const [turnstileFalhou, setTurnstileFalhou] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [falha, setFalha] = useState<string | null>(null);
+  // O email que não saiu: a tela oferece tentar de novo com os mesmos dados.
+  const [podeTentarDeNovo, setPodeTentarDeNovo] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const turnstile = useRef<TurnstileHandle>(null);
 
@@ -73,9 +75,10 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
     setErros((e) => ({ ...e, [campo]: undefined }));
   };
 
-  const enviar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const enviar = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setFalha(null);
+    setPodeTentarDeNovo(false);
 
     const r = publicSignupSchema.safeParse(valores);
     if (!r.success) {
@@ -97,8 +100,12 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
       const resposta = await enviarCadastroPublico(r.data, token);
       if (resposta.ok) {
         setEnviado(true);
+      } else if (resposta.field && resposta.field in VAZIO) {
+        // A recusa é de um campo (ex.: email temporário): a frase vai nele.
+        setErros((atuais) => ({ ...atuais, [resposta.field as Campo]: resposta.message }));
       } else {
         setFalha(resposta.message);
+        setPodeTentarDeNovo(resposta.tentarDeNovo === true);
       }
     } finally {
       // O token foi gasto no servidor, deu certo ou não.
@@ -137,8 +144,8 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
                   <FeatureHelp helpKey="page:cadastro" docsLink={false} />
                 </div>
                 <CardDescription>
-                  {TRIAL_DAYS} dias grátis. Você cria a senha pelo e-mail, cadastra o cartão e só é
-                  cobrado no fim do teste.
+                  {TRIAL_DAYS} dias grátis. Você cria a senha pelo email, preenche os dados para a nota
+                  fiscal, cadastra o cartão e só é cobrado no fim do teste. Um teste por CNPJ ou CPF.
                 </CardDescription>
               </>
             )}
@@ -221,8 +228,21 @@ export default function Cadastro({ habilitado = PUBLIC_SIGNUP_ENABLED }: Cadastr
                 ) : null}
 
                 {falha ? (
-                  <Alert variant="destructive">
-                    <AlertDescription>{falha}</AlertDescription>
+                  <Alert variant="destructive" data-testid="cadastro-falha">
+                    <AlertDescription className="space-y-2">
+                      <p>{falha}</p>
+                      {podeTentarDeNovo ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={enviando || !token}
+                          onClick={() => void enviar()}
+                        >
+                          Tentar de novo
+                        </Button>
+                      ) : null}
+                    </AlertDescription>
                   </Alert>
                 ) : null}
 

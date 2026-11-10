@@ -13,6 +13,7 @@ import { UserRole, roleLabel } from '@/types/userHierarchy';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Info } from 'lucide-react';
+import { LimitesDoTesteCard } from './LimitesDoTesteCard';
 
 interface UsageLimit {
   id: string;
@@ -57,15 +58,19 @@ export default function UsageLimitsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Limites de uso por nível"
+        title="Limites de uso"
         helpKey="page:admin-usage-limits"
-        description="Registre o limite de cada nível da hierarquia. Deixe vazio para sem limite."
+        description="Os limites do teste grátis e do cadastro pelo site, que o servidor confere, e o registro dos limites por nível."
         breadcrumbs={[
           { label: 'Dashboard', href: '/dashboard' },
           { label: 'Administração', href: '/dashboard/admin' },
           { label: 'Limites de Uso' },
         ]}
       />
+
+      {/* Sessão 2 do cadastro (2026-11-09): os limites do teste grátis e do
+          cadastro pelo site. Estes VALEM; a tabela de baixo continua só registro. */}
+      <LimitesDoTesteCard />
 
       {/* Achado 129 do checkup de usabilidade (ops-privado/checkup-ux/
           RELATORIO_CHECKUP_UX.md): nenhuma função, trigger ou tela lê
@@ -74,7 +79,7 @@ export default function UsageLimitsPage() {
           dos acessos. Quando vier, tire o aviso e ajuste page:admin-usage-limits. */}
       <Alert data-testid="aviso-limites-nao-aplicados">
         <Info className="h-4 w-4" />
-        <AlertTitle>Hoje estes valores só ficam registrados</AlertTitle>
+        <AlertTitle>Os limites por nível, abaixo, só ficam registrados</AlertTitle>
         <AlertDescription>
           Nenhuma parte do sistema confere estes limites ainda: ninguém é impedido de criar nada por causa deles.
           Eles passam a valer junto com o novo desenho dos níveis e acessos.

@@ -113,7 +113,7 @@ export const PricingSection = () => {
                 >
                   Você cadastra o cartão ao começar e nada é cobrado nos {TRIAL_DAYS} dias de teste. A
                   primeira mensalidade só é cobrada no dia em que o teste termina. Para não pagar nada,{' '}
-                  {COMO_CANCELAR_NO_TESTE}. Um teste por Conta.
+                  {COMO_CANCELAR_NO_TESTE}. Um teste por CNPJ ou CPF, com limites de uso até o primeiro pagamento.
                 </p>
               ) : null}
               <p className="text-sm text-muted-foreground px-4 sm:px-0">

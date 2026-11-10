@@ -19,6 +19,9 @@ export function tituloDoErro(acao: AcaoDoAviso): string {
 /** SQLSTATE de public.exigir_conta_com_acesso (migração 20261106000001). */
 export const CODIGO_CONTA_SEM_ACESSO = 'CF403';
 
+/** SQLSTATE de public.exigir_limite_do_teste (migração 20261109000001). */
+export const CODIGO_LIMITE_DO_TESTE = 'CF429';
+
 interface ErroDoBanco {
   code?: unknown;
   message?: unknown;
@@ -35,6 +38,11 @@ export function motivoDoErro(error: unknown): string {
   // Conta sem acesso: o servidor já manda a frase certa para o cargo, com o
   // caminho do pagamento ou "fale com o responsável". Vai como veio.
   if ((code === CODIGO_CONTA_SEM_ACESSO || code === 'conta_sem_acesso') && message) {
+    return message;
+  }
+  // Limite do teste grátis: a frase do servidor já diz o limite, o porquê e
+  // que acaba no primeiro pagamento (migração 20261109000001).
+  if ((code === CODIGO_LIMITE_DO_TESTE || code === 'limite_do_teste') && message) {
     return message;
   }
 

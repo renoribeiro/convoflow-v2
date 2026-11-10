@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/accordion';
 import { salesTrialOn } from '@/lib/signup/release';
 import { COMO_CANCELAR_NO_TESTE, TRIAL_DAYS } from '@/lib/billing/trialOffer';
+import { LIMITES_PADRAO } from '@/lib/billing/limitesDoTesteTexto';
 // Achado 8: preço e Lojas incluídas das constantes do sistema.
 import { INCLUDED_SLOTS } from '@/lib/billing/checkout';
 import { API_ADDON_PRICE_LABEL } from '@/lib/api/release';
@@ -32,11 +33,11 @@ export const FAQSection = () => {
     },
     {
       question: 'Quantas mensagens posso enviar por mês?',
-      answer: `O ConvoFlow não cobra por mensagem nem limita a quantidade: o plano é por Conta, com ${INCLUDED_SLOTS} Lojas incluídas, e as mensagens na plataforma são ilimitadas. O que existe é a cobrança da própria Meta pelas conversas na API oficial, feita direto no cartão do seu portfólio empresarial. Os valores atuais estão em developers.facebook.com/docs/whatsapp/pricing. A Meta também aplica um limite diário de quantas pessoas você pode abordar primeiro (responder quem te escreveu não conta), e ele cresce sozinho conforme o número é bem usado.`
+      answer: `No plano pago, o ConvoFlow não cobra por mensagem nem limita a quantidade: o plano é por Conta, com ${INCLUDED_SLOTS} Lojas incluídas.${comTeste ? ` Durante os ${TRIAL_DAYS} dias de teste grátis há um limite de ${LIMITES_PADRAO.teste_mensagens_dia} mensagens enviadas por dia, para evitar abuso; ele acaba no primeiro pagamento.` : ''} O que existe é a cobrança da própria Meta pelas conversas na API oficial, feita direto no cartão do seu portfólio empresarial. Os valores atuais estão em developers.facebook.com/docs/whatsapp/pricing. A Meta também aplica um limite diário de quantas pessoas você pode abordar primeiro (responder quem te escreveu não conta), e ele cresce sozinho conforme o número é bem usado.`
     },
     {
       question: 'Meus dados ficam seguros?',
-      answer: 'Sim. Seus dados ficam em servidores no Brasil, com criptografia em trânsito e em repouso, e seguimos a LGPD. Eles só são compartilhados com quem precisa deles para o serviço funcionar (a Meta, que entrega as mensagens do WhatsApp, e o processador de pagamento), como descreve nossa Política de Privacidade.'
+      answer: 'Sim. Seus dados ficam em servidores no Brasil, com criptografia em trânsito e em repouso, e seguimos a LGPD. Eles só são compartilhados com quem precisa deles para o serviço funcionar (a Meta, que entrega as mensagens do WhatsApp, o processador de pagamento, o envio de email e a verificação contra robôs do cadastro), como descreve nossa Política de Privacidade.'
     },
     {
       question: 'Como funciona o suporte técnico?',
@@ -46,7 +47,7 @@ export const FAQSection = () => {
       ? [
           {
             question: 'Como funciona o teste grátis?',
-            answer: `A primeira assinatura de cada Conta começa com ${TRIAL_DAYS} dias grátis. Você cria a Conta pelo site e cadastra o cartão no Stripe, mas nada é cobrado durante o teste: a primeira mensalidade só é cobrada no dia em que ele termina, e essa data aparece antes de você cadastrar o cartão e depois em Configurações › Assinatura. Para não pagar nada, ${COMO_CANCELAR_NO_TESTE}; o sistema continua aberto até o fim do teste. O teste vale uma vez por Conta.`,
+            answer: `A primeira assinatura de cada Conta começa com ${TRIAL_DAYS} dias grátis. Você cria a Conta pelo site e cadastra o cartão no Stripe, mas nada é cobrado durante o teste: a primeira mensalidade só é cobrada no dia em que ele termina, e essa data aparece antes de você cadastrar o cartão e depois em Configurações › Assinatura. Para não pagar nada, ${COMO_CANCELAR_NO_TESTE}; o sistema continua aberto até o fim do teste. O teste vale uma vez por CNPJ ou CPF. Durante ele, para evitar abuso, a Conta tem até ${LIMITES_PADRAO.teste_lojas} Lojas, até ${LIMITES_PADRAO.teste_numeros} números de WhatsApp (${LIMITES_PADRAO.teste_numeros_qr} por QR Code), até ${LIMITES_PADRAO.teste_mensagens_dia} mensagens enviadas por dia e campanhas de até ${LIMITES_PADRAO.teste_contatos_campanha} contatos por disparo; tudo isso acaba no primeiro pagamento. Se cobrar e você desistir, pode pedir o dinheiro de volta em até 7 dias da primeira cobrança.`,
           },
         ]
       : []),
