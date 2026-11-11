@@ -1360,7 +1360,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Troca a senha que você usa para entrar. Antes de trocar, o sistema confere a sua senha atual. Depois da troca, todos os outros aparelhos e navegadores em que você estava conectado saem da sua conta; este aqui continua conectado. Quem vê o quê não muda: isso é definido pelo cargo, em Equipe.',
     howToConfigure: [
       'Digite a sua senha atual.',
-      'Digite a nova senha, com pelo menos 8 caracteres e diferente da atual.',
+      'Digite a nova senha, com pelo menos 8 caracteres e diferente da atual. Senha que já apareceu em vazamento de outros sites é recusada, mesmo longa: escolha uma que você não usa em lugar nenhum.',
       'Repita a nova senha no último campo.',
       'Clique em "Salvar nova senha". Uma mensagem acima do botão confirma a troca e avisa que os outros aparelhos saíram.',
     ],

@@ -121,7 +121,7 @@ describe('Configurações › Segurança', () => {
     expect(mockSignIn).not.toHaveBeenCalled();
   });
 
-  it('senha fraca recusada pelo servidor vira frase em português', async () => {
+  it('senha vazada recusada pelo servidor vira frase em português', async () => {
     mockUpdateUser.mockResolvedValue({
       data: {},
       error: Object.assign(new Error('Password is known to be weak and easy to guess, please choose a different one.'), {
@@ -132,7 +132,8 @@ describe('Configurações › Segurança', () => {
     render(<SecuritySettings />);
     preencher('senhaatual12', 'senha12345');
 
-    expect(await screen.findByText(/Essa senha é fraca/)).toBeInTheDocument();
+    // Texto do Supabase para senha vazada (proteção ligada em 2026-11-11).
+    expect(await screen.findByText(/já apareceu em vazamentos/)).toBeInTheDocument();
     expect(mockSignOut).not.toHaveBeenCalled();
     semTextoCru('Password is known to be weak');
     expect(mockLogWarn).toHaveBeenCalledWith(

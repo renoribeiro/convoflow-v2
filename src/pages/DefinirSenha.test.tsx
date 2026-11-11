@@ -367,7 +367,7 @@ describe('com sessão: formulário de senha', () => {
     await waitFor(() => expect(mockUpdateUser).toHaveBeenCalledWith({ password: 'senhaboa123' }));
   });
 
-  it('senha fraca recusada pelo servidor aparece em português, sem o texto cru', async () => {
+  it('senha vazada recusada pelo servidor aparece em português, sem o texto cru', async () => {
     mockUpdateUser.mockResolvedValue({
       error: Object.assign(
         new Error('Password is known to be weak and easy to guess, please choose a different one.'),
@@ -379,7 +379,8 @@ describe('com sessão: formulário de senha', () => {
     fireEvent.change(screen.getByLabelText(/repita a senha/i), { target: { value: 'senhaboa123' } });
     fireEvent.click(screen.getByRole('button', { name: /salvar e entrar/i }));
 
-    await screen.findByText(/Essa senha é fraca/i);
+    // Texto do Supabase para senha vazada (proteção ligada em 2026-11-11).
+    await screen.findByText(/já apareceu em vazamentos/i);
     expect(screen.queryByText(/known to be weak/i)).not.toBeInTheDocument();
   });
 

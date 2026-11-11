@@ -15,6 +15,8 @@ export interface ErroDoAuth {
   message?: string;
   code?: string;
   status?: number;
+  /** AuthWeakPasswordError: por que a senha foi recusada ('length', 'characters', 'pwned'). */
+  reasons?: string[];
 }
 
 export const SENHA_ERRO_GENERICO =
@@ -22,6 +24,14 @@ export const SENHA_ERRO_GENERICO =
 
 export const SENHA_FRACA =
   'Essa senha é fraca. Use uma senha mais longa, misturando letras e números.';
+
+/**
+ * Proteção contra senha vazada ligada no Supabase em 2026-11-11: a senha que
+ * aparece na lista pública de vazamentos (HaveIBeenPwned) é recusada, mesmo
+ * longa. "Use uma senha mais longa" não resolveria.
+ */
+export const SENHA_VAZADA =
+  'Essa senha já apareceu em vazamentos de outros sites. Escolha outra, que você não usa em lugar nenhum.';
 
 export const SENHA_IGUAL_A_ATUAL = 'A nova senha precisa ser diferente da atual.';
 
@@ -44,6 +54,9 @@ export function mensagemDoErroDeSenha(err: ErroDoAuth | null | undefined): strin
   const code = err?.code ?? '';
   const texto = err?.message ?? '';
 
+  if (err?.reasons?.includes('pwned') || /pwned|known to be weak/i.test(texto)) {
+    return SENHA_VAZADA;
+  }
   if (code === 'weak_password' || /weak|should be at least|password should/i.test(texto)) {
     return SENHA_FRACA;
   }
