@@ -10,7 +10,7 @@
  * fragmento (#access_token=...). Qualquer robô que "abre" o link para conferir
  * (varredura de e-mail, pré-carregamento) gasta o acesso antes da pessoa. Foi
  * o que aconteceu em 2026-08-18. Continua aceito: e-mails já enviados valem
- * por 24 horas.
+ * por 1 hora (eram 24 horas até 2026-11-11).
  *
  * LINK NOVO ({{ .SiteURL }}/definir-senha?token_hash=...&type=...): abre esta
  * tela SEM gastar nada. A tela mostra "Continuar", e só o clique troca o

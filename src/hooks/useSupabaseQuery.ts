@@ -8,14 +8,14 @@ import { logger } from '@/lib/logger';
 
 /**
  * Tabelas que NÃO devem ser filtradas por tenant_id automaticamente.
- * Inclui tabelas globais (tenants, affiliates), tabela de perfis (filtrada
- * via auth.uid()), e views administrativas.
+ * Inclui tabelas globais (tenants, affiliates) e a tabela de perfis (filtrada
+ * via auth.uid()). A lista de usuários da Administração não passa mais por
+ * aqui: é a função admin_users_list (useAdminUsersList).
  */
 const TENANT_AGNOSTIC_TABLES = new Set([
   'profiles',
   'tenants',
   'affiliates',
-  'admin_users_view',
 ]);
 
 interface QueryFilter {

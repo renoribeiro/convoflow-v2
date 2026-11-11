@@ -53,7 +53,7 @@ async function abrirAdmin(context: BrowserContext) {
     pessoa('aaaaaaaa-0000-4000-8000-0000000000b1', 'Gisele', 'gestor', LOJA),
     pessoa('aaaaaaaa-0000-4000-8000-0000000000b2', 'Gustavo', 'gerente', CONTA),
   ];
-  await context.route(/\/rest\/v1\/admin_users_view/, (route) =>
+  await context.route(/\/rest\/v1\/rpc\/admin_users_list/, (route) =>
     route.request().method() === 'OPTIONS' ? route.fulfill({ status: 204, headers: CORS }) : json(route, usuarios),
   );
   await context.route(/\/rest\/v1\/tenants/, (route) => {

@@ -320,6 +320,18 @@ function rpcResponse(name: string, role: MockRole): unknown {
     case 'get_database_performance_metrics': return [{ metric_name: 'cache_hit_ratio', metric_value: 99.1, unit: '%' }];
     case 'get_materialized_view_stats': return [{ view_name: 'daily_analytics_view', size: '120 kB', last_refresh: iso(1) }];
     case 'get_admin_users_data': case 'get_auth_users_for_admin': return [0, 1, 2, 3, 4, 5].map((i) => row('profiles', i, 'gestor'));
+    // Lista de usuários da Administração (20261111000001, no lugar da antiga
+    // admin_users_view): oito logins com o perfil, como a tabela genérica dava,
+    // todos na Conta de exemplo (é o que faz aparecer "Liberar API" e
+    // "Revogar Acesso" na linha).
+    case 'admin_users_list': return [0, 1, 2, 3, 4, 5, 6, 7].map((i) => {
+      const p = row('profiles', i, role);
+      return {
+        id: p.user_id, email: p.email, created_at: p.created_at, tenant_id: IDS.tenant,
+        first_name: p.first_name, last_name: p.last_name, role: p.role, is_active: p.is_active,
+        phone: p.phone, profile_updated_at: p.updated_at, status: p.status,
+      };
+    });
     case 'get_stripe_transaction_stats': return [{ total_revenue: 123456, total_transactions: 42, success_rate: 97.5, average_transaction: 2939 }];
     case 'current_user_role': case 'get_current_user_role': return role;
     default: return [];

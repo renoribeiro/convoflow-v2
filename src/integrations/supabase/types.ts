@@ -203,15 +203,7 @@ export type Database = {
           threshold_value?: number
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "alert_rules_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       auth_email_failures: {
         Row: {
@@ -348,13 +340,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "automation_flows_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "automation_flows_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -554,13 +539,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bug_reports_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
             referencedColumns: ["id"]
           },
         ]
@@ -1904,13 +1882,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "conversations_sla_muted_by_fkey"
-            columns: ["sla_muted_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "conversations_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
@@ -3110,13 +3081,6 @@ export type Database = {
             referencedRelation: "whatsapp_instances"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "mmc_created_by_fk"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       messages: {
@@ -3551,13 +3515,6 @@ export type Database = {
             referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
         ]
       }
       performance_history: {
@@ -3680,13 +3637,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profiles_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
             referencedColumns: ["id"]
           },
         ]
@@ -3867,13 +3817,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "report_executions_executed_by_fkey"
-            columns: ["executed_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "report_executions_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -3944,13 +3887,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "report_schedules_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "report_schedules_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
@@ -4017,13 +3953,6 @@ export type Database = {
           usage_count?: number | null
         }
         Relationships: [
-          {
-            foreignKeyName: "report_templates_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "report_templates_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -4183,13 +4112,6 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "signup_requests_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
             referencedColumns: ["id"]
           },
         ]
@@ -4491,22 +4413,7 @@ export type Database = {
           title?: string
           triggered_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "system_alerts_acknowledged_by_fkey"
-            columns: ["acknowledged_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "system_alerts_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       system_logs: {
         Row: {
@@ -4548,15 +4455,7 @@ export type Database = {
           timestamp?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "system_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       system_metrics: {
         Row: {
@@ -4658,15 +4557,7 @@ export type Database = {
           updated_by?: string | null
           value?: Json
         }
-        Relationships: [
-          {
-            foreignKeyName: "system_settings_updated_by_fkey"
-            columns: ["updated_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       tags: {
         Row: {
@@ -4735,13 +4626,6 @@ export type Database = {
           tenant_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "tenant_access_events_actor_user_id_fkey"
-            columns: ["actor_user_id"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tenant_access_events_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -4971,13 +4855,6 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenants_manual_access_granted_by_fkey"
-            columns: ["manual_access_granted_by"]
-            isOneToOne: false
-            referencedRelation: "admin_users_view"
             referencedColumns: ["id"]
           },
           {
@@ -5714,34 +5591,6 @@ export type Database = {
         }
         Relationships: []
       }
-      admin_users_view: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          email_confirmed_at: string | null
-          first_name: string | null
-          id: string | null
-          is_active: boolean | null
-          last_name: string | null
-          last_sign_in_at: string | null
-          manual_access_granted: boolean | null
-          phone: string | null
-          profile_updated_at: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
-          status: string | null
-          tenant_id: string | null
-          tenant_name: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profiles_tenant_id_fkey"
-            columns: ["tenant_id"]
-            isOneToOne: false
-            referencedRelation: "tenants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       campaign_performance_daily: {
         Row: {
           avg_order_value: number | null
@@ -6233,6 +6082,22 @@ export type Database = {
           messages_7d: number
           profile_id: string
           tenant_name: string
+        }[]
+      }
+      admin_users_list: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          is_active: boolean
+          last_name: string
+          phone: string
+          profile_updated_at: string
+          role: Database["public"]["Enums"]["user_role"]
+          status: string
+          tenant_id: string
         }[]
       }
       business_minutes_between: {

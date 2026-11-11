@@ -96,7 +96,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'Abra o email do ConvoFlow, clique no botão e depois em "Continuar". Na tela de definir senha, escolha a senha e confirme. Você entra no sistema como Gerente da sua Conta.',
         note:
-          'O botão e o código de 6 dígitos do email valem por 24 horas e por um acesso. Se o botão não abrir, clique no link do fim do email, logo depois de Onde digitar, e digite o seu email e o código. Ou peça um código novo na mesma tela, em "Esqueci minha senha".',
+          'O botão e o código de 6 dígitos do email valem por 1 hora e por um acesso. Se o botão não abrir, clique no link do fim do email, logo depois de Onde digitar, e digite o seu email e o código. Ou peça um código novo na mesma tela, em "Esqueci minha senha".',
       },
       {
         title: 'Preencha os dados para a nota fiscal',
@@ -525,7 +525,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'Ela recebe um email de convite com um botão e um código de 6 dígitos. Clica no botão, depois em "Continuar", e cai numa tela para criar a própria senha. Depois disso já entra no sistema. Em Equipe, a pessoa aparece com a situação "Pendente" desde o convite; quando ela cria a senha, passa a "Ativo". Login compartilhado quebra relatório por pessoa. Cada um usa o seu.',
         screen: '/dashboard/team',
         note:
-          'O convite vale por 24 horas e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa a distribuição automática de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
+          'O convite vale por 1 hora e por UM acesso: depois que o botão ou o código foi usado, os dois deixam de valer. Se ela tentar de novo e vir "Este link expirou ou já foi usado", é só pedir um código novo em "Esqueci minha senha", na tela de login, ou você usa "Redefinir senha" no menu de Ações. A Loja herda o acesso da sua Conta, então quem entra numa Loja nova já cai direto no sistema; se aparecer "Acesso bloqueado", o pagamento pendente é o da Conta. Se a Loja já usa a distribuição automática de conversas, quem acabou de entrar já recebe a própria fatia: as fatias se refazem em divisão igual no momento em que a pessoa aceita o convite.',
       },
       {
         title: 'Remova o acesso de quem sair do time no mesmo dia',

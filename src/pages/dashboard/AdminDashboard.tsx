@@ -15,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
+import { useAdminUsersList } from '@/hooks/users/useAdminUsersList';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
@@ -193,28 +194,12 @@ const AdminDashboard = () => {
 
   // Queries para buscar dados
 
-  // Query para buscar usuários usando a view admin_users_view que já combina auth.users e profiles
-  const { data: usersWithEmails = [], isLoading: usersLoading, refetch: refetchUsers, error: usersError } = useSupabaseQuery({
-    table: 'admin_users_view',
-    queryKey: ['admin-users', isSuperAdmin],
-    select: `
-      id,
-      email,
-      first_name,
-      last_name,
-      role,
-      is_active,
-      status,
-      phone,
-      created_at,
-      profile_updated_at,
-      tenant_id
-    `,
-    orderBy: [{ column: 'created_at', ascending: false }],
-    enabled: !!user && !authLoading && isSuperAdmin // Só executa se estiver autenticado e for super admin
-  });
+  // Usuários: logins com o perfil, pela função só do superadmin
+  // (admin_users_list, que já vem do mais novo para o mais antigo).
+  const { data: usersWithEmails = [], isLoading: usersLoading, refetch: refetchUsers, error: usersError } =
+    useAdminUsersList(!!user && !authLoading && isSuperAdmin);
 
-  // A admin_users_view não traz colunas de acesso da Conta; carregamos os
+  // A lista de usuários não traz colunas de acesso da Conta; carregamos os
   // tenants à parte (superadmin lê todos via RLS) e cruzamos por tenant_id.
   const { data: tenantsRows = [], isLoading: tenantsLoading, refetch: refetchTenants } = useSupabaseQuery({
     table: 'tenants',

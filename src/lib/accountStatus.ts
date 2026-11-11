@@ -26,11 +26,11 @@ export const canAccessApp = (status: string | null | undefined): boolean =>
   status === 'active';
 
 /**
- * Normaliza o estado vindo da `admin_users_view` para exibição.
+ * Normaliza o estado vindo da lista de usuários (`admin_users_list`) para
+ * exibição.
  *
- * A coluna `status` só existe na view a partir da migração 20260813000004; o
- * fallback por `is_active` cobre o intervalo entre o deploy do front e a
- * aplicação do SQL. Sem ele, "Pendente" (convidado, não aceitou) e "Suspenso"
+ * Login sem perfil chega com `status` vazio; o fallback por `is_active` cobre
+ * esse caso. Sem a coluna, "Pendente" (convidado, não aceitou) e "Suspenso"
  * (bloqueado pelo admin) apareceriam os dois como um único "Inativo".
  */
 export const profileStatusOf = (
