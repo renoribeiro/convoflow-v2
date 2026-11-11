@@ -10,6 +10,7 @@ import { montarCorpoMeta, montarLidaMeta } from './meta-body.ts';
 import { caminhoDeEnvioValido, MEDIA_LINK_TTL_S, WHATSAPP_MEDIA_BUCKET } from '../_shared/media-links.ts';
 import { rotaDoEnvio, runProviderSend, type ProviderSendBody } from '../_shared/message-send.ts';
 import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
 import { bytesToBase64, callProvider } from '../_shared/provider-call.ts';
 
 /**
@@ -72,7 +73,6 @@ interface SendRequest {
   template_body_params?: string[];
 }
 
-const DEFAULT_GRAPH_VERSION = 'v20.0';
 
 Deno.serve(async (req: Request) => {
   const logger = createLogger(req);
@@ -209,7 +209,8 @@ Deno.serve(async (req: Request) => {
 
   const cfg = (instance.connection_config as Record<string, any>) || {};
   const phoneNumberId: string | undefined = cfg.phoneNumberId;
-  const graphVersion: string = cfg.graphApiVersion || DEFAULT_GRAPH_VERSION;
+  // Versão única do ConvoFlow (src/lib/meta/versoes.ts); a gravada na linha é só histórico.
+  const graphVersion: string = META_GRAPH_VERSION;
   if (!phoneNumberId) {
     return jsonResponse({ ok: false, error: 'connection_config.phoneNumberId ausente' }, 500);
   }

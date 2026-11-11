@@ -106,7 +106,6 @@ export class ProviderFactory {
                 phoneNumberId,
                 wabaId: cfg.wabaId,
                 accessToken,
-                graphApiVersion: cfg.graphApiVersion || 'v20.0',
             });
         }
 

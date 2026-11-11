@@ -25,13 +25,17 @@ vi.mock('@/lib/env', () => ({
 }));
 vi.mock('@/contexts/TenantContext', () => ({ useTenantId: () => 'bbbbbbbb-0000-4000-8000-000000000002' }));
 
-import { useMetaEmbeddedSignup, META_SIGNUP_SUCCESS_TOAST } from './useMetaEmbeddedSignup';
+import { useMetaEmbeddedSignup, META_SIGNUP_SUCCESS_TOAST, META_SIGNUP_TOAST_OUTRA_EMPRESA } from './useMetaEmbeddedSignup';
+
+const fbInit = vi.fn();
+const fbLoginOptions = vi.fn();
 
 /** Simula o SDK: login devolve o código e a janela da Meta manda FINISH. */
 function stubFacebookDialog() {
   (window as unknown as { FB: unknown }).FB = {
-    init: vi.fn(),
-    login: (cb: (r: unknown) => void) => {
+    init: fbInit,
+    login: (cb: (r: unknown) => void, options: unknown) => {
+      fbLoginOptions(options);
       window.dispatchEvent(
         new MessageEvent('message', {
           origin: 'https://www.facebook.com',
@@ -64,6 +68,8 @@ describe('useMetaEmbeddedSignup', () => {
     invoke.mockReset();
     toast.mockReset();
     invalidateQueries.mockReset();
+    fbInit.mockReset();
+    fbLoginOptions.mockReset();
     document.getElementById('facebook-jssdk')?.remove();
     stubFacebookDialog();
   });
@@ -86,10 +92,26 @@ describe('useMetaEmbeddedSignup', () => {
         tenantId: 'bbbbbbbb-0000-4000-8000-000000000002',
       },
     });
-    expect(outcome).toEqual({ mode: 'connect', instanceId: 'i1', registered: true });
+    expect(outcome).toEqual({ mode: 'connect', instanceId: 'i1', registered: true, deOutraEmpresa: false });
     expect(toast).toHaveBeenCalledWith(META_SIGNUP_SUCCESS_TOAST.connect);
     expect(toast.mock.calls[0]?.[0].title).toBe('Conta Meta conectada');
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['whatsapp-instances'] });
+  });
+
+  it('abre a janela da Meta na versão 4 do Embedded Signup, sem os campos que a Meta ignora', async () => {
+    invoke.mockResolvedValue({ data: { success: true, mode: 'connect', instance: { id: 'i1' }, registered: true }, error: null });
+    const { result } = renderHook(() => useMetaEmbeddedSignup());
+
+    await act(async () => {
+      await result.current.startSignup();
+    });
+
+    expect(fbLoginOptions).toHaveBeenCalledWith({
+      config_id: 'cfg',
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: { setup: {} },
+    });
   });
 
   it('reconexão: o aviso diz "Número reconectado", não "criada"', async () => {
@@ -101,12 +123,32 @@ describe('useMetaEmbeddedSignup', () => {
       outcome = await result.current.startSignup();
     });
 
-    expect(outcome).toEqual({ mode: 'reconnect', instanceId: 'i1', registered: true });
+    expect(outcome).toEqual({ mode: 'reconnect', instanceId: 'i1', registered: true, deOutraEmpresa: false });
     expect(toast).toHaveBeenCalledWith(META_SIGNUP_SUCCESS_TOAST.reconnect);
     const shown = toast.mock.calls[0]?.[0];
     expect(shown.title).toBe('Número reconectado');
     expect(shown.description).toMatch(/histórico continua/);
     expect(shown.description).not.toMatch(/criada/);
+  });
+
+  it('número que já funcionava em outra empresa: o aviso diz o que falta fazer na Meta', async () => {
+    invoke.mockResolvedValue({
+      data: { success: true, mode: 'connect', instance: { id: 'i1' }, registered: true, numeroDeOutraEmpresa: true },
+      error: null,
+    });
+    const { result } = renderHook(() => useMetaEmbeddedSignup());
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.startSignup();
+    });
+
+    expect(outcome).toEqual({ mode: 'connect', instanceId: 'i1', registered: true, deOutraEmpresa: true });
+    expect(toast).toHaveBeenCalledWith(META_SIGNUP_TOAST_OUTRA_EMPRESA);
+    const shown = toast.mock.calls[0]?.[0];
+    expect(shown.description).toMatch(/roteamento de conversas/);
+    expect(shown.description).toMatch(/aquecimento/);
+    expect(`${shown.title} ${shown.description}`).not.toMatch(/[-‐‑‒–—―−]/);
   });
 
   it('recusa da função (número de outra Conta): mostra a mensagem dela, sem dizer de quem é', async () => {

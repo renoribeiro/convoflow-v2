@@ -35,7 +35,6 @@ export const useMetaApi = (): UseMetaApiReturn => {
         phone_number_id: input.phoneNumberId,
         waba_id: input.wabaId,
         access_token: input.accessToken,
-        graph_api_version: input.graphApiVersion,
       });
 
       if (!setupResult.ok) {

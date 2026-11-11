@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
 import { env } from '@/lib/env';
 import { useTenantId } from '@/contexts/TenantContext';
+import { META_GRAPH_VERSION, extrasDoEmbeddedSignup } from '@/lib/meta/versoes';
 
 // ---------------------------------------------------------------------------
 // Global FB SDK types (minimal — only what we use)
@@ -24,10 +25,9 @@ declare global {
           config_id: string;
           response_type: 'code';
           override_default_response_type: boolean;
+          /** Versão 4 do Embedded Signup: só `setup` (src/lib/meta/versoes.ts). */
           extras: {
             setup: Record<string, unknown>;
-            featureType: string;
-            sessionInfoVersion: string;
           };
         },
       ): void;
@@ -48,9 +48,10 @@ interface FBLoginResponse {
   status: string;
 }
 
-// Shape of the WA_EMBEDDED_SIGNUP postMessage payload (session event).
-// Assumption: this matches Meta's documented format for sessionInfoVersion '3'.
-// The outer message event data is JSON-parseable with { type, event, data }.
+// Shape of the WA_EMBEDDED_SIGNUP postMessage payload (session event), como a
+// Meta documenta para a versão 4 do Embedded Signup (página Implementation):
+// { type, event, data: { phone_number_id, waba_id, business_id } }. `waba_id`
+// hoje é o código da conta de mensagens (modelo novo de contas da Meta).
 interface EmbeddedSignupMessageData {
   type: 'WA_EMBEDDED_SIGNUP';
   event: 'FINISH' | 'CANCEL' | 'ERROR';
@@ -89,7 +90,7 @@ function loadFacebookSdk(appId: string): Promise<void> {
         appId,
         autoLogAppEvents: true,
         xfbml: true,
-        version: 'v20.0',
+        version: META_GRAPH_VERSION,
       });
       sdkLoaded = true;
       resolve();
@@ -111,6 +112,8 @@ export interface MetaSignupOutcome {
   mode: 'connect' | 'reconnect';
   instanceId: string;
   registered: boolean;
+  /** O número já funcionava em outra empresa (modelo novo de contas da Meta). */
+  deOutraEmpresa: boolean;
 }
 
 export interface UseMetaEmbeddedSignupReturn {
@@ -137,6 +140,16 @@ export const META_SIGNUP_SUCCESS_TOAST: Record<
       'O ConvoFlow reconheceu este número: ele foi atualizado no lugar e o histórico continua onde estava.',
   },
 };
+
+/**
+ * Aviso de quando o número já funcionava em outra empresa. A conexão está
+ * feita, mas o que decide se as mensagens chegam ao ConvoFlow fica na Meta.
+ */
+export const META_SIGNUP_TOAST_OUTRA_EMPRESA = {
+  title: 'Número conectado',
+  description:
+    'Este número já funcionava em outra empresa, então não passa pelo aquecimento. Falta, no Meta Business Suite, escolher o ConvoFlow no roteamento de conversas e colocar seu cartão na conta de mensagens nova. O passo a passo está na ajuda desta tela.',
+} as const;
 
 export const useMetaEmbeddedSignup = (): UseMetaEmbeddedSignupReturn => {
   const appId = env.get('FACEBOOK_APP_ID') || '';
@@ -220,11 +233,7 @@ export const useMetaEmbeddedSignup = (): UseMetaEmbeddedSignupReturn => {
               config_id: configId,
               response_type: 'code',
               override_default_response_type: true,
-              extras: {
-                setup: {},
-                featureType: '',
-                sessionInfoVersion: '3',
-              },
+              extras: extrasDoEmbeddedSignup(),
             },
           );
         });
@@ -256,12 +265,14 @@ export const useMetaEmbeddedSignup = (): UseMetaEmbeddedSignupReturn => {
         queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
 
         const mode: MetaSignupOutcome['mode'] = data.mode === 'reconnect' ? 'reconnect' : 'connect';
-        toast(META_SIGNUP_SUCCESS_TOAST[mode]);
+        const deOutraEmpresa = data.numeroDeOutraEmpresa === true;
+        toast(deOutraEmpresa ? META_SIGNUP_TOAST_OUTRA_EMPRESA : META_SIGNUP_SUCCESS_TOAST[mode]);
 
         return {
           mode,
           instanceId: String(data.instance?.id ?? ''),
           registered: Boolean(data.registered),
+          deOutraEmpresa,
         };
       } catch (err) {
         const message =

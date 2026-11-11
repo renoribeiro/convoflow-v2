@@ -1,9 +1,11 @@
 import { IWhatsAppProvider, ProviderConfig, SendMessageOptions } from './base.ts';
+import { META_GRAPH_ROOT } from '../meta-versoes.ts';
 
 export interface MetaProviderConfig extends ProviderConfig {
     phoneNumberId: string;
     wabaId?: string;
     accessToken: string;
+    /** Ignorado: a versão é a única do ConvoFlow (src/lib/meta/versoes.ts). */
     graphApiVersion?: string;
 }
 
@@ -13,8 +15,7 @@ export class MetaProvider implements IWhatsAppProvider {
 
     constructor(config: MetaProviderConfig) {
         this.config = config;
-        const version = config.graphApiVersion || 'v20.0';
-        this.graphRoot = `https://graph.facebook.com/${version}`;
+        this.graphRoot = META_GRAPH_ROOT;
     }
 
     private formatTo(phone: string): string {

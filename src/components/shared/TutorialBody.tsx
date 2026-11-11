@@ -22,7 +22,7 @@ export const TutorialBody: React.FC<Props> = ({ tutorial, className }) => {
   const next = getTutorial(tutorial.nextTutorialId);
 
   return (
-  <div className={cn('space-y-5 text-sm', className)}>
+  <div className={cn('space-y-5 text-sm break-words', className)}>
     <div className="space-y-2 rounded-md border border-border bg-muted/40 p-3">
       <p className="flex gap-2 text-foreground">
         <Target className="mt-0.5 h-4 w-4 shrink-0 text-primary" />

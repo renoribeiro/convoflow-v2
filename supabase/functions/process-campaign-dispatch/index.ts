@@ -18,6 +18,7 @@ import { claimExecution } from '../_shared/campaign-claim.ts'
 import { diaLocal, FUSO_BRASILIA } from '../_shared/dia-local.ts'
 import { corsHeaders, DataSanitizer } from '../_shared/validation.ts'
 import { ProviderFactory } from '../_shared/provider-factory.ts'
+import { motivoDoTetoAtingido, tetoDiarioDoNumeroOficial } from '../_shared/teto-diario-oficial.ts'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -474,19 +475,22 @@ serve(async (req) => {
       const isTemplate = isOfficial && (campaign.is_template === true)
 
       if (isOfficial) {
-        // Gate A (V6): Warm-up — cap de destinatários/dia baseado em dias desde registered_at.
-        // "Dia" do cap = dia de Brasília (D5, lote 6b): instance_outbound_today
+        // Gate A (V6): teto do dia. Número novo: aquecimento da primeira semana,
+        // contado de registered_at. Número que já funcionava em outra empresa
+        // (registered_elsewhere, 20261111000003): sem aquecimento, vale o limite
+        // que a Meta informa (messaging_limit_tier). Regra em
+        // _shared/teto-diario-oficial.ts.
+        // "Dia" do teto = dia de Brasília (D5, lote 6b): instance_outbound_today
         // conta a partir da meia noite de America/Sao_Paulo (20261029000002).
-        // Calcula o cap uma vez por instância por invocação (cache em outboundTodayMap).
-        const registeredAt = instanceRow.registered_at || instanceRow.created_at
-        const daysSinceRegistered = registeredAt
-          ? Math.floor((Date.now() - new Date(registeredAt).getTime()) / 86_400_000)
-          : 999
-        let warmupCap: number | null = null
-        if (daysSinceRegistered < 2) warmupCap = 50
-        else if (daysSinceRegistered < 4) warmupCap = 250
-        else if (daysSinceRegistered < 7) warmupCap = 1000
-        // else: sem cap extra de warm-up (só os limites normais de campanha se aplicam)
+        // Calcula uma vez por instância por invocação (cache em outboundTodayMap).
+        const tetoDoDia = tetoDiarioDoNumeroOficial({
+          registeredElsewhere: instanceRow.registered_elsewhere,
+          registeredAt: instanceRow.registered_at,
+          createdAt: instanceRow.created_at,
+          messagingLimitTier: instanceRow.messaging_limit_tier,
+          agoraMs: Date.now(),
+        })
+        const warmupCap = tetoDoDia.teto
 
         if (warmupCap !== null) {
           // Busca outbound today somente se ainda não cacheado para esta instância
@@ -509,9 +513,7 @@ serve(async (req) => {
           if (outboundToday >= warmupCap) {
             await supabase.from('campaign_executions').update({
               status: 'skipped',
-              error_message:
-                `Teto de aquecimento do dia: o número foi registrado há ${daysSinceRegistered} dia(s) e nesta fase manda até ${warmupCap} mensagens por dia. ` +
-                `O dia vira à meia noite de Brasília.`,
+              error_message: motivoDoTetoAtingido(tetoDoDia),
               attempts: exec.attempts + 1,
             }).eq('id', exec.id)
             touchedCampaigns.add(campaign_id)

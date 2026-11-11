@@ -29,7 +29,7 @@ export const FeatureHelpBody: React.FC<Props> = ({
   includeSummary = false,
   className,
 }) => (
-  <div className={cn('space-y-6 text-sm', className)}>
+  <div className={cn('space-y-6 text-sm break-words', className)}>
     {includeSummary && <p className="text-muted-foreground">{entry.whatItDoes}</p>}
 
     <section className="space-y-2">

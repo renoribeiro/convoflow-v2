@@ -182,7 +182,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Planeje a primeira semana com o teto de aquecimento',
         body:
-          'Número recém-conectado tem um teto diário de envio nos primeiros sete dias. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time, e o dia vira à meia noite de Brasília. Se a ideia é disparar campanha, não compre nem importe uma lista grande para a primeira semana: comece pelos contatos que já conhecem a empresa e cresça junto com o teto.',
+          'Número recém-conectado tem um teto diário de envio nos primeiros sete dias. É proteção contra bloqueio pela Meta, não limite do plano: 50 mensagens por dia nos dois primeiros dias, 250 até o quarto, 1.000 até o sétimo; do oitavo dia em diante o teto some. Conta tudo o que sai pelo número no dia, inclusive respostas do time, e o dia vira à meia noite de Brasília. Se a ideia é disparar campanha, não compre nem importe uma lista grande para a primeira semana: comece pelos contatos que já conhecem a empresa e cresça junto com o teto. Número que já funcionava em outra empresa não passa pelo aquecimento: vale o limite diário que a Meta informa para ele.',
       },
       {
         title: 'Confira a lista e vá para a conexão',
@@ -234,7 +234,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'Entre com o login do Facebook, escolha (ou crie) o portfólio empresarial e a conta do WhatsApp Business, digite o número, receba o código por SMS ou ligação e confirme. As telas são da Meta e mudam de tempos em tempos; o que não muda é a ordem: empresa, conta, número, código.',
         note:
-          'Fechar a janela no meio cancela tudo: o ConvoFlow avisa "Cadastro cancelado" e nada é gravado. É só clicar de novo em "Conectar com a Meta".',
+          'Fechar a janela no meio cancela tudo: o ConvoFlow avisa "Cadastro cancelado" e nada é gravado. É só clicar de novo em "Conectar com a Meta". Meu número já está com outra empresa? Na janela, escolha o número e a conta do WhatsApp que você já usa: a Meta compartilha a conta com o ConvoFlow, sem trocar o número. Depois siga o tutorial "Trazer um número que já está com outra empresa", que tem o que falta fazer na Meta (roteamento de conversas, cartão e templates).',
       },
       {
         title: 'Confira o que volta para o ConvoFlow',
@@ -246,7 +246,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Se o número já tinha verificação em duas etapas, digite o PIN',
         body:
-          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar o número na API Oficial" na linha do número. Abre a caixa "Informe o PIN do número": digite o PIN de 6 dígitos que você já usava e clique em "Registrar número". O aviso "Número registrado" fecha o assunto. Se o registro criar um PIN novo, ele aparece numa janela "Guarde o PIN deste número", com botão de copiar: anote antes de clicar em "Já guardei o PIN", porque ele não aparece outra vez.',
+          'Nesse caso o registro automático não acontece: o número aparece "Conectado", mas não envia. Clique no ícone de chave "Registrar o número na API Oficial" na linha do número. Abre a caixa "Informe o PIN do número": digite o PIN de 6 dígitos que você já usava e clique em "Registrar número". Número que veio de outra empresa já chega pronto para enviar; se um dia precisar ser registrado de novo, a mesma caixa explica onde achar o PIN, porque o ConvoFlow não sabe o PIN dele. O aviso "Número registrado" fecha o assunto. Se o registro criar um PIN novo, ele aparece numa janela "Guarde o PIN deste número", com botão de copiar: anote antes de clicar em "Já guardei o PIN", porque ele não aparece outra vez.',
       },
       {
         title: 'Faça um teste real',
@@ -263,6 +263,75 @@ export const ALL_TUTORIALS: Tutorial[] = [
           'É a exceção, para quem já mantém um app no Meta for Developers. Em vez de "Conectar com a Meta", abra "Avançado", embaixo do botão, e cole o "Código do número na Meta (Phone Number ID)", o "Código da conta do WhatsApp Business (WABA ID)" e a "Chave de acesso permanente (Access Token)" e clique em "Validar e conectar". O ConvoFlow confere os dados na Meta antes de gravar; se estiverem errados, nada é salvo e você corrige sem duplicar o número.',
         note:
           'Use a chave de um usuário do sistema da Meta (System User), de longa duração. A chave de um usuário comum vence em poucas horas e a conexão cai junto. O endereço de entrega da Meta é configurado uma vez para o ConvoFlow inteiro, por quem opera a plataforma. Não é passo seu.',
+      },
+    ],
+  },
+
+  // ------------------------------------------------------------------ 2b
+  // Número que já está com outra empresa (modelo novo de contas da Meta,
+  // 2026-09/10). Só o que a Meta confirma nas páginas oficiais:
+  //   account-model-evolution (sem migração; compartilhar a conta do WhatsApp;
+  //     templates não passam de uma conta de mensagens para outra; qualquer
+  //     parceiro pode descadastrar o número);
+  //   conversation-routing/get-started (cinco opções; só pela tela da Meta;
+  //     com um parceiro só, a Meta desliga o roteamento);
+  //   whatsapp-business-accounts (forma de pagamento na conta de mensagens).
+  // O que o ConvoFlow faz sozinho: supabase/functions/_shared/meta-numero-existente.ts.
+  {
+    id: 'numero-de-outra-empresa',
+    title: 'Trazer um número que já está com outra empresa',
+    goal:
+      'No fim, o número que hoje atende por outra empresa (outra plataforma da API oficial) atende pelo ConvoFlow, sem trocar de número e sem parar o atendimento.',
+    forWhom:
+      'Gestor da Loja (o Gerente faz o mesmo, numa Loja escolhida no topo), junto com quem administra a empresa na Meta. Atendente não conecta número. Número que nunca teve a API oficial segue o tutorial "Conectar número pela API Oficial".',
+    moduleName: 'whatsapp-numbers',
+    minRole: 'gestor',
+    steps: [
+      {
+        title: 'Peça à empresa antiga para NÃO descadastrar o número',
+        body:
+          'Pode cancelar o contrato, mas o número precisa continuar registrado. A Meta diz que qualquer parceiro que usa o número consegue descadastrar o número, e isso para o número para todos, inclusive no ConvoFlow. Combine isso antes de começar.',
+      },
+      {
+        title: 'Clique em "Conectar com a Meta" e escolha o número que você já usa',
+        body:
+          'Em Números de WhatsApp, clique em "Conectar número", escolha "API oficial da Meta" e clique em "Conectar com a Meta". Na janela da Meta, entre com o login do Facebook de quem administra a empresa e escolha o número e a conta do WhatsApp que você já usa. A Meta não muda mais o número de lugar: ela compartilha a sua conta do WhatsApp com o ConvoFlow e cria uma conta de mensagens só para o ConvoFlow.',
+        screen: '/dashboard/whatsapp-numbers',
+        helpKey: 'page:whatsapp-numbers',
+        note:
+          'Ao terminar aparece "Número conectado". O ConvoFlow percebe que o número já funcionava: ele não passa pelo aquecimento da primeira semana (vale o limite diário que a Meta informa) e o ConvoFlow não inventa PIN. Página da Meta: developers.facebook.com/documentation/business-messaging/whatsapp/account-model-evolution',
+      },
+      {
+        title: 'Escolha o ConvoFlow no roteamento de conversas da Meta',
+        body:
+          'No Meta Business Suite, abra o roteamento de conversas (Conversation Routing) e escolha o ConvoFlow nas cinco opções: cliente manda mensagem, resposta a anúncio que leva ao WhatsApp, resposta a mensagem de utilidade, resposta a mensagem de marketing e ligações. Isso só se faz na tela da Meta, e só a sua empresa pode fazer.',
+        note:
+          'A Meta não deixa a empresa nova tomar o lugar da antiga sozinha: sem esta escolha, as mensagens dos clientes podem continuar indo só para a empresa antiga. Quando só o ConvoFlow ficar no número, a Meta desliga o roteamento e tudo vem para cá. Página da Meta: developers.facebook.com/documentation/business-messaging/whatsapp/conversation-routing/get-started',
+      },
+      {
+        title: 'Coloque o seu cartão na conta de mensagens nova',
+        body:
+          'No Meta Business Suite, em Configurações, Contas, Contas de mensagens (Messaging accounts), abra a conta que a Meta criou para o ConvoFlow e cadastre a sua forma de pagamento. Quem cobra as conversas é a Meta, e ela cobra você, no seu cartão, não o ConvoFlow. Sem forma de pagamento nessa conta, as mensagens pagas não saem.',
+        note: 'Página da Meta: developers.facebook.com/documentation/business-messaging/whatsapp/whatsapp-business-accounts',
+      },
+      {
+        title: 'Crie de novo os seus templates aprovados',
+        body:
+          'Template aprovado é a mensagem pronta que a Meta aprovou, e ele pertence à conta de mensagens em que foi criado: os da empresa antiga não vêm junto. No WhatsApp Manager, escolha a conta de mensagens do ConvoFlow no seletor do canto de cima, crie os templates de novo e espere a Meta aprovar. Sem template aprovado, você não fala com quem está há mais de 24 horas sem escrever.',
+        screen: '/dashboard/templates',
+        helpKey: 'page:templates',
+      },
+      {
+        title: 'Guarde o histórico antigo com a empresa antiga',
+        body:
+          'As conversas de antes da conexão ficam no sistema da empresa antiga: a API oficial não traz mensagens anteriores, e no ConvoFlow entram só as mensagens novas. Se você precisa do histórico, peça uma cópia a ela antes de encerrar o contrato.',
+      },
+      {
+        title: 'Faça um teste real',
+        body:
+          'Mande uma mensagem de outro celular para o número e confirme que ela aparece em Conversas. Depois responda por ali e veja chegar. Se a mensagem não aparecer, confira o roteamento de conversas na Meta: é o motivo mais comum.',
+        screen: '/dashboard/conversations',
+        helpKey: 'page:conversations',
       },
     ],
   },

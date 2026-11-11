@@ -43,6 +43,8 @@ import { tipoDeConexao } from '@/lib/whatsapp/tipoDeConexao';
 import { WebhookDashboard } from '@/components/webhook/WebhookDashboard';
 import { supabase } from '@/integrations/supabase/client';
 import { logger } from '@/lib/logger';
+import { corpoDaEdgeFunction } from '@/lib/edgeFunctionError';
+import { lerRespostaDoRegistro, TEXTO_PADRAO_DO_PIN } from '@/lib/whatsapp/respostaDoRegistro';
 import { useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -143,6 +145,9 @@ export default function WhatsAppNumbers() {
 
   const [registeringInstance, setRegisteringInstance] = useState<string | null>(null);
   const [pinDialogInstance, setPinDialogInstance] = useState<WhatsAppInstance | null>(null);
+  // A frase da caixa do PIN vem do servidor (número de outra empresa explica
+  // onde achar o PIN; PIN recusado pede para conferir).
+  const [pinDialogTexto, setPinDialogTexto] = useState<string>(TEXTO_PADRAO_DO_PIN);
   // Desconectar pede confirmação (achado 103 do checkup: derrubava na hora).
   const [desconectarAlvo, setDesconectarAlvo] = useState<WhatsAppInstance | null>(null);
   // O PIN gerado no registro aparece numa janela que só fecha com clique
@@ -379,42 +384,44 @@ export default function WhatsAppNumbers() {
     setShowDeleteModal(true);
   };
 
-  const doRegisterNumber = async (instance: WhatsAppInstance, pin?: string) => {
+  /** Devolve true quando o servidor pediu o PIN (a caixa do PIN fica aberta). */
+  const doRegisterNumber = async (instance: WhatsAppInstance, pin?: string): Promise<boolean> => {
     try {
       const body: Record<string, string> = { instanceId: instance.id };
       if (pin) body.pin = pin;
 
       const { data, error } = await supabase.functions.invoke('register-meta-number', { body });
+      // 4xx/5xx: o corpo (com pin_required e a frase) só vem dentro do erro.
+      const corpo = error ? await corpoDaEdgeFunction(error) : (data as Record<string, unknown> | null);
+      const resultado = lerRespostaDoRegistro(corpo, Boolean(error));
 
-      if (error) {
-        logger.error('register-meta-number invoke error', { instanceId: instance.id, error });
-        toast({ title: 'Não deu certo', description: 'Não foi possível falar com o servidor. Tente de novo em instantes.', variant: 'destructive' });
-        return;
-      }
-
-      if (data?.pin_required) {
+      if (resultado.tipo === 'pedir_pin') {
+        setPinDialogTexto(resultado.texto);
         setPinDialogInstance(instance);
         setPinValue('');
-        return;
+        return true;
       }
 
-      if (!data?.success) {
-        toast({ title: 'Não foi possível registrar o número', description: data?.error ?? 'Tente de novo em instantes.', variant: 'destructive' });
-        return;
+      if (resultado.tipo === 'erro') {
+        if (error) logger.error('register-meta-number invoke error', { instanceId: instance.id, error });
+        toast({ title: 'Não foi possível registrar o número', description: resultado.texto, variant: 'destructive' });
+        return false;
       }
 
       toast({ title: 'Número registrado', description: 'Ele já pode enviar e receber mensagens pela API Oficial.' });
-      if (data.pin) setPinGerado({ nome: instance.name, pin: String(data.pin) });
+      if (resultado.pin) setPinGerado({ nome: instance.name, pin: resultado.pin });
 
-      if (data.warning) {
-        toast({ title: 'Aviso', description: data.warning, variant: 'destructive' });
+      if (resultado.aviso) {
+        toast({ title: 'Aviso', description: resultado.aviso, variant: 'destructive' });
       }
 
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });
+      return false;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       logger.error('register-meta-number falhou', { instanceId: instance.id, message });
       toast({ title: 'Não foi possível registrar o número', description: 'Tente de novo em instantes. Se continuar, fale com o suporte do ConvoFlow.', variant: 'destructive' });
+      return false;
     }
   };
 
@@ -431,9 +438,11 @@ export default function WhatsAppNumbers() {
     if (!pinDialogInstance || pinValue.length !== 6) return;
     setPinSubmitting(true);
     try {
-      await doRegisterNumber(pinDialogInstance, pinValue);
-      setPinDialogInstance(null);
-      setPinValue('');
+      const pediuDeNovo = await doRegisterNumber(pinDialogInstance, pinValue);
+      if (!pediuDeNovo) {
+        setPinDialogInstance(null);
+        setPinValue('');
+      }
     } finally {
       setPinSubmitting(false);
     }
@@ -1080,8 +1089,8 @@ export default function WhatsAppNumbers() {
           <DialogHeader>
             <DialogTitle>Informe o PIN do número</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Este número já tem um PIN de confirmação em duas etapas no WhatsApp. Digite os 6 números do PIN para registrar.
+          <p className="text-sm text-muted-foreground" data-testid="pin-motivo">
+            {pinDialogTexto}
           </p>
           <div className="space-y-2">
             <Label htmlFor="register-pin">PIN (6 dígitos)</Label>

@@ -31,6 +31,7 @@ import {
 import { checkReportLimits } from '../_shared/report-limits.ts';
 import { loadProviderCredentials } from '../_shared/instance-credentials.ts';
 import { safeFetch } from '../_shared/safe-outbound-url.ts';
+import { META_GRAPH_ROOT } from '../_shared/meta-versoes.ts';
 
 const ALLOWED_ORIGINS = [
   'https://convoflow.com.br',
@@ -176,11 +177,10 @@ async function sendWhatsApp(admin: SupabaseClient, instance: any, to: string, te
 
   if (provider === 'official') {
     const phoneNumberId = cfg.phoneNumberId || instance.instance_key;
-    const graphVersion = cfg.graphApiVersion || 'v20.0';
     if (!phoneNumberId) throw new Error('connection_config.phoneNumberId ausente na instância do sistema.');
     const { data: token, error: tErr } = await admin.rpc('get_instance_meta_token', { p_instance_id: instance.id });
     if (tErr || !token) throw new Error('Token Meta não encontrado no Vault para a instância do sistema.');
-    const resp = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
+    const resp = await fetch(`${META_GRAPH_ROOT}/${phoneNumberId}/messages`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({

@@ -19,10 +19,10 @@
 //   * GET https://graph.instagram.com/access_token?grant_type=ig_exchange_token
 //     → token longo { access_token, token_type, expires_in (segundos) }.
 //     "Deve ser feito no servidor" (usa o segredo do app);
-//   * GET https://graph.instagram.com/v25.0/me?fields=user_id,username →
+//   * GET https://graph.instagram.com/<versão>/me?fields=user_id,username →
 //     user_id é "o ID da conta profissional, o valor do campo id das
 //     notificações de webhook desta conta" = o nosso igAccountId;
-//   * POST https://graph.instagram.com/v25.0/me/subscribed_apps
+//   * POST https://graph.instagram.com/<versão>/me/subscribed_apps
 //     ?subscribed_fields=messages → { success: true }.
 //
 // ⚠️ IDs GRANDES: 17841419262135883 passa de 2^53. Se a Meta mandar o user_id
@@ -35,8 +35,11 @@
 export const INSTAGRAM_AUTHORIZE_URL = 'https://www.instagram.com/oauth/authorize';
 export const INSTAGRAM_CODE_EXCHANGE_URL = 'https://api.instagram.com/oauth/access_token';
 export const INSTAGRAM_LONG_LIVED_URL = 'https://graph.instagram.com/access_token';
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
+
 export const INSTAGRAM_GRAPH_HOST = 'https://graph.instagram.com';
-export const INSTAGRAM_GRAPH_VERSION = 'v25.0';
+// Versão única do ConvoFlow para a Graph API (src/lib/meta/versoes.ts).
+export const INSTAGRAM_GRAPH_VERSION = META_GRAPH_VERSION;
 
 /** Receber e responder DMs. Nada de comentários nem publicação. */
 export const INSTAGRAM_SCOPES = ['instagram_business_basic', 'instagram_business_manage_messages'] as const;

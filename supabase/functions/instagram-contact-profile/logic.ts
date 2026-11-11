@@ -23,8 +23,11 @@
 // ⚠️ NOMES DE CAMPO: o EdgeLogger censura chaves com 'token'/'secret'/'key'.
 // =============================================================================
 
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
+
 export const INSTAGRAM_GRAPH_HOST = 'https://graph.instagram.com';
-export const INSTAGRAM_GRAPH_VERSION = 'v25.0';
+// Versão única do ConvoFlow para a Graph API (src/lib/meta/versoes.ts).
+export const INSTAGRAM_GRAPH_VERSION = META_GRAPH_VERSION;
 
 /** Quantos contatos uma chamada aceita (a tela manda os que estão na lista). */
 export const MAX_CONTACTS_PER_CALL = 20;

@@ -1,3 +1,4 @@
+import { INSTAGRAM_GRAPH_ROOT } from '@/lib/meta/versoes';
 import { describe, it, expect } from 'vitest';
 // Parte pura do instagram-contact-profile (fatia 4a), compartilhada com o Deno.
 import {
@@ -69,7 +70,7 @@ describe('resposta do Instagram → o que gravar', () => {
 
   it('URL: perfil pelo IGSID, só nome e @ (a foto vence em dias e não é buscada)', () => {
     const u = new URL(buildProfileUrl('978239761327698'));
-    expect(`${u.origin}${u.pathname}`).toBe('https://graph.instagram.com/v25.0/978239761327698');
+    expect(`${u.origin}${u.pathname}`).toBe(`${INSTAGRAM_GRAPH_ROOT}/978239761327698`);
     expect(u.searchParams.get('fields')).toBe('name,username');
   });
 

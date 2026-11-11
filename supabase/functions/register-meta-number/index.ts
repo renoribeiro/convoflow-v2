@@ -4,29 +4,31 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
+import {
+  desfechoDoRegistro,
+  escolherPinDoRegistro,
+  MENSAGEM_PIN_DESCONHECIDO,
+  META_ERRO_JA_REGISTRADO,
+  META_ERRO_PIN_JA_DEFINIDO,
+  type OrigemDoPin,
+} from '../_shared/meta-numero-existente.ts';
 
-// Graph API version used by the entire codebase (meta.ts, meta-oauth-exchange, whatsapp-meta-setup).
-const DEFAULT_GRAPH_VERSION = 'v20.0';
-
-// Meta error codes observed when the number is already registered or already
-// has a two-step PIN set. Both cases are idempotent from our perspective unless
-// the caller must provide the existing PIN.
-//
-// Error 133015: "Phone number already registered" — treat as success.
-// Error 136024: "Two-step verification PIN already set" — the number was
-//   previously registered with a different PIN. The caller must supply that
-//   PIN via body.pin; we return a 409 with a clear explanation.
-const META_ERR_ALREADY_REGISTERED = 133015;
-const META_ERR_PIN_ALREADY_SET = 136024;
+// Erros da Meta tratados aqui (constantes em _shared/meta-numero-existente.ts):
+//   133015 "número já registrado": segue, e o desfecho decide o que guardar.
+//   136024 "PIN já definido": o número tem outro PIN; 409 com pin_required e
+//     a frase que a tela mostra na caixa "Informe o PIN do número".
+// Número que já funcionava em outra empresa (registered_elsewhere) e sem PIN
+// guardado: nem chama a Meta; 409 com pin_required e pin_desconhecido.
 
 interface RegisterRequest {
   /** ID of the whatsapp_instances row to register. */
   instanceId: string;
   /**
-   * 6-digit numeric PIN for WhatsApp's two-step verification.
-   * If omitted, a random PIN is generated and returned in the response.
-   * If the number already has a PIN set (Meta error 136024), this field
-   * is required and must match the existing PIN.
+   * PIN de 6 dígitos da verificação em duas etapas, digitado na tela.
+   * Sem ele: usa o PIN guardado; sem guardado, número novo sorteia (e o PIN
+   * volta na resposta para a janela "Guarde o PIN"), e número que veio de
+   * outra empresa recebe 409 pedindo o PIN.
    */
   pin?: string;
 }
@@ -139,7 +141,7 @@ Deno.serve(async (req: Request) => {
   // --- Load instance row, scoped to caller's tenant ---
   const { data: instance, error: instanceError } = await supabaseAdmin
     .from('whatsapp_instances')
-    .select('id, tenant_id, provider, connection_config, status')
+    .select('id, tenant_id, provider, connection_config, status, registered_elsewhere')
     .eq('id', instanceId)
     .single();
 
@@ -165,7 +167,8 @@ Deno.serve(async (req: Request) => {
   // --- Read connection_config fields ---
   const cfg = (instance.connection_config as Record<string, any>) ?? {};
   const phoneNumberId: string | undefined = cfg.phoneNumberId;
-  const graphVersion: string = cfg.graphApiVersion || DEFAULT_GRAPH_VERSION;
+  // Versão única do ConvoFlow (src/lib/meta/versoes.ts); a gravada na linha é só histórico.
+  const graphVersion: string = META_GRAPH_VERSION;
 
   if (!phoneNumberId) {
     return jsonResponse(
@@ -192,25 +195,51 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  // --- Determine PIN ---
-  // Use body.pin if provided; otherwise generate a random 6-digit PIN.
-  // crypto.getRandomValues is available in the Deno edge runtime.
+  // --- Determine PIN (regra em _shared/meta-numero-existente.ts) ---
+  // O que a pessoa digitou vale primeiro; depois o PIN guardado (o verdadeiro,
+  // em whatsapp_instance_register_pins; connection_config é reserva de linha
+  // antiga). Sem nenhum: número novo sorteia, como sempre; número que já
+  // funcionava em outra empresa NÃO sorteia: a tela pede o PIN e explica.
+  const { data: pinRow } = await supabaseAdmin
+    .from('whatsapp_instance_register_pins')
+    .select('pin')
+    .eq('instance_id', instanceId)
+    .maybeSingle();
+  const pinGuardado = pinRow?.pin ?? cfg.registerPin ?? null;
+  const deOutraEmpresa = instance.registered_elsewhere === true;
+
+  const escolha = escolherPinDoRegistro({
+    pinDigitado: bodyPin ?? null,
+    pinGuardado: typeof pinGuardado === 'string' ? pinGuardado : null,
+    deOutraEmpresa,
+  });
+  if (!('origem' in escolha)) {
+    logger.info('Registro: PIN desconhecido de número que veio de outra empresa; a tela pede o PIN', {
+      instance_id: instanceId,
+    });
+    return jsonResponse(
+      { success: false, error: MENSAGEM_PIN_DESCONHECIDO, pin_required: true, pin_desconhecido: true },
+      409,
+    );
+  }
+  const origem: OrigemDoPin = escolha.origem;
   let chosenPin: string;
-  if (bodyPin) {
-    chosenPin = bodyPin;
+  if (origem === 'digitado') {
+    chosenPin = bodyPin as string;
+  } else if (origem === 'guardado') {
+    chosenPin = pinGuardado as string;
   } else {
+    // crypto.getRandomValues is available in the Deno edge runtime.
     const buf = new Uint32Array(1);
     crypto.getRandomValues(buf);
     // Modulo 1_000_000 gives a value in [0, 999999]; pad to 6 digits.
     chosenPin = String(buf[0] % 1_000_000).padStart(6, '0');
   }
 
-  // --- Call Meta Graph API §6.3: Register phone number ---
-  // Endpoint (SKILL.md §6.3):
-  //   POST https://graph.facebook.com/{GRAPH_API_VERSION}/{phoneNumberId}/register
-  // Body (SKILL.md §6.3):
-  //   { "messaging_product": "whatsapp", "pin": "<6-digit-numeric-string>" }
-  // Headers: Authorization: Bearer {token}, Content-Type: application/json
+  // --- Call Meta Graph API: Register phone number ---
+  //   POST https://graph.facebook.com/{versão}/{phoneNumberId}/register
+  //   Body: { "messaging_product": "whatsapp", "pin": "<6 dígitos>" }
+  //   Headers: Authorization: Bearer {token}, Content-Type: application/json
   const registerUrl =
     `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(phoneNumberId)}/register`;
 
@@ -219,7 +248,8 @@ Deno.serve(async (req: Request) => {
     phone_number_id: phoneNumberId,
     graph_version: graphVersion,
     // Never log chosenPin or accessToken in plain context fields.
-    pin_source: bodyPin ? 'caller' : 'auto_generated',
+    pin_origem: origem,
+    de_outra_empresa: deOutraEmpresa,
   });
 
   let registerData: MetaRegisterResponse;
@@ -250,6 +280,14 @@ Deno.serve(async (req: Request) => {
 
   // --- Interpret the Meta response ---
   const metaError = registerData.error;
+  // A Meta diz que a resposta deixa claro quando o PIN não foi trocado, sem
+  // documentar o nome do campo: o log guarda os NOMES das chaves, nunca valores.
+  logger.info('Meta register: resposta', {
+    instance_id: instanceId,
+    http_status: registerHttpStatus,
+    chaves: Object.keys(registerData ?? {}),
+    meta_code: metaError?.code ?? null,
+  });
 
   if (metaError) {
     const errCode = metaError.code;
@@ -264,33 +302,28 @@ Deno.serve(async (req: Request) => {
       fbtrace_id: metaError.fbtrace_id,
     });
 
-    // 133015 — "Phone number already registered"
-    // The number is already active on WhatsApp. Treat as idempotent success
-    // and fall through to the DB persistence block below.
-    if (errCode === META_ERR_ALREADY_REGISTERED) {
-      logger.info('Number already registered — treating as idempotent success', {
-        instance_id: instanceId,
-      });
-      // Fall through to DB update.
-    }
-    // 136024 — "Two-step verification PIN already set"
-    // The number was previously registered with a different PIN. The caller
-    // must provide the correct existing PIN in body.pin and retry.
-    else if (errCode === META_ERR_PIN_ALREADY_SET) {
+    if (errCode === META_ERRO_JA_REGISTRADO) {
+      // 133015: o número já está registrado. Segue para a gravação, que decide
+      // pelo desfecho se o PIN mandado é o verdadeiro.
+      logger.info('Number already registered (133015)', { instance_id: instanceId });
+    } else if (errCode === META_ERRO_PIN_JA_DEFINIDO) {
+      // 136024: o número tem um PIN que não é o mandado. A tela pede o PIN.
       return jsonResponse(
         {
           success: false,
-          error:
-            'Este número já possui um PIN de verificação em duas etapas configurado. ' +
-            'Forneça o PIN existente no campo "pin" e repita a requisição.',
+          error: deOutraEmpresa
+            ? MENSAGEM_PIN_DESCONHECIDO
+            : origem === 'digitado'
+              ? 'A Meta não aceitou esse PIN. Confira os 6 números com quem cuida do número e tente de novo.'
+              : 'Este número já tem um PIN de verificação em duas etapas. Digite os 6 números do PIN para registrar.',
           meta_error_code: errCode,
           pin_required: true,
+          ...(deOutraEmpresa ? { pin_desconhecido: true } : {}),
         },
         409,
       );
-    }
-    // All other Meta errors are returned as-is to the caller.
-    else {
+    } else {
+      // All other Meta errors are returned to the caller.
       return jsonResponse(
         {
           success: false,
@@ -314,34 +347,38 @@ Deno.serve(async (req: Request) => {
     );
   }
 
-  // --- Persist results to whatsapp_instances ---
-  // Store the chosen PIN in connection_config.registerPin so future
-  // re-registration (e.g. migration) can reuse it.
-  // Set status to 'open' — matching what meta-oauth-exchange and
-  // whatsapp-meta-setup set on a successfully connected official instance.
-  // registered_at is stamped only if still null so the warm-up baseline always
-  // reflects the first successful registration and is not reset on re-registration.
-  const updatedConfig: Record<string, any> = {
-    ...cfg,
-    registerPin: chosenPin,
-  };
+  // --- O que gravar (regra em _shared/meta-numero-existente.ts) ---
+  //   PIN: só o verdadeiro (digitado, guardado, ou sorteado e aceito num
+  //     número novo). O sorteado num número que já estava registrado a Meta não
+  //     aplicou: não é guardado nem mostrado.
+  //   registered_at (início do aquecimento): só no primeiro registro de número
+  //     novo, e só se ainda estiver vazio.
+  //   registered_elsewhere: o número veio pronto de outra empresa.
+  const desfecho = desfechoDoRegistro(
+    { origem, numeroJaEmUso: deOutraEmpresa },
+    { ok: !metaError && registerData.success === true, codigoDeErro: metaError?.code ?? null },
+  );
 
   const now = new Date().toISOString();
+  const atualizar: Record<string, unknown> = {
+    status: 'open',
+    last_connected_at: now,
+    updated_at: now,
+  };
+  if (desfecho.guardarPin) {
+    // O gatilho aa_whatsapp_instances_stash_register_pin tira o registerPin da
+    // config e o guarda em whatsapp_instance_register_pins.
+    atualizar.connection_config = { ...cfg, registerPin: chosenPin };
+  }
+  if (desfecho.marcarDeOutraEmpresa && !deOutraEmpresa) atualizar.registered_elsewhere = true;
 
-  // Step 1: update everything except registered_at on all rows (idempotent fields).
   const { error: updateError } = await supabaseAdmin
     .from('whatsapp_instances')
-    .update({
-      // @ts-ignore connection_config may not yet be in generated types
-      connection_config: updatedConfig,
-      status: 'open',
-      last_connected_at: now,
-      updated_at: now,
-    })
+    // @ts-ignore colunas fora dos tipos gerados (registered_elsewhere)
+    .update(atualizar)
     .eq('id', instanceId);
 
-  // Step 2: stamp registered_at only if it is still null.
-  if (!updateError) {
+  if (!updateError && desfecho.carimbarRegistradoEm) {
     const { error: regAtError } = await supabaseAdmin
       .from('whatsapp_instances')
       .update({
@@ -360,6 +397,9 @@ Deno.serve(async (req: Request) => {
     }
   }
 
+  // Só o PIN que o ConvoFlow criou agora volta para a tela ("Guarde o PIN").
+  const pinParaMostrar = origem === 'sorteado' && desfecho.guardarPin ? chosenPin : undefined;
+
   if (updateError) {
     // Registration succeeded on Meta's side — log and report the DB failure
     // without rolling back (the number IS registered).
@@ -371,12 +411,10 @@ Deno.serve(async (req: Request) => {
       {
         success: true,
         registered: true,
-        // Still return the PIN so the user can record it manually.
-        pin: chosenPin,
-        warning:
-          'Número registrado com sucesso na Meta, mas houve um erro ao atualizar o banco de dados. ' +
-          'Anote o PIN retornado.',
-        db_error: updateError.message,
+        ...(pinParaMostrar ? { pin: pinParaMostrar } : {}),
+        warning: pinParaMostrar
+          ? 'O número foi registrado na Meta, mas o ConvoFlow não conseguiu guardar o resultado. Anote o PIN que aparece agora.'
+          : 'O número foi registrado na Meta, mas o ConvoFlow não conseguiu guardar o resultado. Tente registrar de novo em instantes.',
       },
       200,
     );
@@ -385,6 +423,8 @@ Deno.serve(async (req: Request) => {
   logger.info('Phone number registered successfully', {
     instance_id: instanceId,
     phone_number_id: phoneNumberId,
+    pin_guardado: desfecho.guardarPin,
+    de_outra_empresa: desfecho.marcarDeOutraEmpresa,
     // Do not log chosenPin.
   });
 
@@ -392,7 +432,7 @@ Deno.serve(async (req: Request) => {
     {
       success: true,
       registered: true,
-      pin: chosenPin,
+      ...(pinParaMostrar ? { pin: pinParaMostrar } : {}),
     },
     200,
   );

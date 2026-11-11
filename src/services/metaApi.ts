@@ -6,7 +6,6 @@ export interface MetaSetupRequest {
   instance_id?: string;
   mode: 'create' | 'verify' | 'create_manual';
   access_token?: string;
-  graph_api_version?: string;
   /** create_manual: a Loja aberta no topo, conferida no servidor (connect-target.ts). */
   tenant_id?: string;
   name?: string;

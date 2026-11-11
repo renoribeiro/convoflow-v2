@@ -12,6 +12,7 @@
  *     Meta; conta recusada NUNCA inscrita no webhook; nada gravado se a
  *     inscrição falhar; e o token nunca no resultado que volta ao navegador.
  */
+import { INSTAGRAM_GRAPH_ROOT } from '@/lib/meta/versoes';
 import { describe, it, expect, vi } from 'vitest';
 
 import {
@@ -210,8 +211,8 @@ describe('respostas da Meta', () => {
   });
 
   it('endpoints: /me com user_id e a inscrição no campo messages', () => {
-    expect(meUrl()).toBe('https://graph.instagram.com/v25.0/me?fields=user_id,username');
-    expect(subscribeUrl()).toBe('https://graph.instagram.com/v25.0/me/subscribed_apps?subscribed_fields=messages');
+    expect(meUrl()).toBe(`${INSTAGRAM_GRAPH_ROOT}/me?fields=user_id,username`);
+    expect(subscribeUrl()).toBe(`${INSTAGRAM_GRAPH_ROOT}/me/subscribed_apps?subscribed_fields=messages`);
   });
 });
 

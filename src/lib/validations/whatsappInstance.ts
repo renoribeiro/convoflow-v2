@@ -38,10 +38,6 @@ const officialSchema = z.object({
     .string()
     .trim()
     .min(40, 'A chave de acesso parece incompleta. Cole a chave inteira.'),
-  graphApiVersion: z
-    .string()
-    .regex(/^v\d{1,2}\.\d{1,2}$/, 'Versão da API da Meta inválida (ex.: v20.0).')
-    .optional(),
 });
 
 const wahaSchema = z.object({

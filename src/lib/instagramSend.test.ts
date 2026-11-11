@@ -1,3 +1,4 @@
+import { INSTAGRAM_GRAPH_ROOT } from '@/lib/meta/versoes';
 import { describe, it, expect } from 'vitest';
 // Parte pura do instagram-send-message (fatia 3), compartilhada com o Deno.
 import {
@@ -96,10 +97,10 @@ describe('validade da conexão (tokenExpiresAt)', () => {
 });
 
 describe('chamada à Meta', () => {
-  it('graph.instagram.com, v25.0, /<IG_ID>/messages, recipient + message.text', () => {
+  it('graph.instagram.com na versão única, /<IG_ID>/messages, recipient + message.text', () => {
     const r = buildGraphRequest('17841419262135883', IGSID, 'Olá!');
     expect(INSTAGRAM_GRAPH_HOST).toBe('https://graph.instagram.com');
-    expect(r.url).toBe('https://graph.instagram.com/v25.0/17841419262135883/messages');
+    expect(r.url).toBe(`${INSTAGRAM_GRAPH_ROOT}/17841419262135883/messages`);
     expect(r.body).toEqual({ recipient: { id: IGSID }, message: { text: 'Olá!' } });
   });
 });

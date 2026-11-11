@@ -20,5 +20,10 @@ export function colunasPadrao(tabela: string): string {
   return COLUNAS_PADRAO_POR_TABELA[tabela] ?? '*';
 }
 
-/** As colunas que o navegador não lê nem grava (só o servidor, com a chave dele). */
-export const COLUNAS_FECHADAS_INSTANCIA = ['evolution_api_key', 'evolution_api_url', 'qr_code'] as const;
+/**
+ * As colunas que o navegador não lê nem grava (só o servidor, com a chave dele).
+ * As três primeiras são segredo; `registered_elsewhere` (20261111000003) não é
+ * segredo, mas é decisão do servidor: se a tela gravasse, um Gestor desligaria
+ * o aquecimento do número à mão.
+ */
+export const COLUNAS_FECHADAS_INSTANCIA = ['evolution_api_key', 'evolution_api_url', 'qr_code', 'registered_elsewhere'] as const;

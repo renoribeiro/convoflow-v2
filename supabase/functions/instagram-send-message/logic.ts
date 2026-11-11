@@ -5,7 +5,7 @@
 //
 // Fatos da documentação da Meta ("Instagram API with Instagram login",
 // Messaging API), conferidos em 2026-09-23:
-//   * POST https://graph.instagram.com/v25.0/<IG_ID>/messages
+//   * POST https://graph.instagram.com/<versão>/<IG_ID>/messages
 //     Authorization: Bearer <token>; corpo {recipient:{id}, message:{text}};
 //   * resposta: { recipient_id, message_id };
 //   * texto: UTF-8, no máximo 1000 BYTES (não caracteres);
@@ -21,8 +21,11 @@
 // ⚠️ NOMES DE CAMPO: o EdgeLogger censura chaves com 'token'/'secret'/'key'.
 // =============================================================================
 
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
+
 export const INSTAGRAM_GRAPH_HOST = 'https://graph.instagram.com';
-export const INSTAGRAM_GRAPH_VERSION = 'v25.0';
+// Versão única do ConvoFlow para a Graph API (src/lib/meta/versoes.ts).
+export const INSTAGRAM_GRAPH_VERSION = META_GRAPH_VERSION;
 /** Limite do texto, em bytes UTF-8. Espelhado em src/lib/instagram/reply.ts. */
 export const INSTAGRAM_TEXT_MAX_BYTES = 1000;
 

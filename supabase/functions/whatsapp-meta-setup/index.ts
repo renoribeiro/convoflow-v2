@@ -7,6 +7,7 @@ import { buildCorsHeaders } from '../_shared/validation.ts';
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
 import { decideInstanceAccess } from '../_shared/instance-access.ts';
 import { decideConnectTarget, targetTenantIdFor } from '../_shared/connect-target.ts';
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
 
 /**
  * API Oficial do WhatsApp pelos campos (app próprio da empresa na Meta).
@@ -28,7 +29,6 @@ interface SetupRequest {
   instance_id?: string;
   access_token?: string;
   mode: 'create' | 'verify' | 'create_manual';
-  graph_api_version?: string;
   // create_manual
   tenant_id?: string;
   name?: string;
@@ -37,7 +37,6 @@ interface SetupRequest {
 }
 
 const META_ID_PATTERN = /^\d{6,30}$/;
-const GRAPH_VERSION_PATTERN = /^v\d{1,2}\.\d{1,2}$/;
 
 interface ValidationResult {
   ok: boolean;
@@ -46,7 +45,6 @@ interface ValidationResult {
   verifiedName?: string;
 }
 
-const DEFAULT_GRAPH_VERSION = 'v20.0';
 
 Deno.serve(async (req: Request) => {
   const logger = createLogger(req);
@@ -161,8 +159,8 @@ Deno.serve(async (req: Request) => {
   const cfg = (instance.connection_config as Record<string, any>) || {};
   const phoneNumberId: string | undefined = cfg.phoneNumberId;
   const wabaId: string | undefined = cfg.wabaId;
-  const graphVersion: string =
-    body.graph_api_version || cfg.graphApiVersion || DEFAULT_GRAPH_VERSION;
+  // Versão única do ConvoFlow (src/lib/meta/versoes.ts): nem o corpo nem a linha escolhem.
+  const graphVersion: string = META_GRAPH_VERSION;
 
   if (!phoneNumberId || !wabaId) {
     return jsonResponse(
@@ -194,10 +192,7 @@ Deno.serve(async (req: Request) => {
     const phoneNumberId = typeof req.phone_number_id === 'string' ? req.phone_number_id.trim() : '';
     const wabaId = typeof req.waba_id === 'string' ? req.waba_id.trim() : '';
     const accessToken = typeof req.access_token === 'string' ? req.access_token.trim() : '';
-    const graphVersion =
-      typeof req.graph_api_version === 'string' && GRAPH_VERSION_PATTERN.test(req.graph_api_version)
-        ? req.graph_api_version
-        : DEFAULT_GRAPH_VERSION;
+    const graphVersion = META_GRAPH_VERSION;
     if (name.length < 3 || name.length > 50) {
       return jsonResponse({ ok: false, reason: 'invalid', error: 'O nome precisa ter de 3 a 50 caracteres.' }, 400);
     }

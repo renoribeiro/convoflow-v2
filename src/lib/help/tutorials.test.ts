@@ -226,10 +226,13 @@ describe('cobertura dos tutoriais de onboarding', () => {
     // do dia a dia. chave-api só aparece com a API liberada no site.
     // Desde 2026-11-10 (sessão 4, cadastro ligado): teste-gratis é o primeiro,
     // porque é o começo da jornada de quem chega pelo site.
+    // Desde 2026-11-11: o número que já está com outra empresa logo depois da
+    // conexão pela API Oficial (é o mesmo botão, com passos a mais na Meta).
     expect(TUTORIALS.map((t) => t.id)).toEqual([
       ...(PUBLIC_SIGNUP_ENABLED ? ['teste-gratis'] : []),
       'antes-de-conectar',
       'conectar-whatsapp',
+      'numero-de-outra-empresa',
       'conectar-evolution',
       'conectar-waha',
       'conectar-instagram',

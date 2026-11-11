@@ -5,6 +5,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { createLogger } from '../_shared/logger.ts';
 import { buildCorsHeaders } from '../_shared/validation.ts';
 import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from '../_shared/capabilities.ts';
+import { META_GRAPH_VERSION } from '../_shared/meta-versoes.ts';
+import {
+  CAMPOS_BASICOS_DO_NUMERO_NA_META,
+  CAMPOS_DO_NUMERO_NA_META,
+  desfechoDoRegistro,
+  escolherPinDoRegistro,
+  estadoDoNumeroNaMeta,
+  limiteInformadoPelaMeta,
+  META_ERRO_JA_REGISTRADO,
+  META_ERRO_PIN_JA_DEFINIDO,
+  notaInformadaPelaMeta,
+} from '../_shared/meta-numero-existente.ts';
 import {
   decideMetaSignup,
   metaSignupLookupFilter,
@@ -31,6 +43,10 @@ import {
  *      registered_at já existe: re-registrar com PIN aleatório num número já
  *      registrado só serve para trocar o PIN (ou errá-lo), e zerar
  *      registered_at devolveria o número ao teto de 50/dia da primeira semana.
+ *      Número que já funcionava em outra empresa (modelo novo de contas da
+ *      Meta, desde 2026-11-11): o passo 3 lê status, nota e limite; o PIN
+ *      sorteado não é guardado, não há aquecimento e a linha ganha
+ *      registered_elsewhere (_shared/meta-numero-existente.ts).
  *
  * ROLLBACK (só o que este processo criou)
  *   primeira conexão: se algo explodir DEPOIS do commit, a linha nova é
@@ -44,11 +60,7 @@ import {
  *   caminho esperado.
  */
 
-// Graph API version — matches the default used in whatsapp-meta-setup and
-// the MetaProvider class (meta.ts). Update only when Meta confirms v20.0 is
-// deprecated; SKILL.md lists v19.0 as the safe minimum, but the codebase
-// standardised on v20.0.
-const DEFAULT_GRAPH_VERSION = 'v20.0';
+// Versão da Graph API: a única do ConvoFlow, em src/lib/meta/versoes.ts.
 
 interface ExchangeRequest {
   /** Authorization code received from the Embedded Signup dialog (LaunchParams). */
@@ -76,6 +88,9 @@ interface GraphTokenResponse {
 interface PhoneDetailsResponse {
   display_phone_number?: string;
   verified_name?: string;
+  status?: string;
+  quality_rating?: string;
+  whatsapp_business_manager_messaging_limit?: string;
   error?: {
     message: string;
     code: number;
@@ -204,7 +219,7 @@ Deno.serve(async (req: Request) => {
   const requestedTenantId: string | null =
     typeof tenantId === 'string' && tenantId ? tenantId : (callerProfile.tenant_id ?? null);
 
-  const graphVersion = DEFAULT_GRAPH_VERSION;
+  const graphVersion = META_GRAPH_VERSION;
 
   // ---------------------------------------------------------------------------
   // Step 0: LOOKUP + DECISÃO — antes de qualquer chamada à Meta.
@@ -370,44 +385,56 @@ Deno.serve(async (req: Request) => {
     logger.info('App subscribed to WABA successfully', { wabaId });
 
     // -------------------------------------------------------------------------
-    // Step 3: Fetch phone number display details for the instance record.
+    // Step 3: Detalhes do número na Meta, ANTES do registro.
     //
-    // SKILL.md §1.1: GET /{PHONE_NUMBER_ID}?fields=display_phone_number,verified_name
-    // Non-fatal: if this call fails we log and continue with nulls — and, na
-    // reconexão, phone_number/profile_name da linha ficam como estavam.
+    // Nome e número para a linha, e o que diz se o número já funcionava em
+    // outra empresa (status, nota de qualidade) e o limite de envio que a Meta
+    // informa. Regra em _shared/meta-numero-existente.ts. Se a Meta recusar o
+    // pedido completo, tenta os campos básicos. Não fatal: sem resposta, o
+    // estado é "desconhecido" e vale o comportamento de sempre; na reconexão,
+    // phone_number/profile_name da linha ficam como estavam.
     // -------------------------------------------------------------------------
     let phoneNumberDisplay: string | null = null;
     let verifiedName: string | null = null;
+    let detalhesDoNumero: PhoneDetailsResponse | null = null;
 
-    try {
-      const phoneUrl =
-        `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(phoneNumberId)}` +
-        `?fields=display_phone_number,verified_name`;
-
-      const phoneRes = await fetch(phoneUrl, {
-        headers: { 'Authorization': `Bearer ${accessToken}` },
-      });
-
-      if (phoneRes.ok) {
-        const phoneData: PhoneDetailsResponse = await phoneRes.json();
-        phoneNumberDisplay = phoneData.display_phone_number ?? null;
-        verifiedName = phoneData.verified_name ?? null;
-        logger.info('Fetched phone number details', {
-          display: phoneNumberDisplay,
-          verified: verifiedName,
+    for (const campos of [CAMPOS_DO_NUMERO_NA_META, CAMPOS_BASICOS_DO_NUMERO_NA_META]) {
+      try {
+        const phoneUrl =
+          `https://graph.facebook.com/${graphVersion}/${encodeURIComponent(phoneNumberId)}` +
+          `?fields=${campos}`;
+        const phoneRes = await fetch(phoneUrl, {
+          headers: { 'Authorization': `Bearer ${accessToken}` },
         });
-      } else {
+        if (phoneRes.ok) {
+          detalhesDoNumero = await phoneRes.json();
+          break;
+        }
         const phoneText = await phoneRes.text();
         logger.warn('Could not fetch phone number details (non-fatal)', {
           httpStatus: phoneRes.status,
+          campos,
           body: truncate(phoneText, 200),
         });
+      } catch (phoneErr: any) {
+        logger.warn('Phone number details fetch threw (non-fatal)', {
+          campos,
+          error: phoneErr?.message,
+        });
       }
-    } catch (phoneErr: any) {
-      logger.warn('Phone number details fetch threw (non-fatal)', {
-        error: phoneErr?.message,
-      });
     }
+
+    phoneNumberDisplay = detalhesDoNumero?.display_phone_number ?? null;
+    verifiedName = detalhesDoNumero?.verified_name ?? null;
+    const estadoNaMeta = estadoDoNumeroNaMeta(detalhesDoNumero);
+    const limiteDaMeta = limiteInformadoPelaMeta(detalhesDoNumero);
+    const notaDaMeta = notaInformadaPelaMeta(detalhesDoNumero);
+    logger.info('Detalhes do número na Meta', {
+      estado: estadoNaMeta,
+      status: typeof detalhesDoNumero?.status === 'string' ? detalhesDoNumero.status : null,
+      limite: limiteDaMeta,
+      nota: notaDaMeta,
+    });
 
     // -------------------------------------------------------------------------
     // Step 4: Gravar — linha + token, UMA transação, decidida pelo banco.
@@ -468,30 +495,36 @@ Deno.serve(async (req: Request) => {
     });
 
     // -------------------------------------------------------------------------
-    // Step 5: Register the phone number on the Cloud API (best-effort).
+    // Step 5: Registro do número na Cloud API (best-effort) e o que gravar.
     //
     // PULADO quando a reconexão encontra registered_at já preenchido (ver
-    // cabeçalho). Caso contrário — primeira conexão, ou reconexão de linha que
-    // nunca registrou — usa o registerPin que a linha já tinha, se tiver, ou
-    // gera um.
+    // cabeçalho). Caso contrário (primeira conexão, ou reconexão de linha que
+    // nunca registrou) usa o registerPin que a linha já tinha, se tiver, ou
+    // sorteia um.
     //
-    // SKILL.md §6.3: POST /{phoneNumberId}/register
-    //   Body: { messaging_product: "whatsapp", pin: "<6-digit>" }
-    //   Authorization: Bearer {accessToken}  ← in-memory token, NOT re-read from Vault.
+    // Número que já funcionava em outra empresa (estado "ja_em_uso" no passo 3,
+    // ou 133015 com PIN sorteado): a Meta não troca o PIN de número já
+    // registrado, então o sorteado NÃO é guardado como se fosse o verdadeiro;
+    // registered_at não vira "hoje" (sem aquecimento) e a linha ganha
+    // registered_elsewhere = true. Se um dia for preciso registrar de novo, o
+    // ícone de chave pede o PIN na tela (register-meta-number). Regras em
+    // _shared/meta-numero-existente.ts.
     //
-    // Error handling mirrors register-meta-number/index.ts:
-    //   133015 (already registered) → idempotent success, store PIN in config.
-    //   136024 (PIN already set)    → non-fatal warn, leave fallback button enabled.
-    //   Any other error             → non-fatal warn, leave fallback button enabled.
+    // Endpoint: POST /{phoneNumberId}/register
+    //   Body: { messaging_product: "whatsapp", pin: "<6 dígitos>" }
+    //   Authorization: Bearer {accessToken}  (em memória, NÃO relido do cofre).
     //
-    // A failure here NEVER rolls back or fails the onboarding. This inner
-    // try/catch is self-contained and only logs.
+    // Falha aqui NUNCA desfaz a conexão: tudo dentro do try só registra no log.
     // -------------------------------------------------------------------------
     let autoRegistered = false;
+    let numeroDeOutraEmpresa = false;
 
-    // Meta error codes — same constants as register-meta-number.
-    const META_ERR_ALREADY_REGISTERED = 133015;
-    const META_ERR_PIN_ALREADY_SET = 136024;
+    // Nota e limite que a Meta informou valem para a linha em qualquer caso.
+    const gravar: Record<string, unknown> = {};
+    if (notaDaMeta) gravar.quality_rating = notaDaMeta;
+    if (limiteDaMeta) gravar.messaging_limit_tier = limiteDaMeta;
+    if (notaDaMeta || limiteDaMeta) gravar.health_updated_at = new Date().toISOString();
+    let carimbarRegistradoEm = false;
 
     const alreadyRegistered = mode === 'reconnect' && !!instance.registered_at;
 
@@ -513,11 +546,19 @@ Deno.serve(async (req: Request) => {
           .eq('instance_id', instance.id)
           .maybeSingle();
         const existingPin = pinRow?.pin ?? instance.connection_config?.registerPin;
+        const numeroJaEmUso = estadoNaMeta === 'ja_em_uso';
+
+        // Aqui ninguém digita PIN: com PIN guardado, usa; sem, sorteia (a Meta
+        // pede um PIN de 6 dígitos no registro mesmo de número já registrado).
+        const escolha = escolherPinDoRegistro({
+          pinGuardado: typeof existingPin === 'string' ? existingPin : null,
+          deOutraEmpresa: false,
+        });
+        const origem = 'origem' in escolha ? escolha.origem : 'sorteado';
         let pin: string;
-        if (typeof existingPin === 'string' && /^[0-9]{6}$/.test(existingPin)) {
-          pin = existingPin;
+        if (origem === 'guardado') {
+          pin = existingPin as string;
         } else {
-          // Generate a random 6-digit numeric PIN using the Deno crypto API.
           const pinBuf = new Uint32Array(1);
           crypto.getRandomValues(pinBuf);
           pin = String(pinBuf[0] % 1_000_000).padStart(6, '0');
@@ -529,7 +570,8 @@ Deno.serve(async (req: Request) => {
         logger.info('Auto-registering phone number (best-effort)', {
           instance_id: instance.id,
           phone_number_id: phoneNumberId,
-          reused_pin: pin === existingPin,
+          pin_origem: origem,
+          numero_ja_em_uso: numeroJaEmUso,
           // Never log the pin or accessToken in plain log fields.
         });
 
@@ -545,96 +587,94 @@ Deno.serve(async (req: Request) => {
           }),
         });
 
-        const registerData: { success?: boolean; error?: { message: string; code?: number; type?: string; fbtrace_id?: string } } =
-          await registerRes.json();
-
+        const registerData: Record<string, any> & {
+          success?: boolean;
+          error?: { message: string; code?: number; type?: string; fbtrace_id?: string };
+        } = await registerRes.json();
         const metaErr = registerData.error;
 
-        if (metaErr) {
-          const errCode = metaErr.code;
-
-          if (errCode === META_ERR_ALREADY_REGISTERED) {
-            // 133015 — number is already active on WhatsApp; treat as success.
-            logger.info('Auto-register: number already registered (133015) — idempotent success', {
-              instance_id: instance.id,
-            });
-            autoRegistered = true;
-          } else if (errCode === META_ERR_PIN_ALREADY_SET) {
-            // 136024 — number has an existing PIN we don't know. Non-fatal; user
-            // must click the manual "Registrar número" button and supply the PIN.
-            logger.warn('Auto-register: PIN already set on number (136024) — manual registration required', {
-              instance_id: instance.id,
-              meta_code: errCode,
-              fbtrace_id: metaErr.fbtrace_id,
-            });
-          } else {
-            // Any other Meta error — log details (no secrets) and continue.
-            logger.warn('Auto-register: Meta returned error (non-fatal)', {
-              instance_id: instance.id,
-              meta_code: errCode,
-              meta_type: metaErr.type,
-              http_status: registerRes.status,
-              fbtrace_id: metaErr.fbtrace_id,
-            });
-          }
-        } else if (registerData.success) {
-          // Clean success from Meta.
-          logger.info('Auto-register: phone number registered successfully', {
+        // A Meta diz que a resposta deixa claro quando o PIN não foi trocado,
+        // sem documentar o nome do campo: o log guarda os NOMES das chaves
+        // (nunca os valores) para isso aparecer no primeiro caso real.
+        logger.info('Auto-register: resposta da Meta', {
+          instance_id: instance.id,
+          http_status: registerRes.status,
+          chaves: Object.keys(registerData ?? {}),
+          meta_code: metaErr?.code ?? null,
+          fbtrace_id: metaErr?.fbtrace_id ?? null,
+        });
+        if (metaErr && metaErr.code !== META_ERRO_JA_REGISTRADO && metaErr.code !== META_ERRO_PIN_JA_DEFINIDO) {
+          logger.warn('Auto-register: Meta returned error (non-fatal)', {
             instance_id: instance.id,
-            phone_number_id: phoneNumberId,
-          });
-          autoRegistered = true;
-        } else {
-          // Unexpected shape (no error, no success flag).
-          logger.warn('Auto-register: unexpected Meta response shape (non-fatal)', {
-            instance_id: instance.id,
+            meta_code: metaErr.code,
+            meta_type: metaErr.type,
             http_status: registerRes.status,
+            fbtrace_id: metaErr.fbtrace_id,
           });
         }
 
-        // If registration succeeded (or was already done), persist the PIN in
-        // connection_config (MERGE sobre a config que o commit devolveu — nunca
-        // reconstruída do zero) and stamp registered_at (warm-up baseline) so
-        // that process-campaign-dispatch can calculate the warm-up cap.
-        // registered_at is only set if still null — it must not be overwritten
-        // so the warm-up window is always relative to the first registration.
-        if (autoRegistered) {
-          // O trigger aa_whatsapp_instances_stash_register_pin tira o
-          // registerPin da config e o guarda em whatsapp_instance_register_pins.
-          const updatedConfig = {
+        const desfecho = desfechoDoRegistro(
+          { origem, numeroJaEmUso },
+          { ok: !metaErr && registerData.success === true, codigoDeErro: metaErr?.code ?? null },
+        );
+        autoRegistered = desfecho.registrado;
+        numeroDeOutraEmpresa = desfecho.marcarDeOutraEmpresa;
+        carimbarRegistradoEm = desfecho.carimbarRegistradoEm;
+
+        // PIN verdadeiro: MERGE sobre a config que o commit devolveu (nunca
+        // reconstruída do zero). O gatilho aa_whatsapp_instances_stash_register_pin
+        // tira o registerPin da config e o guarda em whatsapp_instance_register_pins.
+        if (desfecho.guardarPin) {
+          gravar.connection_config = {
             ...(instance.connection_config ?? {}),
             registerPin: pin,
           };
-
-          const { error: configUpdateError } = await supabaseAdmin
-            .from('whatsapp_instances')
-            .update({
-              // @ts-ignore connection_config may not yet be in generated types
-              connection_config: updatedConfig,
-              // @ts-ignore registered_at may not yet be in generated types
-              registered_at: new Date().toISOString(),
-            })
-            .eq('id', instance.id)
-            // Only stamp registered_at on the very first registration
-            .is('registered_at', null);
-
-          if (configUpdateError) {
-            // DB update failure is also non-fatal — registration already succeeded on Meta's side.
-            logger.warn('Auto-register: failed to persist registerPin/registered_at (non-fatal)', {
-              instance_id: instance.id,
-              error: configUpdateError.message,
-            });
-          } else {
-            logger.info('Auto-register: registerPin and registered_at persisted', {
-              instance_id: instance.id,
-            });
-          }
         }
+        if (desfecho.marcarDeOutraEmpresa) gravar.registered_elsewhere = true;
+
+        logger.info('Auto-register: desfecho', {
+          instance_id: instance.id,
+          registrado: desfecho.registrado,
+          guardar_pin: desfecho.guardarPin,
+          aquecimento_comeca_hoje: desfecho.carimbarRegistradoEm,
+          de_outra_empresa: desfecho.marcarDeOutraEmpresa,
+        });
       } catch (autoRegErr: any) {
         // Network or parse error — entirely non-fatal.
         logger.warn('Auto-register: unexpected error during registration step (non-fatal)', {
           instance_id: instance.id,
           error: autoRegErr?.message,
+        });
+      }
+    }
+
+    // Gravações depois do registro: não fatais (a conexão já está feita).
+    if (Object.keys(gravar).length > 0) {
+      const { error: gravarError } = await supabaseAdmin
+        .from('whatsapp_instances')
+        // @ts-ignore colunas fora dos tipos gerados (registered_elsewhere, saúde)
+        .update(gravar)
+        .eq('id', instance.id);
+      if (gravarError) {
+        logger.warn('Auto-register: failed to persist PIN, health or origin (non-fatal)', {
+          instance_id: instance.id,
+          error: gravarError.message,
+        });
+      }
+    }
+    // registered_at (início do aquecimento) só no primeiro registro feito pelo
+    // ConvoFlow num número novo, e só se ainda estiver vazio.
+    if (carimbarRegistradoEm) {
+      const { error: carimboError } = await supabaseAdmin
+        .from('whatsapp_instances')
+        // @ts-ignore registered_at may not yet be in generated types
+        .update({ registered_at: new Date().toISOString() })
+        .eq('id', instance.id)
+        .is('registered_at', null);
+      if (carimboError) {
+        logger.warn('Auto-register: failed to stamp registered_at (non-fatal)', {
+          instance_id: instance.id,
+          error: carimboError.message,
         });
       }
     }
@@ -654,6 +694,9 @@ Deno.serve(async (req: Request) => {
           provider: instance.provider,
         },
         registered: autoRegistered,
+        // Número que já funcionava em outra empresa: a tela avisa o que falta
+        // fazer na Meta (roteamento de conversas, pagamento, templates).
+        numeroDeOutraEmpresa,
       },
       200,
     );
