@@ -36,7 +36,7 @@ export const ConversionFunnel = ({ metrics, isLoading }: ConversionFunnelProps) 
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold">{stage.count}</span>
                     <span className="text-sm text-muted-foreground">
-                      ({stage.percentage}%)
+                      ({stage.percentage.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%)
                     </span>
                   </div>
                 </div>

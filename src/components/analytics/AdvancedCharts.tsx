@@ -43,6 +43,7 @@ import {
 import { AnalyticsFilters } from './AdvancedFilters';
 import { useRealTimeChartData } from '@/hooks/useRealTimeAnalytics';
 import { CHART_SERIES, BRAND_CHART } from '@/lib/chartColors';
+import { rotuloDiaCurto } from '@/lib/datas/brasilia';
 
 // Interfaces
 interface AdvancedChartsProps {
@@ -145,7 +146,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
           <XAxis
             dataKey="date"
             tick={{ fontSize: 12 }}
-            tickFormatter={(value) => new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+            tickFormatter={(value) => rotuloDiaCurto(String(value))}
           />
           <YAxis tick={{ fontSize: 12 }} />
           <Tooltip content={<CustomTooltip />} />
@@ -497,7 +498,7 @@ export const AdvancedCharts = ({ filters, className }: AdvancedChartsProps) => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="date"
-                      tickFormatter={(value) => new Date(value).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                      tickFormatter={(value) => rotuloDiaCurto(String(value))}
                     />
                     <YAxis />
                     <Tooltip content={<CustomTooltip />} />

@@ -1,10 +1,14 @@
 import { useMemo, useState } from 'react';
 import {
-  startOfDay,
-  endOfDay,
-  subDays,
-  differenceInCalendarDays,
-} from 'date-fns';
+  DiaCivil,
+  diaDoCalendario,
+  diaEmBrasilia,
+  diasNoIntervalo,
+  compararDias,
+  fimDoDiaEmBrasilia,
+  inicioDoDiaEmBrasilia,
+  somarDias,
+} from '@/lib/datas/brasilia';
 
 /**
  * Filtro de período global do Dashboard.
@@ -18,6 +22,10 @@ import {
  * do TanStack Query — se mudassem a cada ms, as queries refetchariam em loop.
  * (Trade-off conhecido: o intervalo não "avança" sozinho à meia-noite; basta o
  * usuário reabrir/trocar o período.)
+ *
+ * Desde 2026-11-12 os dias são os de Brasília (meia noite a meia noite em
+ * America/Sao_Paulo), em qualquer fuso do computador. O dia escolhido no
+ * calendário vale como DIA (ano, mês, dia), não como instante.
  */
 
 export type PeriodPreset = 'today' | '7d' | '30d' | 'custom';
@@ -46,6 +54,10 @@ export interface UsePeriodFilterResult {
   /** Número de dias inteiros no período (>= 1). Usado para granularidade de gráficos. */
   days: number;
 
+  /** Primeiro e último dia do período, em Brasília. */
+  firstDay: DiaCivil;
+  lastDay: DiaCivil;
+
   // Strings ISO estáveis — use estas em queryKeys e filtros do Supabase.
   startISO: string;
   endISO: string;
@@ -63,26 +75,29 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
   custom: 'Personalizado',
 };
 
-function resolveRange(preset: PeriodPreset, custom: CustomRange): PeriodRange {
-  const now = new Date();
+interface DiasDoPeriodo {
+  primeiro: DiaCivil;
+  ultimo: DiaCivil;
+}
+
+function resolveDays(preset: PeriodPreset, custom: CustomRange): DiasDoPeriodo {
+  const hoje = diaEmBrasilia(new Date());
 
   switch (preset) {
     case 'today':
-      return { start: startOfDay(now), end: endOfDay(now) };
+      return { primeiro: hoje, ultimo: hoje };
     case '7d':
-      return { start: startOfDay(subDays(now, 6)), end: endOfDay(now) };
+      return { primeiro: somarDias(hoje, -6), ultimo: hoje };
     case '30d':
-      return { start: startOfDay(subDays(now, 29)), end: endOfDay(now) };
+      return { primeiro: somarDias(hoje, -29), ultimo: hoje };
     case 'custom': {
-      const from = custom.from ?? startOfDay(subDays(now, 6));
-      const to = custom.to ?? endOfDay(now);
+      const de = custom.from ? diaDoCalendario(custom.from) : somarDias(hoje, -6);
+      const ate = custom.to ? diaDoCalendario(custom.to) : hoje;
       // Garante ordem cronológica mesmo se o usuário escolher invertido.
-      return from <= to
-        ? { start: startOfDay(from), end: endOfDay(to) }
-        : { start: startOfDay(to), end: endOfDay(from) };
+      return compararDias(de, ate) <= 0 ? { primeiro: de, ultimo: ate } : { primeiro: ate, ultimo: de };
     }
     default:
-      return { start: startOfDay(now), end: endOfDay(now) };
+      return { primeiro: hoje, ultimo: hoje };
   }
 }
 
@@ -93,14 +108,13 @@ export function usePeriodFilter(
   const [custom, setCustom] = useState<CustomRange>({});
 
   return useMemo<UsePeriodFilterResult>(() => {
-    const range = resolveRange(preset, custom);
+    const { primeiro, ultimo } = resolveDays(preset, custom);
+    const range: PeriodRange = { start: inicioDoDiaEmBrasilia(primeiro), end: fimDoDiaEmBrasilia(ultimo) };
 
-    // Duração do período (inclusiva) e janela anterior imediatamente antes dele.
-    const lengthMs = range.end.getTime() - range.start.getTime();
+    // Janela anterior: os mesmos N dias de Brasília, imediatamente antes.
+    const days = Math.max(1, diasNoIntervalo(primeiro, ultimo));
+    const prevStart = inicioDoDiaEmBrasilia(somarDias(primeiro, -days));
     const prevEnd = new Date(range.start.getTime() - 1);
-    const prevStart = new Date(prevEnd.getTime() - lengthMs);
-
-    const days = Math.max(1, differenceInCalendarDays(range.end, range.start) + 1);
 
     const label =
       preset === 'custom' && custom.from && custom.to
@@ -115,6 +129,8 @@ export function usePeriodFilter(
       range,
       prevRange: { start: prevStart, end: prevEnd },
       days,
+      firstDay: primeiro,
+      lastDay: ultimo,
       startISO: range.start.toISOString(),
       endISO: range.end.toISOString(),
       prevStartISO: prevStart.toISOString(),

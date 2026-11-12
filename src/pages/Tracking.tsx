@@ -14,11 +14,13 @@ import RealTimeStatus from '@/components/analytics/RealTimeStatus';
 import ExportReports from '@/components/analytics/ExportReports';
 import { useRealTimeAnalytics } from '@/hooks/useRealTimeAnalytics';
 import { Plus, TrendingUp, BarChart3, Target } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
+import { PERIODO_PADRAO, PeriodoRastreamento, periodoRapido } from '@/lib/rastreamento/resumo';
 
 export default function Tracking() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  // Período em dias de Brasília (2026-11-12): o dia vira à meia noite de
+  // Brasília em qualquer fuso do computador.
+  const [periodo, setPeriodo] = useState<PeriodoRastreamento>(() => periodoRapido(PERIODO_PADRAO));
   // "Nova Fonte" do topo abre o formulário na aba Fontes (antes só trocava de
   // aba e mostrava um aviso). Cada clique soma 1 e a aba abre o formulário.
   const [pedidoNovaFonte, setPedidoNovaFonte] = useState(0);
@@ -53,7 +55,8 @@ export default function Tracking() {
   } = useRealTimeAnalytics({
     filters: analyticsFilters,
     updateInterval: 30000,
-    enableWebSocket: true,
+    // O endpoint /ws/analytics não existe; a atualização vem do polling.
+    enableWebSocket: false,
     enablePolling: true
   });
 
@@ -101,11 +104,8 @@ export default function Tracking() {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <TrackingFilters
-            dateRange={dateRange}
-            onDateRangeChange={setDateRange}
-          />
-          <TrackingDashboard dateRange={dateRange} />
+          <TrackingFilters periodo={periodo} onPeriodoChange={setPeriodo} />
+          <TrackingDashboard periodo={periodo} />
         </TabsContent>
 
         <TabsContent value="sources" className="space-y-6">

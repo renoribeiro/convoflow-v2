@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { FUSO_DE_BRASILIA } from '@/lib/datas/brasilia';
 import { supabase } from '@/integrations/supabase/client';
 import { useTenant } from '@/contexts/TenantContext';
 import { logger } from '@/lib/logger';
@@ -75,14 +76,12 @@ export interface LojaConversationMetricsRow {
   median_duration_minutes: number | null;
 }
 
-/** Fuso do navegador: é nele que o front desenha os dias, então é nele que o banco agrupa. */
-export const browserTimeZone = (): string => {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-};
+/**
+ * Fuso em que o banco agrupa horas e dias: SEMPRE Brasília (2026-11-12).
+ * Antes era o fuso do navegador, e num computador em UTC (ou fora do Brasil)
+ * o dia do Dashboard virava às 21h de Brasília.
+ */
+export const fusoDosRelatorios = (): string => FUSO_DE_BRASILIA;
 
 interface RangeOptions {
   from?: string | null;
@@ -108,7 +107,7 @@ const toNumber = (v: unknown): number => (typeof v === 'number' ? v : Number(v ?
 
 export const useLojaMessageCounts = ({ from = null, to = null, bucket = 'all', enabled = true, keySuffix = [] }: RangeOptions = {}) => {
   const { tenant } = useTenant();
-  const tz = browserTimeZone();
+  const tz = fusoDosRelatorios();
   return useQuery<LojaMessageCountRow[]>({
     queryKey: ['loja-stats', 'message-counts', tenant?.id, from, to, bucket, tz, ...keySuffix],
     enabled: enabled && !!tenant?.id,
@@ -127,7 +126,7 @@ export const useLojaMessageCounts = ({ from = null, to = null, bucket = 'all', e
 
 export const useLojaResponseTime = ({ from = null, to = null, bucket = 'all', enabled = true, keySuffix = [] }: RangeOptions = {}) => {
   const { tenant } = useTenant();
-  const tz = browserTimeZone();
+  const tz = fusoDosRelatorios();
   return useQuery<LojaResponseTimeRow[]>({
     queryKey: ['loja-stats', 'response-time', tenant?.id, from, to, bucket, tz, ...keySuffix],
     enabled: enabled && !!tenant?.id,
@@ -146,7 +145,7 @@ export const useLojaResponseTime = ({ from = null, to = null, bucket = 'all', en
 
 export const useLojaConversationCounts = ({ from = null, to = null, bucket = 'all', enabled = true, keySuffix = [] }: RangeOptions = {}) => {
   const { tenant } = useTenant();
-  const tz = browserTimeZone();
+  const tz = fusoDosRelatorios();
   return useQuery<LojaConversationCountRow[]>({
     queryKey: ['loja-stats', 'conversation-counts', tenant?.id, from, to, bucket, tz, ...keySuffix],
     enabled: enabled && !!tenant?.id,

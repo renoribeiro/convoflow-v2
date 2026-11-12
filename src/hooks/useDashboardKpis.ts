@@ -1,6 +1,6 @@
 import { useSupabaseQuery, useSupabaseCount } from './useSupabaseQuery';
 import { useTenant } from '@/contexts/TenantContext';
-import { startOfDay, subDays, format } from 'date-fns';
+import { diaEmBrasilia, diaIso, inicioDoDiaEmBrasilia, rotuloDiaCurto, somarDias } from '@/lib/datas/brasilia';
 import type { UsePeriodFilterResult } from './usePeriodFilter';
 import {
   sumCounts,
@@ -62,15 +62,19 @@ const deltaPct = (current: number, previous: number): number => {
   return ((current - previous) / previous) * 100;
 };
 
-/** Os 7 dias da sparkline, em ordem, com a chave yyyy-MM-dd de cada um. */
+/** Os 7 dias da sparkline (dias de Brasília), em ordem, com a chave AAAA-MM-DD de cada um. */
 function sparkDays(): Array<{ key: string; label: string }> {
+  const hoje = diaEmBrasilia(new Date());
   const days: Array<{ key: string; label: string }> = [];
   for (let i = SPARK_DAYS - 1; i >= 0; i--) {
-    const d = subDays(new Date(), i);
-    days.push({ key: format(d, 'yyyy-MM-dd'), label: format(d, 'dd/MM') });
+    const key = diaIso(somarDias(hoje, -i));
+    days.push({ key, label: rotuloDiaCurto(key) });
   }
   return days;
 }
+
+/** O dia de Brasília de um instante, como chave AAAA-MM-DD. */
+const chaveDoDia = (instante: string): string => diaIso(diaEmBrasilia(new Date(instante)));
 
 /** Buckets diários (últimos `days` dias) por contagem de linhas. */
 function dailyCountSpark(rows: Array<Record<string, any>>, dateField: string): SparkPoint[] {
@@ -79,29 +83,29 @@ function dailyCountSpark(rows: Array<Record<string, any>>, dateField: string): S
   for (const r of rows) {
     const raw = r[dateField];
     if (!raw) continue;
-    const key = format(new Date(raw), 'yyyy-MM-dd');
+    const key = chaveDoDia(raw);
     if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
   }
   return Array.from(buckets.entries()).map(([date, value]) => ({
-    date: format(new Date(date), 'dd/MM'),
+    date: rotuloDiaCurto(date),
     value,
   }));
 }
 
 /**
  * Mesma sparkline, mas a partir de linhas JÁ agregadas por dia pelo banco
- * (`bucket` = meia-noite local do dia, `n` = contagem). Dias sem linha valem 0.
+ * (`bucket` = meia-noite de Brasília do dia, `n` = contagem). Dias sem linha valem 0.
  */
 function dailyBucketSpark(rows: Array<{ bucket: string | null; n: number }>): SparkPoint[] {
   const buckets = new Map<string, number>();
   for (const d of sparkDays()) buckets.set(d.key, 0);
   for (const r of rows) {
     if (!r.bucket) continue;
-    const key = format(new Date(r.bucket), 'yyyy-MM-dd');
+    const key = chaveDoDia(r.bucket);
     if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + r.n);
   }
   return Array.from(buckets.entries()).map(([date, value]) => ({
-    date: format(new Date(date), 'dd/MM'),
+    date: rotuloDiaCurto(date),
     value,
   }));
 }
@@ -111,7 +115,7 @@ export function useDashboardKpis(period: UsePeriodFilterResult): DashboardKpis {
   const enabled = !!tenant?.id;
 
   const { startISO, endISO, prevStartISO, prevEndISO } = period;
-  const spark7dISO = startOfDay(subDays(new Date(), SPARK_DAYS - 1)).toISOString();
+  const spark7dISO = inicioDoDiaEmBrasilia(somarDias(diaEmBrasilia(new Date()), -(SPARK_DAYS - 1))).toISOString();
 
   // ===== Conversas Ativas (snapshot) + variação por conversas criadas =====
   const { data: convAll = [], isLoading: activeLoading } = useLojaConversationCounts({

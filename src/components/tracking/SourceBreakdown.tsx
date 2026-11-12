@@ -9,7 +9,8 @@ import { CHART_SERIES } from '@/lib/chartColors';
 const COLORS = CHART_SERIES;
 
 interface SourceBreakdownProps {
-  data?: any[];
+  /** Contatos por fonte no período (já somados pelo nome da fonte). */
+  data?: Array<{ name: string; value: number }>;
   isLoading?: boolean;
 }
 
@@ -38,13 +39,7 @@ const renderCustomizedLabel = ({
 };
 
 export const SourceBreakdown = ({ data, isLoading }: SourceBreakdownProps) => {
-  const chartData = data
-    ?.filter(source => source.lead_tracking && source.lead_tracking[0]?.count > 0)
-    .map(source => ({
-      name: source.name,
-      value: source.lead_tracking[0]?.count || 0
-    }))
-    .sort((a, b) => b.value - a.value) || [];
+  const chartData = (data ?? []).filter((f) => f.value > 0);
 
   return (
     <Card>

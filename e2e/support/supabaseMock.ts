@@ -332,6 +332,43 @@ function rpcResponse(name: string, role: MockRole): unknown {
         phone: p.phone, profile_updated_at: p.updated_at, status: p.status,
       };
     });
+    // Aba Resumo do Rastreamento (20261112000001). O Gerente abre a Conta
+    // (kind 'account'), então recebe "Todas as Lojas": a Conta e duas Lojas,
+    // com a Loja em cada linha. Os demais cargos, uma Loja só.
+    case 'rastreamento_resumo': {
+      const todas = role === 'gerente';
+      const lojaA = todas ? uid(1, 't') : IDS.tenant;
+      const lojaB = uid(2, 't');
+      const lojas = todas
+        ? [{ id: IDS.tenant, nome: 'Conta Exemplo', tipo: 'account' }, { id: lojaA, nome: 'Loja Centro', tipo: 'store' }, { id: lojaB, nome: 'Loja Praia', tipo: 'store' }]
+        : [{ id: IDS.tenant, nome: 'Loja Centro', tipo: 'store' }];
+      const dia = (i: number) => new Date(NOW - i * 86_400_000).toISOString().slice(0, 10);
+      const anuncios = [
+        { tenant_id: lojaA, anuncio_id: '120000000000000101', titulo: 'Consulta de avaliação com desconto', conversas: 16, novos: 13, voltaram: 3 },
+        { tenant_id: lojaA, anuncio_id: '120000000000000102', titulo: 'Agende sua visita', conversas: 9, novos: 8, voltaram: 1 },
+        { tenant_id: todas ? lojaB : lojaA, anuncio_id: '120000000000000103', titulo: null, conversas: 3, novos: 3, voltaram: 0 },
+      ];
+      return {
+        periodo: { de: dia(29), ate: dia(0), dias: 30, fuso: 'America/Sao_Paulo' },
+        todas_lojas: todas,
+        lojas,
+        totais: { contatos: 36, conversoes: 4, receita: 1890.5, conversas_anuncio: 28, novos: 24, voltaram: 4 },
+        anterior: { contatos: 30, conversoes: 3, receita: 1200, conversas_anuncio: 20, novos: 18, voltaram: 2 },
+        por_dia: Array.from({ length: 30 }, (_, i) => ({ dia: dia(29 - i), contatos: (i * 7) % 4, conversoes: i % 9 === 0 ? 1 : 0, conversas_anuncio: (i * 5) % 3, novos: (i * 5) % 3, voltaram: 0 })),
+        por_loja: lojas.map((l, i) => ({ tenant_id: l.id, contatos: [0, 28, 8][i] ?? 36, conversoes: [0, 3, 1][i] ?? 4, receita: 0, conversas_anuncio: [0, 25, 3][i] ?? 28, novos: [0, 21, 3][i] ?? 24, voltaram: [0, 4, 0][i] ?? 4 })),
+        por_fonte: [
+          { tenant_id: lojaA, fonte_id: uid(1, 'f'), fonte: 'Consulta de avaliação com desconto · 000101', tipo: 'paid', contatos: 20, conversoes: 3, receita: 1500 },
+          { tenant_id: lojaA, fonte_id: uid(2, 'f'), fonte: 'Agende sua visita · 000102', tipo: 'paid', contatos: 9, conversoes: 1, receita: 390.5 },
+          { tenant_id: todas ? lojaB : lojaA, fonte_id: null, fonte: 'Sem fonte', tipo: null, contatos: 7, conversoes: 0, receita: 0 },
+        ],
+        anuncios,
+        anuncios_por_dia: [
+          { tenant_id: lojaA, dia: dia(0), anuncio_id: '120000000000000101', conversas: 2, novos: 1, voltaram: 1 },
+          { tenant_id: lojaA, dia: dia(1), anuncio_id: '120000000000000102', conversas: 3, novos: 3, voltaram: 0 },
+          { tenant_id: todas ? lojaB : lojaA, dia: dia(2), anuncio_id: '120000000000000103', conversas: 1, novos: 1, voltaram: 0 },
+        ],
+      };
+    }
     case 'get_stripe_transaction_stats': return [{ total_revenue: 123456, total_transactions: 42, success_rate: 97.5, average_transaction: 2939 }];
     case 'current_user_role': case 'get_current_user_role': return role;
     default: return [];

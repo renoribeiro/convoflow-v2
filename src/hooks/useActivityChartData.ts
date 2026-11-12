@@ -1,6 +1,5 @@
 import { useTenant } from '@/contexts/TenantContext';
-import { eachDayOfInterval, format, getHours } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { diaEmBrasilia, diaIso, horaEmBrasilia, rotuloDiaCurto, somarDias } from '@/lib/datas/brasilia';
 import type { UsePeriodFilterResult } from './usePeriodFilter';
 import { useLojaMessageCounts } from './useLojaStats';
 
@@ -12,7 +11,7 @@ import { useLojaMessageCounts } from './useLojaStats';
  * por dia entre start e end (inclusive).
  *
  * Desde a migração 20260914000001 as contagens vêm de `loja_message_counts`
- * (já agrupadas por hora/dia no fuso do navegador), não de linhas de
+ * (já agrupadas por hora/dia no fuso de Brasília, desde 2026-11-12), não de linhas de
  * `messages`: o gráfico é da Loja inteira mesmo para um atendente cuja
  * visibilidade de conversas foi restringida — ver `LojaWideHint`.
  */
@@ -51,30 +50,27 @@ export function useActivityChartData(period: UsePeriodFilterResult): UseActivity
     }));
     for (const r of rows) {
       if (!r.bucket) continue;
-      const bucket = buckets[getHours(new Date(r.bucket))];
+      const bucket = buckets[Number(horaEmBrasilia(new Date(r.bucket)).slice(0, 2))];
       if (!bucket) continue;
       if (r.direction === 'outbound') bucket.enviadas += r.n;
       else bucket.recebidas += r.n;
     }
     data = buckets;
   } else {
-    const dayKeys = eachDayOfInterval({
-      start: new Date(period.range.start),
-      end: new Date(period.range.end),
-    });
+    const dayKeys = Array.from({ length: days }, (_, i) => diaIso(somarDias(period.firstDay, i)));
     const index = new Map<string, ActivityPoint>();
-    const ordered: ActivityPoint[] = dayKeys.map((d) => {
+    const ordered: ActivityPoint[] = dayKeys.map((key) => {
       const point: ActivityPoint = {
-        label: format(d, 'dd/MM', { locale: ptBR }),
+        label: rotuloDiaCurto(key),
         enviadas: 0,
         recebidas: 0,
       };
-      index.set(format(d, 'yyyy-MM-dd'), point);
+      index.set(key, point);
       return point;
     });
     for (const r of rows) {
       if (!r.bucket) continue;
-      const key = format(new Date(r.bucket), 'yyyy-MM-dd');
+      const key = diaIso(diaEmBrasilia(new Date(r.bucket)));
       const point = index.get(key);
       if (!point) continue;
       if (r.direction === 'outbound') point.enviadas += r.n;

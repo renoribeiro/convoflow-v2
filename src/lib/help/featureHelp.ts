@@ -84,6 +84,12 @@ export interface FeatureHelpEntry {
   example?: string;
   /** Dicas extras (opcional). */
   tips?: string[];
+  /**
+   * Páginas oficiais de terceiros (Meta, por exemplo) que confirmam o que a
+   * entrada diz. Só endereço https de quem define a regra; a ajuda mostra o
+   * rótulo como link que abre em outra aba.
+   */
+  fontesOficiais?: Array<{ rotulo: string; url: string }>;
   /** Grupo a que a entrada pertence. */
   category?: HelpCategory;
   /**
@@ -747,24 +753,62 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     moduleName: 'tracking',
     title: 'Rastreamento de contatos',
     whatItDoes:
-      'Responde de onde o contato veio. Quem clica em "Enviar mensagem" num anúncio do Facebook ou do Instagram chega já identificado: a tela mostra qual anúncio trouxe cada pessoa, sem link encurtado e sem você configurar nada.',
+      'Responde de onde o contato veio e quantas conversas cada anúncio da Meta começou. Quem clica em "Enviar mensagem" num anúncio do Facebook ou do Instagram chega já identificado: a tela mostra qual anúncio trouxe cada pessoa, sem link encurtado e sem você configurar nada.',
     howToConfigure: [
-      'Não há o que configurar para anúncios: a origem chega junto com a primeira mensagem e o anúncio vira uma fonte sozinho.',
-      'Abra a aba Resumo e escolha o período (o único filtro da aba). Os números são só dos contatos que chegaram nesse intervalo. A comparação de cada cartão é com o período anterior de mesmo tamanho.',
+      'Não há o que configurar para anúncios: a origem chega junto com a mensagem que a pessoa manda ao clicar no anúncio, e o anúncio vira uma fonte sozinho.',
+      'Abra a aba Resumo e escolha o período. Os dias são os de Brasília: o dia vira à meia noite e "Hoje" é o dia de hoje em Brasília, qualquer que seja o fuso do seu computador. A comparação de cada cartão é com o período anterior de mesmo tamanho.',
+      '"Total de contatos" conta cada pessoa uma vez, pelo primeiro anúncio ou fonte que a trouxe. "Conversas iniciadas por anúncio" conta cada vez que alguém começou uma conversa clicando num anúncio: separa quem é novo de quem já tinha falado com a Loja e voltou.',
+      'No quadro "Conversas iniciadas por anúncio", "Por anúncio" mostra o total de cada anúncio e "Por dia" mostra o dia a dia. A coluna "ID do anúncio" é o mesmo número do Gerenciador de Anúncios da Meta: compare linha a linha, no mesmo período.',
+      'Gerente: com uma Loja aberta no seletor do topo, a tela mostra essa Loja. Com a Conta aberta, ela mostra "Todas as Lojas": a soma das Lojas da sua Conta, com o nome da Loja em cada linha das tabelas e um quadro "Por Loja". Gestor e Atendente veem a própria Loja.',
       'Use a aba Fontes para ver quantos contatos cada anúncio trouxe. Para organizar uma origem que você controla por fora (link na bio, portal, indicação), clique em "Nova fonte", no topo, ou em "Adicionar fonte", na aba: nome, tipo e os códigos de campanha (Origem, Meio e Campanha, os UTM), e a tela monta o link para você copiar. Troque o começo do link pelo endereço da sua página.',
       'Para tirar uma fonte da lista, clique na lixeira dela. Fonte sem contatos é excluída depois da confirmação. Fonte com contatos não pode ser excluída: a janela diz quantos contatos chegaram por ela e oferece "Desligar fonte", para os relatórios continuarem mostrando de onde eles vieram. A fonte desligada continua na aba, como "Inativa", e o olho ao lado liga de novo. Se aparecer "Nada foi excluído", a fonte já tinha saído por outro caminho: atualize a página.',
-      'A aba Análises abre os mesmos contatos por dia, por fonte e por etapa do funil.',
+      'A aba Análises abre os mesmos contatos por dia, por fonte e por etapa do funil, também em dias de Brasília e na mesma Loja (ou em Todas as Lojas) do Resumo.',
     ],
     example:
       'Dois criativos do mesmo consultório rodando juntos. Em dois meses um trouxe 21 contatos e o outro 3, e o orçamento vai para o primeiro sem ninguém precisar contar conversa a conversa.',
     tips: [
       'A identificação automática vale para a conexão oficial da Meta. Número conectado por QR Code não recebe o dado do anúncio, e os contatos dele ficam sem origem.',
-      'Vale a primeira origem: se a pessoa voltar meses depois por outro anúncio, a fonte continua sendo a do primeiro contato. Origem escolhida à mão por você nunca é sobrescrita.',
+      'No "Total de contatos" vale a primeira origem: se a pessoa voltar meses depois por outro anúncio, a fonte dela continua sendo a do primeiro contato. Origem escolhida à mão por você nunca é sobrescrita. A volta aparece em "Conversas iniciadas por anúncio", na coluna "Voltaram".',
+      'O número do ConvoFlow e o do Gerenciador de Anúncios raramente batem certinho: aqui só entram conversas de WhatsApp que chegaram nos números conectados ao ConvoFlow, e a Meta conta de outro jeito. A ajuda do quadro "Conversas iniciadas por anúncio" explica cada diferença, com as páginas oficiais da Meta.',
       'A Meta reaproveita o mesmo código em criativos diferentes, então o nome da fonte termina com os últimos dígitos do anúncio. É o que separa dois criativos de mesmo título.',
-      'A tela não sabe quanto você gastou: o valor investido não vem da Meta para cá. Ela responde "quantos contatos cada anúncio trouxe", não "quanto custou cada contato".',
-      'Os números são atualizados a cada 15 minutos. Um contato que acabou de chegar pode levar esse tempo para aparecer nos gráficos, mas já aparece na conversa.',
+      'A tela não sabe quanto você gastou: o valor investido não vem da Meta para cá. Ela responde "quantas conversas cada anúncio trouxe", não "quanto custou cada contato".',
+      'Os números se atualizam sozinhos a cada minuto enquanto a tela está aberta.',
       'Fonte cadastrada à mão não soma contatos sozinha: o ConvoFlow não lê os códigos UTM de quem clica no seu link. Os códigos servem para a ferramenta de visitas do seu site; quem conta contato por anúncio aqui é a identificação automática da Meta.',
       'As fontes são de cada Loja. Gestor e Atendente cuidam das fontes da própria Loja. Gerente: com uma Loja aberta no seletor do topo, você cria, edita, desliga e exclui as fontes dela, em qualquer Loja da sua Conta.',
+    ],
+    fontesOficiais: [
+      { rotulo: 'Meta: o que é "Conversas por mensagem iniciadas"', url: 'https://www.facebook.com/business/help/1234867544104505' },
+      { rotulo: 'Meta: anúncio que leva a mais de um aplicativo de mensagem', url: 'https://www.facebook.com/business/help/1192884166182156' },
+      { rotulo: 'Meta: por que os números do Gerenciador diferem de outras ferramentas (fuso e data)', url: 'https://www.facebook.com/business/help/511923449323749' },
+    ],
+    category: 'tela',
+    area: 'Marketing',
+  },
+  'page:tracking-anuncios': {
+    moduleName: 'tracking',
+    title: 'Conversas iniciadas por anúncio',
+    whatItDoes:
+      'Conta cada vez que alguém começou uma conversa no WhatsApp clicando num anúncio da Meta, por anúncio e por dia, com o ID do anúncio para você conferir com o Gerenciador de Anúncios.',
+    howToConfigure: [
+      'Escolha o período no topo da aba Resumo. Os dias são os de Brasília, de meia noite a meia noite.',
+      '"Novos" são pessoas que nunca tinham falado com a Loja. "Voltaram" são pessoas que já tinham conversa com a Loja e clicaram num anúncio de novo. Novos mais Voltaram dá o total de conversas.',
+      'Clique em "Por anúncio" para ver o total de cada anúncio, com o ID completo. Clique em "Por dia" para ver cada anúncio em cada dia.',
+      'No Gerenciador de Anúncios, use o mesmo período e a coluna de conversas por mensagem iniciadas. Para comparar dia a dia, peça lá o detalhamento por dia.',
+    ],
+    example:
+      'De 01/11 a 12/11 a Loja recebeu 39 conversas de anúncio: 35 de gente nova e 4 de pessoas que já eram contato e voltaram. O "Total de contatos" do mesmo período mostra menos, porque quem voltou já tinha origem.',
+    tips: [
+      'Aqui só entram conversas de WhatsApp que chegaram nos números conectados ao ConvoFlow pela conexão oficial da Meta. Número conectado por QR Code não recebe o dado do anúncio.',
+      'Um anúncio pode mandar a pessoa para o Messenger, o Instagram Direct ou o WhatsApp. O Gerenciador soma no resultado do anúncio as conversas de todos os destinos escolhidos; aqui só entram as de WhatsApp. No Gerenciador dá para separar o resultado por destino da mensagem.',
+      'Para a Meta, "Conversas por mensagem iniciadas" conta quem mandou mensagem pela primeira vez ou depois de pelo menos 7 dias sem conversar. Aqui, quem volta por um anúncio conta toda vez, mesmo antes de 7 dias, e aparece em "Voltaram".',
+      'O Gerenciador deixa escolher se a conversa entra no dia em que a pessoa viu o anúncio ou no dia em que ela mandou a mensagem, e usa o fuso da sua conta de anúncios. Aqui vale sempre o dia em que a mensagem chegou, no horário de Brasília. Confira as duas coisas antes de comparar dia a dia.',
+      'Segundo a Meta, essa métrica não conta conversas de anúncios entregues para a Europa e o Japão, ou vindos de lá.',
+      'Mensagem que veio de uma publicação comum, e não de um anúncio, não entra nesta conta.',
+    ],
+    fontesOficiais: [
+      { rotulo: 'Meta: o que é "Conversas por mensagem iniciadas"', url: 'https://www.facebook.com/business/help/1234867544104505' },
+      { rotulo: 'Meta: anúncio que leva a mais de um aplicativo de mensagem', url: 'https://www.facebook.com/business/help/1192884166182156' },
+      { rotulo: 'Meta: por que os números do Gerenciador diferem de outras ferramentas (fuso e data)', url: 'https://www.facebook.com/business/help/511923449323749' },
     ],
     category: 'tela',
     area: 'Marketing',

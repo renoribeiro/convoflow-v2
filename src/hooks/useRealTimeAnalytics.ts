@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { AnalyticsFilters } from '@/components/analytics/AdvancedFilters';
 import { getChartColor } from '@/lib/chartColors';
+import { useIdsDoEscopo } from '@/hooks/useTracking';
+import { diaEmBrasilia, diaIso, inicioDoDiaEmBrasilia, somarDias } from '@/lib/datas/brasilia';
 
 // Interfaces
 interface RealTimeAnalyticsData {
@@ -92,6 +94,12 @@ export const useRealTimeAnalytics = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const wsRetriesRef = useRef(0);
 
+  // A Loja aberta, ou a Conta e as Lojas filhas em "Todas as Lojas"
+  // (2026-11-12). As visões deixam o Gerente ler as Lojas filhas; sem este
+  // filtro ele veria as Lojas misturadas, e o superadmin, todas as Contas.
+  const { data: idsDoEscopo } = useIdsDoEscopo();
+  const chaveDoEscopo = (idsDoEscopo ?? []).join(',');
+
   // Função para buscar dados do servidor
   const fetchAnalyticsData = useCallback(async (): Promise<RealTimeAnalyticsData | null> => {
     try {
@@ -100,14 +108,19 @@ export const useRealTimeAnalytics = ({
         abortControllerRef.current.abort();
       }
 
+      const ids = chaveDoEscopo ? chaveDoEscopo.split(',') : [];
+      if (ids.length === 0) return null;
+
       abortControllerRef.current = new AbortController();
       const { signal } = abortControllerRef.current;
+      const desde = getDateFromFilter(filters.quickDate);
 
       // Buscar métricas principais
       const { data: metricsData, error: metricsError } = await supabase
         .from('tracking_metrics_view')
         .select('*')
-        .gte('created_at', getDateFromFilter(filters.quickDate))
+        .in('tenant_id', ids)
+        .gte('created_at', desde.inicio)
         .abortSignal(signal);
 
       if (metricsError) throw metricsError;
@@ -116,7 +129,8 @@ export const useRealTimeAnalytics = ({
       const { data: chartData, error: chartError } = await supabase
         .from('daily_analytics_view')
         .select('*')
-        .gte('date', getDateFromFilter(filters.quickDate))
+        .in('tenant_id', ids)
+        .gte('date', desde.dia)
         .order('date', { ascending: true })
         .abortSignal(signal);
 
@@ -126,7 +140,8 @@ export const useRealTimeAnalytics = ({
       const { data: sourceData, error: sourceError } = await supabase
         .from('source_performance_view')
         .select('*')
-        .gte('date', getDateFromFilter(filters.quickDate))
+        .in('tenant_id', ids)
+        .gte('date', desde.dia)
         .abortSignal(signal);
 
       if (sourceError) throw sourceError;
@@ -135,7 +150,8 @@ export const useRealTimeAnalytics = ({
       const { data: funnelData, error: funnelError } = await supabase
         .from('conversion_funnel_view')
         .select('*')
-        .gte('date', getDateFromFilter(filters.quickDate))
+        .in('tenant_id', ids)
+        .gte('date', desde.dia)
         .abortSignal(signal);
 
       if (funnelError) throw funnelError;
@@ -156,7 +172,7 @@ export const useRealTimeAnalytics = ({
       console.error('Erro ao buscar dados de análise:', err);
       throw err;
     }
-  }, [filters]);
+  }, [filters, chaveDoEscopo]);
 
   // Função para processar dados brutos
   const processAnalyticsData = (rawData: any): RealTimeAnalyticsData => {
@@ -274,23 +290,14 @@ export const useRealTimeAnalytics = ({
   // Função para obter cor do funil — usa paleta da marca
   const getFunnelColor = (index: number): string => getChartColor(index);
 
-  // Função para obter data baseada no filtro
-  const getDateFromFilter = (quickDate: string): string => {
-    const now = new Date();
-    let daysAgo = 30;
-
-    switch (quickDate) {
-      case 'today': daysAgo = 0; break;
-      case '7d': daysAgo = 7; break;
-      case '30d': daysAgo = 30; break;
-      case '90d': daysAgo = 90; break;
-      case '6m': daysAgo = 180; break;
-      case '1y': daysAgo = 365; break;
-      default: daysAgo = 30;
-    }
-
-    const date = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
-    return date.toISOString().split('T')[0];
+  // Primeiro dia do período, em Brasília (2026-11-12). "Hoje" é o dia de hoje
+  // em Brasília; "7 dias" são hoje e os 6 anteriores, como na aba Resumo. As
+  // visões agrupam pelo dia de Brasília; a de métricas tem o instante da meia
+  // noite de Brasília, por isso também o `inicio`.
+  const getDateFromFilter = (quickDate: string): { dia: string; inicio: string } => {
+    const dias: Record<string, number> = { today: 1, '7d': 7, '30d': 30, '90d': 90, '6m': 180, '1y': 365 };
+    const primeiro = somarDias(diaEmBrasilia(), -((dias[quickDate] ?? 30) - 1));
+    return { dia: diaIso(primeiro), inicio: inicioDoDiaEmBrasilia(primeiro).toISOString() };
   };
 
   // Função para atualizar dados

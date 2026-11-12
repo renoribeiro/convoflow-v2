@@ -117,3 +117,55 @@ export function horarioNoFuturo(dia: DiaCivil, hora: string, agora: Date = new D
   const instante = instanteEmBrasilia(dia, hora);
   return !!instante && instante.getTime() > agora.getTime();
 }
+
+// ---------------------------------------------------------------------------
+// Dias inteiros de Brasília para relatórios (2026-11-12, Rastreamento e
+// Dashboard). O dia vira à meia noite de Brasília, qualquer que seja o fuso do
+// computador; antes, os gráficos viravam o dia às 21h (meia noite UTC).
+// ---------------------------------------------------------------------------
+
+/** "AAAA-MM-DD" do dia civil (o formato que o banco devolve em colunas `date`). */
+export function diaIso(dia: DiaCivil): string {
+  return `${String(dia.ano).padStart(4, '0')}-${String(dia.mes).padStart(2, '0')}-${String(dia.dia).padStart(2, '0')}`;
+}
+
+/** O contrário de diaIso. Aceita também um carimbo completo: usa só os 10 primeiros caracteres. */
+export function diaDeIso(iso: string): DiaCivil {
+  const [a, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return { ano: a ?? 0, mes: m ?? 1, dia: d ?? 1 };
+}
+
+/** Soma (ou subtrai) dias de calendário. Não depende de fuso: é conta de calendário. */
+export function somarDias(dia: DiaCivil, n: number): DiaCivil {
+  const t = new Date(Date.UTC(dia.ano, dia.mes - 1, dia.dia + n));
+  return { ano: t.getUTCFullYear(), mes: t.getUTCMonth() + 1, dia: t.getUTCDate() };
+}
+
+/** Quantos dias de `de` até `ate`, contando os dois (de 01/11 a 12/11 são 12). */
+export function diasNoIntervalo(de: DiaCivil, ate: DiaCivil): number {
+  const a = Date.UTC(de.ano, de.mes - 1, de.dia);
+  const b = Date.UTC(ate.ano, ate.mes - 1, ate.dia);
+  return Math.round((b - a) / 86_400_000) + 1;
+}
+
+/** Meia noite de Brasília do dia (o instante em que o dia começa). */
+export function inicioDoDiaEmBrasilia(dia: DiaCivil): Date {
+  return instanteEmBrasilia(dia, '00:00') as Date;
+}
+
+/** Último milissegundo do dia de Brasília. */
+export function fimDoDiaEmBrasilia(dia: DiaCivil): Date {
+  return new Date(inicioDoDiaEmBrasilia(somarDias(dia, 1)).getTime() - 1);
+}
+
+/** "dd/MM" de um dia "AAAA-MM-DD" sem passar por Date (new Date('2026-11-12') é meia noite UTC, 11/11 em Brasília). */
+export function rotuloDiaCurto(iso: string): string {
+  const d = diaDeIso(iso);
+  return `${String(d.dia).padStart(2, '0')}/${String(d.mes).padStart(2, '0')}`;
+}
+
+/** "dd/MM/AAAA" de um dia "AAAA-MM-DD". */
+export function rotuloDiaLongo(iso: string): string {
+  const d = diaDeIso(iso);
+  return `${rotuloDiaCurto(iso)}/${d.ano}`;
+}

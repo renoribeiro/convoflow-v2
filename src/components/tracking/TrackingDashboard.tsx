@@ -1,12 +1,12 @@
-
 import { EmptyState } from '@/components/shared/EmptyState';
-import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { ResponsiveTable } from '@/components/shared/ResponsiveTable';
 import { TrafficChart } from './TrafficChart';
 import { ConversionFunnel } from './ConversionFunnel';
 import { SourceBreakdown } from './SourceBreakdown';
+import { AnunciosConversas } from './AnunciosConversas';
 import { DashboardCardSkeleton } from '@/components/shared/Skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import {
@@ -20,15 +20,18 @@ import {
   Facebook,
   Instagram,
   Search,
-  AlertCircle
+  AlertCircle,
+  Megaphone,
+  Store,
 } from 'lucide-react';
+import { useRastreamentoResumo } from '@/hooks/useTracking';
 import {
-  useTrackingMetrics,
-  useTrafficSources,
-  useCampaignPerformance
-} from '@/hooks/useTracking';
-import { formatCurrency } from '@/lib/utils';
-import { DateRange } from 'react-day-picker';
+  PeriodoRastreamento,
+  fontesSomadas,
+  nomeDaLoja,
+  taxaDeConversao,
+  variacao,
+} from '@/lib/rastreamento/resumo';
 
 // Mapeamento de ícones por tipo de fonte
 const getSourceIcon = (sourceType: string) => {
@@ -63,35 +66,62 @@ const getSourceColor = (sourceType: string) => {
   return colorMap[sourceType.toLowerCase()] || 'bg-muted';
 };
 
-interface TrackingDashboardProps {
-  dateRange?: DateRange;
+const numero = new Intl.NumberFormat('pt-BR');
+
+function Tendencia({ atual, anterior }: { atual: number; anterior: number }) {
+  const v = variacao(atual, anterior);
+  if (v === null) {
+    return <span className="text-sm text-muted-foreground">sem dados no período anterior</span>;
+  }
+  const sobe = v >= 0;
+  return (
+    <>
+      {sobe ? (
+        <TrendingUp className="w-4 h-4 text-success mr-1" />
+      ) : (
+        <TrendingDown className="w-4 h-4 text-destructive mr-1" />
+      )}
+      <span className={`text-sm ${sobe ? 'text-success' : 'text-destructive'}`}>
+        {Math.abs(v).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
+      </span>
+      <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
+    </>
+  );
 }
 
-export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
-  const defaultDateRange = useMemo(() => {
-    if (dateRange && dateRange.from && dateRange.to) {
-      return {
-        from: dateRange.from.toISOString(),
-        to: dateRange.to.toISOString()
-      };
-    }
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    return {
-      from: thirtyDaysAgo.toISOString(),
-      to: now.toISOString()
-    };
-  }, [dateRange]);
+interface CartaoProps {
+  titulo: string;
+  valor: string;
+  icone: ReactNode;
+  fundo: string;
+  rodape: ReactNode;
+}
 
-  const { data: metrics, isLoading: metricsLoading, error: metricsError } = useTrackingMetrics(defaultDateRange);
-  const { data: trafficSources, isLoading: sourcesLoading } = useTrafficSources();
-  const { data: campaignData, isLoading: campaignLoading } = useCampaignPerformance(defaultDateRange);
+function Cartao({ titulo, valor, icone, fundo, rodape }: CartaoProps) {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-muted-foreground">{titulo}</p>
+            <p className="text-3xl font-bold">{valor}</p>
+            <div className="flex flex-wrap items-center mt-1">{rodape}</div>
+          </div>
+          <div className={`w-12 h-12 shrink-0 ${fundo} rounded-lg flex items-center justify-center`}>{icone}</div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-  // Estados de loading
-  const isLoading = metricsLoading || sourcesLoading || campaignLoading;
+interface TrackingDashboardProps {
+  periodo: PeriodoRastreamento;
+}
 
-  // Tratar erro
-  if (metricsError) {
+export const TrackingDashboard = ({ periodo }: TrackingDashboardProps) => {
+  const { data: resumo, isLoading, error } = useRastreamentoResumo(periodo);
+
+  if (error) {
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
@@ -102,209 +132,157 @@ export const TrackingDashboard = ({ dateRange }: TrackingDashboardProps) => {
     );
   }
 
-  // Calcular métricas derivadas
-  const totalLeads = metrics?.totalLeads || 0;
-  const totalConversions = metrics?.totalConversions || 0;
-  const totalRevenue = metrics?.totalRevenue || 0;
-  const conversionRate = metrics?.conversionRate || 0;
-
-  // Calcular tendências (comparação com período anterior)
-  const leadsGrowth = metrics?.trends?.leads?.value || 0;
-  const conversionsGrowth = metrics?.trends?.conversions?.value || 0;
-  const revenueGrowth = metrics?.trends?.revenue?.value || 0;
-  const rateGrowth = metrics?.trends?.rate?.value || 0;
+  const t = resumo?.totais;
+  const ant = resumo?.anterior;
+  const todas = !!resumo?.todas_lojas;
+  const lojasFilhas = resumo?.lojas.filter((l) => l.tipo !== 'account') ?? [];
+  const taxa = t ? taxaDeConversao(t) : 0;
+  const taxaAnterior = ant ? taxaDeConversao(ant) : 0;
 
   return (
     <div className="space-y-6">
-      {/* Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {isLoading ? (
-          <DashboardCardSkeleton />
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total de contatos</p>
-                  <p className="text-3xl font-bold">{totalLeads.toLocaleString()}</p>
-                  <div className="flex items-center mt-1">
-                    {leadsGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-success mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
-                    )}
-                    <span className={`text-sm ${leadsGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {Math.abs(leadsGrowth).toFixed(1)}%
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-info/10 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-info" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {todas && (
+        <Alert data-testid="aviso-todas-as-lojas">
+          <Store className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Todas as Lojas.</strong> Os números somam as {lojasFilhas.length}{' '}
+            {lojasFilhas.length === 1 ? 'Loja' : 'Lojas'} da sua Conta. Para ver uma Loja só, escolha a Loja no seletor do topo.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        {isLoading ? (
-          <DashboardCardSkeleton />
+      {/* Métricas principais */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+        {isLoading || !t || !ant ? (
+          [...Array(5)].map((_, i) => <DashboardCardSkeleton key={i} />)
         ) : (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Conversões</p>
-                  <p className="text-3xl font-bold">{totalConversions.toLocaleString()}</p>
-                  <div className="flex items-center mt-1">
-                    {conversionsGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-success mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
-                    )}
-                    <span className={`text-sm ${conversionsGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {Math.abs(conversionsGrowth).toFixed(1)}%
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-                  <Target className="w-6 h-6 text-success" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading ? (
-          <DashboardCardSkeleton />
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Receita gerada</p>
-                  <p className="text-3xl font-bold">R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                  <div className="flex items-center mt-1">
-                    {revenueGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-success mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
-                    )}
-                    <span className={`text-sm ${revenueGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {Math.abs(revenueGrowth).toFixed(1)}%
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-accent" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {isLoading ? (
-          <DashboardCardSkeleton />
-        ) : (
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Taxa de conversão</p>
-                  <p className="text-3xl font-bold">{conversionRate.toFixed(1)}%</p>
-                  <div className="flex items-center mt-1">
-                    {rateGrowth >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-success mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-destructive mr-1" />
-                    )}
-                    <span className={`text-sm ${rateGrowth >= 0 ? 'text-success' : 'text-destructive'}`}>
-                      {Math.abs(rateGrowth).toFixed(1)}%
-                    </span>
-                    <span className="text-sm text-muted-foreground ml-1">vs período anterior</span>
-                  </div>
-                </div>
-                <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-                  <Eye className="w-6 h-6 text-warning" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Cartao
+              titulo="Total de contatos"
+              valor={numero.format(t.contatos)}
+              icone={<Users className="w-6 h-6 text-info" />}
+              fundo="bg-info/10"
+              rodape={<Tendencia atual={t.contatos} anterior={ant.contatos} />}
+            />
+            <Cartao
+              titulo="Conversas iniciadas por anúncio"
+              valor={numero.format(t.conversas_anuncio)}
+              icone={<Megaphone className="w-6 h-6 text-primary" />}
+              fundo="bg-primary/10"
+              rodape={
+                <span className="text-sm text-muted-foreground" data-testid="novos-e-voltaram">
+                  {numero.format(t.novos)} novos, {numero.format(t.voltaram)} voltaram
+                </span>
+              }
+            />
+            <Cartao
+              titulo="Conversões"
+              valor={numero.format(t.conversoes)}
+              icone={<Target className="w-6 h-6 text-success" />}
+              fundo="bg-success/10"
+              rodape={<Tendencia atual={t.conversoes} anterior={ant.conversoes} />}
+            />
+            <Cartao
+              titulo="Receita gerada"
+              valor={`R$ ${t.receita.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
+              icone={<DollarSign className="w-6 h-6 text-accent" />}
+              fundo="bg-accent/10"
+              rodape={<Tendencia atual={t.receita} anterior={ant.receita} />}
+            />
+            <Cartao
+              titulo="Taxa de conversão"
+              valor={`${taxa.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%`}
+              icone={<Eye className="w-6 h-6 text-warning" />}
+              fundo="bg-warning/10"
+              rodape={<Tendencia atual={taxa} anterior={taxaAnterior} />}
+            />
+          </>
         )}
       </div>
 
+      {todas && resumo && (
+        <Card data-testid="quadro-por-loja">
+          <CardHeader>
+            <CardTitle>Por Loja</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveTable
+              ariaLabel="Números por Loja"
+              rows={resumo.por_loja}
+              rowKey={(l) => l.tenant_id}
+              columns={[
+                { key: 'loja', header: 'Loja', cell: (l) => nomeDaLoja(resumo.lojas, l.tenant_id), card: 'title' },
+                { key: 'contatos', header: 'Contatos', cell: (l) => l.contatos, headClassName: 'text-right', cellClassName: 'text-right' },
+                { key: 'anuncio', header: 'Conversas de anúncio', cell: (l) => <span className="font-semibold">{l.conversas_anuncio}</span>, headClassName: 'text-right', cellClassName: 'text-right' },
+                { key: 'novos', header: 'Novos', cell: (l) => l.novos, headClassName: 'text-right', cellClassName: 'text-right' },
+                { key: 'voltaram', header: 'Voltaram', cell: (l) => l.voltaram, headClassName: 'text-right', cellClassName: 'text-right' },
+                { key: 'conversoes', header: 'Conversões', cell: (l) => l.conversoes, headClassName: 'text-right', cellClassName: 'text-right' },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      <AnunciosConversas resumo={resumo} isLoading={isLoading} />
+
       {/* Gráficos e Análises */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TrafficChart data={metrics?.rawData} isLoading={isLoading} />
-        <ConversionFunnel metrics={metrics} isLoading={isLoading} />
+        <TrafficChart data={resumo?.por_dia} isLoading={isLoading} />
+        <ConversionFunnel
+          metrics={t ? { totalLeads: t.contatos, totalConversions: t.conversoes } : undefined}
+          isLoading={isLoading}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <SourceBreakdown data={trafficSources} isLoading={isLoading} />
+          <SourceBreakdown data={fontesSomadas(resumo?.por_fonte ?? [])} isLoading={isLoading} />
         </div>
 
-        {/* Performance por Fonte */}
+        {/* Resultado por fonte, no período */}
         <Card>
           <CardHeader>
             <CardTitle>Resultado por fonte</CardTitle>
           </CardHeader>
           <CardContent>
-            {sourcesLoading ? (
-              <div className="space-y-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-muted rounded-lg animate-pulse" />
-                      <div className="space-y-1">
-                        <div className="w-20 h-3 bg-muted rounded animate-pulse" />
-                        <div className="w-32 h-2 bg-muted rounded animate-pulse" />
-                      </div>
-                    </div>
-                    <div className="w-12 h-6 bg-muted rounded animate-pulse" />
-                  </div>
-                ))}
-              </div>
+            {isLoading ? (
+              <DashboardCardSkeleton />
             ) : (
               <div className="space-y-4">
-                {trafficSources?.slice(0, 5).map((source: any) => {
-                  const IconComponent = getSourceIcon(source.type || 'organic');
-                  const colorClass = getSourceColor(source.type || 'organic');
-                  // Assumindo que lead_tracking(count) retorna um array com objeto count
-                  const totalLeads = source.lead_tracking?.[0]?.count || 0;
-                  const totalConversions = source.total_conversions || 0; // Se houver coluna ou join de conversões na fonte
-                  const conversionRate = totalLeads > 0
-                    ? (totalConversions / totalLeads) * 100
-                    : 0;
+                {(resumo?.por_fonte ?? []).slice(0, todas ? 8 : 5).map((source) => {
+                  const IconComponent = getSourceIcon(source.tipo || 'organic');
+                  const colorClass = getSourceColor(source.tipo || 'organic');
+                  const rate = source.contatos > 0 ? (source.conversoes / source.contatos) * 100 : 0;
 
                   return (
-                    <div key={source.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 ${colorClass} rounded-lg flex items-center justify-center`}>
+                    <div key={`${source.tenant_id}|${source.fonte_id ?? 'sem'}`} className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center space-x-3">
+                        <div className={`w-8 h-8 shrink-0 ${colorClass} rounded-lg flex items-center justify-center`}>
                           <IconComponent className="w-4 h-4 text-foreground" />
                         </div>
-                        <div>
-                          <p className="font-medium text-sm">{source.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm break-words">{source.fonte}</p>
+                          {todas && resumo && (
+                            <p className="text-xs text-muted-foreground">{nomeDaLoja(resumo.lojas, source.tenant_id)}</p>
+                          )}
                           <p className="text-xs text-muted-foreground">
-                            {totalLeads} contatos • {totalConversions} conversões
+                            {source.contatos} contatos • {source.conversoes} conversões
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <Badge variant="outline">
-                          {conversionRate.toFixed(1)}%
+                          {rate.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%
                         </Badge>
                       </div>
                     </div>
                   );
                 })}
-                {(!trafficSources || trafficSources.length === 0) && (
+                {(!resumo || resumo.por_fonte.length === 0) && (
                   <EmptyState
                     icon={<Globe />}
-                    title="Nenhuma fonte de tráfego configurada"
-                    description='Cadastre a primeira em "Adicionar fonte" para ver os números aqui.'
+                    title="Nenhum contato com origem no período"
+                    description="Contatos que chegam por anúncio ou por uma fonte cadastrada aparecem aqui."
                   />
                 )}
               </div>

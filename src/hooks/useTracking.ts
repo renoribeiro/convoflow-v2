@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useTenant } from '@/contexts/TenantContext';
+import { useRole, useTenant } from '@/contexts/TenantContext';
+import { diaIso } from '@/lib/datas/brasilia';
+import { lerResumo, type PeriodoRastreamento, type ResumoRastreamento } from '@/lib/rastreamento/resumo';
 import { useSupabaseQuery } from './useSupabaseQuery';
 
 // Interfaces para tipos de dados
@@ -57,92 +59,68 @@ export interface TrackingEvent {
   timestamp: string;
 }
 
-export interface TrackingMetrics {
-  totalLeads: number;
-  totalConversions: number;
-  totalRevenue: number;
-  conversionRate: number;
-  trends: {
-    leads: { value: number; isPositive: boolean };
-    conversions: { value: number; isPositive: boolean };
-    revenue: { value: number; isPositive: boolean };
-    rate: { value: number; isPositive: boolean };
-  };
-}
-
-export interface DateRange {
-  from: string;
-  to: string;
-}
-
-// Hook para buscar métricas de tracking
-export function useTrackingMetrics(dateRange?: DateRange) {
+/**
+ * Quem a aba Resumo mostra: a Loja (ou Conta) aberta no seletor do topo e,
+ * para o Gerente (ou o superadmin) com a CONTA aberta, "Todas as Lojas": a
+ * Conta e as Lojas filhas dela, somadas, com a Loja em cada linha.
+ */
+export function useEscopoDoRastreamento() {
   const { tenant } = useTenant();
-  
+  const role = useRole();
+  const todasLojas = tenant?.kind === 'account' && (role === 'gerente' || role === 'superadmin');
+  return { tenantId: tenant?.id ?? null, todasLojas };
+}
+
+/**
+ * As ids que a aba Análises filtra: a Loja aberta, ou a Conta e as Lojas
+ * filhas em "Todas as Lojas". As visões dela deixam o Gerente ler as Lojas
+ * filhas (20261112000001); sem este filtro ele veria as Lojas misturadas.
+ */
+export function useIdsDoEscopo() {
+  const { tenantId, todasLojas } = useEscopoDoRastreamento();
   return useQuery({
-    queryKey: ['tracking-metrics', tenant?.id, dateRange],
-    queryFn: async () => {
-      if (!tenant?.id) throw new Error('Tenant não encontrado');
-      
-      // View filtrada por Conta no servidor — a matview crua não respeita RLS.
-      let query = supabase
-        .from('tracking_metrics_daily_filtered')
-        .select('*')
-        .eq('tenant_id', tenant.id);
-      
-      if (dateRange && dateRange.from && dateRange.to) {
-        query = query
-          .gte('date', dateRange.from)
-          .lte('date', dateRange.to);
-      }
-      
-      const { data, error } = await query.order('date', { ascending: false });
-      
+    queryKey: ['tracking-escopo', tenantId, todasLojas],
+    queryFn: async (): Promise<string[]> => {
+      if (!tenantId) return [];
+      if (!todasLojas) return [tenantId];
+      const { data, error } = await supabase
+        .from('tenants')
+        .select('id')
+        .eq('parent_tenant_id', tenantId)
+        .eq('kind', 'store');
       if (error) throw error;
-      
-      // Calcular métricas agregadas
-      const totalLeads = data?.reduce((sum, item) => sum + (item.total_leads || 0), 0) || 0;
-      const totalConversions = data?.reduce((sum, item) => sum + (item.conversions || 0), 0) || 0;
-      const totalRevenue = data?.reduce((sum, item) => sum + (item.total_revenue || 0), 0) || 0;
-      const conversionRate = totalLeads > 0 ? (totalConversions / totalLeads) * 100 : 0;
-      
-      // Calcular tendências (comparar com período anterior)
-      const currentPeriod = data?.slice(0, Math.floor(data.length / 2)) || [];
-      const previousPeriod = data?.slice(Math.floor(data.length / 2)) || [];
-      
-      const currentLeads = currentPeriod.reduce((sum, item) => sum + (item.total_leads || 0), 0);
-      const previousLeads = previousPeriod.reduce((sum, item) => sum + (item.total_leads || 0), 0);
-      const leadsChange = previousLeads > 0 ? ((currentLeads - previousLeads) / previousLeads) * 100 : 0;
-      
-      const currentConversions = currentPeriod.reduce((sum, item) => sum + (item.conversions || 0), 0);
-      const previousConversions = previousPeriod.reduce((sum, item) => sum + (item.conversions || 0), 0);
-      const conversionsChange = previousConversions > 0 ? ((currentConversions - previousConversions) / previousConversions) * 100 : 0;
-      
-      const currentRevenue = currentPeriod.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
-      const previousRevenue = previousPeriod.reduce((sum, item) => sum + (item.total_revenue || 0), 0);
-      const revenueChange = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
-      
-      const currentRate = currentLeads > 0 ? (currentConversions / currentLeads) * 100 : 0;
-      const previousRate = previousLeads > 0 ? (previousConversions / previousLeads) * 100 : 0;
-      const rateChange = previousRate > 0 ? ((currentRate - previousRate) / previousRate) * 100 : 0;
-      
-      return {
-        totalLeads,
-        totalConversions,
-        totalRevenue,
-        conversionRate,
-        trends: {
-          leads: { value: leadsChange, isPositive: leadsChange >= 0 },
-          conversions: { value: conversionsChange, isPositive: conversionsChange >= 0 },
-          revenue: { value: revenueChange, isPositive: revenueChange >= 0 },
-          rate: { value: rateChange, isPositive: rateChange >= 0 },
-        },
-        rawData: data,
-      } as TrackingMetrics & { rawData: any[] };
+      return [tenantId, ...(data ?? []).map((t) => t.id)];
     },
-    enabled: !!tenant?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    refetchInterval: 30 * 1000, // 30 segundos
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * A aba Resumo inteira: cartões, gráfico por dia, fontes, Lojas e conversas
+ * iniciadas por anúncio. Dias de Brasília; o banco confere o acesso (42501).
+ */
+export function useRastreamentoResumo(periodo: PeriodoRastreamento) {
+  const { tenantId, todasLojas } = useEscopoDoRastreamento();
+  const de = diaIso(periodo.de);
+  const ate = diaIso(periodo.ate);
+
+  return useQuery({
+    queryKey: ['tracking-resumo', tenantId, todasLojas, de, ate],
+    queryFn: async (): Promise<ResumoRastreamento> => {
+      if (!tenantId) throw new Error('Loja não encontrada');
+      const { data, error } = await supabase.rpc('rastreamento_resumo', {
+        p_tenant: tenantId,
+        p_de: de,
+        p_ate: ate,
+        p_todas_lojas: todasLojas,
+      });
+      if (error) throw error;
+      return lerResumo(data);
+    },
+    enabled: !!tenantId,
+    staleTime: 60 * 1000,
+    refetchInterval: 60 * 1000,
   });
 }
 
@@ -160,6 +138,12 @@ export function useTrafficSources(opcoes?: { incluirDesligadas?: boolean }) {
     filters: opcoes?.incluirDesligadas ? [] : [{ column: 'is_active', operator: 'eq', value: true }],
     order: { column: 'created_at', ascending: false },
   });
+}
+
+/** Intervalo em instantes ISO (filtro de created_at). */
+export interface DateRange {
+  from: string;
+  to: string;
 }
 
 // Hook para buscar tracking de leads
@@ -209,68 +193,6 @@ export function useTrackingEvents(leadTrackingId?: string) {
     order: { column: 'timestamp', ascending: false },
     limit: 50,
     enabled: !!leadTrackingId,
-  });
-}
-
-// Hook para performance de campanhas
-export function useCampaignPerformance(dateRange?: DateRange) {
-  const { tenant } = useTenant();
-  
-  return useQuery({
-    queryKey: ['campaign-performance', tenant?.id, dateRange],
-    queryFn: async () => {
-      if (!tenant?.id) throw new Error('Tenant não encontrado');
-      
-      // View filtrada por Conta no servidor — a matview crua não respeita RLS e,
-      // desde 20260731000001, nem concede leitura a `authenticated`.
-      let query = supabase
-        .from('campaign_performance_daily_filtered')
-        .select('*')
-        .eq('tenant_id', tenant.id);
-      
-      if (dateRange && dateRange.from && dateRange.to) {
-        query = query
-          .gte('date', dateRange.from)
-          .lte('date', dateRange.to);
-      }
-      
-      const { data, error } = await query.order('date', { ascending: false });
-      
-      if (error) throw error;
-      
-      // Agrupar por campanha
-      const campaignMap = new Map();
-      
-      data?.forEach(item => {
-        const campaign = item.utm_campaign;
-        if (!campaignMap.has(campaign)) {
-          campaignMap.set(campaign, {
-            campaign,
-            leads: 0,
-            conversions: 0,
-            revenue: 0,
-            conversionRate: 0,
-            avgOrderValue: 0,
-          });
-        }
-        
-        const existing = campaignMap.get(campaign);
-        existing.leads += item.leads || 0;
-        existing.conversions += item.conversions || 0;
-        existing.revenue += item.revenue || 0;
-      });
-      
-      // Calcular métricas finais
-      const campaigns = Array.from(campaignMap.values()).map(campaign => ({
-        ...campaign,
-        conversionRate: campaign.leads > 0 ? (campaign.conversions / campaign.leads) * 100 : 0,
-        avgOrderValue: campaign.conversions > 0 ? campaign.revenue / campaign.conversions : 0,
-      }));
-      
-      return campaigns.sort((a, b) => b.revenue - a.revenue);
-    },
-    enabled: !!tenant?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 }
 
@@ -331,7 +253,7 @@ export function useUpdateTrafficSource() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['traffic-sources'] });
-      queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-resumo'] });
     },
     onError: () => {
       toast({
@@ -371,7 +293,7 @@ export function useDeleteTrafficSource() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['traffic-sources'] });
-      queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-resumo'] });
       toast({ title: 'Fonte excluída' });
     },
     onError: (error: { code?: string; message?: string }) => {
@@ -409,7 +331,7 @@ export function useCreateLeadTracking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-tracking'] });
-      queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-resumo'] });
     },
     onError: (error) => {
       console.error('Erro ao criar lead tracking:', error);
@@ -467,8 +389,7 @@ export function useUpdateConversion() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lead-tracking'] });
-      queryClient.invalidateQueries({ queryKey: ['tracking-metrics'] });
-      queryClient.invalidateQueries({ queryKey: ['campaign-performance'] });
+      queryClient.invalidateQueries({ queryKey: ['tracking-resumo'] });
       toast({
         title: 'Conversão registrada',
       });

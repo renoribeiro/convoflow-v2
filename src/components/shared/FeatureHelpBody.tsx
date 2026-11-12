@@ -7,7 +7,7 @@
  * exatamente a duplicação que este componente existe para evitar.
  */
 import React from 'react';
-import { Lightbulb, ListChecks, Wand2 } from 'lucide-react';
+import { ExternalLink, Lightbulb, ListChecks, Wand2 } from 'lucide-react';
 import type { FeatureHelpEntry } from '@/lib/help/featureHelp';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +63,29 @@ export const FeatureHelpBody: React.FC<Props> = ({
         <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">
           {entry.tips.map((tip, i) => (
             <li key={i}>{tip}</li>
+          ))}
+        </ul>
+      </section>
+    )}
+
+    {entry.fontesOficiais && entry.fontesOficiais.length > 0 && (
+      <section className="space-y-2">
+        <h4 className="flex items-center gap-2 font-medium text-foreground">
+          <ExternalLink className="h-4 w-4 text-primary" />
+          Fontes oficiais
+        </h4>
+        <ul className="space-y-1">
+          {entry.fontesOficiais.map((f) => (
+            <li key={f.url}>
+              <a
+                href={f.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[44px] items-center text-primary underline underline-offset-2 md:min-h-0"
+              >
+                {f.rotulo}
+              </a>
+            </li>
           ))}
         </ul>
       </section>

@@ -6752,6 +6752,15 @@ export type Database = {
         }[]
       }
       purge_access_logs: { Args: { p_batch?: number }; Returns: Json }
+      rastreamento_resumo: {
+        Args: {
+          p_ate: string
+          p_de: string
+          p_tenant: string
+          p_todas_lojas?: boolean
+        }
+        Returns: Json
+      }
       recompute_campaign_metrics: {
         Args: { p_campaign_id: string }
         Returns: undefined
