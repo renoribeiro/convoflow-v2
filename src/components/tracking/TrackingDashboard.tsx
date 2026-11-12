@@ -145,8 +145,11 @@ export const TrackingDashboard = ({ periodo }: TrackingDashboardProps) => {
         <Alert data-testid="aviso-todas-as-lojas">
           <Store className="h-4 w-4" />
           <AlertDescription>
-            <strong>Todas as Lojas.</strong> Os números somam as {lojasFilhas.length}{' '}
-            {lojasFilhas.length === 1 ? 'Loja' : 'Lojas'} da sua Conta. Para ver uma Loja só, escolha a Loja no seletor do topo.
+            <strong>Todas as Lojas.</strong>{' '}
+            {lojasFilhas.length === 1
+              ? 'Os números somam a Conta e a Loja dela.'
+              : `Os números somam a Conta e as ${lojasFilhas.length} Lojas dela.`}{' '}
+            Para ver uma Loja só, escolha a Loja no seletor do topo.
           </AlertDescription>
         </Alert>
       )}
