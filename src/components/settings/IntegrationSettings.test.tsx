@@ -18,6 +18,7 @@ vi.mock('@/hooks/useAvisos', () => ({
     salvar: { mutateAsync: salvar, isPending: false },
     remover: { mutateAsync: remover, isPending: false },
     testar: { mutateAsync: testar, isPending: false },
+    reenviar: { mutateAsync: vi.fn(), isPending: false },
   }),
 }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: vi.fn() }) }));

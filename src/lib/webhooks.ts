@@ -206,3 +206,11 @@ export function fraseDoTeste(r: ResultadoDoTeste): { aceito: boolean; texto: str
   if (r.aceito) return { aceito: true, texto: `Aceito: ${explicarResposta(r.status, r.erro)}.` };
   return { aceito: false, texto: `Não aceito: ${explicarResposta(r.status, r.erro)}.` };
 }
+
+/**
+ * "Reenviar" aparece só no envio que falhou de verdade (não no teste, que tem o
+ * botão próprio). O banco confere de novo (reenviar_entrega, 20261116000002).
+ */
+export function podeReenviar(e: Pick<EntregaDoAviso, 'status' | 'teste'>): boolean {
+  return e.status === 'failed' && !e.teste;
+}

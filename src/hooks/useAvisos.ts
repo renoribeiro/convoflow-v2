@@ -93,6 +93,10 @@ export function useEntregasDoAviso(avisoId: string, aberto: boolean) {
   return useQuery({
     queryKey: [CHAVE, 'entregas', avisoId],
     enabled: aberto,
+    // Com envio na fila (um Reenviar, por exemplo), confere de novo a cada 5 s
+    // até ele sair: a pessoa vê o "Aceito" sem recarregar.
+    refetchInterval: (query) =>
+      (query.state.data ?? []).some((e) => e.status === 'pending' || e.status === 'processing') ? 5000 : false,
     queryFn: async (): Promise<EntregaDoAviso[]> => {
       const { data, error } = await supabase
         .from('webhook_deliveries')
@@ -160,5 +164,18 @@ export function useMexerNosAvisos() {
     onSuccess: (_r, id) => queryClient.invalidateQueries({ queryKey: [CHAVE, 'entregas', id] }),
   });
 
-  return { criar, salvar, remover, testar };
+  // Reenviar um envio que falhou (reenviar_entrega, 20261116000002): volta para
+  // a fila com as 5 tentativas zeradas; o dispatcher manda com as regras de
+  // sempre. A recusa vem com a frase pronta.
+  const reenviar = useMutation({
+    mutationFn: async ({ entregaId }: { entregaId: string; avisoId: string }): Promise<{ ok: boolean; mensagem?: string }> => {
+      const { data, error } = await supabase.rpc('reenviar_entrega', { p_entrega: entregaId });
+      if (error) throw error;
+      const r = (data ?? {}) as { ok?: boolean; mensagem?: string };
+      return { ok: r.ok === true, mensagem: typeof r.mensagem === 'string' ? r.mensagem : undefined };
+    },
+    onSuccess: (_r, { avisoId }) => queryClient.invalidateQueries({ queryKey: [CHAVE, 'entregas', avisoId] }),
+  });
+
+  return { criar, salvar, remover, testar, reenviar };
 }

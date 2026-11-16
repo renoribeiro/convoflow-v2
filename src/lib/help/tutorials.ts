@@ -1005,7 +1005,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Em "Avisar quando", marque só "Lead novo"',
         body:
-          'Ele sai uma vez, na primeira mensagem de quem nunca falou com a Loja, com estes campos: data_entrada, data_entrada_iso, lead_id, nome, telefone, primeiramensagem e loja. Contato cadastrado à mão não conta. Deixe a "Senha de conferência" em branco: o Make funciona sem ela.',
+          'Ele sai uma vez, na primeira mensagem de quem nunca falou com a Loja, com estes campos: data_entrada, data_entrada_iso, lead_id, nome, telefone, primeiramensagem e loja. Contato cadastrado à mão não conta. O nome vem do perfil do WhatsApp da pessoa. Deixe a "Senha de conferência" em branco: o Make funciona sem ela.',
       },
       {
         title: 'Deixe "Aviso ligado" marcado e clique em "Criar aviso"',
@@ -1028,7 +1028,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
         body:
           'A partir daí, cada lead novo vira uma linha em até 5 minutos. Para conferir, abra "Últimos envios" no aviso.',
         note:
-          'Se as 5 tentativas de um envio falharem, o Gestor da Loja e o Gerente recebem um alerta no sino. Para parar, use "Remover" no aviso e confirme em "Remover aviso".',
+          'Se as 5 tentativas de um envio falharem, o Gestor da Loja e o Gerente recebem um alerta no sino. Corrija o endereço e use "Reenviar" no envio, em "Últimos envios". Para parar, use "Remover" no aviso e confirme em "Remover aviso".',
       },
     ],
   },

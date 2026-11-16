@@ -174,3 +174,13 @@ describe('assinatura igual no servidor e na tela', () => {
     expect(await assinarAviso('senha', corpo)).toBe(await signWebhookPayload('senha', corpo));
   });
 });
+
+describe('podeReenviar', () => {
+  it('só o envio que falhou, e nunca o teste', async () => {
+    const { podeReenviar } = await import('./webhooks');
+    expect(podeReenviar({ status: 'failed', teste: false })).toBe(true);
+    expect(podeReenviar({ status: 'failed', teste: true })).toBe(false);
+    expect(podeReenviar({ status: 'delivered', teste: false })).toBe(false);
+    expect(podeReenviar({ status: 'pending', teste: false })).toBe(false);
+  });
+});

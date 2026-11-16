@@ -8,6 +8,7 @@ import { appSlotName, isDuplicateInsertError, summarizeDelivery, type MetaAppSlo
 import { camposDoStatusFalho } from '../_shared/meta-error-fields.ts';
 import { ProviderFactory } from '../_shared/provider-factory.ts';
 import { MetaProvider } from '../_shared/whatsapp-providers/meta.ts';
+import { nomeDoPerfilMeta } from '../_shared/nome-do-perfil.ts';
 import {
   checkRateLimitDb,
   getRateLimitIdentifier,
@@ -223,7 +224,9 @@ serve(async (req) => {
         // Incoming messages
         const messages: any[] = Array.isArray(value.messages) ? value.messages : [];
         for (const msg of messages) {
-          await handleIncomingMessage(supabase, instance, msg, logger, app);
+          // O nome do perfil (value.contacts[].profile.name, SKILL §3.5) vai junto:
+          // o contato novo nasce com ele e o Lead novo já sai com o nome.
+          await handleIncomingMessage(supabase, instance, msg, logger, app, nomeDoPerfilMeta(value, msg.from));
         }
 
         // Delivery / read statuses
@@ -306,6 +309,7 @@ async function handleIncomingMessage(
   msg: any,
   logger: ReturnType<typeof createLogger>,
   app: MetaAppSlot | 'unknown' = 'unknown',
+  nomeDoPerfil: string | null = null,
 ) {
   const rawPhone: string = msg.from || '';
   const phone = DataSanitizer.sanitizePhoneNumber(rawPhone);
@@ -345,11 +349,15 @@ async function handleIncomingMessage(
   // an instance filter missed contacts whose whatsapp_instance_id is null or set
   // to another instance (e.g. created before this instance existed), which
   // silently prevented the v2 engine from ever being invoked.
-  const { data: rpcResult, error: rpcError } = await supabase.rpc('process_incoming_message', {
+  // receber_mensagem_whatsapp (20261116000002) = process_incoming_message com o
+  // nome do perfil: cria o contato novo com ele, preenche o contato sem nome e
+  // nunca troca o nome que a Loja digitou.
+  const { data: rpcResult, error: rpcError } = await supabase.rpc('receber_mensagem_whatsapp', {
     p_phone: phone,
     p_message_content: content,
     p_whatsapp_instance_id: instance.id,
     p_evolution_message_id: messageId,
+    p_nome: nomeDoPerfil,
   });
 
   if (isDuplicateInsertError(rpcError)) {

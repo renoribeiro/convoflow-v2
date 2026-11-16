@@ -6776,6 +6776,10 @@ export type Database = {
         Args: { p_reason: string; p_source: string }
         Returns: undefined
       }
+      reenviar_entrega: {
+        Args: { p_entrega: string }
+        Returns: Json
+      }
       refresh_all_materialized_views: {
         Args: never
         Returns: {

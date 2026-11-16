@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { contatoNovoDaEvolution } from '../_shared/nome-do-perfil.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
 import {
@@ -308,12 +309,15 @@ async function processIncomingMessage(
     .maybeSingle()
 
   if (!contact) {
-    const { data: newContact } = await supabase.from('contacts').insert({
-      phone,
-      name: pushName || phone,
-      tenant_id: instance.tenant_id,
-      whatsapp_instance_id: instance.id
-    }).select('id, name').single();
+    // Com a primeira mensagem (sessão 2 do Lead novo): o "Entra um contato
+    // novo" sai com o texto, como na Meta e no WAHA.
+    const { data: newContact } = await supabase.from('contacts').insert(contatoNovoDaEvolution({
+      telefone: phone,
+      pushName,
+      tenantId: instance.tenant_id,
+      instanciaId: instance.id,
+      primeiraMensagem: rawMessageContent,
+    })).select('id, name').single();
     contact = newContact;
   } else if (pushName && (!contact.name || contact.name === phone)) {
     // Contato existia com nome placeholder (igual ao phone) — promover ao pushName recebido.

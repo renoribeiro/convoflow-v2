@@ -9,6 +9,7 @@ import {
   WAHA_HMAC_HEADER,
 } from '../_shared/waha-webhook-auth.ts'
 import { mapWahaStatus } from '../_shared/instance-control.ts'
+import { nomeDoPerfilWaha } from '../_shared/nome-do-perfil.ts'
 import {
   checkRateLimitDb,
   getRateLimitIdentifier,
@@ -176,11 +177,14 @@ serve(async (req) => {
       if (phone && content) {
         // v1 bots (patched RPC ignores v2 bots). The RPC resolves/creates the
         // contact by (phone, tenant) and RETURNS its id — use that directly.
-        const { data: rpcResult } = await supabase.rpc('process_incoming_message', {
+        // receber_mensagem_whatsapp (20261116000002): o mesmo, com o nome do
+        // perfil que o motor traz em _data (_shared/nome-do-perfil.ts).
+        const { data: rpcResult } = await supabase.rpc('receber_mensagem_whatsapp', {
           p_phone: phone,
           p_message_content: content,
           p_whatsapp_instance_id: instance.id,
-          p_evolution_message_id: msg.id
+          p_evolution_message_id: msg.id,
+          p_nome: nomeDoPerfilWaha(msg, phone),
         });
         logger.info('Message processed', { id: msg.id });
 
