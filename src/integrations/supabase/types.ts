@@ -5120,6 +5120,7 @@ export type Database = {
           response_status: number | null
           scheduled_at: string
           status: string
+          teste: boolean
           tenant_id: string
           updated_at: string
           webhook_id: string
@@ -5136,6 +5137,7 @@ export type Database = {
           response_status?: number | null
           scheduled_at?: string
           status?: string
+          teste?: boolean
           tenant_id: string
           updated_at?: string
           webhook_id: string
@@ -5152,6 +5154,7 @@ export type Database = {
           response_status?: number | null
           scheduled_at?: string
           status?: string
+          teste?: boolean
           tenant_id?: string
           updated_at?: string
           webhook_id?: string

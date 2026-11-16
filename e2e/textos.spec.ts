@@ -39,7 +39,9 @@ export const PROIBIDAS: Array<[RegExp, string]> = [
   [/\b(undefined|NaN)\b|\[object Object\]/, 'valor cru do programa'],
   [/\bpayloads?\b/i, 'linguagem de programador'],
   [/\b(open|close|connecting|qrcode)\b(?![-_])/, 'estado do número em inglês'],
-  [/\bleads?\b/i, 'use "contato" (lead só dentro do funil)'],
+  // "Lead novo" é o nome do aviso em Avisos para sistemas (pedido do dono,
+  // 2026-11-16): a expressão passa; "lead" solto continua proibido.
+  [/\bleads?\b(?!\s+novos?\b)/i, 'use "contato" (lead só dentro do funil e no aviso "Lead novo")'],
   [/(^|[^A-Za-zÀ-ú])lojas?\b/, '"Loja" com maiúscula'],
 ];
 
@@ -51,6 +53,9 @@ export const PROIBIDAS: Array<[RegExp, string]> = [
 const PERMITIDAS: Array<[RegExp, RegExp]> = [
   [/^público \/(privacy-policy|terms-of-service|exclusao-de-dados)$/, /operador|loja|agentes?|lead/i],
   [/\/dashboard\/funnel$/, /\blead/i],
+  // Avisos para sistemas: a lista dos campos do Lead novo mostra o nome exato
+  // de cada campo, e um deles é "loja", em minúscula (2026-11-16).
+  [/configurações integrations$/, /^\W?loja$/],
 ];
 
 function permitida(tela: string, achado: string): boolean {

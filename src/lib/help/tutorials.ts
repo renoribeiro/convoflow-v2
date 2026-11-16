@@ -973,55 +973,62 @@ export const ALL_TUTORIALS: Tutorial[] = [
     ],
   },
   // ------------------------------------------------------------------ 8
-  // Avisos para sistemas (webhooks de saída). Conferido em 2026-10-27 contra
-  // IntegrationSettings e webhook-dispatcher.
+  // Avisos para sistemas (webhooks de saída). Reescrito em 2026-11-16 para o
+  // Lead novo com o Make, conferido contra IntegrationSettings, webhook-teste e
+  // a migração 20261116000001.
   {
     id: 'avisos-para-sistemas',
     title: 'Configurar avisos para sistemas',
     goal:
-      'No fim, outro sistema seu (um CRM, uma planilha, o n8n) vai receber sozinho um aviso a cada acontecimento que você escolheu no ConvoFlow.',
+      'No fim, cada lead novo que escreve no WhatsApp da Loja vira uma linha numa planilha do Google, pelo Make, sem ninguém copiar nada.',
     forWhom:
-      'Gestor da Loja, junto com quem cuida do outro sistema (o Gerente faz o mesmo, numa Loja escolhida no topo). O Atendente não vê esta aba.',
+      'Gestor da Loja ou Gerente da Conta, junto com quem cuida do Make ou do n8n (por exemplo, o gestor de tráfego). O Atendente não vê esta aba.',
     minRole: 'gestor',
     capacidade: 'store.admin',
     steps: [
       {
-        title: 'Pegue no outro sistema o endereço que vai receber os avisos',
+        title: 'No Make, crie um cenário com Webhooks › Custom webhook e copie o endereço',
         body:
-          'No n8n, por exemplo, é o endereço do bloco que o n8n chama de Webhook. Ele precisa começar com http:// ou https://. O ConvoFlow manda os dados no formato que o n8n, o Make e o Zapier recebem sem configuração extra.',
+          'No Make, clique em Create a new scenario, escolha o app Webhooks e o módulo Custom webhook. Clique em Add, dê um nome (o da Loja, por exemplo), clique em Save e depois em Copy address to clipboard. No n8n, o bloco equivalente se chama Webhook.',
       },
       {
-        title: 'Abra Configurações › Avisos para sistemas',
+        title: 'Abra Configurações › Avisos para sistemas e escolha a Loja',
         body:
-          'O aviso é da Loja que está aberta e só recebe o que acontece nela. Gerente: escolha a Loja antes, em "Escolher Loja".',
+          'Gerente: em "Loja", escolha a Loja dos contatos, ou "Todas as Lojas" para usar o mesmo endereço em todas. Cada Loja só manda os próprios contatos. O Gestor cria sempre na própria Loja.',
         screen: '/dashboard/settings',
         helpKey: 'page:settings-integrations',
       },
       {
-        title: 'Preencha "Nome" e "Endereço do outro sistema"',
-        body: 'O nome é só para você reconhecer o aviso na lista (ex.: "Sistema de CRM").',
+        title: 'Dê um nome e cole o endereço em "Endereço do outro sistema"',
+        body: 'O nome é só para você reconhecer o aviso na lista, por exemplo "Planilha de contatos".',
       },
       {
-        title: 'Em "Avisar quando", marque só o que o outro sistema usa',
+        title: 'Em "Avisar quando", marque só "Lead novo"',
         body:
-          'Por exemplo, "Entra um contato novo" para cadastrar o contato no CRM. "Chega uma mensagem" e "Sai uma mensagem" levam o texto das conversas da Loja inteira: marque só se o outro sistema precisar mesmo.',
-      },
-      {
-        title: 'Preencha a "Senha de conferência"',
-        body:
-          'É opcional, mas proteja-se: com ela, cada aviso chega assinado no cabeçalho X-ConvoFlow-Signature, e o outro sistema refaz a assinatura com a mesma senha para conferir que veio do ConvoFlow.',
+          'Ele sai uma vez, na primeira mensagem de quem nunca falou com a Loja, com estes campos: data_entrada, data_entrada_iso, lead_id, nome, telefone, primeiramensagem e loja. Contato cadastrado à mão não conta. Deixe a "Senha de conferência" em branco: o Make funciona sem ela.',
       },
       {
         title: 'Deixe "Aviso ligado" marcado e clique em "Criar aviso"',
-        body:
-          'Aparece "Aviso criado" e ele entra em "Avisos cadastrados", com o selo "Ligado". Desligado, o cadastro fica salvo mas nada é enviado.',
+        body: 'Aparece "Aviso criado" e ele entra em "Avisos cadastrados", com o selo "Ligado".',
       },
       {
-        title: 'Provoque o acontecimento uma vez e confira no outro sistema',
+        title: 'No Make, clique em Run once. No ConvoFlow, clique em "Enviar aviso de teste"',
         body:
-          'Não existe botão de teste: cadastre um contato de teste, por exemplo. O aviso sai em até 5 minutos. Se o outro sistema responder com erro, o ConvoFlow tenta de novo, até 5 vezes.',
+          'O ConvoFlow manda um Lead novo de mentira (Contato de teste do ConvoFlow) e mostra "Aceito" no aviso. No Make aparecem os campos. Se aparecer "Não aceito", a frase diz o que corrigir, por exemplo o endereço que não existe.',
+        helpKey: 'page:settings-integrations',
+      },
+      {
+        title: 'No Make, acrescente Google Sheets › Add a row e ligue as colunas',
+        body:
+          'Escolha a planilha e a aba. Ligue cada coluna ao campo de mesmo nome que veio do teste: data_entrada, lead_id, nome, telefone, primeiramensagem e loja. Não precisa converter nada: a data já vem no horário de Brasília.',
+        note: 'A linha do teste também vai para a planilha. Pode apagar depois.',
+      },
+      {
+        title: 'Salve o cenário no Make e ligue o agendamento em Immediately',
+        body:
+          'A partir daí, cada lead novo vira uma linha em até 5 minutos. Para conferir, abra "Últimos envios" no aviso.',
         note:
-          'Para parar, use "Remover" no aviso e confirme em "Remover aviso": o endereço deixa de receber na hora.',
+          'Se as 5 tentativas de um envio falharem, o Gestor da Loja e o Gerente recebem um alerta no sino. Para parar, use "Remover" no aviso e confirme em "Remover aviso".',
       },
     ],
   },

@@ -2,8 +2,13 @@
 // webhook-dispatcher — consome a fila `webhook_deliveries` e faz o POST nos
 // endpoints configurados em `webhooks`, com assinatura HMAC-SHA256 e retry.
 //
-// Acionada por pg_cron (a cada minuto) via net.http_post (anon bearer).
+// Acionada por pg_cron (a cada 5 minutos) via public.cron_worker_kick.
 // verify_jwt = false no config.toml; autentica internamente via service_role.
+//
+// O POST mora em _shared/webhook-entrega.ts (o botão "Enviar aviso de teste",
+// webhook-teste, usa o mesmo): endereço interno e redirecionamento são
+// recusados antes de sair, e a falha grava o código (response_status) e um
+// motivo que a tela e o alerta do sino explicam.
 // =============================================================================
 import { MOTIVO_CONTA_SEM_ACESSO, criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
@@ -11,6 +16,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { createLogger } from '../_shared/logger.ts'
 import { guardBackendCaller } from '../_shared/backend-gate.ts'
 import { corsHeaders } from '../_shared/validation.ts'
+import { cabecalhosDoAviso, entregarAviso } from '../_shared/webhook-entrega.ts'
 
 interface DeliveryRow {
   id: string
@@ -25,21 +31,6 @@ interface DeliveryRow {
 
 const BUDGET_MS = 50_000
 const BATCH = 50
-
-// Assinatura HMAC-SHA256 (hex) do corpo bruto. O consumidor valida com o mesmo
-// secret no header X-ConvoFlow-Signature: sha256=<hex>.
-async function hmacHex(secret: string, body: string): Promise<string> {
-  const enc = new TextEncoder()
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(body))
-  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
 
 // Backoff: 1ª falha → +1min, depois cresce (2,4,8...) limitado a 60min.
 function nextRetryAt(attempts: number): string {
@@ -132,42 +123,34 @@ serve(async (req) => {
       }
 
       const body = JSON.stringify(d.payload ?? {})
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        'X-ConvoFlow-Event': d.event_type,
-        'X-ConvoFlow-Delivery': d.id,
-      }
-      if (d.webhooks?.secret) {
-        headers['X-ConvoFlow-Signature'] = `sha256=${await hmacHex(d.webhooks.secret, body)}`
-      }
+      const headers = await cabecalhosDoAviso({
+        evento: d.event_type,
+        entregaId: d.id,
+        corpo: body,
+        segredo: d.webhooks?.secret ?? null,
+      })
 
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 10_000)
-        const res = await fetch(url, { method: 'POST', headers, body, signal: controller.signal })
-        clearTimeout(timeout)
-
-        if (res.ok) {
-          await supabase.from('webhook_deliveries').update({
-            status: 'delivered', attempts, response_status: res.status,
-            delivered_at: new Date().toISOString(), error_message: null,
-          }).eq('id', d.id)
-          delivered++
-        } else {
-          throw new Error(`HTTP ${res.status}`)
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
+      const r = await entregarAviso(url, body, headers)
+      if (r.aceito) {
+        await supabase.from('webhook_deliveries').update({
+          status: 'delivered', attempts, response_status: r.status,
+          delivered_at: new Date().toISOString(), error_message: null,
+        }).eq('id', d.id)
+        delivered++
+      } else {
+        // Na última tentativa vira 'failed', e o gatilho tg_aviso_falhou_alerta
+        // avisa no sino o Gestor da Loja e o Gerente da Conta.
         const exhausted = attempts >= d.max_attempts
         await supabase.from('webhook_deliveries').update({
           status: exhausted ? 'failed' : 'pending',
           attempts,
-          error_message: msg,
+          response_status: r.status,
+          error_message: r.erro,
           scheduled_at: exhausted ? undefined : nextRetryAt(attempts),
         }).eq('id', d.id)
         if (exhausted) failed++
         else retried++
-        logger.warn('Falha na entrega do webhook', { deliveryId: d.id, attempts, error: msg })
+        logger.warn('Falha na entrega do webhook', { deliveryId: d.id, attempts, status: r.status, error: r.erro })
       }
     }
 
