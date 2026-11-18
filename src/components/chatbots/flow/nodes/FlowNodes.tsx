@@ -264,6 +264,7 @@ const FIELD_LABELS: Record<string, string> = {
   email: 'Email',
   phone: 'Telefone',
   tag: 'Tag',
+  lead_name: 'Nome do lead',
 };
 
 export const UpdateContactNode: React.FC<NodeProps> = ({ id, data, selected }) => {

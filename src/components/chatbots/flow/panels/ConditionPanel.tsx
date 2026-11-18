@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { validateNodeData } from '@/lib/validations/chatbot-flow';
-import { SYSTEM_VARIABLES } from '@/lib/chatbot/flowConstants';
+import { CONDITION_ONLY_VARIABLES, SYSTEM_VARIABLES } from '@/lib/chatbot/flowConstants';
 import type { ConditionNodeData, ChatbotVariableRow } from '@/types/chatbot-flow.types';
 
 interface Props {
@@ -43,6 +43,7 @@ const ConditionPanel: React.FC<Props> = ({ data, variables, onChange }) => {
 
   const allVarOptions = [
     ...SYSTEM_VARIABLES.map((v) => ({ value: v.token, label: `{${v.token}} (${v.label})` })),
+    ...CONDITION_ONLY_VARIABLES.map((v) => ({ value: v.token, label: `{${v.token}} (${v.label})` })),
     ...variables.map((v) => ({ value: v.name, label: `{${v.name}}` })),
   ];
 

@@ -160,6 +160,15 @@ export const SYSTEM_VARIABLES: { token: string; label: string }[] = [
   { token: 'incoming_message', label: 'Última mensagem recebida' },
 ];
 
+/**
+ * Variáveis que só a Condição lê (o motor calcula na hora; não entram em texto).
+ * primeiro_contato: "sim" quando o contato nunca falou com a Loja antes desta
+ * conversa, "nao" quando já falou (supabase/functions/_shared/nome-do-lead.ts).
+ */
+export const CONDITION_ONLY_VARIABLES: { token: string; label: string }[] = [
+  { token: 'primeiro_contato', label: 'Primeiro contato: sim ou nao' },
+];
+
 /** Default `data` for a freshly-dropped node of the given type. */
 export function defaultNodeData<T extends ChatbotNodeType>(
   type: T

@@ -96,6 +96,7 @@ serve(async (req) => {
     contact_id,
     phone,
     message,
+    profile_name,
   } = body as Record<string, string>;
 
   if (!tenant_id || !whatsapp_instance_id || !contact_id || !phone || !message) {
@@ -154,6 +155,7 @@ serve(async (req) => {
       contact_id,
       phone,
       message,
+      profile_name: typeof profile_name === 'string' ? profile_name : null,
     };
 
     const result = await processChatbotMessage(input, {

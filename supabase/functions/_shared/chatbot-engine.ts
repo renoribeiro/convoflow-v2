@@ -14,6 +14,17 @@
 // Types (mirrors src/types/chatbot-flow.types.ts — kept in sync manually)
 // ---------------------------------------------------------------------------
 
+import {
+  CACHE_PRIMEIRO_CONTATO,
+  CAMPO_NOME_DO_LEAD,
+  JANELA_DA_MENSAGEM_ATUAL_MS,
+  VARIAVEL_PRIMEIRO_CONTATO,
+  limparNomeDoLead,
+  podeTrocarNomeDoContato,
+  valorPrimeiroContato,
+  variavelUnica,
+} from './nome-do-lead.ts';
+
 export type ChatbotNodeType =
   | 'start'
   | 'send_text'
@@ -34,7 +45,7 @@ export type ChatbotSessionStatus =
 
 export type QuestionValidation = 'none' | 'email' | 'phone' | 'number';
 export type ConditionOperator = 'contains' | 'equals' | 'not_empty' | 'empty';
-export type UpdateContactField = 'name' | 'email' | 'phone' | 'tag';
+export type UpdateContactField = 'name' | 'email' | 'phone' | 'tag' | 'lead_name';
 
 export const DEFAULT_HANDLE = 'default';
 export const CONDITION_TRUE_HANDLE = 'true';
@@ -520,6 +531,8 @@ export interface EngineInput {
   phone: string;
   /** Plain-text content of the inbound message. */
   message: string;
+  /** Nome do perfil do WhatsApp de quem escreveu, quando o webhook sabe (Evolution). */
+  profile_name?: string | null;
 }
 
 export interface EngineContext {
@@ -547,6 +560,7 @@ export interface QueryBuilder {
   neq(col: string, val: unknown): this;
   is(col: string, val: unknown): this;
   in(col: string, vals: unknown[]): this;
+  lt(col: string, val: unknown): this;
   single(): Promise<{ data: unknown; error: unknown }>;
   maybeSingle(): Promise<{ data: unknown; error: unknown }>;
   limit(n: number): this;
@@ -1147,7 +1161,15 @@ async function executeNode(
         operator?: ConditionOperator;
         value?: string;
       };
-      const variableValue = d.variable ? (currentVars[d.variable] ?? null) : null;
+      // "Primeiro contato" (primeiro_contato = sim/nao): calculado uma vez por
+      // sessão e guardado com prefixo reservado (não vai para o contato).
+      let updatedVars: Record<string, string> | undefined;
+      let variableValue = d.variable ? (currentVars[d.variable] ?? null) : null;
+      if (d.variable === VARIAVEL_PRIMEIRO_CONTATO && variableValue === null) {
+        variableValue = currentVars[CACHE_PRIMEIRO_CONTATO]
+          ?? await primeiroContato(supabase, session.tenant_id, input.contact_id, logger);
+        updatedVars = { ...currentVars, [CACHE_PRIMEIRO_CONTATO]: variableValue };
+      }
       const result = evaluateCondition(
         d.operator ?? 'equals',
         variableValue,
@@ -1155,7 +1177,7 @@ async function executeNode(
       );
       const handle = result ? CONDITION_TRUE_HANDLE : CONDITION_FALSE_HANDLE;
       const nextNodeId = resolveNextNodeId(edges, node.id, handle);
-      return { nextNodeId };
+      return { nextNodeId, ...(updatedVars ? { updatedVars } : {}) };
     }
 
     // ------------------------------------------------------------------
@@ -1173,6 +1195,31 @@ async function executeNode(
     case 'update_contact': {
       const d = node.data as { field?: UpdateContactField; value?: string };
       const rawValue = substituteVariables(d.value ?? '', varCtx);
+
+      if (d.field === CAMPO_NOME_DO_LEAD) {
+        // "Nome do lead": limpa a resposta, troca o nome só se ainda não há nome
+        // salvo à mão, e a variável do valor ({nome}) passa a ter só o primeiro nome.
+        const limpo = limparNomeDoLead(rawValue);
+        const variavel = variavelUnica(d.value);
+        const updatedVars = variavel ? { ...currentVars, [variavel]: limpo?.primeiro ?? '' } : undefined;
+        if (limpo) {
+          const { data: atual } = await (supabase
+            .from('contacts')
+            .select('name, phone')
+            .eq('id', input.contact_id)
+            .maybeSingle() as Promise<{ data: { name: string | null; phone: string | null } | null; error: unknown }>);
+          if (podeTrocarNomeDoContato({ atual: atual?.name, telefone: atual?.phone ?? input.phone, nomeDoPerfil: input.profile_name })) {
+            await (supabase
+              .from('contacts')
+              .update({ name: limpo.completo, updated_at: new Date().toISOString() })
+              .eq('id', input.contact_id) as unknown as Promise<void>);
+          } else {
+            logger.info('Lead name kept: contact already has a saved name', { contactId: input.contact_id });
+          }
+        }
+        const nextNodeId = resolveNextNodeId(edges, node.id, DEFAULT_HANDLE);
+        return { nextNodeId, ...(updatedVars ? { updatedVars } : {}) };
+      }
 
       if (d.field === 'tag') {
         // Upsert tag by name, then link to contact.
@@ -1497,6 +1544,48 @@ async function onVariablesChanged(
       value: v,
       previous_value: prevVars[k] ?? null,
     });
+  }
+}
+
+/**
+ * Primeiro contato do contato na Loja: nenhuma mensagem (de qualquer lado) de
+ * contato com o mesmo telefone na Loja, fora a rajada que abriu o bot agora.
+ * Em erro, responde "nao" (o caminho de quem volta não pede nome).
+ */
+async function primeiroContato(
+  supabase: SupabaseClientLike,
+  tenantId: string,
+  contactId: string,
+  logger: LoggerLike,
+): Promise<'sim' | 'nao'> {
+  try {
+    const { data: contato } = await (supabase
+      .from('contacts')
+      .select('phone')
+      .eq('id', contactId)
+      .maybeSingle() as Promise<{ data: { phone: string | null } | null; error: unknown }>);
+    let ids = [contactId];
+    if (contato?.phone) {
+      const { data: mesmos } = await (supabase
+        .from('contacts')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('phone', contato.phone) as unknown as Promise<{ data: { id: string }[] | null; error: unknown }>);
+      ids = [...new Set([contactId, ...(mesmos ?? []).map((c) => c.id)])];
+    }
+    const antes = new Date(Date.now() - JANELA_DA_MENSAGEM_ATUAL_MS).toISOString();
+    const { data: anteriores, error } = await (supabase
+      .from('messages')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .in('contact_id', ids)
+      .lt('created_at', antes)
+      .limit(1) as unknown as Promise<{ data: { id: string }[] | null; error: unknown }>);
+    if (error) throw error;
+    return valorPrimeiroContato(anteriores?.length ?? 0);
+  } catch (err) {
+    logger.warn('primeiro_contato check failed; treating as returning contact', { error: String(err) });
+    return 'nao';
   }
 }
 

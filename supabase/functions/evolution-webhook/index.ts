@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { contatoNovoDaEvolution } from '../_shared/nome-do-perfil.ts'
+import { contatoNovoDaEvolution, limparNomeDoPerfil } from '../_shared/nome-do-perfil.ts'
 import { resolverRemetenteEvolution, telefoneDoJid, numerosDaInstancia } from '../_shared/evolution-remetente.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
@@ -395,6 +395,9 @@ async function processIncomingMessage(
     contact_id: contact!.id,
     phone,
     message: rawMessageContent,
+    // O nome do perfil: o bloco "Nome do lead" só troca o nome do contato se ele
+    // ainda for este (nunca um nome salvo à mão).
+    profile_name: limparNomeDoPerfil(pushName, phone),
   }, logger);
 }
 
@@ -456,6 +459,7 @@ function invokeChatbotEngine(
     contact_id: string;
     phone: string;
     message: string;
+    profile_name?: string | null;
   },
   logger: any,
 ): void {

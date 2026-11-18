@@ -43,7 +43,8 @@ export type ChatbotSessionStatus =
 export type QuestionValidation = 'none' | 'email' | 'phone' | 'number';
 export type ConditionOperator = 'contains' | 'equals' | 'not_empty' | 'empty';
 export type TransferAssignTo = 'any' | 'specific_user';
-export type UpdateContactField = 'name' | 'email' | 'phone' | 'tag';
+/** lead_name: o nome que o lead digitou, limpo; só troca nome vazio, telefone ou nome do perfil. */
+export type UpdateContactField = 'name' | 'email' | 'phone' | 'tag' | 'lead_name';
 
 // ---------------------------------------------------------------------------
 // Node `data` shapes (stored in chatbot_nodes.data jsonb)

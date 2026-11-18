@@ -73,7 +73,7 @@ export const SetVariableNodeDataSchema = z.object({
 });
 
 export const UpdateContactNodeDataSchema = z.object({
-  field: z.enum(['name', 'email', 'phone', 'tag']),
+  field: z.enum(['name', 'email', 'phone', 'tag', 'lead_name']),
   value: z.string().min(1, 'Informe o valor').max(500),
 });
 
