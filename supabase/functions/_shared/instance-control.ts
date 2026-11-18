@@ -35,7 +35,7 @@ import { can, CAPABILITY_DENIAL_MESSAGES, statusDenialMessage } from './capabili
 import { decideInstanceAccess, type InstanceAccessTenant } from './instance-access.ts';
 import type { ProviderCredentials, ResolvedCredentials } from './instance-credentials.ts';
 
-export const INSTANCE_ACTIONS = ['status', 'connect', 'disconnect', 'credential', 'replace_key'] as const;
+export const INSTANCE_ACTIONS = ['status', 'connect', 'qr', 'disconnect', 'credential', 'replace_key'] as const;
 export type InstanceAction = (typeof INSTANCE_ACTIONS)[number];
 
 export interface ControlCaller {
@@ -287,6 +287,81 @@ async function doConnect(deps: ControlDeps, instance: ControlInstance, creds: Pr
   return { status: 200, body: { ok: true, state: 'connecting', qr: null, pairing_code: null } };
 }
 
+/**
+ * `qr`: o QR ATUAL, sem nunca abrir conexão nova. É o que a janela do QR usa
+ * depois do único `connect` da abertura.
+ *
+ * Por quê (2026-11-18): logo depois que o celular lê o QR, o WhatsApp reinicia
+ * a conexão e ela fica "close" por um instante. No Evolution 2.3.7,
+ * `GET /instance/connect` com o estado "close" abre OUTRA conexão
+ * (`instance.connectToWhatsapp`); com "connecting" só devolve o QR que já
+ * existe. Pedir `connect` nesse instante derrubava o pareamento e o celular
+ * mostrava "Não foi possível conectar o dispositivo". Aqui: lê o estado e só
+ * pede o QR com "connecting". WAHA: nunca chama `start`.
+ */
+async function doQr(deps: ControlDeps, instance: ControlInstance, creds: ProviderCredentials): Promise<ControlResult> {
+  const provider = instance.provider || 'evolution';
+  if (provider === 'evolution') {
+    const base = trimSlash(creds.baseUrl);
+    const name = encodeURIComponent(instance.instance_key);
+    const st = await deps.callProvider({
+      method: 'GET',
+      url: `${base}/instance/connectionState/${name}`,
+      headers: evolutionHeaders(creds.apiKey),
+      customerServer: false,
+    });
+    if (!ok2xx(st)) return providerFailure(provider, st);
+    const sj = (st.json ?? {}) as { instance?: { state?: unknown }; state?: unknown };
+    const state = mapEvolutionState(sj.instance?.state ?? sj.state);
+    if (state === 'open') {
+      if (instance.status !== 'open') await recordStatus(deps, 'open');
+      return { status: 200, body: { ok: true, state: 'open', qr: null, pairing_code: null } };
+    }
+    if (state !== 'connecting') {
+      // "close" (ou desconhecido): NÃO chama connect, que abriria outra conexão.
+      return { status: 200, body: { ok: true, state: 'close', qr: null, pairing_code: null } };
+    }
+    const res = await deps.callProvider({
+      method: 'GET',
+      url: `${base}/instance/connect/${name}`,
+      headers: evolutionHeaders(creds.apiKey),
+      customerServer: false,
+    });
+    if (!ok2xx(res)) return providerFailure(provider, res);
+    const j = (res.json ?? {}) as { base64?: unknown; pairingCode?: unknown };
+    const qr = typeof j.base64 === 'string' && j.base64.startsWith('data:image') ? j.base64 : null;
+    const pairing = typeof j.pairingCode === 'string' && j.pairingCode ? j.pairingCode : null;
+    return { status: 200, body: { ok: true, state: qr || pairing ? 'qrcode' : 'connecting', qr, pairing_code: pairing } };
+  }
+
+  const base = trimSlash(creds.baseUrl);
+  const session = encodeURIComponent(sessionOf(instance));
+  const info = await deps.callProvider({
+    method: 'GET',
+    url: `${base}/api/sessions/${session}`,
+    headers: wahaHeaders(creds.apiKey),
+    customerServer: true,
+  });
+  if (!ok2xx(info)) return providerFailure(provider, info);
+  const state = mapWahaStatus((info.json as { status?: unknown } | undefined)?.status);
+  if (state === 'connected') {
+    if (instance.status !== 'connected') await recordStatus(deps, 'connected');
+    return { status: 200, body: { ok: true, state: 'connected', qr: null, pairing_code: null } };
+  }
+  if (state === 'qrcode') {
+    const img = await deps.callProvider({
+      method: 'GET',
+      url: `${base}/api/${session}/auth/qr?format=image`,
+      headers: wahaHeaders(creds.apiKey, 'image/png'),
+      customerServer: true,
+    });
+    if (!ok2xx(img)) return providerFailure(provider, img);
+    const qr = img.base64 ? `data:${img.contentType || 'image/png'};base64,${img.base64}` : null;
+    return { status: 200, body: { ok: true, state: 'qrcode', qr, pairing_code: null } };
+  }
+  return { status: 200, body: { ok: true, state: state === 'connecting' ? 'connecting' : 'close', qr: null, pairing_code: null } };
+}
+
 async function doDisconnect(deps: ControlDeps, instance: ControlInstance, creds: ProviderCredentials): Promise<ControlResult> {
   const provider = instance.provider || 'evolution';
   const res =
@@ -398,5 +473,6 @@ export async function runInstanceAction(
   }
   if (action === 'status') return doStatus(deps, instance, credentials);
   if (action === 'connect') return doConnect(deps, instance, credentials);
+  if (action === 'qr') return doQr(deps, instance, credentials);
   return doDisconnect(deps, instance, credentials);
 }

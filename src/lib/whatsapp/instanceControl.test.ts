@@ -175,6 +175,39 @@ describe('Evolution', () => {
     expect(d.updateStatus).toHaveBeenCalled();
   });
 
+  it('qr com a conexão fechada (WhatsApp reiniciando depois da leitura): NÃO chama connect', async () => {
+    const d = deps({ responses: [{ status: 200, json: { instance: { state: 'close' } } }] });
+    const r = await runInstanceAction('qr', {}, d);
+    expect(d.calls).toHaveLength(1);
+    expect(d.calls[0]!.url).toBe(`${SERVIDOR}/instance/connectionState/loja-exemplo`);
+    expect(d.calls.some((c) => c.url.includes('/instance/connect/') || c.url.includes('/restart/') || c.url.includes('/logout/'))).toBe(false);
+    expect(r.body).toEqual({ ok: true, state: 'close', qr: null, pairing_code: null });
+  });
+
+  it('qr com a conexão esperando leitura: devolve o QR que já existe', async () => {
+    const d = deps({
+      responses: [
+        { status: 200, json: { instance: { state: 'connecting' } } },
+        { status: 200, json: { base64: 'data:image/png;base64,QUJD', code: '2@cru' } },
+      ],
+    });
+    const r = await runInstanceAction('qr', {}, d);
+    expect(d.calls.map((c) => c.url)).toEqual([
+      `${SERVIDOR}/instance/connectionState/loja-exemplo`,
+      `${SERVIDOR}/instance/connect/loja-exemplo`,
+    ]);
+    expect(r.body).toEqual({ ok: true, state: 'qrcode', qr: 'data:image/png;base64,QUJD', pairing_code: null });
+    semSegredo(r.body);
+  });
+
+  it('qr com a conexão aberta: diz conectado e grava, sem pedir QR', async () => {
+    const d = deps({ responses: [{ status: 200, json: { instance: { state: 'open' } } }] });
+    const r = await runInstanceAction('qr', {}, d);
+    expect(d.calls).toHaveLength(1);
+    expect(r.body.state).toBe('open');
+    expect(d.updateStatus).toHaveBeenCalledWith({ status: 'open', last_connected_at: '2026-10-26T12:00:00.000Z' });
+  });
+
   it('disconnect: logout com a chave da instância e status close', async () => {
     const d = deps({ responses: [{ status: 200, json: {} }] });
     const r = await runInstanceAction('disconnect', {}, d);
@@ -220,6 +253,14 @@ describe('WAHA (servidor do cliente)', () => {
     expect(d.calls[1]!.url).toBe(`${WAHA}/api/sessao-exemplo/auth/qr?format=image`);
     expect(r.body.qr).toBe('data:image/png;base64,UE5H');
     semSegredo(r.body);
+  });
+
+  it('qr com sessão parada: NUNCA inicia a sessão', async () => {
+    const d = deps({ instance: waha, loadCredentials: credWaha, responses: [{ status: 200, json: { status: 'STOPPED' } }] });
+    const r = await runInstanceAction('qr', {}, d);
+    expect(d.calls).toHaveLength(1);
+    expect(d.calls.some((c) => c.method === 'POST')).toBe(false);
+    expect(r.body).toMatchObject({ ok: true, state: 'close', qr: null });
   });
 
   it('disconnect: logout da sessão e status disconnected', async () => {

@@ -385,7 +385,7 @@ export const ALL_TUTORIALS: Tutorial[] = [
       {
         title: 'Leia o QR Code com o celular do número',
         body:
-          'No celular, abra o WhatsApp e vá em Configurações › Aparelhos conectados › Conectar um aparelho. Aponte a câmera para o QR Code. Venceu antes de você ler? Clique em "Atualizar conexão". Quando conecta, aparece "Conectado com sucesso!" e a janela fecha sozinha.',
+          'No celular, abra o WhatsApp e vá em Configurações › Aparelhos conectados › Conectar um aparelho. Aponte a câmera para o QR Code e espere, sem fechar a janela. Apareceu "O QR Code venceu"? Feche a janela e abra o QR Code de novo. Quando conecta, aparece "Conectado com sucesso!" e a janela fecha sozinha.',
       },
       {
         title: 'Faça um teste real',

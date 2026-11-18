@@ -196,7 +196,10 @@ export default function WhatsAppNumbers() {
     enabled: !!tenant?.id,
     // O estado chega pelo evento do provedor (webhook), que grava no banco;
     // esta releitura do banco é o que faz a tela ver a mudança sem F5.
-    refetchInterval: 30000,
+    // Com a janela do QR (ou a de criar número) aberta, a lista não se relê:
+    // a releitura redesenhava a janela e pedia o QR de novo no meio do
+    // pareamento (2026-11-18). A janela acompanha o número sozinha.
+    refetchInterval: showQRModal || showCreateModal ? undefined : 30000,
   });
   const instances = useMemo(
     () => ((rawInstances ?? []) as unknown as Record<string, unknown>[]).map(rebuildSafeInstanceRow) as unknown as WhatsAppInstance[],

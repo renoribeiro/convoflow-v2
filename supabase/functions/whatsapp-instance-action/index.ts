@@ -11,7 +11,7 @@ import { callProvider } from '../_shared/provider-call.ts';
  * Estado, QR, desconectar, "tem chave?" e trocar a chave de um número
  * Evolution ou WAHA. Quem decide e como: `_shared/instance-control.ts`.
  *
- * Corpo: { instance_id: uuid, action: 'status' | 'connect' | 'disconnect' |
+ * Corpo: { instance_id: uuid, action: 'status' | 'connect' | 'qr' | 'disconnect' |
  *          'credential' | 'replace_key', api_key?: string (só replace_key) }
  *
  * A resposta NUNCA leva a chave nem o endereço do servidor. O que volta é o
@@ -20,7 +20,11 @@ import { callProvider } from '../_shared/provider-call.ts';
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Ver o estado continua liberado; o resto muda o número. */
+/**
+ * Ver o estado continua liberado; o resto muda o número. `qr` (o QR atual,
+ * sem abrir conexão) passa pela trava como o `connect`: só serve a quem
+ * conseguiu conectar.
+ */
 const ACOES_DE_LEITURA = ['status', 'credential'];
 
 Deno.serve(async (req: Request) => {

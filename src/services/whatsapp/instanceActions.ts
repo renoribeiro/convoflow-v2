@@ -11,7 +11,7 @@ import { corpoDaEdgeFunction } from '@/lib/edgeFunctionError';
  * chave salva. Plano: docs/RUNBOOK_segredos_das_instancias.md.
  */
 
-export type InstanceActionName = 'status' | 'connect' | 'disconnect' | 'credential' | 'replace_key';
+export type InstanceActionName = 'status' | 'connect' | 'qr' | 'disconnect' | 'credential' | 'replace_key';
 
 export interface InstanceActionResult {
   ok: boolean;
@@ -22,7 +22,7 @@ export interface InstanceActionResult {
   /** status/disconnect: o estado gravado. */
   status?: string;
   changed?: boolean;
-  /** connect: 'open' | 'connected' | 'qrcode' | 'connecting'. */
+  /** connect e qr: 'open' | 'connected' | 'qrcode' | 'connecting' | 'close' (só qr). */
   state?: string;
   qr?: string | null;
   pairing_code?: string | null;
