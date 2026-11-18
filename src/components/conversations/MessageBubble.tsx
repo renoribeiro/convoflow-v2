@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -30,6 +30,8 @@ import { ehNotaDeVozPelaUrl } from '@/lib/audio/audioFile';
 import { classifyMediaUrl, downloadHref } from '@/lib/media/whatsappMedia';
 import { resumoDaMensagem, semRotuloDeMidia } from '@/lib/media/legendaDaMidia';
 import { motivoDaFalhaDaMensagem, type Reenvio } from '@/lib/conversations/falhaDaMensagem';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
+import { textoSemFormatacao } from '@/lib/whatsapp/formatacao';
 
 /** Click-to-WhatsApp ad referral (Meta `messages[].referral`). All fields optional. */
 export type AdReferral = {
@@ -91,50 +93,6 @@ export type RenderableMessage = {
 /** Characters after which a text message gets a "Ver mais"/"Ver menos" toggle. */
 const LONG_MESSAGE_THRESHOLD = 500;
 
-/** Wraps occurrences of `term` (case-insensitive) in <mark> for in-conversation search. */
-function highlightText(text: string, term?: string): React.ReactNode {
-  if (!term || !term.trim()) return text;
-  const needle = term.trim();
-  const safe = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${safe})`, 'gi'));
-  return parts.map((part, i) =>
-    part.toLowerCase() === needle.toLowerCase() ? (
-      <mark key={i} className="bg-primary/30 text-foreground rounded-sm">
-        {part}
-      </mark>
-    ) : (
-      part
-    ),
-  );
-}
-
-/** Detecta URLs http(s) para transformar em links clicáveis. */
-const URL_SPLIT_REGEX = /(https?:\/\/[^\s]+)/g;
-
-/**
- * Renderiza o texto tornando URLs clicáveis e ainda destacando o termo de busca
- * nos trechos que não são link.
- */
-function renderTextWithLinks(text: string, term?: string): React.ReactNode {
-  const segments = text.split(URL_SPLIT_REGEX);
-  return segments.map((seg, i) => {
-    if (/^https?:\/\//.test(seg)) {
-      return (
-        <a
-          key={i}
-          href={seg}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline break-all hover:opacity-80"
-        >
-          {seg}
-        </a>
-      );
-    }
-    return <Fragment key={i}>{highlightText(seg, term)}</Fragment>;
-  });
-}
-
 function tryParseMetadata(message: RenderableMessage): Record<string, any> {
   if (message.metadata) return message.metadata as Record<string, any>;
   if (typeof message.content === 'string' && message.content.startsWith('{')) {
@@ -147,7 +105,16 @@ function tryParseMetadata(message: RenderableMessage): Record<string, any> {
   return {};
 }
 
-function MediaImage({ url, caption, onOpen }: { url: string; caption?: string | null; onOpen: () => void }) {
+/** Legenda de mídia: o WhatsApp formata a legenda como formata o texto. */
+function Legenda({ texto, formatar, className = '' }: { texto: string; formatar: boolean; className?: string }) {
+  return (
+    <p className={`text-sm whitespace-pre-wrap break-words ${className}`}>
+      <TextoWhatsApp texto={texto} formatar={formatar} />
+    </p>
+  );
+}
+
+function MediaImage({ url, caption, onOpen, formatar }: { url: string; caption?: string | null; onOpen: () => void; formatar: boolean }) {
   return (
     <div className="space-y-2">
       <button
@@ -157,19 +124,19 @@ function MediaImage({ url, caption, onOpen }: { url: string; caption?: string | 
       >
         <img src={url} alt={caption ?? 'Imagem enviada'} className="max-h-[260px] w-auto object-cover" loading="lazy" />
       </button>
-      {caption && <p className="text-sm whitespace-pre-wrap">{caption}</p>}
+      {caption && <Legenda texto={caption} formatar={formatar} />}
     </div>
   );
 }
 
-function MediaVideo({ url, caption }: { url: string; caption?: string | null }) {
+function MediaVideo({ url, caption, formatar }: { url: string; caption?: string | null; formatar: boolean }) {
   return (
     <div className="space-y-2">
       <video controls className="max-w-[280px] rounded-lg overflow-hidden border border-border/40" preload="metadata">
         <source src={url} />
         Seu navegador não suporta vídeo.
       </video>
-      {caption && <p className="text-sm whitespace-pre-wrap">{caption}</p>}
+      {caption && <Legenda texto={caption} formatar={formatar} />}
     </div>
   );
 }
@@ -185,7 +152,7 @@ function MediaAudio({ url, isPtt }: { url: string; isPtt: boolean }) {
   );
 }
 
-function MediaDocument({ url, fileName, caption }: { url: string; fileName?: string | null; caption?: string | null }) {
+function MediaDocument({ url, fileName, caption, formatar }: { url: string; fileName?: string | null; caption?: string | null; formatar: boolean }) {
   return (
     <div className="space-y-2">
       <a
@@ -201,7 +168,7 @@ function MediaDocument({ url, fileName, caption }: { url: string; fileName?: str
         </div>
         <Download className="w-4 h-4 opacity-70" />
       </a>
-      {caption && <p className="text-sm whitespace-pre-wrap">{caption}</p>}
+      {caption && <Legenda texto={caption} formatar={formatar} />}
     </div>
   );
 }
@@ -436,6 +403,11 @@ interface MessageBubbleProps {
    * mensagem no WhatsApp, o botão de reagir não aparece.
    */
   onReact?: (message: RenderableMessage, emoji: string) => void;
+  /**
+   * Mostrar a formatação do WhatsApp (*negrito*, _itálico_...). Padrão: sim.
+   * O Instagram não formata: lá os sinais aparecem como o cliente escreveu.
+   */
+  formatarTexto?: boolean;
 }
 
 /** Tipos cujo corpo NÃO é texto reaproveitável como resposta rápida. */
@@ -462,6 +434,7 @@ export function MessageBubble({
   onResend,
   reenviando = false,
   onReact,
+  formatarTexto = true,
 }: MessageBubbleProps) {
   const isOutbound = message.direction === 'outbound';
   const meta = useMemo(() => tryParseMetadata(message), [message]);
@@ -511,10 +484,10 @@ export function MessageBubble({
     if (midiaPendente) return <MediaPendente type={type} state={midiaPendente} />;
 
     if (type === 'image' && url) {
-      return <MediaImage url={url} caption={caption ?? null} onOpen={() => setImageOpen(true)} />;
+      return <MediaImage url={url} caption={caption ?? null} onOpen={() => setImageOpen(true)} formatar={formatarTexto} />;
     }
     if (type === 'video' && url) {
-      return <MediaVideo url={url} caption={caption ?? null} />;
+      return <MediaVideo url={url} caption={caption ?? null} formatar={formatarTexto} />;
     }
     if (type === 'audio' && url) {
       // OGG = mensagem de voz, enviada ou recebida (ver ehNotaDeVozPelaUrl).
@@ -522,7 +495,7 @@ export function MessageBubble({
       return <MediaAudio url={url} isPtt={isPtt} />;
     }
     if (type === 'document' && url) {
-      return <MediaDocument url={url} fileName={fileName} caption={caption ?? null} />;
+      return <MediaDocument url={url} fileName={fileName} caption={caption ?? null} formatar={formatarTexto} />;
     }
     if (type === 'sticker' && url) {
       return <MediaSticker url={url} />;
@@ -556,7 +529,7 @@ export function MessageBubble({
     return (
       <div>
         <p className={`text-sm whitespace-pre-wrap break-words ${isLong && !expanded ? 'line-clamp-[12]' : ''}`}>
-          {renderTextWithLinks(text, searchTerm)}
+          <TextoWhatsApp texto={text} termo={searchTerm} formatar={formatarTexto} />
         </p>
         {isLong && (
           <button
@@ -602,7 +575,7 @@ export function MessageBubble({
         {showQuoted && message.quoted && (
           <div className="mb-2 px-2 py-1 border-l-2 border-current/40 bg-background/20 rounded-sm">
             <p className="text-xs opacity-70">{message.quoted.sender || 'Em resposta a'}</p>
-            <p className="text-xs opacity-90 line-clamp-2">{resumoDaMensagem(message.quoted.content) || '...'}</p>
+            <p className="text-xs opacity-90 line-clamp-2">{citacaoLimpa(message.quoted.content, formatarTexto) || '...'}</p>
           </div>
         )}
 
@@ -693,7 +666,7 @@ export function MessageBubble({
               <DialogTitle className="sr-only">Imagem ampliada</DialogTitle>
             </DialogHeader>
             <img src={url} alt={caption ?? 'Imagem'} className="w-full h-auto rounded-lg" />
-            {caption && <p className="text-sm whitespace-pre-wrap mt-2">{caption}</p>}
+            {caption && <Legenda texto={caption} formatar={formatarTexto} className="mt-2" />}
             <Button asChild variant="outline" size="sm" className="mt-2 w-fit">
               <a href={downloadHref(url)} target="_blank" rel="noopener noreferrer" download>
                 <Download className="w-4 h-4 mr-2" /> Baixar
@@ -704,6 +677,15 @@ export function MessageBubble({
       )}
     </div>
   );
+}
+
+/**
+ * A linha que fala de uma mensagem citada: sem o rótulo do webhook e, no
+ * WhatsApp, sem os sinais de formatação (a citação é um resumo, como a lista).
+ */
+export function citacaoLimpa(texto: string | null | undefined, semFormatacao = true): string {
+  const resumo = resumoDaMensagem(texto);
+  return semFormatacao ? textoSemFormatacao(resumo) : resumo;
 }
 
 export function pickMessagePreview(message: RenderableMessage): string {

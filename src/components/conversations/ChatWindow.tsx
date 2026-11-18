@@ -109,8 +109,8 @@ import { reenvioDaMensagem } from '@/lib/conversations/falhaDaMensagem';
 import { idsParaMarcarComoLidas, naoLidasDoCliente } from '@/lib/conversations/lidaAoAbrir';
 import { usePaginaVisivel } from '@/hooks/usePaginaVisivel';
 import { cn, formatPhoneBR } from '@/lib/utils';
-import { MessageBubble, type RenderableMessage } from './MessageBubble';
-import { resumoDaMensagem } from '@/lib/media/legendaDaMidia';
+import { MessageBubble, citacaoLimpa, type RenderableMessage } from './MessageBubble';
+import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
 import { LeadTagsDialog } from '@/components/etiquetas/LeadTagsDialog';
 import { ContactPanel } from './ContactPanel';
 import { ChatSearchBar } from './ChatSearchBar';
@@ -1648,6 +1648,8 @@ export const ChatWindow = ({
                   <MessageBubble
                     message={msg}
                     onReply={isInstagram ? undefined : setReplyTo}
+                    // O Instagram não formata: lá os sinais ficam como vieram.
+                    formatarTexto={!isInstagram}
                     searchTerm={searchOpen ? searchTerm : undefined}
                     isActiveMatch={activeMatchId === msg.id}
                     onSaveAsQuickReply={handleSaveAsQuickReply}
@@ -1671,7 +1673,7 @@ export const ChatWindow = ({
             {replyTo && (
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <span className="text-xs text-muted-foreground">Respondendo:</span>
-                <span className="text-xs truncate">{resumoDaMensagem(replyTo.content) || rotuloDoTipo(replyTo.message_type)}</span>
+                <span className="text-xs truncate">{citacaoLimpa(replyTo.content) || rotuloDoTipo(replyTo.message_type)}</span>
                 <Button variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
                   <X className="w-3 h-3" />
                 </Button>
@@ -1834,6 +1836,21 @@ export const ChatWindow = ({
                     </TooltipTrigger>
                     <TooltipContent className="text-xs">Emoji</TooltipContent>
                   </Tooltip>
+                )}
+
+                {/* Os sinais de formatação do WhatsApp (*negrito*...). A mensagem
+                    sai como foi digitada; quem formata é o WhatsApp do cliente,
+                    e a bolha enviada já mostra o resultado. Instagram não formata.
+                    O respiro dos lados impede que a área de toque de 44 px do
+                    "?" no celular cubra o campo de texto. */}
+                {!isInstagram && (
+                  <span className="flex shrink-0 self-center px-3 md:px-1" data-dica-formatacao="">
+                    <DicaDoCampo
+                      rotulo="Formatação do WhatsApp"
+                      texto="Para formatar, cole o sinal no texto: *negrito*, _itálico_, ~riscado~ e ```monoespaçado```. A mensagem sai como você digitou e o cliente vê formatada no WhatsApp."
+                      ajuda="page:conversations-formatacao"
+                    />
+                  </span>
                 )}
 
                 <Textarea

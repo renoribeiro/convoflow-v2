@@ -50,6 +50,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNotifications } from '@/hooks/useNotifications';
+import { textoSemFormatacao } from '@/lib/whatsapp/formatacao';
 import { useGlobalMessageListener } from '@/hooks/useRealtimeMessages';
 import { useConversationShortcuts } from '@/hooks/useConversationShortcuts';
 import { XL_BREAKPOINT, useIsBelowXl, useIsMobile } from '@/hooks/use-mobile';
@@ -225,6 +226,7 @@ export default function Conversations() {
     }) => {
       let contactName = 'Novo contato';
       let contactPhone = '';
+      let ehInstagram = false;
       try {
         const { data: contact } = await supabase
           .from('contacts')
@@ -244,12 +246,15 @@ export default function Conversations() {
               ? contactDisplayName(c, 'instagram')
               : c.name || c.phone || 'Contato';
           contactPhone = c.phone || '';
+          ehInstagram = c.channel === 'instagram';
         }
       } catch {
         /* fallback */
       }
 
-      let preview = message.content;
+      // Notificação não formata: no WhatsApp, o texto vai sem os sinais
+      // (*Consulta* vira Consulta). O Instagram não tem formatação.
+      let preview = ehInstagram ? message.content : textoSemFormatacao(message.content);
       if (message.messageType === 'image') preview = '📷 Imagem';
       else if (message.messageType === 'audio') preview = '🎤 Áudio';
       else if (message.messageType === 'video') preview = '📹 Vídeo';

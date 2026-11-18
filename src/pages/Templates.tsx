@@ -14,6 +14,7 @@ import { AlertCircle, FileText, RefreshCw, Search, Smartphone } from 'lucide-rea
 
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { TemplateStatusBadge } from '@/components/shared/TemplateStatusBadge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -49,23 +50,28 @@ const TemplateText = ({ text }: { text?: string }) => {
   const segments = splitTemplateText(text);
   if (segments.length === 0) return null;
 
+  // A formatação do WhatsApp (*negrito*...) por fora; os {{n}} destacados em
+  // cada pedaço de texto comum, mesmo dentro de um negrito.
   return (
     <p className="text-sm whitespace-pre-wrap break-words">
-      {segments.map((segment, index) =>
-        segment.type === 'param' ? (
-          <code
-            key={index}
-            className="rounded bg-primary/10 px-1 py-0.5 font-mono text-xs text-primary"
-          >
-            {segment.value}
-          </code>
-        ) : (
-          <span key={index}>{segment.value}</span>
-        ),
-      )}
+      <TextoWhatsApp texto={text} links={false} folha={(pedaco) => <ParametrosDestacados texto={pedaco} />} />
     </p>
   );
 };
+
+const ParametrosDestacados = ({ texto }: { texto: string }) => (
+  <>
+    {splitTemplateText(texto).map((segment, index) =>
+      segment.type === 'param' ? (
+        <code key={index} className="rounded bg-primary/10 px-1 py-0.5 font-mono text-xs text-primary">
+          {segment.value}
+        </code>
+      ) : (
+        <span key={index}>{segment.value}</span>
+      ),
+    )}
+  </>
+);
 
 /** Um idioma de um template: cabeçalho, corpo, rodapé e botões. */
 const TemplateLanguage = ({ template }: { template: WhatsAppTemplate }) => {

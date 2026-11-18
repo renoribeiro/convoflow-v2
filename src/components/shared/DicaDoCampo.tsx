@@ -15,6 +15,7 @@
  * src/lib/help/cobertura.test.ts confere isso em todo o src/.
  */
 import { HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
@@ -24,9 +25,14 @@ interface Props {
   /** O nome do campo, para o leitor de tela ("O que é: Prioridade"). */
   rotulo: string;
   className?: string;
+  /**
+   * Chave de uma entrada da Ajuda (src/lib/help/featureHelp.ts). Com ela, a
+   * dica termina num link "Ver mais na Ajuda" que abre a entrada.
+   */
+  ajuda?: string;
 }
 
-export function DicaDoCampo({ texto, rotulo, className }: Props) {
+export function DicaDoCampo({ texto, rotulo, className, ajuda }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -49,6 +55,14 @@ export function DicaDoCampo({ texto, rotulo, className }: Props) {
         className="w-72 max-w-[calc(100vw-2rem)] p-3 text-xs leading-relaxed"
       >
         {texto}
+        {ajuda && (
+          <Link
+            to={`/dashboard/help#${ajuda}`}
+            className="mt-2 block font-medium text-accent underline underline-offset-2 hover:opacity-80"
+          >
+            Ver mais na Ajuda
+          </Link>
+        )}
       </PopoverContent>
     </Popover>
   );

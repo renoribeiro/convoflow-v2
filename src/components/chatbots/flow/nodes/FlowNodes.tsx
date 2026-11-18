@@ -5,6 +5,7 @@
 import React from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import BaseNode from './BaseNode';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import type {
   StartNodeData,
   SendTextNodeData,
@@ -62,7 +63,7 @@ export const SendTextNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       errorMessage={d.meta?.errorMessage}
       onDelete={d.meta?.onDelete}
     >
-      <p className="line-clamp-2 break-words">{d.message || <em>Sem mensagem</em>}</p>
+      <p className="line-clamp-2 break-words">{d.message ? <TextoWhatsApp texto={d.message} links={false} /> : <em>Sem mensagem</em>}</p>
     </BaseNode>
   );
 };
@@ -81,7 +82,7 @@ export const AskQuestionNode: React.FC<NodeProps> = ({ id, data, selected }) => 
       errorMessage={d.meta?.errorMessage}
       onDelete={d.meta?.onDelete}
     >
-      <p className="line-clamp-2 break-words">{d.message || <em>Sem pergunta</em>}</p>
+      <p className="line-clamp-2 break-words">{d.message ? <TextoWhatsApp texto={d.message} links={false} /> : <em>Sem pergunta</em>}</p>
       {d.save_to_variable && (
         <p className="text-[10px] text-[hsl(var(--primary))] mt-1">→ {'{' + d.save_to_variable + '}'}</p>
       )}
@@ -124,7 +125,7 @@ export const ShowOptionsNode: React.FC<NodeProps> = ({ id, data, selected }) => 
         </>
       }
     >
-      <p className="line-clamp-1 break-words">{d.message || <em>Sem mensagem</em>}</p>
+      <p className="line-clamp-1 break-words">{d.message ? <TextoWhatsApp texto={d.message} links={false} /> : <em>Sem mensagem</em>}</p>
       {(d.options ?? []).length > 0 && (
         <ul className="mt-1 space-y-0.5">
           {d.options.map((o, i) => (
@@ -220,7 +221,7 @@ export const TransferAgentNode: React.FC<NodeProps> = ({ id, data, selected }) =
       onDelete={d.meta?.onDelete}
       showSourceHandle={false}
     >
-      <p className="line-clamp-2 break-words">{d.message || 'Transferir para atendente'}</p>
+      <p className="line-clamp-2 break-words">{d.message ? <TextoWhatsApp texto={d.message} links={false} /> : 'Transferir para atendente'}</p>
       <p className="text-[10px] mt-1 text-muted-foreground">
         {d.assign_to === 'specific_user' ? 'Atendente específico' : 'Qualquer atendente'}
       </p>
@@ -324,7 +325,7 @@ export const EndFlowNode: React.FC<NodeProps> = ({ id, data, selected }) => {
       showSourceHandle={false}
     >
       {d.message ? (
-        <p className="line-clamp-2 break-words">{d.message}</p>
+        <p className="line-clamp-2 break-words"><TextoWhatsApp texto={d.message} links={false} /></p>
       ) : d.silent ? (
         <p className="italic">Encerrar silenciosamente</p>
       ) : (

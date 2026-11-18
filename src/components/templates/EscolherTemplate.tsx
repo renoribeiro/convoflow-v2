@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { AlertCircle, Loader2, RefreshCw, X } from 'lucide-react';
 import { useMetaTemplates, useMetaWabaGroups } from '@/hooks/useMetaTemplates';
 import {
@@ -136,7 +137,7 @@ export function EscolherTemplate({ instanceId, valor, aoMudar, dicaDasVariaveis,
           )}
           {escolhido?.bodyText && (
             <p className="whitespace-pre-wrap rounded border bg-muted/30 p-2 text-xs text-muted-foreground">
-              {escolhido.bodyText}
+              <TextoWhatsApp texto={escolhido.bodyText} links={false} />
             </p>
           )}
           {escolhido && valor.parametros.length === 0 && (

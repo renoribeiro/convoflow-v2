@@ -685,6 +685,30 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
     category: 'tela',
     area: 'Operação',
   },
+  // Montada pela dica "?" ao lado do campo de mensagem (link "Ver mais na Ajuda").
+  'page:conversations-formatacao': {
+    moduleName: 'conversations',
+    title: 'Conversas › Formatação do WhatsApp',
+    whatItDoes:
+      'A conversa mostra a formatação como o WhatsApp mostra: o texto entre asteriscos aparece em negrito, e os outros sinais também valem. Na lista de conversas, na notificação e na citação de uma resposta, o texto aparece limpo, sem os sinais. A mensagem guardada nunca muda.',
+    howToConfigure: [
+      'Para formatar um trecho, cole o sinal no começo e no fim dele, sem espaço: *negrito*, _itálico_, ~riscado~, ```monoespaçado``` e `código`.',
+      'No começo da linha, "> " faz uma citação, "* " ou "- " faz um item de lista e "1. " faz um item numerado.',
+      'Envie normalmente. A mensagem sai com os sinais, do jeito que você digitou, e o WhatsApp do cliente mostra formatada. A sua bolha na conversa já mostra como ela ficou.',
+    ],
+    example:
+      'Você escreve "Sua *consulta* está marcada para _amanhã_". O cliente lê "consulta" em negrito e "amanhã" em itálico, e a lista de conversas mostra "Sua consulta está marcada para amanhã".',
+    tips: [
+      'O sinal só conta colado no texto e fora da palavra: "* oi*", "meu_arquivo" e "2*3" ficam como estão. O negrito, o itálico e o riscado não passam de uma linha para outra.',
+      'A formatação aparece também na prévia de templates, campanhas, automações, chatbots e respostas rápidas.',
+      'O Instagram não tem formatação: nas conversas de lá, os sinais aparecem como o cliente escreveu.',
+    ],
+    fontesOficiais: [
+      { rotulo: 'WhatsApp: Como formatar suas mensagens', url: 'https://faq.whatsapp.com/539178204879377' },
+    ],
+    category: 'tela',
+    area: 'Operação',
+  },
   'page:contacts': {
     moduleName: 'contacts',
     title: 'Contatos',

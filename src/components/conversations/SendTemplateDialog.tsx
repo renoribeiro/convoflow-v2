@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TemplateStatusBadge } from '@/components/shared/TemplateStatusBadge';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import {
   Select,
   SelectContent,
@@ -255,7 +256,7 @@ export function SendTemplateDialog({
               )}
               {selectedTemplate?.bodyText && (
                 <p className="text-xs text-muted-foreground border rounded p-2 bg-muted/30 whitespace-pre-wrap">
-                  {selectedTemplate.bodyText}
+                  <TextoWhatsApp texto={selectedTemplate.bodyText} links={false} />
                 </p>
               )}
               <button

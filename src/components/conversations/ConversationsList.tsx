@@ -32,6 +32,7 @@ import {
   type ConversationChannel,
 } from '@/lib/conversations/channel';
 import { pickMessagePreview } from './MessageBubble';
+import { textoSemFormatacao } from '@/lib/whatsapp/formatacao';
 import { MessageStatusIcon } from './MessageStatusIcon';
 import { LinhaDeEtiquetas } from './LinhaDeEtiquetas';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -283,7 +284,8 @@ export const ConversationsList = ({
           typeof conv?.contacts?.phone === 'string' && conv.contacts.phone.endsWith('@g.us');
         const lastDirection = conv.last_message?.direction ?? 'inbound';
         const lastStatus = conv.last_message?.status ?? null;
-        const messagePreview = conv.last_message
+        const rowChannel = asChannel(conv.channel ?? conv.contacts?.channel);
+        const textoDaPrevia = conv.last_message
           ? pickMessagePreview({
               id: 'preview',
               content: conv.last_message.content ?? null,
@@ -294,7 +296,9 @@ export const ConversationsList = ({
               media_url: null,
             })
           : 'Nenhuma mensagem';
-        const rowChannel = asChannel(conv.channel ?? conv.contacts?.channel);
+        // A lista mostra o texto limpo: *Consulta* vira Consulta. No Instagram
+        // não existe formatação, então os sinais ficam como o cliente escreveu.
+        const messagePreview = rowChannel === 'instagram' ? textoDaPrevia : textoSemFormatacao(textoDaPrevia);
         return {
           id: conv.id,
           contact_id: conv.contact_id,

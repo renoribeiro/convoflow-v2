@@ -20,6 +20,7 @@ import { useCampaignMutations, type Campaign, type CampaignCreateInput, type Mes
 import { logger } from '@/lib/logger';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { EscolherTemplate } from '@/components/templates/EscolherTemplate';
 import { templateCompleto } from '@/lib/templates/escolherTemplate';
 import { format, differenceInDays, differenceInHours, differenceInMinutes } from 'date-fns';
@@ -849,7 +850,10 @@ export const CampaignWizard = ({
           {state.message_template && (
             <div className="mt-3 flex justify-end">
               <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
-                {state.message_template.replace(/{name}/g, 'João').replace(/{first_name}/g, 'João').replace(/{phone}/g, '5511999990001').replace(/{email}/g, 'joao@exemplo.com')}
+                <TextoWhatsApp
+                  links={false}
+                  texto={state.message_template.replace(/{name}/g, 'João').replace(/{first_name}/g, 'João').replace(/{phone}/g, '5511999990001').replace(/{email}/g, 'joao@exemplo.com')}
+                />
                 <div className="text-xs text-muted-foreground text-right mt-1">10:30 ✓✓</div>
               </div>
             </div>
@@ -1385,11 +1389,14 @@ export const CampaignWizard = ({
             <Label className="mb-2 block">Prévia da Mensagem</Label>
             <div className="flex justify-end">
               <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
-                {state.message_template
-                  .replace(/{name}/g, 'João')
-                  .replace(/{first_name}/g, 'João')
-                  .replace(/{phone}/g, '5511999990001')
-                  .replace(/{email}/g, 'joao@exemplo.com')}
+                <TextoWhatsApp
+                  links={false}
+                  texto={state.message_template
+                    .replace(/{name}/g, 'João')
+                    .replace(/{first_name}/g, 'João')
+                    .replace(/{phone}/g, '5511999990001')
+                    .replace(/{email}/g, 'joao@exemplo.com')}
+                />
                 <div className="text-xs text-muted-foreground text-right mt-1">
                   10:30 ✓✓
                 </div>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Dialog,
@@ -191,7 +192,7 @@ export const QuickRepliesSettings = () => {
                 <div className="min-w-0 space-y-1">
                   <p className="font-medium text-sm">{reply.name}</p>
                   <p className="text-sm text-muted-foreground whitespace-pre-wrap line-clamp-3">
-                    {reply.content}
+                    <TextoWhatsApp texto={reply.content} links={false} />
                   </p>
                   <Autoria reply={reply} />
                 </div>

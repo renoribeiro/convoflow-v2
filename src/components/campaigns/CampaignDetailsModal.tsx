@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -235,11 +236,14 @@ export const CampaignDetailsModal = ({ campaignId, onClose }: CampaignDetailsMod
                     <p className="text-xs text-muted-foreground mb-2">Prévia da mensagem</p>
                     <div className="flex justify-end">
                       <div className="max-w-xs superficie-lima rounded-2xl rounded-tr-sm px-4 py-2 text-sm whitespace-pre-wrap shadow-sm">
-                        {campaign.message_template
-                          .replace(/{name}/g, 'João')
-                          .replace(/{first_name}/g, 'João')
-                          .replace(/{phone}/g, '5511999990001')
-                          .replace(/{email}/g, 'joao@exemplo.com')}
+                        <TextoWhatsApp
+                          links={false}
+                          texto={campaign.message_template
+                            .replace(/{name}/g, 'João')
+                            .replace(/{first_name}/g, 'João')
+                            .replace(/{phone}/g, '5511999990001')
+                            .replace(/{email}/g, 'joao@exemplo.com')}
+                        />
                         <div className="text-xs text-muted-foreground text-right mt-1">
                           10:30 ✓✓
                         </div>

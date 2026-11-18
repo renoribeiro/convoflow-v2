@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/command';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { substituteVariables } from '@/lib/chatbot/flowEngine';
 import { useQuickReplies } from '@/hooks/useQuickReplies';
 import { buildQuickReplyContext, type QuickReplyContact } from './quickReplyContext';
@@ -125,7 +126,7 @@ export function QuickRepliesPopover({
                   >
                     <span className="text-sm font-medium">{reply.title}</span>
                     <span className="text-xs text-muted-foreground line-clamp-1">
-                      {reply.content}
+                      <TextoWhatsApp texto={reply.content} links={false} />
                     </span>
                   </CommandItem>
                 ))}

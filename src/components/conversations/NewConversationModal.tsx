@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { FeatureHelp } from '@/components/shared/FeatureHelp';
 import { DicaDoCampo } from '@/components/shared/DicaDoCampo';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -540,7 +541,7 @@ export const NewConversationModal = ({ onConversationCreated, icone = false, noV
                   )}
                   {template?.bodyText && (
                     <p className="text-xs text-muted-foreground border rounded p-2 bg-muted/30 whitespace-pre-wrap">
-                      {template.bodyText}
+                      <TextoWhatsApp texto={template.bodyText} links={false} />
                     </p>
                   )}
                   {params.map((valor, idx) => (

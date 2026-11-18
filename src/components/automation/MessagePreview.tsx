@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { Check } from 'lucide-react';
+import { TextoWhatsApp } from '@/components/shared/TextoWhatsApp';
 
 const SAMPLE: Record<string, string> = {
   name: 'João Silva',
@@ -40,7 +41,11 @@ export const MessagePreview: React.FC<MessagePreviewProps> = ({ text, customVari
       <div className="flex justify-end">
         <div className="relative max-w-[85%] rounded-lg rounded-tr-none superficie-lima px-3 py-2 shadow-sm">
           <p className="whitespace-pre-wrap break-words text-sm text-foreground">
-            {filled || <span className="italic text-muted-foreground">Sua mensagem aparece aqui…</span>}
+            {filled ? (
+              <TextoWhatsApp texto={filled} links={false} />
+            ) : (
+              <span className="italic text-muted-foreground">Sua mensagem aparece aqui…</span>
+            )}
           </p>
           <div className="mt-1 flex items-center justify-end gap-0.5 text-[10px] text-muted-foreground">
             09:00
