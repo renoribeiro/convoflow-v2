@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { contatoNovoDaEvolution } from '../_shared/nome-do-perfil.ts'
+import { resolverRemetenteEvolution, telefoneDoJid, numerosDaInstancia } from '../_shared/evolution-remetente.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
 import {
@@ -94,7 +95,7 @@ serve(async (req) => {
     // Security Check: Verify the instance exists in our DB
     const { data: instance, error: instanceError } = await supabase
       .from('whatsapp_instances')
-      .select('id, tenant_id, instance_key, connection_config, evolution_api_key')
+      .select('id, tenant_id, instance_key, phone_number, connection_config, evolution_api_key')
       .eq('instance_key', instanceName)
       .single()
 
@@ -164,7 +165,7 @@ serve(async (req) => {
         break
 
       case 'send.message':
-        await processSentMessage(supabase, instance, instanceName, eventData as MessageData, logger)
+        await processSentMessage(supabase, instance, instanceName, eventData as MessageData, sender, logger)
         break
 
       case 'connection.update':
@@ -178,7 +179,7 @@ serve(async (req) => {
       case 'contacts.set':
       case 'contacts.upsert':
       case 'contacts.update':
-        await processContactEvent(supabase, instance, instanceName, eventType, eventData, logger)
+        await processContactEvent(supabase, instance, instanceName, eventType, eventData, sender, logger)
         break
 
       case 'chats.set':
@@ -253,7 +254,7 @@ serve(async (req) => {
 
 async function processIncomingMessage(
   supabase: SupabaseClient,
-  instance: { id: string; tenant_id: string; instance_key: string },
+  instance: { id: string; tenant_id: string; instance_key: string; phone_number?: string | null },
   instanceName: string,
   messageData: MessageData,
   sender: string | undefined,
@@ -268,11 +269,14 @@ async function processIncomingMessage(
     // campanha ou pelo bot gravar a linha dele antes; processSentMessage não
     // grava de novo o que já tem o mesmo id e reconhece o eco do bot.
     const { messageType: tipo } = extractMessageContent(message ?? {})
-    const jid = key.remoteJid ?? ''
-    if (!key.id || jid.includes('@g.us') || jid.includes('@broadcast')) return
+    if (!key.id) return
+    const destino = resolverRemetenteEvolution({
+      key, sender, telefoneDaInstancia: instance.phone_number, instancia: instanceName,
+    })
+    if (!destino.ok) return
     if (tipo === 'protocol' || tipo === 'reaction' || tipo === 'unknown') return
     await new Promise((r) => setTimeout(r, 2500))
-    await processSentMessage(supabase, instance, instanceName, messageData, logger)
+    await processSentMessage(supabase, instance, instanceName, messageData, sender, logger)
     return
   }
 
@@ -281,35 +285,20 @@ async function processIncomingMessage(
   // Determine message content and type
   const { content: rawMessageContent, messageType } = extractMessageContent(message)
 
-  // Handle LID resolution: Evolution V2/Baileys novo manda remoteJid em
-  // formato LID (`12345@lid`). Tentamos em ordem:
-  //   1. sender field (já vem resolvido em alguns eventos)
-  //   2. key.remoteJidAlt (Baileys V2 traz o phone real aqui quando JID é LID)
-  //   3. key.remoteJid (fallback — só serve se não for LID)
-  let rawPhone: string;
-  if (sender && !sender.includes('@lid')) {
-    rawPhone = sender.replace('@s.whatsapp.net', '').replace('@c.us', '');
-  } else if ((key as any).remoteJidAlt && !(key as any).remoteJidAlt.includes('@lid')) {
-    rawPhone = (key as any).remoteJidAlt.replace('@s.whatsapp.net', '').replace('@c.us', '');
-  } else if (!key.remoteJid.includes('@lid')) {
-    rawPhone = key.remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
-  } else {
-    logger.warn('Cannot resolve phone from LID — sender/remoteJidAlt/remoteJid all LID', {
-      sender, remoteJid: key.remoteJid, remoteJidAlt: (key as any).remoteJidAlt,
-    });
+  // Quem escreveu (correção de 2026-11-18, _shared/evolution-remetente.ts):
+  // remoteJid, ou remoteJidAlt/senderPn quando ele é @lid. O `sender` do corpo
+  // é o PRÓPRIO número conectado: serve só para nunca virar contato. Grupo,
+  // status e canal são ignorados.
+  const remetente = resolverRemetenteEvolution({
+    key, sender, telefoneDaInstancia: instance.phone_number, instancia: instanceName,
+  })
+  if (!remetente.ok) {
+    if (remetente.motivo === 'lid_sem_telefone' || remetente.motivo === 'sem_telefone' || remetente.motivo === 'numero_da_instancia') {
+      logger.warn('Inbound message ignored: sender not resolved', { motivo: remetente.motivo, id: key.id, instanceName })
+    }
     return;
   }
-
-  const phone = DataSanitizer.sanitizePhoneNumber(rawPhone)
-  if (!phone) return;
-
-  // Check if it's a group message
-  const isGroup = key.remoteJid.includes('@g.us');
-  if (isGroup) {
-    // For group messages, we can log but skip contact creation for now
-    logger.info('Group message received', { group: key.remoteJid, messageType })
-    return;
-  }
+  const phone = remetente.telefone
 
   // Find or Create Contact — escopo por instância (mesma pessoa em duas
   // instâncias = dois contatos separados, conforme decisão do usuário).
@@ -370,6 +359,8 @@ async function processIncomingMessage(
     content: rawMessageContent,
     evolution_message_id: key.id,
     status: 'received',
+    // Só os campos de remetente, para conferir depois quem mandou (sem nome nem texto).
+    metadata: { evolution: remetente.dados },
   })
 
   // Campaign reply tracking — isolated so it never disrupts message processing.
@@ -695,9 +686,10 @@ async function processMessageDelete(supabase: SupabaseClient, instanceName: stri
 
 async function processSentMessage(
   supabase: SupabaseClient,
-  instance: { id: string; tenant_id: string; instance_key: string },
+  instance: { id: string; tenant_id: string; instance_key: string; phone_number?: string | null },
   instanceName: string,
   messageData: MessageData,
+  sender: string | undefined,
   logger: any
 ) {
   const { key, message, messageTimestamp } = messageData;
@@ -706,19 +698,18 @@ async function processSentMessage(
 
   const { content, messageType } = extractMessageContent(message);
 
-  // Resolução de LID (idem processIncomingMessage): tenta remoteJidAlt primeiro.
-  let rawPhone: string;
-  if ((key as any).remoteJidAlt && !(key as any).remoteJidAlt.includes('@lid')) {
-    rawPhone = (key as any).remoteJidAlt.replace('@s.whatsapp.net', '').replace('@c.us', '');
-  } else if (!key.remoteJid.includes('@lid')) {
-    rawPhone = key.remoteJid.replace('@s.whatsapp.net', '').replace('@g.us', '');
-  } else {
-    logger.warn('Sent message has LID remoteJid without alt — skip', { remoteJid: key.remoteJid });
+  // O destino (mesma regra da entrada, _shared/evolution-remetente.ts): nunca
+  // grupo, status, canal nem o próprio número (mensagem para si mesmo).
+  const destino = resolverRemetenteEvolution({
+    key, sender, telefoneDaInstancia: instance.phone_number, instancia: instanceName,
+  });
+  if (!destino.ok) {
+    if (destino.motivo === 'lid_sem_telefone') {
+      logger.warn('Sent message has LID remoteJid without alt — skip', { id: key.id });
+    }
     return;
   }
-  const phone = DataSanitizer.sanitizePhoneNumber(rawPhone);
-
-  if (!phone) return;
+  const phone = destino.telefone;
 
   // Find the contact — escopo por instância
   const { data: contact } = await supabase
@@ -835,22 +826,24 @@ async function processQRCodeUpdate(supabase: SupabaseClient, instanceName: strin
 
 async function processContactEvent(
   supabase: SupabaseClient,
-  instance: { id: string; tenant_id: string },
+  instance: { id: string; tenant_id: string; phone_number?: string | null },
   instanceName: string,
   eventType: string,
   contactData: any,
+  sender: string | undefined,
   logger: any
 ) {
+  const proprios = numerosDaInstancia(sender, instance.phone_number);
   const contacts = Array.isArray(contactData) ? contactData : [contactData];
 
   for (const contact of contacts) {
     if (!contact?.id) continue;
 
-    const phone = contact.id.replace('@s.whatsapp.net', '').replace('@c.us', '');
-    if (!phone || phone.includes('@g.us')) continue;
-
-    const sanitizedPhone = DataSanitizer.sanitizePhoneNumber(phone);
+    // Só pessoa com telefone (nada de @lid, grupo, status ou canal) e nunca o
+    // próprio número conectado (_shared/evolution-remetente.ts).
+    const sanitizedPhone = telefoneDoJid(contact.id);
     if (!sanitizedPhone) continue;
+    if (proprios.has(sanitizedPhone)) continue;
 
     const pushName: string | undefined = contact.name || contact.pushName || contact.notify;
     const profilePicUrl: string | undefined = contact.profilePicUrl || contact.profilePictureUrl;
