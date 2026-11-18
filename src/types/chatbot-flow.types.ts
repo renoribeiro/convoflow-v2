@@ -19,7 +19,8 @@ export type ChatbotTriggerType =
   | 'first_contact'
   | 'out_of_hours'
   | 'no_agent_reply'
-  | 'funnel_stage';
+  | 'funnel_stage'
+  | 'no_recent_human';
 
 export type ChatbotNodeType =
   | 'start'
@@ -137,13 +138,16 @@ export interface NoAgentReplyTriggerValue {
 export interface FunnelStageTriggerValue {
   stage_id: string;
 }
+// no_recent_human has no extra config (12 h sem pessoa, 24 h sem bot: regra fixa)
+export type NoRecentHumanTriggerValue = Record<string, never>;
 
 export type ChatbotTriggerValue =
   | KeywordTriggerValue
   | FirstContactTriggerValue
   | OutOfHoursTriggerValue
   | NoAgentReplyTriggerValue
-  | FunnelStageTriggerValue;
+  | FunnelStageTriggerValue
+  | NoRecentHumanTriggerValue;
 
 export interface ChatbotTriggerValueMap {
   keyword: KeywordTriggerValue;
@@ -151,6 +155,7 @@ export interface ChatbotTriggerValueMap {
   out_of_hours: OutOfHoursTriggerValue;
   no_agent_reply: NoAgentReplyTriggerValue;
   funnel_stage: FunnelStageTriggerValue;
+  no_recent_human: NoRecentHumanTriggerValue;
 }
 
 // ---------------------------------------------------------------------------

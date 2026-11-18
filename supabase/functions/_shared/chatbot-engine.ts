@@ -396,6 +396,44 @@ export interface ChatbotRow {
   priority: number | null;
 }
 
+// ---------------------------------------------------------------------------
+// Gatilho "Sem conversa humana recente" (no_recent_human, desde 2026-11-18)
+//
+// Dispara quando nenhuma pessoa escreveu na conversa nas últimas 12 horas e
+// nenhum bot rodou para o contato nas últimas 24 horas. Quem decide é a função
+// SQL public.chatbot_sem_conversa_humana (migração 20261118000001). A sessão
+// aberta por ele leva a marca `__gatilho`: só ela para quando uma pessoa escreve
+// (trigger trg_chatbot_para_com_humano) e vence depois de 12 horas esperando.
+// Sessões dos gatilhos antigos não mudam.
+// ---------------------------------------------------------------------------
+export const GATILHO_SEM_CONVERSA_HUMANA = 'no_recent_human';
+export const MARCA_DO_GATILHO = '__gatilho';
+export const SESSAO_VENCE_EM_HORAS = 12;
+
+/** A sessão do gatilho novo está esperando há mais de 12 horas? */
+export function sessaoVencida(
+  session: Pick<ChatbotSession, 'variables' | 'last_activity_at'>,
+  now: Date = new Date(),
+): boolean {
+  if (session.variables?.[MARCA_DO_GATILHO] !== GATILHO_SEM_CONVERSA_HUMANA) return false;
+  const ultima = new Date(session.last_activity_at).getTime();
+  if (Number.isNaN(ultima)) return false;
+  return now.getTime() - ultima >= SESSAO_VENCE_EM_HORAS * 60 * 60 * 1000;
+}
+
+/** Variáveis iniciais da sessão: a marca, só para o gatilho novo. */
+export function variaveisIniciais(triggerType: string | null | undefined): Record<string, string> {
+  return triggerType === GATILHO_SEM_CONVERSA_HUMANA
+    ? { [MARCA_DO_GATILHO]: GATILHO_SEM_CONVERSA_HUMANA }
+    : {};
+}
+
+/** O id da mensagem que o Evolution devolve no envio (`key.id`), se houver. */
+export function idDoEnvioEvolution(resposta: unknown): string | null {
+  const id = (resposta as { key?: { id?: unknown } } | null | undefined)?.key?.id;
+  return typeof id === 'string' && id.trim() !== '' ? id : null;
+}
+
 /**
  * Evaluate whether a trigger fires for the current inbound message.
  *
@@ -412,11 +450,15 @@ export function evaluateTrigger(
     priorInboundCount: number;
     tenantSettings?: Record<string, unknown> | null;
     now?: Date;
+    /** Resposta de chatbot_sem_conversa_humana (só calculada se algum bot usa o gatilho). */
+    semConversaHumanaRecente?: boolean;
   },
 ): boolean {
   if (!trigger.is_active) return false;
 
   switch (trigger.trigger_type) {
+    case GATILHO_SEM_CONVERSA_HUMANA:
+      return opts.semConversaHumanaRecente === true;
     case 'keyword': {
       const keywords = (trigger.trigger_value.keywords as string[]) ?? [];
       return matchKeyword(opts.message, keywords);
@@ -578,7 +620,16 @@ export async function processChatbotMessage(
     logger.warn('Failed to look up active session', { error: String(sessionErr) });
   }
 
-  if (session) {
+  if (session && sessaoVencida(session)) {
+    // Gatilho novo: a espera venceu (12 h). A sessão acaba e a mensagem segue
+    // como se não houvesse bot, pelos gatilhos abaixo.
+    logger.info('Chatbot session expired after waiting; closing', { sessionId: session.id });
+    await updateSession(supabase, session.id, {
+      status: 'abandoned',
+      awaiting_input: false,
+      ended_at: new Date().toISOString(),
+    });
+  } else if (session) {
     logger.info('Active session found, routing reply', { sessionId: session.id });
     await handleSessionReply(session, message, input, ctx);
     return { acted: true, reason: 'existing_session' };
@@ -641,6 +692,8 @@ export async function processChatbotMessage(
   const sortedBots = [...scopedBots].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
   let matchedBot: ChatbotRow | null = null;
   let matchedTrigger: TriggerRow | null = null;
+  // Calculado uma vez, só quando algum bot tem o gatilho novo.
+  let semConversaHumanaRecente: boolean | undefined;
 
   for (const bot of sortedBots) {
     const { data: triggers } = await (supabase
@@ -652,12 +705,22 @@ export async function processChatbotMessage(
     if (!triggers?.length) continue;
 
     for (const trigger of triggers) {
+      if (trigger.trigger_type === GATILHO_SEM_CONVERSA_HUMANA && semConversaHumanaRecente === undefined) {
+        const { data: livre, error: livreErr } = await (supabase.rpc('chatbot_sem_conversa_humana', {
+          p_tenant_id: tenant_id,
+          p_contact_id: contact_id,
+        }) as unknown as Promise<{ data: boolean | null; error: unknown }>);
+        if (livreErr) logger.warn('chatbot_sem_conversa_humana failed; trigger skipped', { error: String(livreErr) });
+        // Na dúvida, não dispara: bot que fica quieto é melhor que bot por cima da pessoa.
+        semConversaHumanaRecente = !livreErr && livre === true;
+      }
       const fired = evaluateTrigger(trigger, {
         message,
         contactId: contact_id,
         contactStageId,
         priorInboundCount,
         tenantSettings,
+        semConversaHumanaRecente,
       });
       if (fired) {
         matchedBot = bot;
@@ -677,7 +740,7 @@ export async function processChatbotMessage(
     triggerType: matchedTrigger?.trigger_type,
   });
 
-  await startNewSession(matchedBot, input, tenantSettings, ctx);
+  await startNewSession(matchedBot, input, tenantSettings, ctx, matchedTrigger?.trigger_type);
   return { acted: true, reason: `trigger:${matchedTrigger?.trigger_type}` };
 }
 
@@ -690,6 +753,7 @@ async function startNewSession(
   input: EngineInput,
   tenantSettings: Record<string, unknown> | null,
   ctx: EngineContext,
+  triggerType?: string,
 ): Promise<void> {
   const { supabase, logger } = ctx;
   const { contact_id, whatsapp_instance_id, tenant_id, message } = input;
@@ -716,7 +780,7 @@ async function startNewSession(
       tenant_id,
       whatsapp_instance_id,
       current_node_id: startNode.id,
-      variables: {},
+      variables: variaveisIniciais(triggerType),
       status: 'active',
       awaiting_input: false,
       started_at: new Date().toISOString(),
@@ -1218,6 +1282,16 @@ async function sendBotMessage(
 
   if (!text.trim()) return;
 
+  // Evolution devolve o que enviamos como evento send.message (o "eco"). Para o
+  // eco nunca virar mensagem de pessoa nem aparecer duas vezes, a linha do bot
+  // é gravada ANTES do envio e ganha o id do Evolution logo depois; o
+  // evolution-webhook reconhece o eco por esse id ou, se chegar antes, pela
+  // linha do bot com o mesmo texto ainda sem id. Outros provedores: como antes.
+  if ((instance.provider ?? 'evolution') === 'evolution') {
+    await sendBotMessageEvolution(text, input, ctx);
+    return;
+  }
+
   try {
     // Import provider factory dynamically to keep this file importable in test
     // environments without Deno network access.
@@ -1252,6 +1326,65 @@ async function sendBotMessage(
       }) as unknown as Promise<void>);
   } catch (err) {
     logger.warn('Failed to persist outbound bot message row', { error: String(err) });
+  }
+}
+
+async function sendBotMessageEvolution(
+  text: string,
+  input: EngineInput,
+  ctx: EngineContext,
+): Promise<void> {
+  const { supabase, logger, instance } = ctx;
+
+  let rowId: string | null = null;
+  try {
+    const { data } = await (supabase
+      .from('messages')
+      .insert({
+        contact_id: input.contact_id,
+        tenant_id: input.tenant_id,
+        whatsapp_instance_id: input.whatsapp_instance_id,
+        direction: 'outbound',
+        message_type: 'text',
+        content: text,
+        status: 'pending',
+        is_from_bot: true,
+        source: 'chatbot',
+      })
+      .select('id')
+      .single() as Promise<{ data: { id: string } | null; error: unknown }>);
+    rowId = data?.id ?? null;
+  } catch (err) {
+    logger.warn('Failed to persist outbound bot message row', { error: String(err) });
+  }
+
+  let evolutionId: string | null = null;
+  let sent = false;
+  try {
+    const { ProviderFactory } = await import('./provider-factory.ts');
+    const provider = await ProviderFactory.getProvider(
+      instance as unknown as Parameters<typeof ProviderFactory.getProvider>[0],
+      supabase as unknown as Parameters<typeof ProviderFactory.getProvider>[1],
+    );
+    evolutionId = idDoEnvioEvolution(await provider.sendMessage(input.phone, text));
+    sent = true;
+  } catch (err) {
+    logger.error('Failed to send bot message via provider', { error: String(err) });
+  }
+
+  if (!rowId) return;
+  try {
+    const status = sent ? 'sent' : 'failed';
+    const { error } = await (supabase
+      .from('messages')
+      .update({ status, ...(evolutionId ? { evolution_message_id: evolutionId } : {}) })
+      .eq('id', rowId) as unknown as Promise<{ error: unknown }>);
+    if (error && evolutionId) {
+      // O id já está noutra linha (eco gravado antes): fica só a situação.
+      await (supabase.from('messages').update({ status }).eq('id', rowId) as unknown as Promise<void>);
+    }
+  } catch (err) {
+    logger.warn('Failed to update outbound bot message row', { error: String(err) });
   }
 }
 

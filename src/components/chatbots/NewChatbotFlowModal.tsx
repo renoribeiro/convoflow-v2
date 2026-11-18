@@ -63,6 +63,7 @@ const TRIGGER_LABELS: Record<ChatbotTriggerType, string> = {
   out_of_hours: 'Fora do horário',
   no_agent_reply: 'Sem resposta do atendente',
   funnel_stage: 'Etapa do funil',
+  no_recent_human: 'Sem conversa humana recente',
 };
 
 /**
@@ -80,6 +81,7 @@ const ALL_TRIGGER_TYPES: ChatbotTriggerType[] = [
   'out_of_hours',
   'no_agent_reply',
   'funnel_stage',
+  'no_recent_human',
 ];
 
 interface TriggerConfig {
@@ -212,6 +214,9 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
           break;
         case 'funnel_stage':
           trigger_value = { stage_id: cfg.stage_id };
+          break;
+        case 'no_recent_human':
+          trigger_value = {};
           break;
         default:
           trigger_value = {};
@@ -387,6 +392,9 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
                       </Label>
                       {type === 'keyword' && (
                         <DicaDoCampo rotulo="Palavras-chave" texto="O bot entra quando a mensagem contém a palavra em qualquer parte, maiúscula ou minúscula. Palavra curta como oi também casa com foi." />
+                      )}
+                      {type === 'no_recent_human' && (
+                        <DicaDoCampo rotulo="Sem conversa humana recente" texto="O bot entra se ninguém da equipe escreveu nas últimas 12 horas e nenhum bot rodou nas últimas 24. Ele para sozinho quando alguém da equipe escreve." />
                       )}
                     </div>
 

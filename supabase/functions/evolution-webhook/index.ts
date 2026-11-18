@@ -261,7 +261,20 @@ async function processIncomingMessage(
 ) {
   const { key, message, messageTimestamp, pushName } = messageData
 
-  if (key.fromMe) return
+  if (key.fromMe) {
+    // Mensagem que a Loja mandou pelo CELULAR (desde 2026-11-18): grava como
+    // saída de pessoa, para a conversa mostrar e o bot do gatilho "Sem conversa
+    // humana recente" parar. Espera um pouco para o envio feito pela tela, por
+    // campanha ou pelo bot gravar a linha dele antes; processSentMessage não
+    // grava de novo o que já tem o mesmo id e reconhece o eco do bot.
+    const { messageType: tipo } = extractMessageContent(message ?? {})
+    const jid = key.remoteJid ?? ''
+    if (!key.id || jid.includes('@g.us') || jid.includes('@broadcast')) return
+    if (tipo === 'protocol' || tipo === 'reaction' || tipo === 'unknown') return
+    await new Promise((r) => setTimeout(r, 2500))
+    await processSentMessage(supabase, instance, instanceName, messageData, logger)
+    return
+  }
 
   if (!key?.id) return
 
@@ -726,6 +739,35 @@ async function processSentMessage(
     .maybeSingle();
 
   if (existingMsg) return;
+
+  // Eco do bot que chegou antes do motor gravar o id: a linha do bot já existe
+  // (gravada antes do envio), com o mesmo texto e ainda sem id. Ela fica com o
+  // id; nada é gravado de novo e o eco nunca vira mensagem de pessoa.
+  if (content) {
+    const desde = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: linhaDoBot } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('contact_id', contact.id)
+      .eq('tenant_id', instance.tenant_id)
+      .eq('direction', 'outbound')
+      .eq('is_from_bot', true)
+      .is('evolution_message_id', null)
+      .eq('content', content)
+      .gte('created_at', desde)
+      .order('created_at', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (linhaDoBot) {
+      await supabase
+        .from('messages')
+        .update({ evolution_message_id: key.id })
+        .eq('id', linhaDoBot.id)
+        .is('evolution_message_id', null);
+      logger.info('Bot echo matched to its row', { id: key.id });
+      return;
+    }
+  }
 
   // Trigger BEFORE INSERT já gerencia a conversa por (contact, tenant).
   // Como contatos agora são per-instance, a conversa naturalmente também fica per-instance.

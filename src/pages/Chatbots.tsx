@@ -35,6 +35,7 @@ const TRIGGER_LABELS: Record<ChatbotTriggerType, string> = {
   out_of_hours: 'Fora do horário',
   no_agent_reply: 'Sem resposta',
   funnel_stage: 'Etapa do funil',
+  no_recent_human: 'Sem conversa humana recente',
 };
 
 const Chatbots: React.FC = () => {

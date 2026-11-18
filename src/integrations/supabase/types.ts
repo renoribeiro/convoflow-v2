@@ -6966,6 +6966,7 @@ export type Database = {
         | "out_of_hours"
         | "no_agent_reply"
         | "funnel_stage"
+        | "no_recent_human"
       tenant_status: "active" | "inactive" | "trial" | "suspended" | "past_due"
       user_role:
         | "superadmin"
@@ -7128,6 +7129,7 @@ export const Constants = {
         "out_of_hours",
         "no_agent_reply",
         "funnel_stage",
+        "no_recent_human",
       ],
       tenant_status: ["active", "inactive", "trial", "suspended", "past_due"],
       user_role: [

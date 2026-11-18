@@ -161,6 +161,8 @@ export const FunnelStageTriggerValueSchema = z.object({
   stage_id: z.string().uuid('Selecione uma etapa'),
 });
 
+export const NoRecentHumanTriggerValueSchema = z.object({});
+
 export function validateTriggerValue(type: string, value: unknown) {
   switch (type) {
     case 'keyword':
@@ -173,6 +175,8 @@ export function validateTriggerValue(type: string, value: unknown) {
       return validar(NoAgentReplyTriggerValueSchema, value);
     case 'funnel_stage':
       return validar(FunnelStageTriggerValueSchema, value);
+    case 'no_recent_human':
+      return validar(NoRecentHumanTriggerValueSchema, value);
     default:
       return validar(z.object({}), value);
   }
@@ -195,6 +199,7 @@ export const ChatbotFlowCreateSchema = z.object({
           'out_of_hours',
           'no_agent_reply',
           'funnel_stage',
+          'no_recent_human',
         ]),
         trigger_value: z.record(z.any()).default({}),
         is_active: z.boolean().default(true),
