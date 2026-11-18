@@ -1865,7 +1865,11 @@ export const ChatWindow = ({
                         ? 'Áudio vai sem legenda; o texto fica para depois'
                         : pendingFile
                           ? 'Adicionar legenda (opcional)...'
-                          : 'Digite sua mensagem...'
+                          : // No celular, com a dica "?" da formatação ao lado, o
+                            // texto longo quebrava em duas linhas e saía cortado.
+                            celular
+                            ? 'Mensagem'
+                            : 'Digite sua mensagem...'
                   }
                   rows={1}
                   // min-w-0: sem ele o campo não encolhe e empurra o botão de
