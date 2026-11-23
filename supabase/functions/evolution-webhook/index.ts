@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { contatoNovoDaEvolution, limparNomeDoPerfil } from '../_shared/nome-do-perfil.ts'
+import { origemDoContatoAntigo } from '../_shared/nome-do-lead.ts'
 import { resolverRemetenteEvolution, telefoneDoJid, numerosDaInstancia } from '../_shared/evolution-remetente.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
@@ -304,7 +305,7 @@ async function processIncomingMessage(
   // instâncias = dois contatos separados, conforme decisão do usuário).
   let { data: contact } = await supabase
     .from('contacts')
-    .select('id, name')
+    .select('id, name, name_source')
     .eq('phone', phone)
     .eq('tenant_id', instance.tenant_id)
     .eq('whatsapp_instance_id', instance.id)
@@ -319,14 +320,24 @@ async function processIncomingMessage(
       tenantId: instance.tenant_id,
       instanciaId: instance.id,
       primeiraMensagem: rawMessageContent,
-    })).select('id, name').single();
+    })).select('id, name, name_source').single();
     contact = newContact;
   } else if (pushName && (!contact.name || contact.name === phone)) {
     // Contato existia com nome placeholder (igual ao phone) — promover ao pushName recebido.
     await supabase
       .from('contacts')
-      .update({ name: pushName, updated_at: new Date().toISOString() })
+      .update({ name: pushName, name_source: 'whatsapp', updated_at: new Date().toISOString() })
       .eq('id', contact.id);
+  } else if (contact.name && !contact.name_source) {
+    // Contato antigo, ainda sem origem do nome (20261123000002): igual ao
+    // nome do perfil é do WhatsApp; diferente, da equipe. O nome não muda.
+    const perfil = limparNomeDoPerfil(pushName, phone);
+    if (perfil) {
+      await supabase
+        .from('contacts')
+        .update({ name_source: origemDoContatoAntigo(contact.name, perfil) })
+        .eq('id', contact.id);
+    }
   }
 
   if (!contact) return;
@@ -866,7 +877,10 @@ async function processContactEvent(
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
       // Só sobrescrever name se ainda for placeholder (igual ao phone ou vazio) E tivermos algo melhor.
       const isPlaceholder = !existing.name || existing.name === sanitizedPhone;
-      if (pushName && isPlaceholder) updates.name = pushName;
+      if (pushName && isPlaceholder) {
+        updates.name = pushName;
+        updates.name_source = 'whatsapp';
+      }
       if (profilePicUrl) updates.avatar_url = profilePicUrl;
       if (Object.keys(updates).length > 1) {
         const { error } = await supabase.from('contacts').update(updates).eq('id', existing.id);
@@ -876,6 +890,8 @@ async function processContactEvent(
       const { error } = await supabase.from('contacts').insert({
         phone: sanitizedPhone,
         name: pushName || sanitizedPhone,
+        // Sem letra (só o telefone), o banco grava "telefone" sozinho.
+        name_source: 'whatsapp',
         avatar_url: profilePicUrl || null,
         tenant_id: instance.tenant_id,
         whatsapp_instance_id: instance.id,

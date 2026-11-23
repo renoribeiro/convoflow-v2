@@ -18,10 +18,12 @@ import {
   CACHE_PRIMEIRO_CONTATO,
   CAMPO_NOME_DO_LEAD,
   JANELA_DA_MENSAGEM_ATUAL_MS,
+  ORIGEM_DO_NOME_DO_LEAD,
   VARIAVEL_PRIMEIRO_CONTATO,
   limparNomeDoLead,
   podeTrocarNomeDoContato,
   valorPrimeiroContato,
+  variavelDoNomeDoLead,
   variavelUnica,
 } from './nome-do-lead.ts';
 
@@ -880,6 +882,13 @@ async function handleSessionReply(
     // Save answer to variable.
     if (d.save_to_variable) {
       updatedVars[d.save_to_variable] = message.trim();
+      // Automação pronta "Salvar o nome do lead" (aba Automação): a resposta
+      // guardada na variável escolhida pela Loja é conferida, vira o nome do
+      // contato quando pode, e a variável fica só com o primeiro nome (ou
+      // vazia, quando a resposta não é um nome).
+      if (d.save_to_variable === variavelDoNomeDoLead(tenantSettings)) {
+        updatedVars[d.save_to_variable] = await salvarNomeDoLead(ctx, input, message);
+      }
     }
 
     nextNodeId = resolveNextNodeId(allEdges, currentNode.id, DEFAULT_HANDLE);
@@ -1199,24 +1208,12 @@ async function executeNode(
       if (d.field === CAMPO_NOME_DO_LEAD) {
         // "Nome do lead": limpa a resposta, troca o nome só se ainda não há nome
         // salvo à mão, e a variável do valor ({nome}) passa a ter só o primeiro nome.
-        const limpo = limparNomeDoLead(rawValue);
+        // Mesma regra da automação pronta "Salvar o nome do lead". Com os dois
+        // ligados (a troca da Loja para o cartão), o nome é salvo uma vez só:
+        // depois da primeira, a origem é "lead" e não se troca mais.
         const variavel = variavelUnica(d.value);
-        const updatedVars = variavel ? { ...currentVars, [variavel]: limpo?.primeiro ?? '' } : undefined;
-        if (limpo) {
-          const { data: atual } = await (supabase
-            .from('contacts')
-            .select('name, phone')
-            .eq('id', input.contact_id)
-            .maybeSingle() as Promise<{ data: { name: string | null; phone: string | null } | null; error: unknown }>);
-          if (podeTrocarNomeDoContato({ atual: atual?.name, telefone: atual?.phone ?? input.phone, nomeDoPerfil: input.profile_name })) {
-            await (supabase
-              .from('contacts')
-              .update({ name: limpo.completo, updated_at: new Date().toISOString() })
-              .eq('id', input.contact_id) as unknown as Promise<void>);
-          } else {
-            logger.info('Lead name kept: contact already has a saved name', { contactId: input.contact_id });
-          }
-        }
+        const primeiro = await salvarNomeDoLead(ctx, input, rawValue);
+        const updatedVars = variavel ? { ...currentVars, [variavel]: primeiro } : undefined;
         const nextNodeId = resolveNextNodeId(edges, node.id, DEFAULT_HANDLE);
         return { nextNodeId, ...(updatedVars ? { updatedVars } : {}) };
       }
@@ -1519,6 +1516,51 @@ async function fireVariableCapturedAutomation(
       variable: payload.variable_name,
     });
   }
+}
+
+/**
+ * Salva o nome do lead (automação pronta "Salvar o nome do lead" e o bloco
+ * "Atualizar contato" › Nome do lead): confere a resposta, troca o nome do
+ * contato só quando ele está vazio, é só o telefone ou veio do perfil do
+ * WhatsApp (contacts.name_source), grava a origem "lead" e devolve o primeiro
+ * nome (vazio quando a resposta não é um nome). Erro ao gravar não para o bot.
+ */
+export async function salvarNomeDoLead(
+  ctx: Pick<EngineContext, 'supabase' | 'logger'>,
+  input: Pick<EngineInput, 'contact_id' | 'phone' | 'profile_name'>,
+  resposta: string,
+): Promise<string> {
+  const { supabase, logger } = ctx;
+  const limpo = limparNomeDoLead(resposta);
+  if (!limpo) return '';
+  try {
+    const { data: atual } = await (supabase
+      .from('contacts')
+      .select('name, phone, name_source')
+      .eq('id', input.contact_id)
+      .maybeSingle() as Promise<{
+        data: { name: string | null; phone: string | null; name_source: string | null } | null;
+        error: unknown;
+      }>);
+    if (
+      podeTrocarNomeDoContato({
+        atual: atual?.name,
+        telefone: atual?.phone ?? input.phone,
+        origem: atual?.name_source,
+        nomeDoPerfil: input.profile_name,
+      })
+    ) {
+      await (supabase
+        .from('contacts')
+        .update({ name: limpo.completo, name_source: ORIGEM_DO_NOME_DO_LEAD, updated_at: new Date().toISOString() })
+        .eq('id', input.contact_id) as unknown as Promise<void>);
+    } else {
+      logger.info('Lead name kept: contact already has a saved name', { contactId: input.contact_id });
+    }
+  } catch (err) {
+    logger.warn('Lead name not saved', { contactId: input.contact_id, error: String(err) });
+  }
+  return limpo.primeiro;
 }
 
 /**

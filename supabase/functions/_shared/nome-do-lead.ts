@@ -2,20 +2,45 @@
 // nome-do-lead.ts — o nome que a pessoa digita no chatbot, conferido, e quando
 // ele pode virar o nome do contato (2026-11-18; regra estrita desde 2026-11-23)
 // =============================================================================
-// Usado pelo bloco "Atualizar contato" com o campo "Nome do lead" (lead_name):
+// Usado pela automação pronta "Salvar o nome do lead" (aba Automação, chaves
+// lead_name_enabled e lead_name_variable em tenants.settings, desde
+// 2026-11-23) e pelo bloco "Atualizar contato" com o campo "Nome do lead"
+// (lead_name), que continua valendo para os chatbots que ainda o têm:
 //   - tira "meu nome é", "me chamo", "sou o/a", "aqui é" do começo;
 //   - só aceita de 1 a 4 palavras, só letras (acento e apóstrofo valem), sem
 //     "?", sem número, e a primeira palavra não pode ser palavra comum que não
 //     é nome ("qual", "bom", "oi", "preço"...). Correção de 2026-11-23: a
 //     resposta "Qual preço da limpeza de pele?" virava o nome "Qual";
 //   - cada palavra sai com a primeira letra maiúscula;
-//   - só troca o nome do contato quando ele está vazio, é só o telefone ou é o
-//     nome do perfil do WhatsApp. Nome salvo à mão por alguém nunca é trocado.
+//   - só troca o nome do contato quando ele está vazio, é só o telefone ou veio
+//     do perfil do WhatsApp (contacts.name_source, migração 20261123000002).
+//     Nome salvo à mão por alguém, ou já salvo pelo chatbot, nunca é trocado.
 // E a condição "Primeiro contato" (primeiro_contato = sim/nao).
 // Sem I/O: o Vitest testa sem Deno.
 // =============================================================================
 
 export const CAMPO_NOME_DO_LEAD = 'lead_name';
+
+/** De onde veio o nome do contato (contacts.name_source). */
+export const ORIGENS_DO_NOME = ['whatsapp', 'telefone', 'equipe', 'lead'] as const;
+export type OrigemDoNome = (typeof ORIGENS_DO_NOME)[number];
+/** A origem que o chatbot grava quando salva o nome que a pessoa digitou. */
+export const ORIGEM_DO_NOME_DO_LEAD: OrigemDoNome = 'lead';
+
+/** Variável do chatbot que guarda a resposta, como o banco aceita (CHECK da migração 20261123000002). */
+export const VARIAVEL_VALIDA = /^[A-Za-z][A-Za-z0-9_]{0,49}$/;
+
+/**
+ * A variável que a automação pronta "Salvar o nome do lead" confere, ou null
+ * quando o cartão está desligado (ou mal preenchido) na Loja.
+ */
+export function variavelDoNomeDoLead(settings: unknown): string | null {
+  if (!settings || typeof settings !== 'object') return null;
+  const s = settings as Record<string, unknown>;
+  if (s.lead_name_enabled !== true) return null;
+  const v = typeof s.lead_name_variable === 'string' ? s.lead_name_variable.trim() : '';
+  return VARIAVEL_VALIDA.test(v) ? v : null;
+}
 export const VARIAVEL_PRIMEIRO_CONTATO = 'primeiro_contato';
 /** Onde a resposta calculada fica guardada na sessão (prefixo reservado: não vai para o contato). */
 export const CACHE_PRIMEIRO_CONTATO = '__primeiro_contato';
@@ -84,11 +109,15 @@ const comparavel = (s: string) => semAcento(s).toLowerCase().replace(/\s+/g, ' '
 
 /**
  * O nome atual do contato pode ser trocado pelo nome do lead? Só quando está
- * vazio, é só o telefone, ou é o nome do perfil do WhatsApp.
+ * vazio, é só o telefone, ou veio do perfil do WhatsApp. A origem gravada
+ * (name_source) decide; vale igual no Evolution, na Meta e no WAHA. Contato
+ * antigo, ainda sem origem: só quando o nome é igual ao do perfil que o
+ * webhook mandou agora (o Evolution manda); sem isso, vale como equipe.
  */
 export function podeTrocarNomeDoContato(p: {
   atual: string | null | undefined;
   telefone: string | null | undefined;
+  origem?: string | null;
   nomeDoPerfil?: string | null;
 }): boolean {
   const atual = (p.atual ?? '').trim();
@@ -96,8 +125,18 @@ export function podeTrocarNomeDoContato(p: {
   const digitos = atual.replace(/\D/g, '');
   const fone = String(p.telefone ?? '').replace(/\D/g, '');
   if (!/\p{L}/u.test(atual) && (digitos.length >= 8 || digitos === fone)) return true;
-  if (p.nomeDoPerfil && comparavel(p.nomeDoPerfil) === comparavel(atual)) return true;
-  return false;
+  if (p.origem === 'whatsapp' || p.origem === 'telefone') return true;
+  if (p.origem) return false;
+  return !!p.nomeDoPerfil && comparavel(p.nomeDoPerfil) === comparavel(atual);
+}
+
+/**
+ * Contato antigo (sem origem) quando chega o nome do perfil: igual ao nome
+ * salvo é do WhatsApp; diferente, da equipe. Mesma regra de
+ * receber_mensagem_whatsapp (Meta e WAHA), aqui para o Evolution.
+ */
+export function origemDoContatoAntigo(atual: string, nomeDoPerfil: string): OrigemDoNome {
+  return comparavel(atual) === comparavel(nomeDoPerfil) ? 'whatsapp' : 'equipe';
 }
 
 /** O valor do bloco é uma variável só (ex.: "{nome}")? Devolve o nome dela. */

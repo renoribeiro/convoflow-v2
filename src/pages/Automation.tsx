@@ -17,6 +17,7 @@ import { useSupabaseQuery } from '@/hooks/useSupabaseQuery';
 import { useSupabaseMutation } from '@/hooks/useSupabaseMutation';
 import { useToast } from '@/hooks/use-toast';
 import { AutomationBuilder } from '@/components/automation/AutomationBuilder';
+import { AutomacoesProntas } from '@/components/automation/AutomacoesProntas';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { ConfirmationDialog } from '@/components/shared/ConfirmationDialog';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -167,6 +168,9 @@ const Automation = () => {
         breadcrumbs={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Automação' }]}
         actions={<Button size="sm" onClick={() => setShowBuilder(true)}><Plus className="h-4 w-4 mr-2" />Nova automação</Button>}
       />
+
+      {/* Automações prontas: por Loja, fixas no topo (2026-11-23) */}
+      <AutomacoesProntas fluxos={flows} />
 
       {/* Métricas */}
       <div className="grid gap-4 md:grid-cols-4">

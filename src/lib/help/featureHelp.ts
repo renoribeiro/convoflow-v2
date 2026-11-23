@@ -277,6 +277,10 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Defina o valor (geralmente uma {variavel} coletada antes).',
     ],
     example: 'Campo "Nome" = {nome} → o contato passa a ter o nome informado. Campo "Nome do lead" = {nome} → confere a resposta ("meu nome é maria clara" vira "Maria Clara"; pergunta, número, mais de 4 palavras ou resposta que começa com "qual", "bom dia", "oi", "preço" e parecidas não viram nome), troca o nome só quando o contato ainda não tem nome, tem só o telefone ou tem o nome do perfil do WhatsApp (nunca um nome salvo à mão) e deixa em {nome} só o primeiro nome, para usar em "Muito prazer, {nome}!".',
+    tips: [
+      'Para salvar o nome que a pessoa digita, prefira a automação pronta "Salvar o nome do lead", na aba Automação: o chatbot só faz a pergunta e a Loja liga, desliga e escolhe a variável num lugar só. As regras são as mesmas do campo "Nome do lead", e com os dois ligados o nome é salvo uma vez só.',
+      'O campo "Nome" troca o nome do contato sempre, até um nome salvo pela equipe. O "Nome do lead" e a automação pronta nunca trocam.',
+    ],
     category: 'chatbot',
     area: 'Ações',
   },
@@ -1073,6 +1077,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Adicione as ações na ordem em que devem acontecer. Para esperar entre uma e outra, use o passo "Aguardar".',
       'Use condições para a automação parar quando não fizer sentido continuar.',
       'Clique em "Ativar". Automação pausada não roda; "Pausar" suspende sem apagar.',
+      'No topo ficam as automações prontas, "Salvar o nome do lead" e "Aviso quando ninguém responde": já vêm montadas, e você só liga e ajusta para a Loja aberta. Gerente e Gestor mudam; o Atendente vê como estão.',
     ],
     example:
       'Gatilho "Mudança de etapa" para "Visita agendada" → ação "Agendar follow up" em 24 horas com "Confirmando sua visita amanhã, {first_name}?" → ação "Adicionar etiqueta" com "visita marcada".',
@@ -1084,6 +1089,51 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Número da API Oficial: "Enviar Mensagem" para quem não escreveu nas últimas 24 horas não sai, sem aviso na conversa. Num gatilho de etapa com espera longa, isso acontece com frequência.',
       'Comece com uma automação curta e confira as execuções antes de montar algo longo: automação grande errada erra em silêncio.',
       'Se a Conta ficar sem acesso, as automações não rodam: nada é enviado e nada muda sozinho. O que aconteceu nesse período não roda depois.',
+    ],
+    category: 'tela',
+    area: 'Marketing',
+  },
+
+  'page:automation-nome-do-lead': {
+    moduleName: 'automation',
+    title: 'Automação › Salvar o nome do lead',
+    whatItDoes:
+      'O chatbot pergunta o nome e guarda a resposta numa variável. Com este cartão ligado, essa resposta é conferida e vira o nome do contato, sem nenhum bloco a mais no chatbot.',
+    howToConfigure: [
+      'No chatbot, use um bloco "Fazer Pergunta" para o nome e guarde a resposta numa variável, por exemplo {nome}.',
+      'Na aba Automação, no cartão "Salvar o nome do lead", escreva essa variável sem as chaves (nome) e ligue "Ligar nesta Loja".',
+      'Clique em "Salvar". Vale para a Loja aberta no seletor do topo.',
+    ],
+    example:
+      'A pessoa responde "meu nome é maria clara": o contato passa a se chamar Maria Clara e {nome} fica "Maria", para o chatbot dizer "Prazer, Maria!".',
+    tips: [
+      'Só vira nome resposta de 1 a 4 palavras, só com letras, sem pergunta e sem número, que não começa com "qual", "oi", "bom dia", "preço" e parecidas. Quando não é nome, {nome} fica vazio e o contato não muda.',
+      'Nunca troca um nome salvo pela equipe nem um nome que o chatbot já salvou. Troca só contato sem nome, só com o telefone ou com o nome do perfil do WhatsApp, nos números por QR Code, na API Oficial e no WAHA.',
+      'Se uma automação comum da Loja também troca o nome do contato, o cartão avisa: ela não confere nada e troca até nome salvo pela equipe.',
+      'Gerente e Gestor ligam, desligam e escolhem a variável. O Atendente vê como está.',
+    ],
+    category: 'tela',
+    area: 'Marketing',
+  },
+  'page:automation-aviso-de-espera': {
+    moduleName: 'automation',
+    title: 'Automação › Aviso quando ninguém responde',
+    whatItDoes:
+      'Quando o cliente escreve e ninguém da equipe responde no tempo que você escolher, sai uma mensagem automática dizendo que a resposta já vem. Sai uma vez por espera.',
+    howToConfigure: [
+      'Na aba Automação, no cartão "Aviso quando ninguém responde", ligue "Ligar nesta Loja".',
+      'Escolha os "Minutos sem resposta", de 1 a 240, e ajuste a "Mensagem" (ela já vem com o texto padrão).',
+      'Decida se o aviso respeita o horário de funcionamento. O horário em si se ajusta na aba Horário, em Configurações.',
+      'Clique em "Salvar".',
+    ],
+    example:
+      'Com 5 minutos: o cliente escreve às 10h, ninguém responde, e às 10h05 sai "Recebemos sua mensagem!...". Se ele escrever de novo às 10h07, não sai outro. Depois que alguém da equipe responder, a próxima espera ganha um aviso novo.',
+    tips: [
+      'Os minutos contam desde a primeira mensagem do cliente que ficou sem resposta. Resposta de chatbot e o próprio aviso não contam como resposta da equipe.',
+      'Respeitando o horário, o aviso só sai com a Loja aberta e só contam os minutos de Loja aberta. Loja sem horário salvo: sai a qualquer hora.',
+      'Enquanto um chatbot conversa com o cliente, o aviso não sai. Vale só para WhatsApp, não para grupo nem Instagram.',
+      'Não é o gatilho "Sem resposta do atendente" do chatbot: aqui sai uma mensagem só, e nenhum chatbot é aberto.',
+      'Gerente e Gestor ligam, desligam e ajustam. O Atendente vê como está.',
     ],
     category: 'tela',
     area: 'Marketing',

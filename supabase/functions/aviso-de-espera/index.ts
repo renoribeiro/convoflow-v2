@@ -1,5 +1,7 @@
 /**
  * aviso-de-espera — "Recebemos sua mensagem!" quando a paciente espera (2026-11-23).
+ * O texto é o do cartão "Aviso quando ninguém responde" da aba Automação
+ * (tenants.settings.waiting_notice_text), ou o padrão quando não há texto.
  *
  * Quem decide QUEM recebe é o banco: public.aviso_de_espera_pendentes()
  * (migração 20261123000001). Esta função só envia, pelo mesmo caminho do
@@ -20,7 +22,7 @@ import { guardBackendCaller } from '../_shared/backend-gate.ts';
 import { criarMemoDeAcesso } from '../_shared/conta-acesso.ts';
 import { criarCotaDeEnvios } from '../_shared/limites-do-teste.ts';
 import { sendBotMessage, type EngineContext, type WhatsAppInstanceLike } from '../_shared/chatbot-engine.ts';
-import { FONTE_DO_AVISO, TEXTO_DO_AVISO_DE_ESPERA } from '../_shared/aviso-de-espera.ts';
+import { FONTE_DO_AVISO, textoDoAviso } from '../_shared/aviso-de-espera.ts';
 
 interface Pendente {
   conversation_id: string;
@@ -57,6 +59,18 @@ serve(async (req) => {
   const cota = criarCotaDeEnvios(supabase, (id, erro) =>
     logger.error('aviso-de-espera: não conferi o limite do teste', { tenant_id: id, erro }));
 
+  // O texto de cada Loja (cartão "Aviso quando ninguém responde"), lido uma
+  // vez por rodada. Sem texto salvo, o padrão.
+  const textos = new Map<string, string>();
+  const textoDaLoja = async (tenantId: string): Promise<string> => {
+    const salvo = textos.get(tenantId);
+    if (salvo) return salvo;
+    const { data: loja } = await supabase.from('tenants').select('settings').eq('id', tenantId).maybeSingle();
+    const texto = textoDoAviso((loja as { settings?: unknown } | null)?.settings);
+    textos.set(tenantId, texto);
+    return texto;
+  };
+
   const stats = { enviados: 0, pulados: 0 };
   for (const p of pendentes) {
     try {
@@ -75,7 +89,7 @@ serve(async (req) => {
         continue;
       }
       await sendBotMessage(
-        TEXTO_DO_AVISO_DE_ESPERA,
+        await textoDaLoja(p.tenant_id),
         {
           tenant_id: p.tenant_id,
           whatsapp_instance_id: p.whatsapp_instance_id,

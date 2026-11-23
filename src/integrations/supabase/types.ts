@@ -1558,6 +1558,7 @@ export type Database = {
           last_interaction_at: string | null
           lead_source_id: string | null
           name: string | null
+          name_source: string | null
           notes: string | null
           opt_in_at: string | null
           opt_in_mass_message: boolean
@@ -1590,6 +1591,7 @@ export type Database = {
           last_interaction_at?: string | null
           lead_source_id?: string | null
           name?: string | null
+          name_source?: string | null
           notes?: string | null
           opt_in_at?: string | null
           opt_in_mass_message?: boolean
@@ -1622,6 +1624,7 @@ export type Database = {
           last_interaction_at?: string | null
           lead_source_id?: string | null
           name?: string | null
+          name_source?: string | null
           notes?: string | null
           opt_in_at?: string | null
           opt_in_mass_message?: boolean

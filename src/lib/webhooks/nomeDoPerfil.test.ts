@@ -73,12 +73,14 @@ describe('Evolution: o contato novo leva a primeira mensagem', () => {
   it('nome do perfil e primeira mensagem', () => {
     expect(contatoNovoDaEvolution({
       telefone: '5585999990201', pushName: 'Ana', tenantId: 't', instanciaId: 'i', primeiraMensagem: 'Oi, vi o anúncio',
-    })).toEqual({ phone: '5585999990201', name: 'Ana', tenant_id: 't', whatsapp_instance_id: 'i', first_message: 'Oi, vi o anúncio' });
+    })).toEqual({
+      phone: '5585999990201', name: 'Ana', name_source: 'whatsapp', tenant_id: 't', whatsapp_instance_id: 'i', first_message: 'Oi, vi o anúncio',
+    });
   });
   it('sem nome no perfil: o telefone, como sempre', () => {
     expect(contatoNovoDaEvolution({
       telefone: '5585999990201', pushName: undefined, tenantId: 't', instanciaId: 'i', primeiraMensagem: '',
-    })).toMatchObject({ name: '5585999990201', first_message: null });
+    })).toMatchObject({ name: '5585999990201', name_source: 'telefone', first_message: null });
   });
 });
 

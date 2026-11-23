@@ -73,11 +73,22 @@ export function contatoNovoDaEvolution(p: {
   tenantId: string;
   instanciaId: string;
   primeiraMensagem: string | null | undefined;
-}): { phone: string; name: string; tenant_id: string; whatsapp_instance_id: string; first_message: string | null } {
+}): {
+  phone: string;
+  name: string;
+  name_source: 'whatsapp' | 'telefone';
+  tenant_id: string;
+  whatsapp_instance_id: string;
+  first_message: string | null;
+} {
+  const nome = limparNomeDoPerfil(p.pushName, p.telefone);
   return {
     phone: p.telefone,
     // Sem nome no perfil, o telefone (como sempre foi): o Lead novo manda vazio.
-    name: limparNomeDoPerfil(p.pushName, p.telefone) ?? p.telefone,
+    name: nome ?? p.telefone,
+    // De onde veio o nome (contacts.name_source, 20261123000002): o chatbot só
+    // troca nome que veio do perfil ou que é só o telefone.
+    name_source: nome ? 'whatsapp' : 'telefone',
     tenant_id: p.tenantId,
     whatsapp_instance_id: p.instanciaId,
     first_message: p.primeiraMensagem ? p.primeiraMensagem : null,
