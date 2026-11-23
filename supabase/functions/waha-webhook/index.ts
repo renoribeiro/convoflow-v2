@@ -246,7 +246,8 @@ serve(async (req) => {
       }
 
       await supabase.from('messages')
-        .update({ status: status, updated_at: new Date().toISOString() })
+        // `messages` não tem updated_at: com ele a gravação falhava sempre.
+        .update({ status: status })
         .eq('evolution_message_id', id); // We store WAHA ID in this column
 
       logger.info('Message status updated', { id, status });

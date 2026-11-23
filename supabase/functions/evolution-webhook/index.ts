@@ -3,6 +3,7 @@ import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-
 import { contatoNovoDaEvolution, limparNomeDoPerfil } from '../_shared/nome-do-perfil.ts'
 import { origemDoContatoAntigo } from '../_shared/nome-do-lead.ts'
 import { resolverRemetenteEvolution, telefoneDoJid, numerosDaInstancia } from '../_shared/evolution-remetente.ts'
+import { aplicarAvisosDeStatus } from '../_shared/evolution-status.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
 import {
@@ -158,7 +159,7 @@ serve(async (req) => {
         break
 
       case 'messages.update':
-        await processMessageUpdate(supabase, instanceName, eventData, logger)
+        await processMessageUpdate(supabase, instance, instanceName, eventData, logger)
         break
 
       case 'messages.delete':
@@ -563,40 +564,69 @@ function extractMessageContent(message: any): { content: string; messageType: st
   return { content: '[Mensagem não suportada]', messageType: 'unknown' };
 }
 
-async function processMessageUpdate(supabase: SupabaseClient, instanceName: string, updateData: any, logger: any) {
-  const updates = Array.isArray(updateData) ? updateData : [updateData];
+// Formato do aviso, mapa de status e regra de só ir para frente:
+// _shared/evolution-status.ts. A busca fica na Loja do número.
+async function processMessageUpdate(
+  supabase: SupabaseClient,
+  instance: { id: string; tenant_id: string },
+  instanceName: string,
+  updateData: unknown,
+  logger: any,
+) {
+  const resultado = await aplicarAvisosDeStatus(updateData, {
+    avancar: async (id, novo, anteriores) => {
+      const { data, error } = await supabase.from('messages')
+        .update({ status: novo })
+        .eq('tenant_id', instance.tenant_id)
+        .eq('evolution_message_id', id)
+        .in('status', [...anteriores])
+        .select('id');
+      return { linhas: data?.length ?? 0, erro: error?.message ?? null };
+    },
+    existe: async (id) => {
+      const { data, error } = await supabase.from('messages')
+        .select('id')
+        .eq('tenant_id', instance.tenant_id)
+        .eq('evolution_message_id', id)
+        .limit(1);
+      return { existe: (data?.length ?? 0) > 0, erro: error?.message ?? null };
+    },
+  });
 
-  for (const updateItem of updates) {
-    const { key, update } = updateItem;
-    if (!key?.id) continue;
+  logger.info('Message status updates', {
+    instance: instanceName,
+    recebidos: resultado.recebidos,
+    gravados: resultado.gravados,
+    iguais: resultado.iguais,
+    ignorados: resultado.ignorados,
+    sem_mensagem: resultado.semMensagem.length,
+    falhas: resultado.falhas.length,
+  });
+  if (resultado.semMensagem.length > 0) {
+    logger.warn('Message status: no stored message for id', {
+      instance: instanceName,
+      total: resultado.semMensagem.length,
+      ids: resultado.semMensagem.slice(0, 20),
+    });
+  }
+  if (resultado.falhas.length > 0) {
+    logger.warn('Message status write failed', {
+      instance: instanceName,
+      total: resultado.falhas.length,
+      ids: resultado.falhas.slice(0, 20).map((f) => f.id),
+      erro: resultado.falhas[0].erro,
+    });
+  }
 
-    let status = 'sent';
-    if (update?.status) {
-      switch (update.status) {
-        case 'SERVER_ACK': status = 'sent'; break;
-        case 'DELIVERY_ACK': status = 'delivered'; break;
-        case 'READ': status = 'read'; break;
-        case 'PLAYED': status = 'read'; break;
-        case 'ERROR': status = 'failed'; break;
-        default: status = 'sent';
-      }
-    }
-
-    await supabase.from('messages')
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq('evolution_message_id', key.id);
-
-    logger.info('Updated message status', { id: key.id, status });
-
+  for (const aviso of resultado.avisos) {
     // Campaign execution ACK — isolated so any failure never disrupts the above.
-    // Evolution MESSAGES_UPDATE: update.status = DELIVERY_ACK → delivered, READ/PLAYED → read.
-    // We match campaign_executions by provider_message_id = key.id.
+    // We match campaign_executions by provider_message_id = the WhatsApp id.
     try {
-      if (status === 'delivered' || status === 'read') {
-        await updateCampaignExecutionAck(supabase, key.id, status, logger);
+      if (aviso.status === 'delivered' || aviso.status === 'read') {
+        await updateCampaignExecutionAck(supabase, aviso.id, aviso.status, logger);
       }
     } catch (ackErr: any) {
-      logger.warn('Campaign ACK update failed (non-fatal)', { id: key.id, error: ackErr.message });
+      logger.warn('Campaign ACK update failed (non-fatal)', { id: aviso.id, error: ackErr.message });
     }
   }
 }
