@@ -154,9 +154,6 @@ export const FirstContactTriggerValueSchema = z.object({});
 export const OutOfHoursTriggerValueSchema = z.object({
   timezone: z.string().max(60).optional(),
 });
-export const NoAgentReplyTriggerValueSchema = z.object({
-  minutes: z.number().int().min(1, 'Mínimo de 1 minuto').max(1440),
-});
 export const FunnelStageTriggerValueSchema = z.object({
   stage_id: z.string().uuid('Selecione uma etapa'),
 });
@@ -171,8 +168,6 @@ export function validateTriggerValue(type: string, value: unknown) {
       return validar(FirstContactTriggerValueSchema, value);
     case 'out_of_hours':
       return validar(OutOfHoursTriggerValueSchema, value);
-    case 'no_agent_reply':
-      return validar(NoAgentReplyTriggerValueSchema, value);
     case 'funnel_stage':
       return validar(FunnelStageTriggerValueSchema, value);
     case 'no_recent_human':
@@ -197,7 +192,6 @@ export const ChatbotFlowCreateSchema = z.object({
           'keyword',
           'first_contact',
           'out_of_hours',
-          'no_agent_reply',
           'funnel_stage',
           'no_recent_human',
         ]),

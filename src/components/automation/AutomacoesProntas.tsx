@@ -282,8 +282,8 @@ function CartaoAvisoDeEspera() {
   const descricao = 'Uma mensagem automática quando o cliente espera e ninguém da equipe responde.';
   const naoEhGatilho = (
     <Aviso icone={Info}>
-      Não é o gatilho "Sem resposta do atendente" do chatbot: aqui sai uma mensagem só, uma vez por espera, e nenhum
-      chatbot é aberto. Enquanto um chatbot conversa com o cliente, o aviso não sai.
+      Sai uma mensagem só, uma vez por espera, e nenhum chatbot é aberto. Enquanto um chatbot conversa com o cliente,
+      o aviso não sai.
     </Aviso>
   );
 

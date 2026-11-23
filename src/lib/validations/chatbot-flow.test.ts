@@ -54,9 +54,12 @@ describe('validateTriggerValue', () => {
     expect(validateTriggerValue('keyword', { keywords: ['oi'] }).success).toBe(true);
     expect(validateTriggerValue('keyword', { keywords: [] }).success).toBe(false);
   });
-  it('no_agent_reply needs positive minutes', () => {
-    expect(validateTriggerValue('no_agent_reply', { minutes: 10 }).success).toBe(true);
-    expect(validateTriggerValue('no_agent_reply', { minutes: 0 }).success).toBe(false);
+  it('no_agent_reply (gatilho que saiu em 2026-11-23) não é aceito ao salvar um chatbot', () => {
+    const r = ChatbotFlowCreateSchema.safeParse({
+      name: 'Bot',
+      triggers: [{ trigger_type: 'no_agent_reply', trigger_value: { minutes: 10 } }],
+    });
+    expect(r.success).toBe(false);
   });
   it('first_contact accepts empty object', () => {
     expect(validateTriggerValue('first_contact', {}).success).toBe(true);

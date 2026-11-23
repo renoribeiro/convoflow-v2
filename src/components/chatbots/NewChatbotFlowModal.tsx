@@ -61,25 +61,20 @@ const TRIGGER_LABELS: Record<ChatbotTriggerType, string> = {
   keyword: 'Palavra-chave',
   first_contact: 'Primeiro contato',
   out_of_hours: 'Fora do horário',
-  no_agent_reply: 'Sem resposta do atendente',
   funnel_stage: 'Etapa do funil',
   no_recent_human: 'Sem conversa humana recente',
 };
 
 /**
- * "Sem resposta do atendente" fica FORA da tela (achado 80 do checkup,
- * ops-privado/checkup-ux/RELATORIO_CHECKUP_UX.md): o motor nunca dispara esse
- * gatilho (chatbot-engine.ts: "needs a scheduler"). Em 2026-10-25 nenhum
- * chatbot o usava. Se aparecer um antigo com ele ligado, a tela ainda o mostra,
- * com o aviso, para a pessoa poder desligar. Volta quando houver o agendador.
+ * O antigo gatilho "Sem resposta do atendente" (no_agent_reply) saiu em
+ * 2026-11-23: nunca disparou e nenhum chatbot o usava. A espera por resposta
+ * da equipe é o cartão "Aviso quando ninguém responde", na aba Automação. O
+ * valor continua no enum do banco e o motor o ignora.
  */
-const GATILHO_QUE_NAO_DISPARA: ChatbotTriggerType = 'no_agent_reply';
-
 const ALL_TRIGGER_TYPES: ChatbotTriggerType[] = [
   'keyword',
   'first_contact',
   'out_of_hours',
-  'no_agent_reply',
   'funnel_stage',
   'no_recent_human',
 ];
@@ -88,7 +83,6 @@ interface TriggerConfig {
   enabled: boolean;
   keywords: string[];
   keywordInput: string;
-  minutes: number;
   stage_id: string;
 }
 
@@ -98,7 +92,6 @@ const defaultTriggerConfig = (): TriggerConfig => ({
   enabled: false,
   keywords: [],
   keywordInput: '',
-  minutes: 5,
   stage_id: '',
 });
 
@@ -114,7 +107,6 @@ const configsFromTriggers = (triggers: ChatbotTriggerRow[]): TriggerConfigs => {
     base[t].enabled = true;
     const v = (tr.trigger_value ?? {}) as Record<string, unknown>;
     if (t === 'keyword') base[t].keywords = Array.isArray(v.keywords) ? (v.keywords as string[]) : [];
-    if (t === 'no_agent_reply') base[t].minutes = typeof v.minutes === 'number' ? v.minutes : 5;
     if (t === 'funnel_stage') base[t].stage_id = typeof v.stage_id === 'string' ? v.stage_id : '';
   }
   return base;
@@ -208,9 +200,6 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
           break;
         case 'out_of_hours':
           trigger_value = {};
-          break;
-        case 'no_agent_reply':
-          trigger_value = { minutes: cfg.minutes };
           break;
         case 'funnel_stage':
           trigger_value = { stage_id: cfg.stage_id };
@@ -372,9 +361,7 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
             <Label>Gatilhos *</Label>
             {errors.triggers && <p className="text-xs text-destructive">{errors.triggers}</p>}
             <div className="space-y-3 rounded-md border p-3">
-              {ALL_TRIGGER_TYPES.filter(
-                (type) => type !== GATILHO_QUE_NAO_DISPARA || triggerConfigs[type].enabled,
-              ).map((type) => {
+              {ALL_TRIGGER_TYPES.map((type) => {
                 const cfg = triggerConfigs[type];
                 return (
                   <div key={type} className="space-y-2">
@@ -386,9 +373,6 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
                       />
                       <Label htmlFor={`trig-${type}`} className="cursor-pointer font-normal">
                         {TRIGGER_LABELS[type]}
-                        {type === GATILHO_QUE_NAO_DISPARA && (
-                          <span className="ml-1 text-xs text-destructive">(ainda não dispara: desmarque)</span>
-                        )}
                       </Label>
                       {type === 'keyword' && (
                         <DicaDoCampo rotulo="Palavras-chave" texto="O bot entra quando a mensagem contém a palavra em qualquer parte, maiúscula ou minúscula. Palavra curta como oi também casa com foi." />
@@ -423,20 +407,6 @@ const NewChatbotFlowModal: React.FC<Props> = ({ open, onClose, initial, onSaved 
                             </Badge>
                           ))}
                         </div>
-                      </div>
-                    )}
-
-                    {cfg.enabled && type === 'no_agent_reply' && (
-                      <div className="ml-6 flex items-center gap-2">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={1440}
-                          value={cfg.minutes}
-                          onChange={(e) => setTrigger(type, { minutes: parseInt(e.target.value) || 5 })}
-                          className="w-24"
-                        />
-                        <span className="text-sm text-muted-foreground">minutos sem resposta</span>
                       </div>
                     )}
 

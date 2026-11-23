@@ -41,8 +41,9 @@ export const PROIBIDAS: Array<[RegExp, string]> = [
   [/\b(open|close|connecting|qrcode)\b(?![-_])/, 'estado do número em inglês'],
   // "Lead novo" é o nome do aviso em Avisos para sistemas (pedido do dono,
   // 2026-11-16) e "nome do lead" é o do cartão "Salvar o nome do lead" da aba
-  // Automação (pedido do dono, 2026-11-23): as duas expressões passam; "lead"
-  // solto continua proibido.
+  // Automação (pedido do dono, 2026-11-23; o campo "Nome do lead" do chatbot
+  // não é mais oferecido e só aparece em bloco antigo que já o usa): as duas
+  // expressões passam; "lead" solto continua proibido.
   [/(?<!nome do )\bleads?\b(?!\s+novos?\b)/i, 'use "contato" (lead só dentro do funil, no aviso "Lead novo" e em "nome do lead")'],
   [/(^|[^A-Za-zÀ-ú])lojas?\b/, '"Loja" com maiúscula'],
 ];

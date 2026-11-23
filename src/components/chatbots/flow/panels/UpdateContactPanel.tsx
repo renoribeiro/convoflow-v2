@@ -18,6 +18,13 @@ const FIELD_OPTIONS = [
   { value: 'tag', label: 'Tag' },
 ];
 
+/**
+ * "Nome do lead" deixou de ser oferecido em 2026-11-23: quem salva o nome é o
+ * cartão "Salvar o nome do lead", na aba Automação. Um bloco que já está com
+ * ele escolhido continua mostrando e funcionando (motor e validação ficam).
+ */
+const CAMPO_SO_PARA_BLOCO_ANTIGO = 'lead_name';
+
 const UpdateContactPanel: React.FC<Props> = ({ data, onChange }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -49,7 +56,9 @@ const UpdateContactPanel: React.FC<Props> = ({ data, onChange }) => {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {FIELD_OPTIONS.map((o) => (
+            {FIELD_OPTIONS.filter(
+              (o) => o.value !== CAMPO_SO_PARA_BLOCO_ANTIGO || data.field === CAMPO_SO_PARA_BLOCO_ANTIGO,
+            ).map((o) => (
               <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
             ))}
           </SelectContent>

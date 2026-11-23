@@ -8,7 +8,7 @@
  *    quando uma automação comum ativa também troca o nome;
  *  - o cartão do aviso nasce com o texto padrão, grava minutos, texto e a
  *    chave do horário (nunca business_hours), diz que sem horário salvo o aviso
- *    sai a qualquer hora e que não é o gatilho "Sem resposta do atendente";
+ *    sai a qualquer hora e que sai uma mensagem só, sem abrir chatbot;
  *  - Conta em foco (Gerente sem Loja aberta): pede para escolher a Loja.
  * Quem faz valer no servidor: a RPC set_tenant_settings e o CHECK do banco
  * (docs/teste_automacoes_prontas.sql, grupos PE e CK).
@@ -215,8 +215,10 @@ describe('Aviso quando ninguém responde', () => {
     expect(within(cartao).getByText(/mesmo com a Loja fechada/)).toBeInTheDocument();
   });
 
-  it('diz que não é o gatilho "Sem resposta do atendente" do chatbot', () => {
+  it('diz que sai uma mensagem só e não cita o gatilho que saiu do chatbot', () => {
     montar();
-    expect(within(cartaoAviso()).getByText(/Não é o gatilho "Sem resposta do atendente" do chatbot/)).toBeInTheDocument();
+    const cartao = cartaoAviso();
+    expect(within(cartao).getByText(/Sai uma mensagem só, uma vez por espera, e nenhum chatbot é aberto/)).toBeInTheDocument();
+    expect(within(cartao).queryByText(/Sem resposta do atendente/)).not.toBeInTheDocument();
   });
 });

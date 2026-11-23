@@ -18,7 +18,6 @@ export type ChatbotTriggerType =
   | 'keyword'
   | 'first_contact'
   | 'out_of_hours'
-  | 'no_agent_reply'
   | 'funnel_stage'
   | 'no_recent_human';
 
@@ -133,9 +132,6 @@ export type FirstContactTriggerValue = Record<string, never>;
 export interface OutOfHoursTriggerValue {
   timezone?: string;
 }
-export interface NoAgentReplyTriggerValue {
-  minutes: number;
-}
 export interface FunnelStageTriggerValue {
   stage_id: string;
 }
@@ -146,7 +142,6 @@ export type ChatbotTriggerValue =
   | KeywordTriggerValue
   | FirstContactTriggerValue
   | OutOfHoursTriggerValue
-  | NoAgentReplyTriggerValue
   | FunnelStageTriggerValue
   | NoRecentHumanTriggerValue;
 
@@ -154,7 +149,6 @@ export interface ChatbotTriggerValueMap {
   keyword: KeywordTriggerValue;
   first_contact: FirstContactTriggerValue;
   out_of_hours: OutOfHoursTriggerValue;
-  no_agent_reply: NoAgentReplyTriggerValue;
   funnel_stage: FunnelStageTriggerValue;
   no_recent_human: NoRecentHumanTriggerValue;
 }
