@@ -24,17 +24,43 @@ import { UpdateContactNodeDataSchema } from '@/lib/validations/chatbot-flow';
 describe('limparNomeDoLead', () => {
   it.each([
     ['Ana', 'Ana', 'Ana'],
+    ['meu nome é ana', 'Ana', 'Ana'],
+    ['Maria Clara', 'Maria Clara', 'Maria'],
     ['meu nome é teodora quimera', 'Teodora Quimera', 'Teodora'],
-    ['Sou a Maria Clara Souza Lima', 'Maria Clara Souza', 'Maria'],
-    ['Ana, quero botox', 'Ana', 'Ana'],
+    ['Sou a Maria Clara Souza Lima', 'Maria Clara Souza Lima', 'Maria'],
     ['  me chamo   JOÃO  pedro ', 'João Pedro', 'João'],
-    ['Oi, aqui é a Bia!', 'Bia', 'Bia'],
+    ['aqui é a Bia!', 'Bia', 'Bia'],
+    ["Joana D'Ávila", "Joana D'ávila", 'Joana'],
     ['Souza', 'Souza', 'Souza'],
   ])('%s', (entrada, completo, primeiro) => {
     expect(limparNomeDoLead(entrada)).toEqual({ completo, primeiro });
   });
 
-  it.each([['😊🙏'], [''], ['   '], ['meu nome é'], ['12345'], ['[Áudio]'], ['[Figurinha]']])('sem nome: %j', (entrada) => {
+  it.each([
+    ['Qual preço da limpeza de pele?'],
+    ['Qual preço da limpeza de pele'],
+    ['Bom dia'],
+    ['Boa tarde, tudo bem'],
+    ['Oi, aqui é a Bia'],
+    ['Ana, quero botox'],
+    ['Olá'],
+    ['Quero fazer botox'],
+    ['Sim'],
+    ['Não'],
+    ['Obrigada'],
+    ['Limpeza de pele'],
+    ['Informação'],
+    ['Ana?'],
+    ['Teodora Quimera Souza Lima Neta'],
+    ['😊🙏'],
+    [''],
+    ['   '],
+    ['meu nome é'],
+    ['12345'],
+    ['Ana 2'],
+    ['[Áudio]'],
+    ['[Figurinha]'],
+  ])('sem nome: %j', (entrada) => {
     expect(limparNomeDoLead(entrada)).toBeNull();
   });
 

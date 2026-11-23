@@ -1320,10 +1320,16 @@ function buildOptionsText(prompt: string, options: ShowOptionsOption[]): string 
   return `${prompt}\n\n${lines.join('\n')}`;
 }
 
-async function sendBotMessage(
+/**
+ * Envia um texto automático e grava a linha como mensagem de bot
+ * (is_from_bot = true): não conta como resposta de pessoa, não para nem
+ * reabre o chatbot. `source` diz quem mandou ('chatbot' ou 'aviso_espera').
+ */
+export async function sendBotMessage(
   text: string,
   input: EngineInput,
   ctx: EngineContext,
+  source = 'chatbot',
 ): Promise<void> {
   const { supabase, logger, instance } = ctx;
 
@@ -1335,7 +1341,7 @@ async function sendBotMessage(
   // evolution-webhook reconhece o eco por esse id ou, se chegar antes, pela
   // linha do bot com o mesmo texto ainda sem id. Outros provedores: como antes.
   if ((instance.provider ?? 'evolution') === 'evolution') {
-    await sendBotMessageEvolution(text, input, ctx);
+    await sendBotMessageEvolution(text, input, ctx, source);
     return;
   }
 
@@ -1369,7 +1375,7 @@ async function sendBotMessage(
         content: text,
         status: 'sent',
         is_from_bot: true,
-        source: 'chatbot',
+        source,
       }) as unknown as Promise<void>);
   } catch (err) {
     logger.warn('Failed to persist outbound bot message row', { error: String(err) });
@@ -1380,6 +1386,7 @@ async function sendBotMessageEvolution(
   text: string,
   input: EngineInput,
   ctx: EngineContext,
+  source: string,
 ): Promise<void> {
   const { supabase, logger, instance } = ctx;
 
@@ -1396,7 +1403,7 @@ async function sendBotMessageEvolution(
         content: text,
         status: 'pending',
         is_from_bot: true,
-        source: 'chatbot',
+        source,
       })
       .select('id')
       .single() as Promise<{ data: { id: string } | null; error: unknown }>);

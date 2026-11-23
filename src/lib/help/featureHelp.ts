@@ -276,7 +276,7 @@ export const FEATURE_HELP: Record<string, FeatureHelpEntry> = {
       'Escolha o campo do contato.',
       'Defina o valor (geralmente uma {variavel} coletada antes).',
     ],
-    example: 'Campo "Nome" = {nome} → o contato passa a ter o nome informado. Campo "Nome do lead" = {nome} → limpa a resposta ("meu nome é maria clara" vira "Maria Clara", até 3 palavras), troca o nome só quando o contato ainda não tem nome, tem só o telefone ou tem o nome do perfil do WhatsApp (nunca um nome salvo à mão) e deixa em {nome} só o primeiro nome, para usar em "Muito prazer, {nome}!".',
+    example: 'Campo "Nome" = {nome} → o contato passa a ter o nome informado. Campo "Nome do lead" = {nome} → confere a resposta ("meu nome é maria clara" vira "Maria Clara"; pergunta, número, mais de 4 palavras ou resposta que começa com "qual", "bom dia", "oi", "preço" e parecidas não viram nome), troca o nome só quando o contato ainda não tem nome, tem só o telefone ou tem o nome do perfil do WhatsApp (nunca um nome salvo à mão) e deixa em {nome} só o primeiro nome, para usar em "Muito prazer, {nome}!".',
     category: 'chatbot',
     area: 'Ações',
   },
