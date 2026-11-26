@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/lib/logger';
+import { motivoDoErro } from '@/lib/errors/mensagemDoErro';
 import { instanceNameSchema } from '@/lib/validations/whatsappInstance';
 import { temNomeNoServidor } from '@/lib/whatsapp/nomeNoServidor';
 import { NomeNoServidor } from './NomeNoServidor';
@@ -29,8 +30,12 @@ import { NomeNoServidor } from './NomeNoServidor';
  * ler e copiar, como "Nome no servidor de conexão" (2026-11-04).
  *
  * Quem pode: quem tem `whatsapp.configure` (gerente e gestor). A regra real é a
- * policy `whatsapp_instances_tenant_update` no banco; o botão que abre este
- * modal só se esconde de quem não pode, para não oferecer o que vai falhar.
+ * função `renomear_numero` no banco (20261126000002), que muda SÓ o nome e
+ * aceita quem é da Loja do número e o Gerente em qualquer Loja da Conta dele,
+ * tenha ela gente cadastrada ou não. Antes o modal fazia UPDATE direto, e a
+ * policy só aceitava a própria Loja: o Gerente não conseguia renomear. O botão
+ * que abre este modal só se esconde de quem não pode, para não oferecer o que
+ * vai falhar.
  */
 
 export interface RenameableInstance {
@@ -114,18 +119,15 @@ export const RenameInstanceModal = ({
 
     setSaving(true);
     try {
-      // `.select()` no update: sem ele o PostgREST devolve 204 mesmo quando o
-      // RLS descartou a linha, e a tela diria "renomeado" sem ter renomeado.
-      const { data, error } = await supabase
-        .from('whatsapp_instances')
-        .update({ name: parsed.data, updated_at: new Date().toISOString() })
-        .eq('id', instance.id)
-        .select('id')
-        .maybeSingle();
+      // A função recusa alto (42501) quem não pode, em vez de o UPDATE "dar
+      // certo" sem mudar nada. Conta sem acesso volta com a frase pronta (CF403).
+      const { error } = await supabase.rpc('renomear_numero', {
+        p_instance_id: instance.id,
+        p_nome: parsed.data,
+      });
 
-      if (error) throw new Error(error.message);
-      if (!data) {
-        throw new Error(texts.forbidden);
+      if (error) {
+        throw new Error(error.code === '42501' ? texts.forbidden : motivoDoErro(error));
       }
 
       queryClient.invalidateQueries({ queryKey: ['whatsapp-instances'] });

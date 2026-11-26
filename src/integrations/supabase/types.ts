@@ -6797,6 +6797,10 @@ export type Database = {
       }
       refresh_monitoring_views: { Args: never; Returns: undefined }
       refresh_tracking_views: { Args: never; Returns: undefined }
+      renomear_numero: {
+        Args: { p_instance_id: string; p_nome: string }
+        Returns: string
+      }
       resolve_contact_by_channel: {
         Args: {
           p_channel: string

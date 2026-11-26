@@ -3,40 +3,26 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-const { mockFrom, mockToast } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockToast: vi.fn() }));
+const { mockFrom, mockRpc, mockToast } = vi.hoisted(() => ({ mockFrom: vi.fn(), mockRpc: vi.fn(), mockToast: vi.fn() }));
 
-vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: mockFrom } }));
+vi.mock('@/integrations/supabase/client', () => ({ supabase: { from: mockFrom, rpc: mockRpc } }));
 vi.mock('@/hooks/use-toast', () => ({ useToast: () => ({ toast: mockToast }), toast: mockToast }));
 vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
 import { RenameInstanceModal } from './RenameInstanceModal';
 
 /**
- * Renomear só mexe em `name`. A `instance_key` é a identidade da instância no
- * servidor Evolution e nos webhooks — se um dia alguém "melhorar" o modal para
- * editá-la, o primeiro teste cai.
+ * Renomear só mexe em `name`, e só pela função `renomear_numero`
+ * (20261126000002): ela aceita o Gerente em qualquer Loja da Conta, recusa
+ * alto quem não pode e nunca toca a `instance_key`, que é a identidade da
+ * instância no servidor Evolution e nos webhooks. Se um dia alguém voltar a
+ * gravar direto na tabela, o primeiro teste cai.
  */
 
-let updatePayload: Record<string, unknown> | null = null;
-let updateResult: { data: { id: string } | null; error: { message: string } | null } = {
-  data: { id: 'inst-1' },
+let rpcResult: { data: string | null; error: { message: string; code?: string } | null } = {
+  data: 'Vendas',
   error: null,
 };
-
-function stubUpdate() {
-  updatePayload = null;
-  mockFrom.mockImplementation(() => {
-    const chain: any = {};
-    chain.update = vi.fn((payload: Record<string, unknown>) => {
-      updatePayload = payload;
-      return chain;
-    });
-    chain.eq = vi.fn(() => chain);
-    chain.select = vi.fn(() => chain);
-    chain.maybeSingle = vi.fn(() => Promise.resolve(updateResult));
-    return chain;
-  });
-}
 
 function renderModal(props: Partial<React.ComponentProps<typeof RenameInstanceModal>> = {}) {
   const queryClient = new QueryClient();
@@ -58,20 +44,20 @@ function renderModal(props: Partial<React.ComponentProps<typeof RenameInstanceMo
 
 beforeEach(() => {
   vi.clearAllMocks();
-  updateResult = { data: { id: 'inst-1' }, error: null };
-  stubUpdate();
+  rpcResult = { data: 'Vendas', error: null };
+  mockRpc.mockImplementation(() => Promise.resolve(rpcResult));
 });
 
 describe('RenameInstanceModal', () => {
-  it('grava só o nome — nunca a instance_key', async () => {
+  it('grava só o nome, pela função renomear_numero, nunca direto na tabela', async () => {
     const { onOpenChange, onSuccess } = renderModal();
 
     fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'Vendas' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
-    expect(updatePayload).toMatchObject({ name: 'Vendas' });
-    expect(updatePayload).not.toHaveProperty('instance_key');
+    expect(mockRpc).toHaveBeenCalledWith('renomear_numero', { p_instance_id: 'inst-1', p_nome: 'Vendas' });
+    expect(mockFrom).not.toHaveBeenCalled();
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
@@ -92,7 +78,7 @@ describe('RenameInstanceModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByText(/pelo menos 3 caracteres/i)).toBeInTheDocument();
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
   it('barra nome repetido na mesma Conta, ignorando maiúsculas e espaços', async () => {
@@ -101,13 +87,11 @@ describe('RenameInstanceModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     expect(await screen.findByText(/Já existe um número com esse nome/i)).toBeInTheDocument();
-    expect(mockFrom).not.toHaveBeenCalled();
+    expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it('quando o RLS descarta a linha, diz "sem permissão" em vez de fingir sucesso', async () => {
-    // PostgREST devolve 204 e data nulo quando a policy de UPDATE não casa —
-    // sem o .select() a tela diria "renomeado" sem ter renomeado.
-    updateResult = { data: null, error: null };
+  it('quando o banco recusa (42501), diz "não pode renomear" em vez de fingir sucesso', async () => {
+    rpcResult = { data: null, error: { message: 'Você não pode renomear este número.', code: '42501' } };
     const { onSuccess } = renderModal();
 
     fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'Vendas' } });
@@ -120,6 +104,20 @@ describe('RenameInstanceModal', () => {
           description: expect.stringMatching(/não pode renomear/i),
         }),
       ),
+    );
+    expect(onSuccess).not.toHaveBeenCalled();
+  });
+
+  it('Conta sem acesso: mostra a frase que o servidor mandou', async () => {
+    const frase = 'A Conta está sem acesso, então esta ação não foi feita. Fale com o responsável pela Conta.';
+    rpcResult = { data: null, error: { message: frase, code: 'CF403' } };
+    const { onSuccess } = renderModal();
+
+    fireEvent.change(screen.getByLabelText('Nome do número'), { target: { value: 'Vendas' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() =>
+      expect(mockToast).toHaveBeenCalledWith(expect.objectContaining({ variant: 'destructive', description: frase })),
     );
     expect(onSuccess).not.toHaveBeenCalled();
   });
