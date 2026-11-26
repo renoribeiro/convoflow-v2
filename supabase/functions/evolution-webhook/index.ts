@@ -4,6 +4,16 @@ import { contatoNovoDaEvolution, limparNomeDoPerfil } from '../_shared/nome-do-p
 import { origemDoContatoAntigo } from '../_shared/nome-do-lead.ts'
 import { resolverRemetenteEvolution, telefoneDoJid, numerosDaInstancia } from '../_shared/evolution-remetente.ts'
 import { aplicarAvisosDeStatus } from '../_shared/evolution-status.ts'
+import { aplicarApagadas, depsDoBanco, type EventoDeApagada } from '../_shared/evolution-apagada.ts'
+import {
+  baixadorDoEvolution,
+  depsDoServidor,
+  ehTipoDeMidia,
+  guardarMidiaDaEvolution,
+  type DepsDaMidia,
+  type PastaDaMidia,
+} from '../_shared/evolution-midia.ts'
+import { resolveProviderCredentials } from '../_shared/instance-credentials.ts'
 import { createLogger } from '../_shared/logger.ts'
 import { applyReplyCancellations } from '../_shared/followup-reply.ts'
 import {
@@ -143,6 +153,25 @@ serve(async (req) => {
       })
     }
 
+    // Mídia dos números QR Code (desde 2026-11-25, _shared/evolution-midia.ts):
+    // o arquivo é pedido ao Evolution com a chave do cofre que acabou de ser
+    // conferida. Sem chave, a mensagem fica com o texto de hoje.
+    const credenciaisDaMidia = resolveProviderCredentials(
+      instance,
+      storedCreds,
+      { evolutionBaseUrl: Deno.env.get('EVOLUTION_API_URL') },
+    ).credentials
+    const midia: ContextoDaMidia | null = credenciaisDaMidia
+      ? {
+        supabase,
+        baixar: baixadorDoEvolution({
+          baseUrl: credenciaisDaMidia.baseUrl,
+          apiKey: credenciaisDaMidia.apiKey,
+          instancia: instance.instance_key,
+        }),
+      }
+      : null
+
     logger.info('Processing webhook event', {
       event: eventType,
       instance: instanceName,
@@ -155,7 +184,7 @@ serve(async (req) => {
     // Handle all Evolution API V2 event types
     switch (eventType) {
       case 'messages.upsert':
-        await processIncomingMessage(supabase, instance, instanceName, eventData as MessageData, sender, logger)
+        await processIncomingMessage(supabase, instance, instanceName, eventData as MessageData, sender, logger, midia)
         break
 
       case 'messages.update':
@@ -163,11 +192,12 @@ serve(async (req) => {
         break
 
       case 'messages.delete':
-        await processMessageDelete(supabase, instanceName, eventData, logger)
+      case 'messages.edited':
+        await processMessageDelete(supabase, instance, instanceName, eventType as EventoDeApagada, eventData, logger)
         break
 
       case 'send.message':
-        await processSentMessage(supabase, instance, instanceName, eventData as MessageData, sender, logger)
+        await processSentMessage(supabase, instance, instanceName, eventData as MessageData, sender, logger, midia)
         break
 
       case 'connection.update':
@@ -260,7 +290,8 @@ async function processIncomingMessage(
   instanceName: string,
   messageData: MessageData,
   sender: string | undefined,
-  logger: any
+  logger: any,
+  midia: ContextoDaMidia | null = null,
 ) {
   const { key, message, messageTimestamp, pushName } = messageData
 
@@ -278,7 +309,7 @@ async function processIncomingMessage(
     if (!destino.ok) return
     if (tipo === 'protocol' || tipo === 'reaction' || tipo === 'unknown') return
     await new Promise((r) => setTimeout(r, 2500))
-    await processSentMessage(supabase, instance, instanceName, messageData, sender, logger)
+    await processSentMessage(supabase, instance, instanceName, messageData, sender, logger, midia)
     return
   }
 
@@ -362,7 +393,7 @@ async function processIncomingMessage(
   // da instância que as criou, em vez de migrar a cada mensagem nova.
 
   // Save message to database
-  await supabase.from('messages').insert({
+  const { data: linhaRecebida } = await supabase.from('messages').insert({
     contact_id: contact.id,
     tenant_id: instance.tenant_id,
     whatsapp_instance_id: instance.id,
@@ -373,7 +404,19 @@ async function processIncomingMessage(
     status: 'received',
     // Só os campos de remetente, para conferir depois quem mandou (sem nome nem texto).
     metadata: { evolution: remetente.dados },
-  })
+  }).select('id').maybeSingle()
+
+  // Foto, áudio, vídeo, documento, figurinha: o arquivo vem em segundo plano.
+  if (linhaRecebida?.id && ehTipoDeMidia(messageType)) {
+    agendarMidiaDaEvolution(midia, {
+      linhaId: linhaRecebida.id,
+      tenantId: instance.tenant_id,
+      idDoWhatsapp: key.id,
+      pasta: 'inbound',
+      tipo: messageType,
+      mensagem: { key: key as unknown as Record<string, unknown>, message },
+    }, logger)
+  }
 
   // Campaign reply tracking — isolated so it never disrupts message processing.
   try {
@@ -711,22 +754,45 @@ async function markCampaignExecutionReplied(
   });
 }
 
-async function processMessageDelete(supabase: SupabaseClient, instanceName: string, deleteData: any, logger: any) {
-  const key = deleteData?.key || deleteData;
-  if (!key?.id) {
-    logger.warn('messages.delete event missing key.id', { instanceName });
-    return;
+// Apagar para todos (messages.delete, ou messages.edited com protocolo REVOKE).
+// Formatos, regra e o que se grava: _shared/evolution-apagada.ts. Edição de
+// verdade só fica no registro. A busca fica na Loja do número.
+async function processMessageDelete(
+  supabase: SupabaseClient,
+  instance: { id: string; tenant_id: string },
+  instanceName: string,
+  evento: EventoDeApagada,
+  dados: unknown,
+  logger: any,
+) {
+  const r = await aplicarApagadas(evento, dados, depsDoBanco(supabase, instance.tenant_id));
+
+  logger.info('Deleted messages', {
+    instance: instanceName,
+    evento,
+    recebidos: r.recebidos,
+    apagar: r.ids.length,
+    marcadas: r.marcadas,
+    arquivos_removidos: r.arquivosRemovidos,
+    ignorados: r.ignorados,
+    sem_mensagem: r.semMensagem.length,
+    falhas: r.falhas.length,
+  });
+  if (r.semMensagem.length > 0) {
+    logger.warn('Deleted message: no stored message for id', {
+      instance: instanceName,
+      total: r.semMensagem.length,
+      ids: r.semMensagem.slice(0, 20),
+    });
   }
-
-  await supabase.from('messages')
-    .update({
-      status: 'deleted',
-      content: '[Mensagem apagada]',
-      updated_at: new Date().toISOString()
-    })
-    .eq('evolution_message_id', key.id);
-
-  logger.info('Message marked as deleted', { id: key.id, instanceName });
+  if (r.falhas.length > 0) {
+    logger.warn('Deleted message write failed', {
+      instance: instanceName,
+      total: r.falhas.length,
+      ids: r.falhas.slice(0, 20).map((f) => f.id),
+      erro: r.falhas[0].erro,
+    });
+  }
 }
 
 async function processSentMessage(
@@ -735,7 +801,8 @@ async function processSentMessage(
   instanceName: string,
   messageData: MessageData,
   sender: string | undefined,
-  logger: any
+  logger: any,
+  midia: ContextoDaMidia | null = null,
 ) {
   const { key, message, messageTimestamp } = messageData;
 
@@ -808,7 +875,7 @@ async function processSentMessage(
   // Trigger BEFORE INSERT já gerencia a conversa por (contact, tenant).
   // Como contatos agora são per-instance, a conversa naturalmente também fica per-instance.
 
-  await supabase.from('messages').insert({
+  const { data: linhaEnviada } = await supabase.from('messages').insert({
     contact_id: contact.id,
     tenant_id: instance.tenant_id,
     whatsapp_instance_id: instance.id,
@@ -817,9 +884,66 @@ async function processSentMessage(
     content,
     evolution_message_id: key.id,
     status: 'sent',
-  });
+  }).select('id').maybeSingle();
 
   logger.info('Sent message recorded', { id: key.id, messageType });
+
+  // Mídia mandada pelo celular do número: só a linha que o webhook acabou de
+  // gravar (o anexo enviado pela tela já tem arquivo e saiu acima).
+  if (linhaEnviada?.id && ehTipoDeMidia(messageType)) {
+    agendarMidiaDaEvolution(midia, {
+      linhaId: linhaEnviada.id,
+      tenantId: instance.tenant_id,
+      idDoWhatsapp: key.id,
+      pasta: 'celular',
+      tipo: messageType,
+      mensagem: { key: key as unknown as Record<string, unknown>, message },
+    }, logger);
+  }
+}
+
+interface ContextoDaMidia {
+  supabase: SupabaseClient;
+  baixar: DepsDaMidia['baixar'];
+}
+
+/**
+ * Busca e guarda o arquivo em segundo plano (EdgeRuntime.waitUntil), como a
+ * Meta: o webhook responde na hora. Uma tentativa; o registro leva só ids.
+ * Regra inteira: _shared/evolution-midia.ts.
+ */
+function agendarMidiaDaEvolution(
+  midia: ContextoDaMidia | null,
+  pedido: {
+    linhaId: string;
+    tenantId: string;
+    idDoWhatsapp: string;
+    pasta: PastaDaMidia;
+    tipo: string;
+    mensagem: { key: Record<string, unknown>; message?: unknown };
+  },
+  logger: any,
+): void {
+  const ids = { id: pedido.idDoWhatsapp, linha: pedido.linhaId, tipo: pedido.tipo, pasta: pedido.pasta };
+  if (!midia) {
+    logger.warn('Evolution media skipped: no instance key', ids);
+    return;
+  }
+  const tarefa = guardarMidiaDaEvolution(pedido, depsDoServidor(midia.supabase, midia.baixar))
+    .then((r) => {
+      if (r.situacao === 'guardada') logger.info('Evolution media stored', ids);
+      else logger.warn('Evolution media not stored', { ...ids, situacao: r.situacao, detalhe: r.detalhe });
+    })
+    .catch((err: any) => {
+      logger.warn('Evolution media failed', { ...ids, erro: err?.name ?? 'erro' });
+    });
+  // EdgeRuntime é global do Supabase Edge: segura a função viva até o fim.
+  const runtime = (globalThis as { EdgeRuntime?: { waitUntil?: (p: Promise<unknown>) => void } }).EdgeRuntime;
+  try {
+    runtime?.waitUntil?.(tarefa);
+  } catch (_e) {
+    // best-effort; ignore
+  }
 }
 
 // ============================================

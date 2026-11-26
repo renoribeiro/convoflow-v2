@@ -57,6 +57,10 @@ const WEBHOOK_EVENTS = [
   'CONNECTION_UPDATE',
   'MESSAGES_UPSERT',
   'MESSAGES_UPDATE',
+  // Apagar para todos: o Evolution 2.3.7 avisa por um dos dois (ou pelos dois).
+  // O evolution-webhook trata em _shared/evolution-apagada.ts.
+  'MESSAGES_DELETE',
+  'MESSAGES_EDITED',
   'SEND_MESSAGE',
   'CONTACTS_UPSERT',
   'CONTACTS_UPDATE',

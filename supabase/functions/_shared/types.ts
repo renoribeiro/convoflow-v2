@@ -1,7 +1,7 @@
 // Evolution API V2 - Shared Types for Edge Functions
 
 export interface WebhookEvent {
-  event: 'messages.upsert' | 'messages.update' | 'messages.delete' | 'connection.update' |
+  event: 'messages.upsert' | 'messages.update' | 'messages.delete' | 'messages.edited' | 'connection.update' |
   'qrcode.updated' | 'send.message' | 'contacts.upsert' | 'contacts.update' |
   'contacts.set' | 'chats.upsert' | 'chats.update' | 'chats.delete' | 'chats.set' |
   'groups.upsert' | 'groups.update' | 'group.participants.update' |
