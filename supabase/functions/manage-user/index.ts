@@ -30,6 +30,7 @@ import { can, CAPABILITY_DENIAL_MESSAGES, normalizeRole } from '../_shared/capab
 import { contaSlug, sufixoAleatorio } from '../_shared/conta-slug.ts';
 import { setLoginBan, statusBansLogin } from '../_shared/login-ban.ts';
 import { avaliarTrocaDeCargo, type LugarDaPessoa } from '../_shared/troca-de-cargo.ts';
+import { decidirGerenteSobrePessoa } from '../_shared/gerente-sobre-pessoa.ts';
 import {
   checkAttendantEntry,
   EXCLUIDO_NAO_REATIVA,
@@ -273,7 +274,8 @@ function idsDeDescendentes(data: unknown): string[] {
  * Quem pode agir sobre quem.
  *
  *   superadmin → qualquer perfil (menos o próprio)
- *   gerente    → seus descendentes na árvore de perfis
+ *   gerente    → seus descendentes na árvore de perfis QUE estejam na Conta
+ *                dele ou numa Loja dela (gerente-sobre-pessoa.ts, 2026-11-26)
  *   gestor     → atendentes da própria loja
  *   atendente  → ninguém
  *
@@ -322,12 +324,22 @@ async function ensureCanManage(
         500,
       );
     }
-    if (idsDeDescendentes(data).includes(targetId)) return;
-    throw new SecureError(
-      'Este usuário não pertence à sua Conta.',
-      'FORBIDDEN',
-      403,
-    );
+    const descendentes = idsDeDescendentes(data);
+    // A árvore sozinha não basta: a pessoa também tem de estar na Conta do
+    // Gerente ou numa Loja dela (gerente-sobre-pessoa.ts). Só busca a Loja
+    // quando a árvore já deixou passar e a pessoa não está na própria Conta.
+    const precisaDaLoja =
+      descendentes.includes(targetId) && !!alvo.tenant_id && alvo.tenant_id !== caller.tenant_id;
+    const alvoTenant = precisaDaLoja ? await fetchTenantRow(admin, alvo.tenant_id as string) : null;
+    const decisao = decidirGerenteSobrePessoa({
+      caller,
+      alvoId: targetId,
+      descendentes,
+      alvoTenantId: alvo.tenant_id ?? null,
+      alvoTenant,
+    });
+    if (decisao.ok) return;
+    throw new SecureError(decisao.message, 'FORBIDDEN', decisao.status);
   }
 
   if (papel === 'gestor') {
@@ -359,6 +371,19 @@ async function fetchTarget(admin: SupabaseClient, id: string) {
     throw new SecureError('Profile alvo não encontrado', 'NOT_FOUND', 404);
   }
   return data;
+}
+
+/** A linha de `tenants` que a regra do Gerente olha; null quando não existe. */
+async function fetchTenantRow(admin: SupabaseClient, id: string) {
+  const { data, error } = await admin
+    .from('tenants')
+    .select('id, kind, parent_tenant_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) {
+    throw new SecureError(`Falha ao verificar permissão: ${error.message}`, 'PERMISSION_CHECK_FAILED', 500);
+  }
+  return data ?? null;
 }
 
 // ---------------------------------------------------------------------------
